@@ -1,12 +1,13 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
+import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 
 interface SubmitButtonProps {
-  children: string;
+  children: ReactNode;
   pendingLabel: string;
 }
 

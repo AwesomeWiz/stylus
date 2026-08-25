@@ -28,6 +28,20 @@ Do not rely solely on hidden UI elements.
 
 Backend authorization remains mandatory.
 
+Phase 2 company-profile behavior:
+
+- organization members may read their organization's onboarding source data
+- only `OWNER` and `ADMIN` may insert or update it
+- Server Actions derive organization and audit identities from authenticated
+  server context rather than trusting hidden/browser fields
+- every new organization-owned table has RLS select/insert/update policies
+- no delete grant is provided; competitor removal uses archival
+- triggers prohibit organization reassignment, creator reassignment and forged
+  updater identities
+- completion is accepted only after all required structured sections exist
+- progress advancement is an authenticated, role-checked security-invoker RPC;
+  organization scope is still derived and validated server-side
+
 ---
 
 # AI Memory

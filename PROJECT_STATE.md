@@ -4,27 +4,26 @@ Last Updated: 2026-08-25
 
 ## Overall Status
 
-AUTHENTICATION AND ORGANIZATIONS COMPLETE / READY FOR PHASE 2
+COMPANY ONBOARDING NAVIGATION FIX / READY FOR MANUAL QA
 
-The verified Supabase authentication and organization-isolation foundation is
-in place. Company onboarding and later business functionality have not started.
+The verified authentication and organization foundation now includes structured,
+resumable company onboarding. A reproducible first-submit navigation defect has
+been fixed and awaits manual verification. Task management has not started.
 
 ---
 
 ## Current Phase
 
-Phase 1 — Authentication and Organizations
+Phase 2 — Company Onboarding
 
-Status: COMPLETE
+Status: READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-002 established secure multi-user authentication, organization membership,
-server-side organization context and database row-level security.
-
-TASK-003 is ready but has not started.
+TASK-003 remains current while the first-submit onboarding navigation fix is
+manually verified. TASK-004 has not started.
 
 ---
 
@@ -107,19 +106,101 @@ Verified on 2026-08-25 with browser-safe test configuration:
 
 ---
 
+# Phase 2 Implementation
+
+- focused eight-step onboarding: Company; Problem & Idea; Product; Audience;
+  Positioning & Brand; Marketing; Competitors; Review & Finish
+- per-step validation, field errors, pending states, Back and Save/Continue
+- bounded add/remove list controls and zero-or-more competitor editor
+- durable server-side progress saved between steps
+- completion timestamp and workspace routing that does not repeat onboarding
+- Company Profile review/edit page after completion
+- pre-product-friendly optional website, social, brand and competitor fields
+- no AI provider, memory, embedding, RAG, scraping or Marketing plugin code
+
+---
+
+# Phase 2 Database and Security
+
+Migration: `supabase/migrations/20260825000200_company_onboarding.sql`
+
+Introduced:
+
+- controlled company, product, brand, marketing and competitor enums
+- `company_profiles`
+- `audience_profiles`
+- `brand_profiles`
+- `marketing_profiles`
+- `competitors` with archival removal
+- `onboarding_progress`
+- member read policies and OWNER/ADMIN insert/update policies on every table
+- immutable organization ownership, creator/starter provenance and authenticated
+  updater enforcement
+- pgTAP policy suite at
+  `supabase/tests/database/company_onboarding_rls.test.sql`
+
+Server Actions independently derive the current organization from the validated
+membership context and map accepted fields explicitly. MEMBER and VIEWER roles
+cannot mutate onboarding data.
+
+---
+
+# Phase 2 Verification
+
+Verified on 2026-08-25:
+
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 16 files and 49 tests
+- `npm run build`: passed; onboarding and Company Profile routes compiled
+- linked `supabase db push --dry-run --skip-vault`: passed; exactly the new Phase
+  2 migration is pending and no remote changes were made
+- unauthenticated `/onboarding/company` and `/company/profile`: HTTP 307 to
+  `/login`
+- source security scan: no service-role use, secret logging, AI calls or memory
+  implementation
+
+## Manual-QA Navigation Fix
+
+Resolved on 2026-08-25:
+
+- removed broad root-layout revalidation before onboarding redirects
+- replaced the separate progress read/upsert with
+  `advance_onboarding_progress(uuid, smallint)` on the same authenticated client
+- progress advancement now targets the absolute completed step, making duplicate
+  requests idempotent rather than incrementing twice
+- regression coverage verifies first-submit persistence/redirect, validation and
+  persistence failures, duplicate requests, disabled pending submission and
+  refresh/login recovery
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 18 files and 59 tests
+- `npm run build`: passed
+- linked migration dry run: passed; only
+  `20260825000300_fix_onboarding_progress_advance.sql` is pending
+
+---
+
 # Manual Verification Still Required
 
-The current machine does not have Docker, Supabase project credentials or an
-available in-app browser surface. Before production deployment:
+The current machine does not have Docker or an available in-app browser surface.
+The linked Supabase project was available for a non-mutating migration dry run.
+Before merge/deployment:
 
 1. Run `npm run db:start`, `npm run db:reset`, `npm run db:lint` and
    `npm run test:db` in a Docker-enabled environment.
-2. Apply the migration to a non-production Supabase project.
-3. Configure the Site URL, allowed redirect URL and confirmation email template
+2. Apply `20260825000300_fix_onboarding_progress_advance.sql` with
+   `npm exec supabase -- db push --linked --skip-vault` after review.
+3. Run authenticated OWNER, ADMIN, MEMBER and VIEWER onboarding/RLS checks using
+   separate organizations.
+4. Configure the Site URL, allowed redirect URL and confirmation email template
    to use `/auth/confirm?token_hash={{ .TokenHash }}&type=email`.
-4. Manually verify signup, confirmation, login, session refresh, organization
+5. Manually verify signup, confirmation, login, session refresh, organization
    creation, cross-user isolation and logout with real accounts.
-5. Perform desktop and mobile visual QA in a browser.
+6. Perform onboarding and Company Profile visual QA at desktop, tablet and narrow
+   mobile widths, including refresh/resume and list add/remove behavior.
 
 ---
 
@@ -238,22 +319,24 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-002 complete. TASK-003 is ready for a future implementation session.
+TASK-003 navigation fix is ready for manual QA. TASK-004 has not started.
 
 ---
 
 # Known Issues
 
-No known implementation defects.
+No known unresolved implementation defect after the automated regression suite.
 
-Real Supabase/pgTAP and interactive browser verification remain required as
-described above because the necessary external environment was unavailable.
+Applying the fix migration, executing pgTAP and manually confirming one-click
+step advancement remain required. The in-app browser skill found no available
+browser surface during this session.
 
 ---
 
 # Next Recommended Action
 
-Execute TASK-003 from CODEX_TASKS.md on a dedicated task branch.
+Apply the fix migration and repeat TASK-003 manual QA. Confirm that one click
+advances each step and refresh/login resumes correctly. Do not begin TASK-004.
 
 ---
 
@@ -267,7 +350,8 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-002 is complete and verified on `codex/task-002-auth`.
+TASK-003 remains current on `codex/task-003-company-onboarding` until the
+navigation fix is manually verified.
 
-Begin TASK-003 only in a new session after reviewing the repository and current
-worktree. Preserve unrelated user changes and do not begin TASK-004.
+Apply the pending fix migration and verify one-click advancement, refresh/resume,
+logout/login recovery and duplicate-click prevention. Do not begin TASK-004.

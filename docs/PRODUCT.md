@@ -151,6 +151,13 @@ Initial categories:
 
 Company Knowledge provides controlled context for AI agents.
 
+Initial company onboarding establishes the authoritative structured source for
+company identity, problem, product concept, primary audience, positioning,
+brand direction, marketing objectives and known competitors. Founders can save
+between steps, resume later and update the profile after completion. Optional
+fields support pre-product companies without websites, customers, revenue or a
+finished brand.
+
 ---
 
 # Marketing

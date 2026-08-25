@@ -6,6 +6,10 @@ describe("session route decisions", () => {
   it("redirects unauthenticated application requests to login", () => {
     expect(getSessionRouteDecision("/", false)).toBe("/login");
     expect(getSessionRouteDecision("/organization/new", false)).toBe("/login");
+    expect(getSessionRouteDecision("/onboarding/company", false)).toBe(
+      "/login",
+    );
+    expect(getSessionRouteDecision("/company/profile", false)).toBe("/login");
   });
 
   it("allows unauthenticated authentication routes", () => {

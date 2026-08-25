@@ -4,23 +4,20 @@
 
 ## TASK-003 — Company Onboarding
 
-Status: READY
+Status: READY FOR MANUAL QA
 
 Phase: 2
 
-Planned scope:
+Manual-QA fix scope:
 
-- company identity
-- startup idea
-- problem
-- product concept
-- stage
-- audience
-- brand profile
-- marketing objectives
-- initial competitor records
+- removed broad layout revalidation that competed with the action redirect
+- replaced read-then-upsert progress writes with an idempotent authenticated RPC
+- one successful submission persists data, advances progress and redirects once
+- validation/data/progress failures remain on the current step without advancing
+- duplicate submissions target an absolute completed step and cannot double-advance
+- refresh/login routing resumes from the durable next step
 
-Do not proceed to TASK-004 during TASK-003.
+Do not proceed to TASK-004 until the fix is applied and manually verified.
 
 ---
 
