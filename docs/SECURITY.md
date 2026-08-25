@@ -8,6 +8,16 @@ Enforce authorization server-side.
 
 Use Supabase RLS where appropriate.
 
+Phase 1 enforcement:
+
+- authenticated server helpers verify users with Supabase Auth
+- organization IDs are validated and membership-checked before use
+- organization reads require membership through RLS
+- organization name updates require an `OWNER` or `ADMIN` membership
+- users can read only their own membership records
+- clients have no direct membership insert, update or delete grants
+- initial organization and `OWNER` membership creation is atomic
+
 ---
 
 # Permissions
@@ -44,6 +54,24 @@ Never expose:
 to browser code.
 
 Use environment variables and server-side secret handling.
+
+The web application uses only Supabase's browser-safe publishable key. No
+service-role client or environment variable is present in the TASK-002 runtime.
+
+Required public configuration is schema-validated at startup. Secret-key names
+and prefixes are checked against production browser chunks during verification.
+
+---
+
+# Sessions
+
+Supabase SSR stores sessions in cookies and rotates refresh tokens through the
+Next.js Proxy boundary. Proxy uses verified claims rather than trusting the
+unvalidated session user object. Server Actions and protected pages independently
+validate the authenticated user before accessing organization data.
+
+Authentication errors are intentionally generic. Passwords, access tokens and
+refresh tokens are never logged by application code.
 
 ---
 

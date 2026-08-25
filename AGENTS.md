@@ -417,3 +417,57 @@ Do not opportunistically implement later roadmap features.
 
 If unrelated technical debt is discovered, document it rather than
 silently expanding scope.
+
+---
+
+# Git Workflow
+
+The `main` branch represents the latest verified stable version of Stylus.
+
+Do not perform substantial feature development directly on `main`.
+
+For each CODEX_TASKS.md implementation task, use a dedicated branch.
+
+Branch naming:
+
+codex/task-<number>-<short-name>
+
+Examples:
+
+codex/task-001-foundation
+codex/task-002-auth
+codex/task-004-tasks
+
+Before implementation:
+
+1. Check git status.
+2. Identify the current branch.
+3. Preserve unrelated user changes.
+4. Ensure the task branch is based on the latest intended `main`.
+
+During implementation:
+
+- Make focused changes related to the current task.
+- Do not rewrite unrelated history.
+- Do not force push.
+- Do not delete branches without explicit instruction.
+- Do not commit secrets or local environment files.
+
+Before considering a task ready for merge:
+
+1. Run lint.
+2. Run typecheck.
+3. Run tests.
+4. Run the production build where applicable.
+5. Review the diff.
+6. Update PROJECT_STATE.md.
+7. Update CODEX_TASKS.md.
+8. Update docs/ROADMAP.md where appropriate.
+
+A task may only be considered merge-ready when its required verification
+passes.
+
+Do not automatically merge into `main` unless explicitly instructed.
+
+Do not automatically push to a remote unless the current task explicitly
+authorizes it.

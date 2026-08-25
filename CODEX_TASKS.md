@@ -2,9 +2,56 @@
 
 # Current
 
-## TASK-001 — Repository Foundation
+## TASK-003 — Company Onboarding
 
 Status: READY
+
+Phase: 2
+
+Planned scope:
+
+- company identity
+- startup idea
+- problem
+- product concept
+- stage
+- audience
+- brand profile
+- marketing objectives
+- initial competitor records
+
+Do not proceed to TASK-004 during TASK-003.
+
+---
+
+# Completed
+
+## TASK-002 — Authentication and Organizations
+
+Status: COMPLETE
+
+Phase: 1
+
+Implemented scope:
+
+- Supabase SSR integration with cookie-based sessions
+- signup, email confirmation, login and logout
+- protected route redirects and authenticated session detection
+- organization and membership schema with role foundation
+- atomic initial organization creation with OWNER membership
+- validated server-side organization context helpers
+- restricted grants and row-level security policies
+- application shell account and organization context
+- authorization, session, migration-contract and UI tests
+
+Real Supabase flow and pgTAP verification remain documented deployment checks
+because local Docker and project credentials were unavailable during TASK-002.
+
+---
+
+## TASK-001 — Repository Foundation
+
+Status: COMPLETE
 
 Phase: 0
 
@@ -97,49 +144,7 @@ After verification:
 
 ---
 
-# Next
-
-## TASK-002 — Authentication and Organizations
-
-Status: BLOCKED_BY TASK-001
-
-Phase: 1
-
-Planned scope:
-
-- Supabase integration
-- signup
-- login
-- logout
-- session management
-- organization creation
-- organization membership
-- protected application shell
-- basic role/permission foundation
-- initial RLS
-- authorization tests
-
-Do not begin until TASK-001 is complete.
-
----
-
 # Planned Queue
-
-## TASK-003 — Company Onboarding
-
-Planned scope:
-
-- company identity
-- startup idea
-- problem
-- product concept
-- stage
-- audience
-- brand profile
-- marketing objectives
-- initial competitor records
-
----
 
 ## TASK-004 — Task Management
 

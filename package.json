@@ -1,0 +1,33 @@
+{
+  "name": "stylus",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @stylus/web",
+    "build": "npm run build --workspace @stylus/web",
+    "db:lint": "supabase db lint --local",
+    "db:reset": "supabase db reset",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "lint": "npm run lint --workspace @stylus/web",
+    "typecheck": "npm run typecheck --workspace @stylus/web",
+    "test": "npm run test --workspace @stylus/web",
+    "test:db": "supabase test db",
+    "test:watch": "npm run test:watch --workspace @stylus/web",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.7.1",
+    "supabase": "^2.115.0"
+  }
+}
