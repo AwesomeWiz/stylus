@@ -33,7 +33,7 @@ export const navigationGroups: NavigationGroup[] = [
       { label: "Home", icon: Home, href: "/", active: true },
       { label: "Tasks", icon: CalendarCheck2, href: "#tasks" },
       { label: "Whiteboards", icon: LayoutDashboard, href: "#whiteboards" },
-      { label: "Company Knowledge", icon: Building2, href: "#knowledge" },
+      { label: "Company Profile", icon: Building2, href: "/company/profile" },
     ],
   },
   {

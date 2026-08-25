@@ -94,6 +94,24 @@ PostgreSQL grants and RLS provide defense in depth. Organization creation is an
 authenticated atomic database function that creates both the organization and
 its creator's `OWNER` membership.
 
+Company onboarding never accepts an organization boundary from browser form
+data. Server Actions derive the current organization from the authenticated
+membership context, explicitly require `OWNER` or `ADMIN`, map accepted fields,
+and then operate through the authenticated Supabase client. RLS repeats the
+membership and role checks at the database boundary.
+
+The onboarding records are authoritative structured company source data. They
+do not create AI memory, embeddings or knowledge-retrieval records.
+
+---
+
+# Company Onboarding Flow
+
+The protected workspace resolves organization setup before company onboarding.
+Incomplete organizations resume from persisted `onboarding_progress`; completed
+organizations enter the workspace without repeating onboarding. The same
+structured records remain editable from Company Profile after completion.
+
 ---
 
 # Core Modules

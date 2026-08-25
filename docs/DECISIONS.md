@@ -164,3 +164,20 @@ organization and creator `OWNER` membership are committed atomically.
 
 No service-role client is introduced for normal authentication or organization
 operations.
+
+---
+
+## ADR-014 — Structured, Resumable Company Onboarding
+
+Status: ACCEPTED
+
+Company onboarding is persisted as pragmatic structured relational records,
+not a questionnaire JSON blob and not AI memory. Company, audience, brand,
+marketing and competitor records share an explicit organization boundary, while
+an onboarding-progress record controls resumability and completion routing.
+
+Variable founder-supplied lists use bounded arrays where separate entities would
+add little value. Audience profiles and competitors remain separate tables so
+additional segments and competitors can be added later. Records stay editable
+after completion, competitor removal is archival, and only owners or
+administrators may mutate authoritative company context.

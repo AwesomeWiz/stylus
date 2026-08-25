@@ -2,29 +2,59 @@
 
 # Current
 
-## TASK-003 — Company Onboarding
+## TASK-004 — Task Management
 
 Status: READY
 
-Phase: 2
+Phase: 3
 
 Planned scope:
 
-- company identity
-- startup idea
-- problem
-- product concept
-- stage
-- audience
-- brand profile
-- marketing objectives
-- initial competitor records
+- create task
+- edit task
+- assignment
+- priority
+- status
+- due date/time
+- comments
+- subtasks if approved
+- My Tasks
+- Team Tasks
+- upcoming
+- overdue
+- completed
+- archive
+- calendar
 
-Do not proceed to TASK-004 during TASK-003.
+Do not proceed to TASK-005 during TASK-004.
 
 ---
 
 # Completed
+
+## TASK-003 — Company Onboarding
+
+Status: COMPLETE
+
+Phase: 2
+
+Implemented scope:
+
+- eight-step, resumable company onboarding flow
+- structured company, problem, product and positioning source data
+- reusable audience profile foundation with a primary segment
+- optional brand direction and structured marketing objectives
+- zero-or-more soft-archived competitor records
+- persisted progress and completion timestamp
+- post-completion Company Profile review and editing
+- OWNER/ADMIN mutations with MEMBER/VIEWER read-only behavior
+- RLS, immutable organization ownership and protected audit provenance
+- routing, schema, authorization, UI and migration-contract tests
+
+The linked Supabase migration dry run passed. Applying the migration, running the
+pgTAP suite and authenticated responsive browser QA remain manual checks.
+
+---
 
 ## TASK-002 — Authentication and Organizations
 
@@ -145,28 +175,6 @@ After verification:
 ---
 
 # Planned Queue
-
-## TASK-004 — Task Management
-
-Planned scope:
-
-- create task
-- edit task
-- assignment
-- priority
-- status
-- due date/time
-- comments
-- subtasks if approved
-- My Tasks
-- Team Tasks
-- upcoming
-- overdue
-- completed
-- archive
-- calendar
-
----
 
 ## TASK-005 — Reminders, Notifications and Activity
 

@@ -110,9 +110,52 @@ Board elements contain:
 
 # Company Knowledge
 
-company_profiles
-audience_profiles
-brand_profiles
+Phase 2 introduces authoritative onboarding source data through migration
+`20260825000200_company_onboarding.sql`:
+
+`company_profiles`
+
+- one row per organization
+- identity, stage, problem, startup idea, product concept and positioning
+- controlled `company_stage` and `product_status` enums
+- arrays only for variable lists such as capabilities and reasons to believe
+
+`audience_profiles`
+
+- supports multiple organization-scoped segments
+- onboarding establishes one primary segment through a partial unique index
+- structured characteristics, pains, goals, motivations, objections and channels
+
+`brand_profiles`
+
+- one row per organization
+- optional personality, voice, perception and visual direction
+- `brand_status` supports founders whose branding is not decided
+
+`marketing_profiles`
+
+- one row per organization
+- controlled primary/secondary objectives and marketing stage
+- multiple channels and content-focus areas without assuming Instagram exclusivity
+
+`competitors`
+
+- zero or more organization-scoped records
+- `DIRECT`, `INDIRECT`, `ALTERNATIVE` and `INSPIRATION` types
+- removals are archived through `archived_at`
+
+`onboarding_progress`
+
+- one row per organization
+- durable current step and completion timestamp
+
+All six tables are readable by organization members and mutable only by owners
+or administrators. RLS uses the Phase 1 organization helpers. Database triggers
+prevent organization, original creator or onboarding-starter reassignment and
+require authenticated updater provenance.
+
+Future Company Knowledge tables:
+
 company_knowledge
 decisions
 experiments
