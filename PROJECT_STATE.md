@@ -4,27 +4,28 @@ Last Updated: 2026-08-25
 
 ## Overall Status
 
-TASK-004 TASK MANAGEMENT / READY FOR MANUAL QA AGAIN
+TASK-005 REMINDERS, NOTIFICATIONS AND ACTIVITY / READY FOR MANUAL QA
 
-The verified authentication, organization and company-onboarding foundation now
-includes lightweight collaborative task management. The implementation is ready
-for authenticated role, responsive and migration QA before merge.
+The verified collaboration foundation now includes private in-app deadline
+notifications, database-native task reminders and immutable organization
+activity. Hosted scheduling and authenticated role QA remain before merge.
 
 ---
 
 ## Current Phase
 
-Phase 3 — Tasks
+Phase 4 — Notifications & Activity
 
-Status: READY FOR MANUAL QA AGAIN
+Status: READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-004 includes the resolved overdue-deadline manual-QA defect on
-`codex/task-004-task-management` and is ready for manual QA again. TASK-005 is
-documented as next but has not started.
+TASK-005 is implementation-complete on
+`codex/task-005-reminders-notifications-activity` and ready for migration,
+hosted Cron, authenticated security and responsive manual QA. TASK-006 has not
+started.
 
 ---
 
@@ -258,6 +259,62 @@ Resolved on 2026-08-25:
 
 ---
 
+# Phase 4 Implementation
+
+- compact global notification bell/popover with unread count, recent messages,
+  explicit unread text, mark-one and mark-all read actions
+- safe task-context navigation derived from controlled entity references
+- 24-hour, one-hour and at-deadline in-app reminder policy for assigned active
+  tasks
+- deterministic database processor with exact UTC deadline-version idempotency
+- current status, assignee, membership and deadline revalidation on every run
+- immutable task create/update/assignment/status/comment activity triggers
+- protected responsive `/activity` history with member identities and task links
+- no external delivery channel, browser polling, local daemon, VPS or AI scope
+
+---
+
+# Phase 4 Database and Security
+
+Migration: `supabase/migrations/20260825000500_reminders_notifications_activity.sql`
+
+Introduced:
+
+- controlled notification, reminder and activity event enums
+- recipient-private `notifications`
+- deadline-versioned `task_reminder_deliveries`
+- immutable organization-readable `activity_events`
+- `process_task_reminders(timestamptz)` restricted to trusted database/service
+  execution
+- recipient-scoped database-time read-state functions
+- composite organization/member and organization/task foreign keys
+- RLS and grants denying browser notification creation, activity forgery and
+  reminder-ledger access
+- 32-assertion pgTAP suite at
+  `supabase/tests/database/reminders_notifications_activity_rls.test.sql`
+
+---
+
+# Phase 4 Verification
+
+Verified on 2026-08-25:
+
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 33 files and 112 tests
+- `npm run build`: passed; protected `/activity` and `/tasks` routes compiled
+- linked `supabase db push --dry-run --skip-vault`: passed; exactly
+  `20260825000500_reminders_notifications_activity.sql` is pending and no remote
+  change was made
+- deterministic tests use fixed instants with no sleeps
+- migration contract verifies current-state eligibility, deadline-version
+  deduplication, trusted execution grants and immutable activity provenance
+
+Production build, linked migration dry run and final formatting are recorded
+after the final verification pass.
+
+---
+
 # Manual Verification Still Required
 
 The current machine does not have Docker or an available in-app browser surface.
@@ -266,16 +323,22 @@ Before merge/deployment:
 
 1. Run `npm run db:start`, `npm run db:reset`, `npm run db:lint` and
    `npm run test:db` in a Docker-enabled environment.
-2. Apply `20260825000400_task_management.sql` with
+2. Apply `20260825000500_reminders_notifications_activity.sql` with
    `npm exec supabase -- db push --linked --skip-vault` after review.
-3. Run authenticated OWNER, ADMIN, MEMBER and VIEWER task/RLS checks using
-   separate organizations, including rejected cross-organization assignment.
-4. Configure the Site URL, allowed redirect URL and confirmation email template
+3. Enable the `stylus-task-reminders` hosted Cron job exactly as documented in
+   `docs/DEPLOYMENT.md`, then inspect its first run in Job History.
+4. Run authenticated recipient, other-member and cross-organization
+   notification/activity RLS checks, including mark-one and mark-all behavior.
+5. Configure the Site URL, allowed redirect URL and confirmation email template
    to use `/auth/confirm?token_hash={{ .TokenHash }}&type=email`.
-5. Manually verify signup, confirmation, login, session refresh, organization
+6. Manually verify signup, confirmation, login, session refresh, organization
    creation, cross-user isolation and logout with real accounts.
-6. Perform Tasks visual QA at desktop, tablet and narrow mobile widths, including
-   create/edit, filters, completion/reopen, comments and long-content wrapping.
+7. At desktop, tablet and narrow mobile widths, verify the notification popover,
+   unread controls, safe task navigation and Activity loading/error/empty/list
+   states.
+8. With fixed test deadlines, verify 24-hour, one-hour and deadline reminders;
+   repeat processor calls, change a deadline, then complete/cancel/unassign tasks
+   before processing to confirm idempotency and stale-reminder prevention.
 
 ---
 
@@ -394,28 +457,28 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-004 task management is ready for manual QA again on
-`codex/task-004-task-management`. TASK-005 has not started.
+TASK-005 is ready for manual QA on
+`codex/task-005-reminders-notifications-activity`. TASK-006 has not started.
 
 ---
 
 # Known Issues
 
-No known unresolved TASK-004 implementation defect after the overdue-deadline
-manual-QA fix and automated suite.
+The hosted `stylus-task-reminders` Cron job is not provisioned automatically;
+deployment must enable Supabase Cron and schedule the documented five-minute
+database-function call. Free Supabase projects can pause after low activity, in
+which case database Cron does not execute until the project resumes.
 
-Docker is unavailable, so the new pgTAP suite has not run locally. The in-app
-browser runtime reported no available browser surface, so authenticated visual,
-responsive and interaction QA remains required. The linked migration dry run
-passed without changing the hosted database.
+Docker is unavailable, so the Phase 4 pgTAP suite has not run locally.
+Authenticated visual, responsive and interaction QA remains required.
 
 ---
 
 # Next Recommended Action
 
-Review and apply `20260825000400_task_management.sql`, execute pgTAP in a
-Docker-enabled environment, and run TASK-004 manual QA with separate OWNER,
-ADMIN, MEMBER and VIEWER accounts. Do not begin TASK-005 during QA.
+Review and apply `20260825000500_reminders_notifications_activity.sql`, enable
+the documented hosted Cron job, execute pgTAP in a Docker-enabled environment,
+and run TASK-005 recipient/isolation/activity QA. Do not begin TASK-006.
 
 ---
 
@@ -429,10 +492,11 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-004 is complete and ready for manual QA on
-`codex/task-004-task-management`.
+TASK-005 is complete and ready for manual QA on
+`codex/task-005-reminders-notifications-activity`.
 
-Apply the pending task migration and verify task creation, editing, assignment,
-filters, completion/reopen, comments, the 14-day Completed/Archive boundary,
-cross-organization isolation and VIEWER read-only behavior. TASK-005 is the exact
-next documented task; do not begin it until TASK-004 is accepted and merged.
+Apply the pending Phase 4 migration, activate and inspect the hosted reminder
+Cron job, verify recipient-private notification read state, exercise all task
+activity transitions, and test cross-organization isolation. TASK-006 —
+Whiteboard Foundation is the exact next task; do not begin it until TASK-005 is
+accepted and merged.

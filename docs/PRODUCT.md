@@ -106,6 +106,11 @@ Future delivery adapters may include:
 - Slack
 - other integrations
 
+The initial notification center is in-app only. Assigned active tasks receive
+idempotent reminders approximately 24 hours before, one hour before and at the
+deadline. Notifications are private to their recipient, while the separate
+Activity page shows organization-visible task and comment history.
+
 ---
 
 ## Whiteboards

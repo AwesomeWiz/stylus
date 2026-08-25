@@ -35,6 +35,18 @@ export type CompetitorType =
   "DIRECT" | "INDIRECT" | "ALTERNATIVE" | "INSPIRATION";
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+export type NotificationType = "TASK_DUE_24H" | "TASK_DUE_1H" | "TASK_DEADLINE";
+export type NotificationEntityType = "TASK";
+export type NotificationChannel = "IN_APP";
+export type TaskReminderKind = "DUE_24H" | "DUE_1H" | "DEADLINE";
+export type ActivityEventType =
+  | "TASK_CREATED"
+  | "TASK_UPDATED"
+  | "TASK_ASSIGNED"
+  | "TASK_COMPLETED"
+  | "TASK_REOPENED"
+  | "TASK_CANCELLED"
+  | "TASK_COMMENTED";
 
 export type OrganizationRow = {
   created_at: string;
@@ -186,6 +198,42 @@ export type TaskCommentRow = {
   task_id: string;
 };
 
+export type NotificationRow = {
+  body: string;
+  created_at: string;
+  entity_id: string | null;
+  entity_type: NotificationEntityType | null;
+  id: string;
+  organization_id: string;
+  read_at: string | null;
+  recipient_id: string;
+  title: string;
+  type: NotificationType;
+};
+
+export type ActivityEventRow = {
+  actor_id: string;
+  created_at: string;
+  entity_id: string;
+  entity_type: NotificationEntityType;
+  event_type: ActivityEventType;
+  id: string;
+  metadata: Record<string, unknown>;
+  organization_id: string;
+};
+
+export type TaskReminderDeliveryRow = {
+  channel: NotificationChannel;
+  deadline_at: string;
+  id: string;
+  notification_id: string | null;
+  organization_id: string;
+  processed_at: string;
+  recipient_id: string;
+  reminder_kind: TaskReminderKind;
+  task_id: string;
+};
+
 export type TaskMember = {
   display_name: string;
   member_user_id: string;
@@ -201,6 +249,12 @@ type AuditedInsert = {
 export type Database = {
   public: {
     Tables: {
+      activity_events: {
+        Row: ActivityEventRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       audience_profiles: {
         Row: AudienceProfileRow;
         Insert: AuditedInsert &
@@ -284,6 +338,12 @@ export type Database = {
         };
         Relationships: [];
       };
+      notifications: {
+        Row: NotificationRow;
+        Insert: never;
+        Update: Pick<NotificationRow, "read_at">;
+        Relationships: [];
+      };
       marketing_profiles: {
         Row: MarketingProfileRow;
         Insert: AuditedInsert &
@@ -332,6 +392,12 @@ export type Database = {
           "body" | "created_by" | "organization_id" | "task_id"
         > &
           Partial<Pick<TaskCommentRow, "id">>;
+        Update: never;
+        Relationships: [];
+      };
+      task_reminder_deliveries: {
+        Row: TaskReminderDeliveryRow;
+        Insert: never;
         Update: never;
         Relationships: [];
       };
@@ -385,16 +451,33 @@ export type Database = {
         Args: { p_organization_id: string };
         Returns: TaskMember[];
       };
+      mark_all_notifications_read: {
+        Args: { p_organization_id: string };
+        Returns: number;
+      };
+      mark_notification_read: {
+        Args: { p_notification_id: string; p_organization_id: string };
+        Returns: boolean;
+      };
+      process_task_reminders: {
+        Args: { p_now?: string };
+        Returns: number;
+      };
     };
     Enums: {
+      activity_event_type: ActivityEventType;
       brand_status: BrandStatus;
       company_stage: CompanyStage;
       competitor_type: CompetitorType;
       marketing_objective: MarketingObjective;
       marketing_stage: MarketingStage;
+      notification_entity_type: NotificationEntityType;
+      notification_channel: NotificationChannel;
+      notification_type: NotificationType;
       organization_role: OrganizationRole;
       product_status: ProductStatus;
       task_priority: TaskPriority;
+      task_reminder_kind: TaskReminderKind;
       task_status: TaskStatus;
     };
     CompositeTypes: { [_ in never]: never };

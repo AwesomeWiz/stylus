@@ -7,6 +7,9 @@ describe("application navigation", () => {
     expect(navigationGroups[0]?.items).toContainEqual(
       expect.objectContaining({ label: "Tasks", href: "/tasks" }),
     );
+    expect(navigationGroups[0]?.items).toContainEqual(
+      expect.objectContaining({ label: "Activity", href: "/activity" }),
+    );
   });
 
   it("contains the required navigation sections", () => {

@@ -76,13 +76,18 @@ Status: READY FOR MANUAL QA
 
 ## Phase 4 — Notifications & Activity
 
-- [ ] notification model
-- [ ] notification center
-- [ ] task reminders
-- [ ] overdue notifications
+Status: READY FOR MANUAL QA
+
+- [x] notification model
+- [x] compact notification center
+- [x] task reminders
+- [x] deadline notifications
 - [ ] mentions
-- [ ] activity stream
-- [ ] idempotency
+- [x] activity stream
+- [x] idempotency
+
+Mentions remain deferred; TASK-005 implements deadline notifications and the
+notification/activity foundations without external delivery channels.
 
 ---
 

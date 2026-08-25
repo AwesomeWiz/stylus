@@ -20,6 +20,7 @@ export interface TaskFilters {
   priority?: TaskPriority;
   query?: string;
   status?: TaskStatus;
+  selectedTaskId?: string;
   view: TaskView;
 }
 

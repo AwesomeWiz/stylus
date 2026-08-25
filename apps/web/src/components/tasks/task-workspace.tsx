@@ -28,6 +28,7 @@ interface TaskWorkspaceProps {
   members: TaskMember[];
   nextDeadlineIso: string | null;
   nowIso: string;
+  selectedTaskId?: string;
   tasks: TaskRow[];
 }
 
@@ -74,11 +75,14 @@ export function TaskWorkspace({
   members,
   nextDeadlineIso,
   nowIso,
+  selectedTaskId,
   tasks,
 }: TaskWorkspaceProps) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskRow | null>(
+    () => tasks.find((task) => task.id === selectedTaskId) ?? null,
+  );
   const closeCreate = useCallback(() => setCreating(false), []);
   const closeDetail = useCallback(() => setSelectedTask(null), []);
   const now = new Date(nowIso);

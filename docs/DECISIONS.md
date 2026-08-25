@@ -196,3 +196,21 @@ Completion timestamps are database-managed and idempotent. The primary Completed
 view shows the last 14 days, while older completions appear in Archive without
 being mutated or deleted. This avoids background archival infrastructure and
 keeps historical work intact.
+
+---
+
+## ADR-016 — Database-Native In-App Reminder Delivery
+
+Status: ACCEPTED
+
+Initial task reminders are derived and delivered by a deterministic PostgreSQL
+function invoked approximately every five minutes by hosted Supabase Cron. The
+processor rechecks the current task deadline, active status, assignee and
+membership, then atomically creates an in-app notification and a deadline-
+versioned idempotency record.
+
+Notifications are private recipient messages. Activity events are separate,
+immutable organization history produced by database triggers. No always-on Node
+worker, developer laptop, VPS, external delivery channel or arbitrary stored
+redirect URL is introduced. Hosted Cron activation remains an explicit
+deployment step.

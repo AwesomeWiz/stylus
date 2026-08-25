@@ -1,8 +1,10 @@
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
 import { Sheet } from "@/components/ui/sheet";
+import { NotificationMenu } from "@/components/notifications/notification-menu";
+import type { NotificationSummary } from "@/modules/notifications/server/data";
 
 import { Sidebar } from "./sidebar";
 import type { ShellIdentity, ShellOrganization } from "./app-shell";
@@ -11,6 +13,7 @@ interface TopbarProps {
   activePath: string;
   identity: ShellIdentity;
   logoutAction: () => Promise<void>;
+  notifications: NotificationSummary;
   organization: ShellOrganization;
 }
 
@@ -18,6 +21,7 @@ export function Topbar({
   activePath,
   identity,
   logoutAction,
+  notifications,
   organization,
 }: TopbarProps) {
   return (
@@ -41,9 +45,7 @@ export function Topbar({
       </div>
       <SearchInput className="max-w-md flex-1" />
       <div className="ml-auto flex items-center gap-1">
-        <Button aria-label="View notifications" size="icon" variant="ghost">
-          <Bell aria-hidden="true" className="size-[18px]" />
-        </Button>
+        <NotificationMenu {...notifications} />
       </div>
     </header>
   );
