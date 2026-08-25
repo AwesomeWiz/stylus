@@ -4,17 +4,17 @@ Last Updated: 2026-08-25
 
 ## Overall Status
 
-TASK-005 REMINDERS, NOTIFICATIONS AND ACTIVITY / READY FOR MANUAL QA
+TASK-006 WHITEBOARD FOUNDATION / READY FOR MANUAL QA
 
-The verified collaboration foundation now includes private in-app deadline
-notifications, database-native task reminders and immutable organization
-activity. Hosted scheduling and authenticated role QA remain before merge.
+Stylus now includes a persistent organization-scoped visual canvas with private
+image storage, bounded autosave, role-aware editing and permanent isolation
+coverage. Hosted migration and authenticated visual/security QA remain.
 
 ---
 
 ## Current Phase
 
-Phase 4 — Notifications & Activity
+Phase 5 — Whiteboards
 
 Status: READY FOR MANUAL QA
 
@@ -22,10 +22,9 @@ Status: READY FOR MANUAL QA
 
 ## Current Objective
 
-TASK-005 is implementation-complete on
-`codex/task-005-reminders-notifications-activity` and ready for migration,
-hosted Cron, authenticated security and responsive manual QA. TASK-006 has not
-started.
+TASK-006 is implementation-complete on
+`codex/task-006-whiteboard-foundation` and ready for migration, authenticated
+role/storage testing and responsive canvas manual QA. TASK-007 has not started.
 
 ---
 
@@ -338,6 +337,61 @@ ambiguity:
 
 ---
 
+# Phase 5 Implementation
+
+- protected `/whiteboards` list/grid with create, rename, open and archival
+- full-space React Flow editor with pan, zoom, fit, selection and touch-friendly
+  compact tooling
+- independently persisted TEXT, STICKY, IMAGE, SHAPE and ARROW elements
+- rectangle/ellipse shapes, direct text/sticky editing, resizing and deterministic
+  bring/send layering
+- bounded persistence on create, drag end, resize end and edit commit with
+  visible saving/error/retry feedback
+- private validated image upload with one-hour signed rendering URLs
+- VIEWER read-only behavior and OWNER/ADMIN/MEMBER collaboration
+- no comments, mentions, realtime, presence, AI or Marketing integration
+
+---
+
+# Phase 5 Database and Security
+
+Migration: `supabase/migrations/20260825000600_whiteboard_foundation.sql`
+
+Introduced:
+
+- controlled `board_element_type`
+- organization-scoped `boards` and independently addressable `board_elements`
+- finite geometry, positive dimensions, JSON-object and z-index constraints
+- composite organization/board and membership provenance foreign keys
+- provenance triggers preventing creator, organization and board reassignment
+- collaborator-write/member-read RLS with restricted column grants
+- private `board-images` bucket limited to 10 MB PNG/JPEG/WebP files
+- path-derived organization storage policies for member reads and collaborator
+  writes/removal
+- 22-assertion pgTAP suite at
+  `supabase/tests/database/whiteboards_rls.test.sql`
+
+---
+
+# Phase 5 Verification
+
+Verified on 2026-08-25:
+
+- focused TASK-006 tests: passed; 9 files and 36 tests
+- full web suite: passed; 42 files and 151 tests
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run build`: passed; `/whiteboards` and `/whiteboards/[boardId]` compiled
+- unauthenticated list and direct board routes return HTTP 307 to `/login`
+- linked migration dry run: passed; only
+  `20260825000600_whiteboard_foundation.sql` is pending
+- dependency audit: 0 vulnerabilities after adding `@xyflow/react`
+- local pgTAP execution unavailable because Docker/Podman is not installed
+- in-app browser QA unavailable because no browser surface was connected
+
+---
+
 # Manual Verification Still Required
 
 The current machine does not have Docker or an available in-app browser surface.
@@ -346,22 +400,21 @@ Before merge/deployment:
 
 1. Run `npm run db:start`, `npm run db:reset`, `npm run db:lint` and
    `npm run test:db` in a Docker-enabled environment.
-2. Apply `20260825000500_reminders_notifications_activity.sql` with
+2. Apply `20260825000600_whiteboard_foundation.sql` with
    `npm exec supabase -- db push --linked --skip-vault` after review.
-3. Enable the `stylus-task-reminders` hosted Cron job exactly as documented in
-   `docs/DEPLOYMENT.md`, then inspect its first run in Job History.
-4. Run authenticated recipient, other-member and cross-organization
-   notification/activity RLS checks, including mark-one and mark-all behavior.
-5. Configure the Site URL, allowed redirect URL and confirmation email template
-   to use `/auth/confirm?token_hash={{ .TokenHash }}&type=email`.
-6. Manually verify signup, confirmation, login, session refresh, organization
-   creation, cross-user isolation and logout with real accounts.
-7. At desktop, tablet and narrow mobile widths, verify the notification popover,
-   unread controls, safe task navigation and Activity loading/error/empty/list
-   states.
-8. With fixed test deadlines, verify 24-hour, one-hour and deadline reminders;
-   repeat processor calls, change a deadline, then complete/cancel/unassign tasks
-   before processing to confirm idempotency and stale-reminder prevention.
+3. Create OWNER/ADMIN/MEMBER/VIEWER users in two organizations and confirm list,
+   direct-route, board mutation and element mutation boundaries.
+4. Create a board and each element type; pan, zoom, move, resize, layer, edit and
+   archive elements, then navigate away/reopen and verify reconstruction.
+5. Upload valid PNG/JPEG/WebP images and reject SVG/executable and oversized
+   files; confirm Organization A cannot sign or fetch Organization B paths.
+6. Confirm save/error/retry feedback under a simulated network failure and that
+   repeated clicks while pending do not duplicate creation.
+7. At desktop, laptop, tablet and narrow mobile widths, verify canvas containment,
+   toolbar overflow, touch targets, selection controls and no page-level
+   horizontal scrolling.
+8. Verify keyboard focus, Enter text editing, Escape deselection, Delete/Backspace
+   archival and React Flow keyboard movement without intercepting text input.
 
 ---
 
@@ -480,28 +533,29 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-005 is ready for manual QA on
-`codex/task-005-reminders-notifications-activity`. TASK-006 has not started.
+TASK-006 is ready for manual QA on
+`codex/task-006-whiteboard-foundation`. TASK-007 has not started.
 
 ---
 
 # Known Issues
 
-The hosted `stylus-task-reminders` Cron job is not provisioned automatically;
-deployment must enable Supabase Cron and schedule the documented five-minute
-database-function call. Free Supabase projects can pause after low activity, in
-which case database Cron does not execute until the project resumes.
+Docker/Podman is unavailable, so the Phase 5 22-assertion pgTAP suite has not run
+locally. No in-app browser surface was available for authenticated visual QA.
+Hosted migration, storage-policy behavior, role isolation, image signed URLs,
+responsive layout and real pointer pan/zoom/drag/resize QA remain required.
 
-Docker is unavailable, so the Phase 4 pgTAP suite has not run locally.
-Authenticated visual, responsive and interaction QA remains required.
+TASK-006 intentionally has no undo/redo, multi-select, comments, mentions,
+realtime synchronization or presence. The latter collaboration scope belongs to
+TASK-007.
 
 ---
 
 # Next Recommended Action
 
-Review and apply `20260825000500_reminders_notifications_activity.sql`, enable
-the documented hosted Cron job, execute pgTAP in a Docker-enabled environment,
-and run TASK-005 recipient/isolation/activity QA. Do not begin TASK-006.
+Review and apply `20260825000600_whiteboard_foundation.sql`, execute pgTAP in a
+database-capable environment, and run TASK-006 authenticated role, storage,
+persistence and responsive canvas QA. Do not begin TASK-007.
 
 ---
 
@@ -515,11 +569,11 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-005 is complete and ready for manual QA on
-`codex/task-005-reminders-notifications-activity`.
+TASK-006 is complete and ready for manual QA on
+`codex/task-006-whiteboard-foundation`.
 
-Apply the pending Phase 4 migration, activate and inspect the hosted reminder
-Cron job, verify recipient-private notification read state, exercise all task
-activity transitions, and test cross-organization isolation. TASK-006 —
-Whiteboard Foundation is the exact next task; do not begin it until TASK-005 is
-accepted and merged.
+Apply the pending Phase 5 migration, run the whiteboard pgTAP suite, verify
+OWNER/ADMIN/MEMBER/VIEWER and cross-organization boundaries, exercise private
+image upload/signed access, and test canvas persistence and responsive behavior.
+TASK-007 — Whiteboard Collaboration is the exact next task; do not begin it
+until TASK-006 is accepted and merged.

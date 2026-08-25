@@ -9,7 +9,9 @@ const migration = readFileSync(
     "../../supabase/migrations/20260825000500_reminders_notifications_activity.sql",
   ),
   "utf8",
-).toLowerCase();
+)
+  .replace(/\r\n/g, "\n")
+  .toLowerCase();
 const processorFixMigration = readFileSync(
   resolve(
     process.cwd(),

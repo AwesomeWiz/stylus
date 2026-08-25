@@ -131,10 +131,16 @@ Initial elements:
 - images
 - shapes
 - arrows
-- links
-- frames/sections where appropriate
+- controlled rectangle/ellipse shapes
 
-Users can comment on boards and elements.
+The first whiteboard foundation uses a large pan/zoom canvas and persists each
+element independently. Creation saves immediately; movement and resize save at
+interaction end; text/sticky edits save on commit. Board images are private and
+served through short-lived signed URLs. OWNER, ADMIN and MEMBER edit while
+VIEWER is read-only.
+
+Board and element comments, mentions and realtime collaboration are planned for
+the next whiteboard phase and are not part of the foundation.
 
 Whiteboard content does not automatically become permanent Company
 Knowledge.

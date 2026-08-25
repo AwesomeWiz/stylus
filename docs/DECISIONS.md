@@ -214,3 +214,20 @@ immutable organization history produced by database triggers. No always-on Node
 worker, developer laptop, VPS, external delivery channel or arbitrary stored
 redirect URL is introduced. Hosted Cron activation remains an explicit
 deployment step.
+
+---
+
+## ADR-017 — Relational Whiteboard Elements with React Flow
+
+Status: ACCEPTED
+
+TASK-006 uses the MIT-licensed React Flow library for canvas interaction while
+retaining Stylus-owned rendering, mutation and persistence boundaries. Boards
+are reconstructed from independently addressable organization-scoped element
+rows rather than one opaque JSON document.
+
+Writes occur at bounded interaction boundaries instead of pointer frequency.
+Images live in a private organization-path Supabase Storage bucket and are
+rendered through short-lived signed URLs. This foundation deliberately omits
+realtime subscriptions, comments and presence so TASK-007 can add collaboration
+over a stable authorized element model.

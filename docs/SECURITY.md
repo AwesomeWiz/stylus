@@ -95,6 +95,23 @@ Marketing must not retrieve Agency memory.
 
 ---
 
+# Whiteboards and Board Images
+
+- protected pages and every mutation derive the current organization from the
+  authenticated membership context
+- board and element RLS allows member reads; only OWNER, ADMIN and MEMBER mutate
+- restricted grants and triggers prevent organization, board, creator and
+  creation-time reassignment, including forged creator identities
+- composite foreign keys prevent elements from referencing another organization
+- browsers receive no hard-delete grant; board and element removal is archival
+- text is rendered as ordinary React text, never through `dangerouslySetInnerHTML`
+- uploads accept only PNG, JPEG and WebP up to 10 MB with server-side validation
+- `board-images` is private; path-derived organization policies protect reads,
+  writes and removal, and rendering uses expiring signed URLs
+- storage service-role credentials are not used or exposed
+
+---
+
 # Secrets
 
 Never expose:

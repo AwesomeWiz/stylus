@@ -93,18 +93,22 @@ notification/activity foundations without external delivery channels.
 
 ## Phase 5 — Whiteboards
 
-- [ ] boards
-- [ ] pan/zoom
-- [ ] text
-- [ ] sticky notes
-- [ ] images
-- [ ] shapes
-- [ ] arrows
-- [ ] drag/resize
+- [x] boards
+- [x] pan/zoom
+- [x] text
+- [x] sticky notes
+- [x] images
+- [x] shapes
+- [x] arrows
+- [x] drag/resize
 - [ ] comments
 - [ ] mentions
 - [ ] realtime collaboration
-- [ ] permissions
+- [x] permissions
+
+TASK-006 provides the persistent single-session editor, private image storage,
+layering, autosave boundaries and viewer read-only access. Comments, mentions,
+realtime synchronization and presence remain TASK-007.
 
 ---
 
