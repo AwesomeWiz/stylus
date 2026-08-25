@@ -124,10 +124,24 @@ role.
 
 # Whiteboards
 
-boards
-board_elements
-board_comments
-board_members where needed
+Phase 5 introduces migration `20260825000600_whiteboard_foundation.sql`.
+
+`boards`
+
+- organization-scoped UUID identity, bounded title and creator/updater provenance
+- archive timestamp rather than a browser delete grant
+- active organization/update index for the board list
+
+`board_elements`
+
+- composite `(organization_id, board_id)` ownership
+- controlled `TEXT`, `STICKY`, `IMAGE`, `SHAPE` and `ARROW` type
+- finite bounded position, positive dimensions, rotation and deterministic z-index
+- independently persisted content, style and metadata JSON objects
+- text, sticky, shape and arrow presentation stored in the existing style JSON;
+  the TASK-006 usability completion pass requires no schema migration
+- creator/updater provenance and archival removal
+- active board/order and organization/board indexes
 
 Board elements contain:
 
@@ -141,6 +155,16 @@ Board elements contain:
 - content
 - style
 - metadata
+
+The board is not stored as one opaque JSON document. Triggers prevent board,
+organization and creator reassignment, require authenticated audit identities,
+and touch the parent board after element changes. OWNER, ADMIN and MEMBER mutate;
+VIEWER reads only.
+
+Supabase Storage bucket `board-images` is private, limited to 10 MB PNG, JPEG and
+WebP objects, and protected by organization-path membership/role policies.
+Archiving an image element retains its private object so non-destructive recovery
+remains possible; a future permanent purge workflow may remove archived assets.
 
 ---
 

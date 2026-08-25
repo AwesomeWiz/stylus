@@ -2,50 +2,46 @@
 
 # Current
 
-## TASK-005 — Reminders, Notifications and Activity
+## TASK-006 — Whiteboard Foundation
 
 Status: COMPLETE / READY FOR MANUAL QA
 
-Phase: 4
+Phase: 5
 
 Implemented scope:
 
-- private recipient-targeted in-app notifications and unread controls
-- safe task-context navigation without stored redirect URLs
-- deterministic 24-hour, one-hour and deadline reminder processing
-- deadline-version idempotency and current task/member eligibility checks
-- immutable database-triggered task and comment activity history
-- compact notification popover and responsive Activity page
-- hosted Supabase Cron execution documentation and permanent security tests
+- organization-scoped board list, creation, rename and archival
+- React Flow canvas with pan, zoom, selection and keyboard movement
+- persistent text, sticky, image, rectangle/ellipse, and arrow elements
+- bounded persistence on create, drag end, resize end and text commit
+- deterministic layering and safe element archival
+- private organization-scoped Supabase Storage images with signed URLs
+- OWNER/ADMIN/MEMBER collaboration and VIEWER read-only behavior
+- RLS, storage-policy, action, schema, interaction and pgTAP coverage
+- manual-QA completion pass with contextual text/sticky/shape/arrow formatting,
+  bounded persisted undo/redo, keyboard shortcuts and horizontal default arrows
+- immediate image-picker activation, duplicate-mutation protection and memoized
+  element rendering during pointer-frequency canvas updates
 
-Migration `20260825000500_reminders_notifications_activity.sql` and the hosted
-Cron job require deployment/manual verification. Cron is not automatically
-provisioned by the repository.
-
-Manual QA found and resolved an ambiguous `reminder_kind` PL/pgSQL identifier in
-the hosted processor. Forward migration
-`20260825000510_fix_reminder_processor.sql` safely replaces the function; it
-must be applied before Cron delivery is reverified.
+The manual-QA usability defects are resolved without a schema migration. The
+linked database is current. Authenticated role/storage, pointer and responsive
+manual QA should be repeated; Docker is unavailable locally, so the 22-assertion
+pgTAP suite remains to be executed in a database-capable environment.
 
 ---
 
 # Next
 
-## TASK-006 — Whiteboard Foundation
+## TASK-007 — Whiteboard Collaboration
 
 Status: READY
 
 Phase: 5
 
-Planned scope:
+Planned scope: comments, element comments, @mentions, realtime element updates,
+presence, board activity and collaboration permissions.
 
-- boards and infinite/canvas workspace
-- pan and zoom
-- text and sticky notes
-- images, shapes and arrows
-- drag, resize and layering
-
-Do not begin until TASK-005 has completed manual QA and is merged through the
+Do not begin until TASK-006 has completed manual QA and is merged through the
 normal workflow.
 
 ---

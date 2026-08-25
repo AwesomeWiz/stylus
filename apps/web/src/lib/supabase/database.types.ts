@@ -47,6 +47,39 @@ export type ActivityEventType =
   | "TASK_REOPENED"
   | "TASK_CANCELLED"
   | "TASK_COMMENTED";
+export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
+
+export type BoardRow = {
+  archived_at: string | null;
+  created_at: string;
+  created_by: string;
+  id: string;
+  organization_id: string;
+  title: string;
+  updated_at: string;
+  updated_by: string;
+};
+
+export type BoardElementRow = {
+  archived_at: string | null;
+  board_id: string;
+  content: Record<string, unknown>;
+  created_at: string;
+  created_by: string;
+  element_type: BoardElementType;
+  height: number;
+  id: string;
+  metadata: Record<string, unknown>;
+  organization_id: string;
+  rotation: number;
+  style: Record<string, unknown>;
+  updated_at: string;
+  updated_by: string;
+  width: number;
+  x: number;
+  y: number;
+  z_index: number;
+};
 
 export type OrganizationRow = {
   created_at: string;
@@ -274,6 +307,53 @@ export type Database = {
         Update: Partial<AudienceProfileRow>;
         Relationships: [];
       };
+      board_elements: {
+        Row: BoardElementRow;
+        Insert: Pick<
+          BoardElementRow,
+          | "board_id"
+          | "content"
+          | "created_by"
+          | "element_type"
+          | "height"
+          | "metadata"
+          | "organization_id"
+          | "style"
+          | "updated_by"
+          | "width"
+          | "x"
+          | "y"
+          | "z_index"
+        > &
+          Partial<Pick<BoardElementRow, "id" | "rotation">>;
+        Update: Partial<
+          Pick<
+            BoardElementRow,
+            | "archived_at"
+            | "content"
+            | "height"
+            | "metadata"
+            | "rotation"
+            | "style"
+            | "updated_by"
+            | "width"
+            | "x"
+            | "y"
+            | "z_index"
+          >
+        >;
+        Relationships: [];
+      };
+      boards: {
+        Row: BoardRow;
+        Insert: Pick<
+          BoardRow,
+          "created_by" | "organization_id" | "title" | "updated_by"
+        > &
+          Partial<Pick<BoardRow, "id">>;
+        Update: Partial<Pick<BoardRow, "archived_at" | "title" | "updated_by">>;
+        Relationships: [];
+      };
       brand_profiles: {
         Row: BrandProfileRow;
         Insert: AuditedInsert &
@@ -466,6 +546,7 @@ export type Database = {
     };
     Enums: {
       activity_event_type: ActivityEventType;
+      board_element_type: BoardElementType;
       brand_status: BrandStatus;
       company_stage: CompanyStage;
       competitor_type: CompetitorType;

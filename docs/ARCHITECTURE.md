@@ -162,6 +162,36 @@ deadline so server-filtered views cross that boundary without polling.
 
 ---
 
+# Whiteboard Boundary
+
+Whiteboards are a Core collaboration module. React Flow supplies local canvas
+geometry, pan, zoom, selection and resize interactions; it does not own the
+database model. Every board element is an independently addressable PostgreSQL
+row so authorization, partial updates and future realtime collaboration do not
+depend on a monolithic board JSON document.
+
+Server Components derive the active organization and reconstruct a board from
+active ordered element rows. Server Actions validate explicit mutation schemas,
+derive organization/creator/updater provenance, and persist only at bounded
+interaction points. PostgreSQL repeats the boundary through composite board/org
+foreign keys, restricted column grants, provenance triggers and RLS.
+
+The editor keeps at most 75 local element snapshots. Each user-level operation
+records once at its commit boundary; undo/redo diffs adjacent snapshots and
+persists the resulting authorized update, archive or restore operations. This is
+local editing history, not event sourcing, and reload reconstructs the last
+persisted state from normal element rows.
+
+Images use the private `board-images` Supabase Storage bucket. Object paths begin
+with the validated organization and board IDs; membership/role storage policies
+control object access, and the editor receives one-hour signed URLs. No service
+role credential or public bucket is used.
+
+TASK-006 is intentionally single-session: comments, mentions, realtime element
+synchronization and presence are deferred to TASK-007.
+
+---
+
 # Plugin Modules
 
 Initial:

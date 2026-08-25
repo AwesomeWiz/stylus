@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { serverEnv } from "@/lib/env/server";
 
 import "./globals.css";
+import "@xyflow/react/dist/style.css";
 
 void serverEnv;
 
