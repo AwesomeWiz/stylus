@@ -4,26 +4,27 @@ Last Updated: 2026-08-25
 
 ## Overall Status
 
-COMPANY ONBOARDING NAVIGATION FIX / READY FOR MANUAL QA
+TASK-004 TASK MANAGEMENT / READY FOR MANUAL QA AGAIN
 
-The verified authentication and organization foundation now includes structured,
-resumable company onboarding. A reproducible first-submit navigation defect has
-been fixed and awaits manual verification. Task management has not started.
+The verified authentication, organization and company-onboarding foundation now
+includes lightweight collaborative task management. The implementation is ready
+for authenticated role, responsive and migration QA before merge.
 
 ---
 
 ## Current Phase
 
-Phase 2 — Company Onboarding
+Phase 3 — Tasks
 
-Status: READY FOR MANUAL QA
+Status: READY FOR MANUAL QA AGAIN
 
 ---
 
 ## Current Objective
 
-TASK-003 remains current while the first-submit onboarding navigation fix is
-manually verified. TASK-004 has not started.
+TASK-004 includes the resolved overdue-deadline manual-QA defect on
+`codex/task-004-task-management` and is ready for manual QA again. TASK-005 is
+documented as next but has not started.
 
 ---
 
@@ -183,6 +184,80 @@ Resolved on 2026-08-25:
 
 ---
 
+# Phase 3 Implementation
+
+- protected `/tasks` workspace integrated with the responsive Stylus shell
+- fast create/edit dialog with title, description, one optional assignee,
+  priority, status, scheduled time and due time
+- compact task rows with accessible completion/reopen controls and overdue state
+- My Tasks, All Tasks, Upcoming, Overdue, Completed, Archive and Calendar views
+- composing title, assignee, status and priority filters
+- deterministic actionable ordering and UTC date handling
+- 14-day recent-completion window with older history retained in Archive
+- lightweight task comments for working collaboration context
+- view-specific empty states plus loading, error and pending states
+- no reminder delivery, notifications, workers, AI or later-task infrastructure
+
+---
+
+# Phase 3 Database and Security
+
+Migration: `supabase/migrations/20260825000400_task_management.sql`
+
+Introduced:
+
+- `task_status` and `task_priority` enums
+- `tasks` with one nullable same-organization assignee
+- `task_comments`
+- organization/status, assignee, due and completion-history indexes
+- composite organization/member and organization/task foreign keys
+- database-managed, idempotent `completed_at` lifecycle
+- immutable organization/creator provenance and authenticated updater enforcement
+- column-level grants that exclude IDs, ownership and managed timestamps
+- organization member reads; OWNER/ADMIN/MEMBER writes; VIEWER read-only RLS
+- authenticated `list_organization_task_members(uuid)` directory RPC exposing
+  only member IDs, display names and roles
+- 19-assertion pgTAP suite at
+  `supabase/tests/database/task_management_rls.test.sql`
+
+---
+
+# Phase 3 Verification
+
+Verified on 2026-08-25:
+
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 25 files and 92 tests
+- `npm run build`: passed; protected `/tasks` route compiled
+- linked `supabase db push --dry-run --skip-vault`: passed; exactly
+  `20260825000400_task_management.sql` is pending and no remote change was made
+- migration/security contract coverage verifies RLS roles, organization isolation,
+  same-organization assignment, restricted grants and lifecycle invariants
+- component coverage verifies compact task display, collaborator dialogs,
+  VIEWER read-only behavior and view-specific empty states
+
+## Manual-QA Overdue Deadline Fix
+
+Resolved on 2026-08-25:
+
+- local date/time inputs now convert through the browser timezone to UTC
+  instants before persistence, and stored instants display in local time
+- overdue uses the inclusive `due_at <= now` boundary for active tasks only
+- the open workspace schedules one refresh at the nearest future active
+  deadline, with timer cleanup and no polling when no deadline can change state
+- deterministic coverage verifies timezone conversion, active/inactive status
+  behavior, the deadline boundary, refresh-time filtering and the existing
+  14-day completion split
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 26 files and 97 tests
+- `npm run build`: passed; protected `/tasks` route compiled
+
+---
+
 # Manual Verification Still Required
 
 The current machine does not have Docker or an available in-app browser surface.
@@ -191,16 +266,16 @@ Before merge/deployment:
 
 1. Run `npm run db:start`, `npm run db:reset`, `npm run db:lint` and
    `npm run test:db` in a Docker-enabled environment.
-2. Apply `20260825000300_fix_onboarding_progress_advance.sql` with
+2. Apply `20260825000400_task_management.sql` with
    `npm exec supabase -- db push --linked --skip-vault` after review.
-3. Run authenticated OWNER, ADMIN, MEMBER and VIEWER onboarding/RLS checks using
-   separate organizations.
+3. Run authenticated OWNER, ADMIN, MEMBER and VIEWER task/RLS checks using
+   separate organizations, including rejected cross-organization assignment.
 4. Configure the Site URL, allowed redirect URL and confirmation email template
    to use `/auth/confirm?token_hash={{ .TokenHash }}&type=email`.
 5. Manually verify signup, confirmation, login, session refresh, organization
    creation, cross-user isolation and logout with real accounts.
-6. Perform onboarding and Company Profile visual QA at desktop, tablet and narrow
-   mobile widths, including refresh/resume and list add/remove behavior.
+6. Perform Tasks visual QA at desktop, tablet and narrow mobile widths, including
+   create/edit, filters, completion/reopen, comments and long-content wrapping.
 
 ---
 
@@ -319,24 +394,28 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-003 navigation fix is ready for manual QA. TASK-004 has not started.
+TASK-004 task management is ready for manual QA again on
+`codex/task-004-task-management`. TASK-005 has not started.
 
 ---
 
 # Known Issues
 
-No known unresolved implementation defect after the automated regression suite.
+No known unresolved TASK-004 implementation defect after the overdue-deadline
+manual-QA fix and automated suite.
 
-Applying the fix migration, executing pgTAP and manually confirming one-click
-step advancement remain required. The in-app browser skill found no available
-browser surface during this session.
+Docker is unavailable, so the new pgTAP suite has not run locally. The in-app
+browser runtime reported no available browser surface, so authenticated visual,
+responsive and interaction QA remains required. The linked migration dry run
+passed without changing the hosted database.
 
 ---
 
 # Next Recommended Action
 
-Apply the fix migration and repeat TASK-003 manual QA. Confirm that one click
-advances each step and refresh/login resumes correctly. Do not begin TASK-004.
+Review and apply `20260825000400_task_management.sql`, execute pgTAP in a
+Docker-enabled environment, and run TASK-004 manual QA with separate OWNER,
+ADMIN, MEMBER and VIEWER accounts. Do not begin TASK-005 during QA.
 
 ---
 
@@ -350,8 +429,10 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-003 remains current on `codex/task-003-company-onboarding` until the
-navigation fix is manually verified.
+TASK-004 is complete and ready for manual QA on
+`codex/task-004-task-management`.
 
-Apply the pending fix migration and verify one-click advancement, refresh/resume,
-logout/login recovery and duplicate-click prevention. Do not begin TASK-004.
+Apply the pending task migration and verify task creation, editing, assignment,
+filters, completion/reopen, comments, the 14-day Completed/Archive boundary,
+cross-organization isolation and VIEWER read-only behavior. TASK-005 is the exact
+next documented task; do not begin it until TASK-004 is accepted and merged.

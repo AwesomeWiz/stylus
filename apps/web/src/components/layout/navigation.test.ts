@@ -3,13 +3,10 @@ import { describe, expect, it } from "vitest";
 import { navigationGroups } from "./navigation";
 
 describe("application navigation", () => {
-  it("keeps a single active destination", () => {
-    const activeItems = navigationGroups
-      .flatMap((group) => group.items)
-      .filter((item) => item.active);
-
-    expect(activeItems).toHaveLength(1);
-    expect(activeItems[0]).toMatchObject({ label: "Home", href: "/" });
+  it("links task management from the core navigation", () => {
+    expect(navigationGroups[0]?.items).toContainEqual(
+      expect.objectContaining({ label: "Tasks", href: "/tasks" }),
+    );
   });
 
   it("contains the required navigation sections", () => {

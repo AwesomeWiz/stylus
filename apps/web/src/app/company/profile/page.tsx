@@ -17,6 +17,7 @@ export default async function CompanyProfilePage() {
 
   return (
     <AppShell
+      activePath="/company/profile"
       identity={{
         displayName: data.context.user.displayName,
         email: data.context.user.email,

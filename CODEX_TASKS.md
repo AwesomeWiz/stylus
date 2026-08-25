@@ -2,26 +2,87 @@
 
 # Current
 
-## TASK-003 — Company Onboarding
+## TASK-004 — Task Management Manual QA
 
-Status: READY FOR MANUAL QA
+Status: COMPLETE / READY FOR MANUAL QA AGAIN
 
-Phase: 2
+The overdue-deadline defect found during manual QA is resolved. Local date/time
+values are persisted as correct UTC instants, overdue uses the inclusive
+deadline boundary, and the open workspace refreshes at the nearest active
+deadline. TASK-004 remains current until manual QA accepts the fix.
 
-Manual-QA fix scope:
+---
 
-- removed broad layout revalidation that competed with the action redirect
-- replaced read-then-upsert progress writes with an idempotent authenticated RPC
-- one successful submission persists data, advances progress and redirects once
-- validation/data/progress failures remain on the current step without advancing
-- duplicate submissions target an absolute completed step and cannot double-advance
-- refresh/login routing resumes from the durable next step
+# Next
 
-Do not proceed to TASK-004 until the fix is applied and manually verified.
+## TASK-005 — Reminders, Notifications and Activity
+
+Status: READY
+
+Phase: 4
+
+Planned scope:
+
+- task reminder infrastructure
+- 24-hour reminder
+- 1-hour reminder
+- deadline notification
+- overdue notification
+- notification center
+- activity feed
+- mentions
+- idempotent notification creation
+
+Do not begin until TASK-004 has completed manual QA and is merged through the
+normal workflow.
 
 ---
 
 # Completed
+
+## TASK-004 — Task Management
+
+Status: COMPLETE / READY FOR MANUAL QA AGAIN
+
+Phase: 3
+
+Implemented scope:
+
+- organization-scoped task creation and editing
+- controlled TODO, IN_PROGRESS, COMPLETED and CANCELLED lifecycle
+- LOW, MEDIUM, HIGH and URGENT priority
+- single same-organization assignee or unassigned work
+- scheduled and due timestamps with UTC-safe validation
+- My Tasks, All Tasks, Upcoming, Overdue, Completed, Archive and Calendar views
+- composing title, assignee, status and priority filters
+- database-managed idempotent completion and reopening
+- 14-day recent-completion visibility with non-destructive derived archive
+- lightweight organization-scoped task comments
+- compact responsive rows, accessible dialogs, loading/error/empty states
+- OWNER/ADMIN/MEMBER collaboration and VIEWER read-only behavior
+- server-derived organization/audit scope, restricted column grants and RLS
+- pgTAP, action, lifecycle, filtering, migration-contract and UI coverage
+
+Migration `20260825000400_task_management.sql` requires manual application.
+Authenticated role and responsive visual QA remain required before merge.
+
+---
+
+## TASK-003 — Company Onboarding
+
+Status: COMPLETE
+
+Phase: 2
+
+Implemented scope:
+
+- structured eight-step company onboarding and profile editing
+- durable resumability and completion routing
+- organization-scoped company, audience, brand, marketing and competitor data
+- OWNER/ADMIN mutation policies with member reads
+- idempotent first-submit progress advancement and navigation regression coverage
+
+---
 
 ## TASK-002 — Authentication and Organizations
 
@@ -142,44 +203,6 @@ After verification:
 ---
 
 # Planned Queue
-
-## TASK-004 — Task Management
-
-Planned scope:
-
-- create task
-- edit task
-- assignment
-- priority
-- status
-- due date/time
-- comments
-- subtasks if approved
-- My Tasks
-- Team Tasks
-- upcoming
-- overdue
-- completed
-- archive
-- calendar
-
----
-
-## TASK-005 — Reminders, Notifications and Activity
-
-Planned scope:
-
-- task reminder infrastructure
-- 24-hour reminder
-- 1-hour reminder
-- deadline notification
-- overdue notification
-- notification center
-- activity feed
-- mentions
-- idempotent notification creation
-
----
 
 ## TASK-006 — Whiteboard Foundation
 

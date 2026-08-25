@@ -55,20 +55,22 @@ Status: READY FOR MANUAL QA
 
 ## Phase 3 — Tasks
 
-- [ ] create/edit task
-- [ ] assignment
-- [ ] priority
-- [ ] status
-- [ ] due date/time
-- [ ] comments
-- [ ] My Tasks
-- [ ] Team Tasks
-- [ ] upcoming
-- [ ] overdue
-- [ ] completed
-- [ ] 14-day completed visibility
-- [ ] archive
-- [ ] calendar
+Status: READY FOR MANUAL QA
+
+- [x] create/edit task
+- [x] assignment
+- [x] priority
+- [x] status
+- [x] due date/time
+- [x] comments
+- [x] My Tasks
+- [x] Team Tasks
+- [x] upcoming
+- [x] overdue
+- [x] completed
+- [x] 14-day completed visibility
+- [x] archive
+- [x] calendar
 
 ---
 

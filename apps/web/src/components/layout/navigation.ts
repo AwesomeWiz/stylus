@@ -18,7 +18,6 @@ export interface NavigationItem {
   label: string;
   icon: LucideIcon;
   href: string;
-  active?: boolean;
 }
 
 export interface NavigationGroup {
@@ -30,8 +29,8 @@ export const navigationGroups: NavigationGroup[] = [
   {
     label: "Core",
     items: [
-      { label: "Home", icon: Home, href: "/", active: true },
-      { label: "Tasks", icon: CalendarCheck2, href: "#tasks" },
+      { label: "Home", icon: Home, href: "/" },
+      { label: "Tasks", icon: CalendarCheck2, href: "/tasks" },
       { label: "Whiteboards", icon: LayoutDashboard, href: "#whiteboards" },
       { label: "Company Profile", icon: Building2, href: "/company/profile" },
     ],

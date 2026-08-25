@@ -74,6 +74,13 @@ After that they move to Archive.
 
 They are not automatically deleted.
 
+The initial task system uses one clear assignee, or no assignee, and separates a
+scheduled start from a due deadline. My Tasks focuses on active assignments;
+team, upcoming, overdue, recent completion, archive and compact calendar views
+share one filterable workspace. OWNER, ADMIN and MEMBER collaborate normally,
+while VIEWER is read-only. Lightweight comments hold working context and are not
+automatically promoted to Company Knowledge.
+
 ---
 
 ## Notifications

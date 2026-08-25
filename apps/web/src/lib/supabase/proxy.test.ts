@@ -10,6 +10,7 @@ describe("session route decisions", () => {
       "/login",
     );
     expect(getSessionRouteDecision("/company/profile", false)).toBe("/login");
+    expect(getSessionRouteDecision("/tasks", false)).toBe("/login");
   });
 
   it("allows unauthenticated authentication routes", () => {

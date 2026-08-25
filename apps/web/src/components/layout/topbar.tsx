@@ -8,12 +8,18 @@ import { Sidebar } from "./sidebar";
 import type { ShellIdentity, ShellOrganization } from "./app-shell";
 
 interface TopbarProps {
+  activePath: string;
   identity: ShellIdentity;
   logoutAction: () => Promise<void>;
   organization: ShellOrganization;
 }
 
-export function Topbar({ identity, logoutAction, organization }: TopbarProps) {
+export function Topbar({
+  activePath,
+  identity,
+  logoutAction,
+  organization,
+}: TopbarProps) {
   return (
     <header className="bg-background/95 sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 backdrop-blur-sm sm:px-6 lg:px-8">
       <div className="lg:hidden">
@@ -26,6 +32,7 @@ export function Topbar({ identity, logoutAction, organization }: TopbarProps) {
           }
         >
           <Sidebar
+            activePath={activePath}
             identity={identity}
             logoutAction={logoutAction}
             organization={organization}

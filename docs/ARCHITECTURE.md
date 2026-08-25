@@ -141,6 +141,27 @@ Planned Core modules:
 
 ---
 
+# Task Management Boundary
+
+Task management is a Core collaboration module. Server Components derive the
+current organization and query only that scope; Server Actions map accepted
+fields and never accept an organization or audit identity from the browser.
+
+PostgreSQL repeats this boundary through RLS, composite organization/member
+foreign keys, immutable provenance triggers and restricted column grants.
+OWNER, ADMIN and MEMBER collaborate on tasks and comments, while VIEWER remains
+read-only. Completion timestamps are database-managed and repeat completion is
+idempotent. The 14-day Completed/Archive split is a deterministic read behavior,
+not deletion or background infrastructure.
+
+Scheduled and due inputs are local browser wall-clock values converted to UTC
+instants for PostgreSQL `timestamptz` persistence, then formatted in the user's
+local timezone. Overdue remains derived from active status, deadline and current
+time. The client schedules a single refresh at the nearest future active
+deadline so server-filtered views cross that boundary without polling.
+
+---
+
 # Plugin Modules
 
 Initial:
