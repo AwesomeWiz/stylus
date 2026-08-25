@@ -33,6 +33,8 @@ export type MarketingStage =
   | "SCALING";
 export type CompetitorType =
   "DIRECT" | "INDIRECT" | "ALTERNATIVE" | "INSPIRATION";
+export type TaskStatus = "TODO" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 export type OrganizationRow = {
   created_at: string;
@@ -156,6 +158,38 @@ export type OnboardingProgressRow = {
   started_by: string;
   updated_at: string;
   updated_by: string;
+};
+
+export type TaskRow = {
+  assignee_id: string | null;
+  completed_at: string | null;
+  created_at: string;
+  created_by: string;
+  description: string | null;
+  due_at: string | null;
+  id: string;
+  organization_id: string;
+  priority: TaskPriority;
+  scheduled_at: string | null;
+  status: TaskStatus;
+  title: string;
+  updated_at: string;
+  updated_by: string;
+};
+
+export type TaskCommentRow = {
+  body: string;
+  created_at: string;
+  created_by: string;
+  id: string;
+  organization_id: string;
+  task_id: string;
+};
+
+export type TaskMember = {
+  display_name: string;
+  member_user_id: string;
+  role: OrganizationRole;
 };
 
 type AuditedInsert = {
@@ -291,6 +325,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      task_comments: {
+        Row: TaskCommentRow;
+        Insert: Pick<
+          TaskCommentRow,
+          "body" | "created_by" | "organization_id" | "task_id"
+        > &
+          Partial<Pick<TaskCommentRow, "id">>;
+        Update: never;
+        Relationships: [];
+      };
+      tasks: {
+        Row: TaskRow;
+        Insert: Pick<
+          TaskRow,
+          "created_by" | "organization_id" | "title" | "updated_by"
+        > &
+          Partial<
+            Pick<
+              TaskRow,
+              | "assignee_id"
+              | "description"
+              | "due_at"
+              | "priority"
+              | "scheduled_at"
+              | "status"
+            >
+          >;
+        Update: Partial<
+          Pick<
+            TaskRow,
+            | "assignee_id"
+            | "description"
+            | "due_at"
+            | "priority"
+            | "scheduled_at"
+            | "status"
+            | "title"
+            | "updated_by"
+          >
+        >;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -305,6 +381,10 @@ export type Database = {
         Args: { p_name: string };
         Returns: OrganizationRow;
       };
+      list_organization_task_members: {
+        Args: { p_organization_id: string };
+        Returns: TaskMember[];
+      };
     };
     Enums: {
       brand_status: BrandStatus;
@@ -314,6 +394,8 @@ export type Database = {
       marketing_stage: MarketingStage;
       organization_role: OrganizationRole;
       product_status: ProductStatus;
+      task_priority: TaskPriority;
+      task_status: TaskStatus;
     };
     CompositeTypes: { [_ in never]: never };
   };

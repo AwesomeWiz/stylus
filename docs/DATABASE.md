@@ -43,10 +43,29 @@ Granular roles and permissions remain future work.
 
 # Tasks
 
-tasks
-task_assignees if multiple assignees are supported
-task_comments
-task_reminders
+Phase 3 introduces migration `20260825000400_task_management.sql`.
+
+`tasks`
+
+- UUID primary key and required `organization_id`
+- controlled `task_status`: `TODO`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`
+- controlled `task_priority`: `LOW`, `MEDIUM`, `HIGH`, `URGENT`
+- one nullable assignee enforced by a composite organization-membership foreign key
+- creator/updater membership provenance
+- separate UTC `scheduled_at` and `due_at` timestamps
+- database-managed `completed_at`, creation and update timestamps
+- constraints for title/description length, date order and completion consistency
+- indexes for organization/status, organization/assignee, deadlines and completion history
+
+`task_comments`
+
+- organization/task composite ownership
+- bounded comment body, creator and creation timestamp
+- retained with the task; no update/delete grant in Phase 3
+
+`list_organization_task_members(uuid)` is an authenticated, membership-checked
+directory RPC. It returns only member IDs, display names and roles required for
+assignment; it does not expose emails or authentication records.
 
 Tasks support:
 
@@ -54,9 +73,11 @@ Tasks support:
 - priority
 - due_at
 - completed_at
-- archived_at
+- a derived Archive view for completions older than 14 days
 
-Completed tasks should not be hard-deleted automatically.
+Completed tasks are never hard-deleted automatically. Recent and archived
+visibility is derived from `completed_at`, so no background archival mutation is
+required.
 
 ---
 

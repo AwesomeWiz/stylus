@@ -7,6 +7,7 @@ describe("AppShell", () => {
   it("exposes global controls and opens accessible mobile navigation", () => {
     render(
       <AppShell
+        activePath="/"
         identity={{ displayName: "Alex Morgan", email: "alex@example.test" }}
         logoutAction={async () => undefined}
         organization={{ name: "Acme", role: "OWNER" }}

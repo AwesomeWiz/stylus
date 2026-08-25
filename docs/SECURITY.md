@@ -56,6 +56,26 @@ Marketing must not retrieve Agency memory.
 
 ---
 
+# Task Management
+
+- every task and comment carries an explicit organization boundary
+- Server Actions derive organization, creator and updater identities from the
+  authenticated organization context
+- assignees must satisfy a composite foreign key to membership in the same
+  organization and are also validated before mutation
+- OWNER, ADMIN and MEMBER may perform normal task collaboration; VIEWER has
+  read-only access
+- RLS blocks cross-organization reads and mutations and anonymous access
+- column-level grants prevent clients from setting IDs, timestamps,
+  `completed_at`, organization ownership or creator provenance
+- lifecycle triggers set/clear `completed_at` and preserve its first completion
+  value across duplicate completion requests
+- the member selector uses a membership-checked, pinned-search-path function and
+  exposes only IDs, display names and roles
+- tasks and comments have no delete grant in Phase 3
+
+---
+
 # Secrets
 
 Never expose:

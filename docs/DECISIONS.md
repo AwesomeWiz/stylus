@@ -181,3 +181,18 @@ add little value. Audience profiles and competitors remain separate tables so
 additional segments and competitors can be added later. Records stay editable
 after completion, competitor removal is archival, and only owners or
 administrators may mutate authoritative company context.
+
+---
+
+## ADR-015 — Lightweight, Organization-Scoped Task Collaboration
+
+Status: ACCEPTED
+
+The first task system uses one organization-scoped record with one optional
+assignee, controlled status/priority, distinct scheduled and due timestamps, and
+lightweight comments. OWNER, ADMIN and MEMBER collaborate; VIEWER is read-only.
+
+Completion timestamps are database-managed and idempotent. The primary Completed
+view shows the last 14 days, while older completions appear in Archive without
+being mutated or deleted. This avoids background archival infrastructure and
+keeps historical work intact.

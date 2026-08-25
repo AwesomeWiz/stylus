@@ -28,6 +28,7 @@ export default async function HomePage() {
 
   return (
     <AppShell
+      activePath="/"
       identity={{
         displayName: context.user.displayName,
         email: context.user.email,

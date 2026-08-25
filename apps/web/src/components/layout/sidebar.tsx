@@ -8,6 +8,7 @@ import { navigationGroups } from "./navigation";
 import type { ShellIdentity, ShellOrganization } from "./app-shell";
 
 interface SidebarProps {
+  activePath: string;
   identity: ShellIdentity;
   logoutAction: () => Promise<void>;
   organization: ShellOrganization;
@@ -24,6 +25,7 @@ function getInitials(displayName: string) {
 }
 
 export function Sidebar({
+  activePath,
   identity,
   logoutAction,
   organization,
@@ -44,10 +46,11 @@ export function Sidebar({
               {group.items.map((item) => (
                 <li key={item.label}>
                   <a
-                    aria-current={item.active ? "page" : undefined}
+                    aria-current={item.href === activePath ? "page" : undefined}
                     className={cn(
                       "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground flex min-h-9 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors",
-                      item.active && "bg-sidebar-accent text-accent-foreground",
+                      item.href === activePath &&
+                        "bg-sidebar-accent text-accent-foreground",
                     )}
                     href={item.href}
                   >

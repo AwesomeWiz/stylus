@@ -16,6 +16,7 @@ export interface ShellOrganization {
 }
 
 interface AppShellProps {
+  activePath: string;
   children: ReactNode;
   identity: ShellIdentity;
   logoutAction: () => Promise<void>;
@@ -23,6 +24,7 @@ interface AppShellProps {
 }
 
 export function AppShell({
+  activePath,
   children,
   identity,
   logoutAction,
@@ -32,6 +34,7 @@ export function AppShell({
     <div className="min-h-screen lg:pl-64">
       <aside className="bg-sidebar border-sidebar-border fixed inset-y-0 left-0 z-40 hidden w-64 border-r lg:block">
         <Sidebar
+          activePath={activePath}
           identity={identity}
           logoutAction={logoutAction}
           organization={organization}
@@ -39,6 +42,7 @@ export function AppShell({
       </aside>
       <div className="min-w-0">
         <Topbar
+          activePath={activePath}
           identity={identity}
           logoutAction={logoutAction}
           organization={organization}
