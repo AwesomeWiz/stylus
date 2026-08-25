@@ -10,6 +10,13 @@ const migration = readFileSync(
   ),
   "utf8",
 ).toLowerCase();
+const processorFixMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825000510_fix_reminder_processor.sql",
+  ),
+  "utf8",
+).toLowerCase();
 
 describe("reminders, notifications and activity migration", () => {
   it("defines focused organization-scoped records with deadline-version deduplication", () => {
@@ -67,5 +74,39 @@ describe("reminders, notifications and activity migration", () => {
     expect(migration).toContain("'task_reopened'");
     expect(migration).toContain("'task_cancelled'");
     expect(migration).toContain("'task_commented'");
+  });
+});
+
+describe("reminder processor corrective migration", () => {
+  it("replaces the applied function without ambiguous local variable names", () => {
+    expect(processorFixMigration).toContain(
+      "create or replace function public.process_task_reminders",
+    );
+    expect(processorFixMigration).toContain(
+      "v_reminder_kind public.task_reminder_kind",
+    );
+    expect(processorFixMigration).toContain("v_reminder_kind,");
+    expect(processorFixMigration).not.toContain(
+      "\n  reminder_kind public.task_reminder_kind",
+    );
+    expect(processorFixMigration).toContain(
+      "returning reminder_delivery.id into v_delivery_id",
+    );
+  });
+
+  it("preserves trusted execution and current-state eligibility checks", () => {
+    expect(processorFixMigration).toContain("security definer");
+    expect(processorFixMigration).toContain("set search_path = ''");
+    expect(processorFixMigration).toContain("from public, anon, authenticated");
+    expect(processorFixMigration).toContain("to service_role");
+    expect(processorFixMigration).toContain(
+      "task.status in ('todo', 'in_progress')",
+    );
+    expect(processorFixMigration).toContain(
+      "membership.user_id = task.assignee_id",
+    );
+    expect(processorFixMigration).toContain(
+      "on conflict (task_id, recipient_id, reminder_kind, deadline_at, channel)",
+    );
   });
 });

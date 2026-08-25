@@ -313,6 +313,29 @@ Verified on 2026-08-25:
 Production build, linked migration dry run and final formatting are recorded
 after the final verification pass.
 
+## Manual-QA Reminder Processor Fix
+
+Resolved on 2026-08-25 after hosted Supabase Cron exposed a PostgreSQL runtime
+ambiguity:
+
+- the applied processor's local `reminder_kind` collided with the unqualified
+  `reminder_kind` conflict-target column, aborting every eligible reminder run
+- forward migration `20260825000510_fix_reminder_processor.sql` replaces only
+  `public.process_task_reminders(timestamptz)` and preserves existing data
+- all processor locals now use a `v_` prefix and target-row identifiers are
+  explicitly qualified where PostgreSQL permits qualification
+- `SECURITY DEFINER`, the empty `search_path`, current task/member checks,
+  deadline-version idempotency, and service-role-only execution are preserved
+- pgTAP now executes the eligible insert branch with `lives_ok`, directly
+  covering the hosted failure path
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 33 files and 114 tests
+- `npm run build`: passed
+- linked migration dry run: passed; only
+  `20260825000510_fix_reminder_processor.sql` is pending
+
 ---
 
 # Manual Verification Still Required

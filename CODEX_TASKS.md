@@ -22,6 +22,11 @@ Migration `20260825000500_reminders_notifications_activity.sql` and the hosted
 Cron job require deployment/manual verification. Cron is not automatically
 provisioned by the repository.
 
+Manual QA found and resolved an ambiguous `reminder_kind` PL/pgSQL identifier in
+the hosted processor. Forward migration
+`20260825000510_fix_reminder_processor.sql` safely replaces the function; it
+must be applied before Cron delivery is reverified.
+
 ---
 
 # Next

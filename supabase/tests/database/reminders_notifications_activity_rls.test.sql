@@ -39,7 +39,10 @@ select is_empty($$ select id from public.notifications $$, 'anonymous users cann
 select is_empty($$ select id from public.activity_events $$, 'anonymous users cannot read activity');
 
 set local role service_role;
-select is(public.process_task_reminders('2026-08-25 12:00:00+00'), 1, 'an eligible assigned active task produces one reminder');
+select lives_ok(
+  $$ select public.process_task_reminders('2026-08-25 12:00:00+00') $$,
+  'the reminder processor executes its eligible insert path without ambiguous identifiers'
+);
 select is(public.process_task_reminders('2026-08-25 12:00:00+00'), 0, 'duplicate processor execution is idempotent');
 select is((select count(*)::integer from public.task_reminder_deliveries), 1, 'only an eligible task records delivery');
 select is((select count(*)::integer from public.notifications), 1, 'completed, cancelled and unassigned tasks do not notify');
