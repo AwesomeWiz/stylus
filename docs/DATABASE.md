@@ -148,6 +148,8 @@ Phase 2 introduces authoritative onboarding source data through migration
 
 - one row per organization
 - durable current step and completion timestamp
+- `advance_onboarding_progress(uuid, smallint)` records an absolute completed
+  step idempotently, so retries cannot advance twice
 
 All six tables are readable by organization members and mutable only by owners
 or administrators. RLS uses the Phase 1 organization helpers. Database triggers

@@ -16,6 +16,16 @@ describe("company onboarding routing", () => {
     ).toBe("/onboarding/positioning-brand");
   });
 
+  it("keeps refresh and login recovery on the step persisted by one submission", () => {
+    expect(
+      getWorkspaceRouteDecision({
+        completedAt: null,
+        currentStep: 2,
+        role: "OWNER",
+      }),
+    ).toBe("/onboarding/problem");
+  });
+
   it("sends non-managers to the waiting state without granting mutation rights", () => {
     expect(
       getWorkspaceRouteDecision({

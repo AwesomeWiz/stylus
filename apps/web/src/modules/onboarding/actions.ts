@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
@@ -52,26 +51,6 @@ function errorState(error: unknown): OnboardingActionState {
     message: "Your progress could not be saved. Please try again.",
     status: "error",
   };
-}
-
-async function saveProgress(input: {
-  nextStep: number;
-  organizationId: string;
-  userId: string;
-}) {
-  const supabase = await createServerSupabaseClient();
-  const { data } = await supabase
-    .from("onboarding_progress")
-    .select("current_step, started_by")
-    .eq("organization_id", input.organizationId)
-    .maybeSingle();
-  const currentStep = Math.max(data?.current_step ?? 1, input.nextStep);
-  return supabase.from("onboarding_progress").upsert({
-    current_step: currentStep,
-    organization_id: input.organizationId,
-    started_by: data?.started_by ?? input.userId,
-    updated_by: input.userId,
-  });
 }
 
 export async function saveOnboardingStepAction(
@@ -325,12 +304,15 @@ export async function saveOnboardingStepAction(
 
     const { error } = await operation;
     if (error) throw error;
-    const progressResult = await saveProgress({
-      nextStep: step.number + 1,
-      organizationId: current.organization.id,
-      userId: current.user.id,
+    const progressResult = await supabase.rpc("advance_onboarding_progress", {
+      p_completed_step: step.number,
+      p_organization_id: current.organization.id,
     });
-    if (progressResult.error) throw progressResult.error;
+    if (progressResult.error || progressResult.data < step.number + 1)
+      throw (
+        progressResult.error ??
+        new Error("Onboarding progress did not advance.")
+      );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       return errorState(error);
@@ -338,7 +320,6 @@ export async function saveOnboardingStepAction(
     return errorState(null);
   }
 
-  revalidatePath("/", "layout");
   const destination =
     value(formData, "mode") === "edit"
       ? "/company/profile"
@@ -374,6 +355,5 @@ export async function completeOnboardingAction() {
     })
     .eq("organization_id", current.organization.id);
   if (error) throw new Error("Onboarding could not be completed.");
-  revalidatePath("/", "layout");
   redirect("/");
 }

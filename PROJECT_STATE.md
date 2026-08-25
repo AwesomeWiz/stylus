@@ -4,11 +4,11 @@ Last Updated: 2026-08-25
 
 ## Overall Status
 
-COMPANY ONBOARDING COMPLETE / READY FOR PHASE 3
+COMPANY ONBOARDING NAVIGATION FIX / READY FOR MANUAL QA
 
 The verified authentication and organization foundation now includes structured,
-resumable company onboarding. Task management and later functionality have not
-started.
+resumable company onboarding. A reproducible first-submit navigation defect has
+been fixed and awaits manual verification. Task management has not started.
 
 ---
 
@@ -16,16 +16,14 @@ started.
 
 Phase 2 — Company Onboarding
 
-Status: COMPLETE
+Status: READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-003 established authoritative organization-scoped company context, durable
-onboarding progress, completion routing and post-completion profile editing.
-
-TASK-004 is ready but has not started.
+TASK-003 remains current while the first-submit onboarding navigation fix is
+manually verified. TASK-004 has not started.
 
 ---
 
@@ -163,6 +161,26 @@ Verified on 2026-08-25:
 - source security scan: no service-role use, secret logging, AI calls or memory
   implementation
 
+## Manual-QA Navigation Fix
+
+Resolved on 2026-08-25:
+
+- removed broad root-layout revalidation before onboarding redirects
+- replaced the separate progress read/upsert with
+  `advance_onboarding_progress(uuid, smallint)` on the same authenticated client
+- progress advancement now targets the absolute completed step, making duplicate
+  requests idempotent rather than incrementing twice
+- regression coverage verifies first-submit persistence/redirect, validation and
+  persistence failures, duplicate requests, disabled pending submission and
+  refresh/login recovery
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 18 files and 59 tests
+- `npm run build`: passed
+- linked migration dry run: passed; only
+  `20260825000300_fix_onboarding_progress_advance.sql` is pending
+
 ---
 
 # Manual Verification Still Required
@@ -173,8 +191,8 @@ Before merge/deployment:
 
 1. Run `npm run db:start`, `npm run db:reset`, `npm run db:lint` and
    `npm run test:db` in a Docker-enabled environment.
-2. Apply `20260825000200_company_onboarding.sql` to a non-production Supabase
-   project with `npm exec supabase -- db push --linked --skip-vault` after review.
+2. Apply `20260825000300_fix_onboarding_progress_advance.sql` with
+   `npm exec supabase -- db push --linked --skip-vault` after review.
 3. Run authenticated OWNER, ADMIN, MEMBER and VIEWER onboarding/RLS checks using
    separate organizations.
 4. Configure the Site URL, allowed redirect URL and confirmation email template
@@ -301,24 +319,24 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-003 complete. TASK-004 is ready for a future implementation session.
+TASK-003 navigation fix is ready for manual QA. TASK-004 has not started.
 
 ---
 
 # Known Issues
 
-No known implementation defects.
+No known unresolved implementation defect after the automated regression suite.
 
-Applying the new migration, executing pgTAP and authenticated interactive browser
-verification remain required as described above. The in-app browser skill found
-no available browser surface during this session.
+Applying the fix migration, executing pgTAP and manually confirming one-click
+step advancement remain required. The in-app browser skill found no available
+browser surface during this session.
 
 ---
 
 # Next Recommended Action
 
-Manually apply and QA TASK-003, then execute TASK-004 from CODEX_TASKS.md on a
-dedicated task branch after the user-controlled merge.
+Apply the fix migration and repeat TASK-003 manual QA. Confirm that one click
+advances each step and refresh/login resumes correctly. Do not begin TASK-004.
 
 ---
 
@@ -332,8 +350,8 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-003 is complete and verified on `codex/task-003-company-onboarding`.
+TASK-003 remains current on `codex/task-003-company-onboarding` until the
+navigation fix is manually verified.
 
-Apply the pending migration and complete authenticated responsive QA before
-merging. Begin TASK-004 only in a new session after reviewing the repository and
-current worktree. Preserve unrelated user changes and do not begin TASK-005.
+Apply the pending fix migration and verify one-click advancement, refresh/resume,
+logout/login recovery and duplicate-click prevention. Do not begin TASK-004.

@@ -39,7 +39,7 @@ Status: COMPLETE
 
 ## Phase 2 — Company Onboarding
 
-Status: COMPLETE
+Status: READY FOR MANUAL QA
 
 - [x] company profile
 - [x] startup idea

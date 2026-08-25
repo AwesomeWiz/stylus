@@ -2,59 +2,26 @@
 
 # Current
 
-## TASK-004 — Task Management
+## TASK-003 — Company Onboarding
 
-Status: READY
+Status: READY FOR MANUAL QA
 
-Phase: 3
+Phase: 2
 
-Planned scope:
+Manual-QA fix scope:
 
-- create task
-- edit task
-- assignment
-- priority
-- status
-- due date/time
-- comments
-- subtasks if approved
-- My Tasks
-- Team Tasks
-- upcoming
-- overdue
-- completed
-- archive
-- calendar
+- removed broad layout revalidation that competed with the action redirect
+- replaced read-then-upsert progress writes with an idempotent authenticated RPC
+- one successful submission persists data, advances progress and redirects once
+- validation/data/progress failures remain on the current step without advancing
+- duplicate submissions target an absolute completed step and cannot double-advance
+- refresh/login routing resumes from the durable next step
 
-Do not proceed to TASK-005 during TASK-004.
+Do not proceed to TASK-004 until the fix is applied and manually verified.
 
 ---
 
 # Completed
-
-## TASK-003 — Company Onboarding
-
-Status: COMPLETE
-
-Phase: 2
-
-Implemented scope:
-
-- eight-step, resumable company onboarding flow
-- structured company, problem, product and positioning source data
-- reusable audience profile foundation with a primary segment
-- optional brand direction and structured marketing objectives
-- zero-or-more soft-archived competitor records
-- persisted progress and completion timestamp
-- post-completion Company Profile review and editing
-- OWNER/ADMIN mutations with MEMBER/VIEWER read-only behavior
-- RLS, immutable organization ownership and protected audit provenance
-- routing, schema, authorization, UI and migration-contract tests
-
-The linked Supabase migration dry run passed. Applying the migration, running the
-pgTAP suite and authenticated responsive browser QA remain manual checks.
-
----
 
 ## TASK-002 — Authentication and Organizations
 
@@ -175,6 +142,28 @@ After verification:
 ---
 
 # Planned Queue
+
+## TASK-004 — Task Management
+
+Planned scope:
+
+- create task
+- edit task
+- assignment
+- priority
+- status
+- due date/time
+- comments
+- subtasks if approved
+- My Tasks
+- Team Tasks
+- upcoming
+- overdue
+- completed
+- archive
+- calendar
+
+---
 
 ## TASK-005 — Reminders, Notifications and Activity
 

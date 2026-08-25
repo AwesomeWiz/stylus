@@ -294,6 +294,13 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      advance_onboarding_progress: {
+        Args: {
+          p_completed_step: number;
+          p_organization_id: string;
+        };
+        Returns: number;
+      };
       create_organization: {
         Args: { p_name: string };
         Returns: OrganizationRow;

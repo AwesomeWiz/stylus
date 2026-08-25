@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(16);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -92,9 +92,21 @@ select is_empty(
 );
 
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000011', true);
-select lives_ok(
-  $$ insert into public.onboarding_progress (organization_id, current_step, started_by, updated_by) values ('10000000-0000-0000-0000-000000000011', 2, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000011') $$,
-  'an owner can persist onboarding progress'
+select throws_ok(
+  $$ select public.advance_onboarding_progress('10000000-0000-0000-0000-000000000011', 3) $$,
+  '22023',
+  'Onboarding steps cannot be skipped',
+  'progress cannot skip invalid future steps'
+);
+select results_eq(
+  $$ select public.advance_onboarding_progress('10000000-0000-0000-0000-000000000011', 1)::integer $$,
+  array[2]::integer[],
+  'one successful submission advances to the next step'
+);
+select results_eq(
+  $$ select public.advance_onboarding_progress('10000000-0000-0000-0000-000000000011', 1)::integer $$,
+  array[2]::integer[],
+  'repeating the same submission does not advance twice'
 );
 select results_eq(
   $$ update public.onboarding_progress set current_step = 5 where organization_id = '10000000-0000-0000-0000-000000000011' returning current_step::integer $$,

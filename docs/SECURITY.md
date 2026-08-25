@@ -39,6 +39,8 @@ Phase 2 company-profile behavior:
 - triggers prohibit organization reassignment, creator reassignment and forged
   updater identities
 - completion is accepted only after all required structured sections exist
+- progress advancement is an authenticated, role-checked security-invoker RPC;
+  organization scope is still derived and validated server-side
 
 ---
 

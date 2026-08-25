@@ -112,6 +112,11 @@ Incomplete organizations resume from persisted `onboarding_progress`; completed
 organizations enter the workspace without repeating onboarding. The same
 structured records remain editable from Company Profile after completion.
 
+Each successful step write is followed by one awaited, idempotent database
+operation that records the absolute completed step. Navigation occurs only after
+the durable next step is returned; no broad layout refresh competes with the
+redirect. Repeating the same request cannot increment progress twice.
+
 ---
 
 # Core Modules
