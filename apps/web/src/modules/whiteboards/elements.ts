@@ -7,7 +7,7 @@ export const defaultElementSize: Record<
   BoardElementType,
   { height: number; width: number }
 > = {
-  ARROW: { height: 80, width: 220 },
+  ARROW: { height: 24, width: 220 },
   IMAGE: { height: 240, width: 320 },
   SHAPE: { height: 140, width: 200 },
   STICKY: { height: 180, width: 200 },
@@ -24,7 +24,7 @@ export function defaultElementData(type: BoardElementType) {
     case "STICKY":
       return {
         content: { text: "New idea" },
-        style: { color: "#fef3c7", fontSize: 18 },
+        style: { background: "#fef3c7", color: "#713f12", fontSize: 18 },
       };
     case "SHAPE":
       return {

@@ -138,6 +138,8 @@ Phase 5 introduces migration `20260825000600_whiteboard_foundation.sql`.
 - controlled `TEXT`, `STICKY`, `IMAGE`, `SHAPE` and `ARROW` type
 - finite bounded position, positive dimensions, rotation and deterministic z-index
 - independently persisted content, style and metadata JSON objects
+- text, sticky, shape and arrow presentation stored in the existing style JSON;
+  the TASK-006 usability completion pass requires no schema migration
 - creator/updater provenance and archival removal
 - active board/order and organization/board indexes
 

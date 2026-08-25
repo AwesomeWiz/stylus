@@ -176,6 +176,12 @@ derive organization/creator/updater provenance, and persist only at bounded
 interaction points. PostgreSQL repeats the boundary through composite board/org
 foreign keys, restricted column grants, provenance triggers and RLS.
 
+The editor keeps at most 75 local element snapshots. Each user-level operation
+records once at its commit boundary; undo/redo diffs adjacent snapshots and
+persists the resulting authorized update, archive or restore operations. This is
+local editing history, not event sourcing, and reload reconstructs the last
+persisted state from normal element rows.
+
 Images use the private `board-images` Supabase Storage bucket. Object paths begin
 with the validated organization and board IDs; membership/role storage policies
 control object access, and the editor receives one-hour signed URLs. No service

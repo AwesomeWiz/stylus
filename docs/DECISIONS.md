@@ -231,3 +231,18 @@ Images live in a private organization-path Supabase Storage bucket and are
 rendered through short-lived signed URLs. This foundation deliberately omits
 realtime subscriptions, comments and presence so TASK-007 can add collaboration
 over a stable authorized element model.
+
+---
+
+## ADR-018 — Bounded Local Whiteboard History with Persisted Transitions
+
+Status: ACCEPTED
+
+TASK-006 undo/redo keeps at most 75 active-element snapshots in the editor. One
+snapshot is recorded per completed user operation rather than per pointer event.
+Moving between snapshots produces ordinary organization-scoped update, archive
+or restore actions, so reload reflects the last successful history state.
+
+This deliberately avoids event sourcing and adds no database schema. Future
+realtime collaboration must reconcile concurrent changes separately rather than
+treating this single-session history as a shared event log.

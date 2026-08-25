@@ -1,7 +1,7 @@
 "use client";
 
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 import type { BoardElementRow } from "@/lib/supabase/database.types";
 
@@ -36,7 +36,13 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
   )
     ? (element.style.align as "left" | "center" | "right")
     : "left";
-  const sharedStyle = { fontSize, textAlign };
+  const color =
+    element.element_type === "STICKY" && !element.style.background
+      ? "#713f12"
+      : typeof element.style.color === "string"
+        ? element.style.color
+        : "#18181b";
+  const sharedStyle = { color, fontSize, textAlign };
 
   if (editing && data.canMutate) {
     return (
@@ -66,7 +72,7 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
   return (
     <div
       aria-label={`${element.element_type === "STICKY" ? "Sticky note" : "Text"}: ${text || "Empty"}`}
-      className="flex h-full w-full p-3 whitespace-pre-wrap"
+      className="h-full w-full p-3 whitespace-pre-wrap"
       onDoubleClick={() => setEditing(true)}
       onKeyDown={(event) => {
         if (event.key === "Enter" && data.canMutate) setEditing(true);
@@ -81,7 +87,7 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
   );
 }
 
-export function WhiteboardNode({
+function WhiteboardNodeComponent({
   data,
   selected,
 }: NodeProps<WhiteboardFlowNode>) {
@@ -91,7 +97,11 @@ export function WhiteboardNode({
   const stroke =
     typeof element.style.stroke === "string" ? element.style.stroke : "#71717a";
   const stickyColor =
-    typeof element.style.color === "string" ? element.style.color : "#fef3c7";
+    typeof element.style.background === "string"
+      ? element.style.background
+      : typeof element.style.color === "string"
+        ? element.style.color
+        : "#fef3c7";
   const arrowColor =
     typeof element.style.color === "string" ? element.style.color : "#52525b";
   return (
@@ -114,13 +124,15 @@ export function WhiteboardNode({
           })
         }
       />
-      {element.element_type === "TEXT" ? <EditableText data={data} /> : null}
+      {element.element_type === "TEXT" ? (
+        <EditableText data={data} key={textValue(element.content)} />
+      ) : null}
       {element.element_type === "STICKY" ? (
         <div
           className="h-full w-full border border-black/10 shadow-sm"
           style={{ backgroundColor: stickyColor }}
         >
-          <EditableText data={data} />
+          <EditableText data={data} key={textValue(element.content)} />
         </div>
       ) : null}
       {element.element_type === "SHAPE" ? (
@@ -165,8 +177,8 @@ export function WhiteboardNode({
             }
             x1="2"
             x2={element.width - 8}
-            y1="4"
-            y2={element.height - 8}
+            y1={element.height / 2}
+            y2={element.height / 2}
           />
         </svg>
       ) : null}
@@ -200,3 +212,12 @@ export function WhiteboardNode({
     </div>
   );
 }
+
+export const WhiteboardNode = memo(
+  WhiteboardNodeComponent,
+  (previous, next) =>
+    previous.selected === next.selected &&
+    previous.data.element === next.data.element &&
+    previous.data.imageUrl === next.data.imageUrl &&
+    previous.data.canMutate === next.data.canMutate,
+);

@@ -23,6 +23,7 @@ import {
   archiveBoardElementAction,
   createBoardElementAction,
   renameBoardAction,
+  restoreBoardElementAction,
   updateBoardElementAction,
   uploadBoardImageAction,
 } from "@/modules/whiteboards/actions";
@@ -32,6 +33,14 @@ import {
   nextZIndex,
   reorderElement,
 } from "@/modules/whiteboards/elements";
+import {
+  createWhiteboardHistory,
+  diffWhiteboardSnapshots,
+  recordWhiteboardHistory,
+  redoWhiteboardHistory,
+  undoWhiteboardHistory,
+} from "@/modules/whiteboards/history";
+import { boardImageFileSchema } from "@/modules/whiteboards/schemas";
 
 import { WhiteboardNode, type WhiteboardFlowNode } from "./whiteboard-node";
 import {
@@ -40,6 +49,7 @@ import {
   type WhiteboardSaveState,
 } from "./whiteboard-chrome";
 import { WhiteboardToolbar, type WhiteboardTool } from "./whiteboard-toolbar";
+import { WhiteboardInspector } from "./whiteboard-inspector";
 
 const nodeTypes = { whiteboard: WhiteboardNode };
 
@@ -81,6 +91,9 @@ export function WhiteboardWorkspace({
   const [nodes, setNodes] = useState<WhiteboardFlowNode[]>(() =>
     elements.map((element) => flowNode(element, imageUrls[element.id])),
   );
+  const [history, setHistory] = useState(() =>
+    createWhiteboardHistory(elements),
+  );
   const [activeTool, setActiveTool] = useState<WhiteboardTool>("SELECT");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<WhiteboardSaveState>("SAVED");
@@ -94,8 +107,39 @@ export function WhiteboardWorkspace({
   const flowRef = useRef<ReactFlowInstance<WhiteboardFlowNode> | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const imagePositionRef = useRef({ x: 0, y: 0 });
+  const historyRef = useRef(history);
+  const imageUrlsRef = useRef(imageUrls);
+  const mutationLockRef = useRef(false);
+
+  const syncNodes = useCallback((snapshot: BoardElementRow[]) => {
+    setNodes((current) => {
+      const byId = new Map(current.map((node) => [node.id, node]));
+      return snapshot.map((element) => {
+        const existing = byId.get(element.id);
+        return {
+          ...flowNode(
+            element,
+            existing?.data.imageUrl ?? imageUrlsRef.current[element.id],
+          ),
+          selected: existing?.selected,
+        };
+      });
+    });
+  }, []);
+
+  const recordSnapshot = useCallback(
+    (snapshot: BoardElementRow[]) => {
+      const next = recordWhiteboardHistory(historyRef.current, snapshot);
+      historyRef.current = next;
+      setHistory(next);
+      syncNodes(snapshot);
+    },
+    [syncNodes],
+  );
 
   const runMutation = useCallback((operation: () => Promise<void>) => {
+    if (mutationLockRef.current) return;
+    mutationLockRef.current = true;
     setSaveState("SAVING");
     setError(null);
     startTransition(async () => {
@@ -111,6 +155,8 @@ export function WhiteboardWorkspace({
             : "The change could not be saved.",
         );
         setLastRetry(() => operation);
+      } finally {
+        mutationLockRef.current = false;
       }
     });
   }, []);
@@ -120,10 +166,13 @@ export function WhiteboardWorkspace({
       setNodes((current) =>
         current.map((node) =>
           node.id === element.id
-            ? flowNode(
-                element,
-                signedUrl ?? (node.data.imageUrl as string | undefined),
-              )
+            ? {
+                ...flowNode(
+                  element,
+                  signedUrl ?? (node.data.imageUrl as string | undefined),
+                ),
+                selected: node.selected,
+              }
             : node,
         ),
       );
@@ -148,24 +197,85 @@ export function WhiteboardWorkspace({
     [replaceElement, runMutation],
   );
 
+  const persistHistoryTransition = useCallback(
+    async (from: BoardElementRow[], to: BoardElementRow[]) => {
+      const diff = diffWhiteboardSnapshots(from, to);
+      const results = await Promise.all([
+        ...diff.archiveIds.map((id) => archiveBoardElementAction(id)),
+        ...diff.restore.map((element) => restoreBoardElementAction(element.id)),
+        ...diff.update.map((element) =>
+          updateBoardElementAction({
+            content: element.content,
+            elementId: element.id,
+            height: element.height,
+            metadata: element.metadata,
+            rotation: element.rotation,
+            style: element.style,
+            width: element.width,
+            x: element.x,
+            y: element.y,
+            zIndex: element.z_index,
+          }),
+        ),
+      ]);
+      const failed = results.find((result) => result.status === "error");
+      if (failed?.status === "error") throw new Error(failed.message);
+    },
+    [],
+  );
+
+  const navigateHistory = useCallback(
+    (direction: "UNDO" | "REDO") => {
+      if (!canMutate || pending || mutationLockRef.current) return;
+      const current = historyRef.current;
+      const next =
+        direction === "UNDO"
+          ? undoWhiteboardHistory(current)
+          : redoWhiteboardHistory(current);
+      if (next === current) return;
+      historyRef.current = next;
+      setHistory(next);
+      syncNodes(next.present);
+      if (!next.present.some((element) => element.id === selectedId))
+        setSelectedId(null);
+      runMutation(() =>
+        persistHistoryTransition(current.present, next.present),
+      );
+    },
+    [
+      canMutate,
+      pending,
+      persistHistoryTransition,
+      runMutation,
+      selectedId,
+      syncNodes,
+    ],
+  );
+
   const onContentCommit = useCallback(
     (elementId: string, content: Record<string, unknown>) => {
-      setNodes((current) =>
-        current.map((node) =>
-          node.id === elementId
-            ? {
-                ...node,
-                data: {
-                  ...node.data,
-                  element: { ...node.data.element, content },
-                },
-              }
-            : node,
+      if (mutationLockRef.current) return;
+      recordSnapshot(
+        historyRef.current.present.map((element) =>
+          element.id === elementId ? { ...element, content } : element,
         ),
       );
       persistUpdate(elementId, { elementId, content });
     },
-    [persistUpdate],
+    [persistUpdate, recordSnapshot],
+  );
+
+  const onStyleCommit = useCallback(
+    (elementId: string, style: Record<string, unknown>) => {
+      if (mutationLockRef.current) return;
+      recordSnapshot(
+        historyRef.current.present.map((element) =>
+          element.id === elementId ? { ...element, style } : element,
+        ),
+      );
+      persistUpdate(elementId, { elementId, style });
+    },
+    [persistUpdate, recordSnapshot],
   );
 
   const onResizeCommit = useCallback(
@@ -173,28 +283,15 @@ export function WhiteboardWorkspace({
       elementId: string,
       dimensions: { height: number; width: number; x: number; y: number },
     ) => {
-      setNodes((current) =>
-        current.map((node) =>
-          node.id === elementId
-            ? {
-                ...node,
-                data: {
-                  ...node.data,
-                  element: { ...node.data.element, ...dimensions },
-                },
-                position: { x: dimensions.x, y: dimensions.y },
-                style: {
-                  ...node.style,
-                  height: dimensions.height,
-                  width: dimensions.width,
-                },
-              }
-            : node,
+      if (mutationLockRef.current) return;
+      recordSnapshot(
+        historyRef.current.present.map((element) =>
+          element.id === elementId ? { ...element, ...dimensions } : element,
         ),
       );
       persistUpdate(elementId, { elementId, ...dimensions });
     },
-    [persistUpdate],
+    [persistUpdate, recordSnapshot],
   );
 
   const renderedNodes = useMemo(
@@ -210,25 +307,40 @@ export function WhiteboardWorkspace({
     .element;
 
   const removeSelected = useCallback(() => {
-    if (!canMutate || !selectedId || pending) return;
-    const removed = nodes.find((node) => node.id === selectedId);
+    if (!canMutate || !selectedId || pending || mutationLockRef.current) return;
+    const removed = historyRef.current.present.find(
+      (element) => element.id === selectedId,
+    );
     if (!removed) return;
-    setNodes((current) => current.filter((node) => node.id !== selectedId));
+    recordSnapshot(
+      historyRef.current.present.filter((element) => element.id !== selectedId),
+    );
     setSelectedId(null);
     runMutation(async () => {
       const result = await archiveBoardElementAction(selectedId);
-      if (result.status === "error") {
-        setNodes((current) => [...current, removed]);
-        throw new Error(result.message);
-      }
+      if (result.status === "error") throw new Error(result.message);
     });
-  }, [canMutate, nodes, pending, runMutation, selectedId]);
+  }, [canMutate, pending, recordSnapshot, runMutation, selectedId]);
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.matches("input, textarea, select, [contenteditable='true']"))
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.matches("input, textarea, select, [contenteditable='true']")
+      )
         return;
+      const modifier = event.ctrlKey || event.metaKey;
+      if (modifier && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        navigateHistory(event.shiftKey ? "REDO" : "UNDO");
+        return;
+      }
+      if (modifier && event.key.toLowerCase() === "y") {
+        event.preventDefault();
+        navigateHistory("REDO");
+        return;
+      }
       if ((event.key === "Delete" || event.key === "Backspace") && selectedId) {
         event.preventDefault();
         removeSelected();
@@ -242,13 +354,14 @@ export function WhiteboardWorkspace({
     };
     window.addEventListener("keydown", listener);
     return () => window.removeEventListener("keydown", listener);
-  }, [removeSelected, selectedId]);
+  }, [navigateHistory, removeSelected, selectedId]);
 
   function addElement(
     type: Exclude<WhiteboardTool, "SELECT" | "PAN" | "IMAGE">,
     position: { x: number; y: number },
   ) {
-    const elementRows = nodes.map((node) => node.data.element);
+    if (mutationLockRef.current) return;
+    const elementRows = historyRef.current.present;
     const size = defaultElementSize[type];
     const defaults = defaultElementData(type);
     runMutation(async () => {
@@ -265,7 +378,7 @@ export function WhiteboardWorkspace({
         zIndex: nextZIndex(elementRows),
       });
       if (result.status === "error") throw new Error(result.message);
-      setNodes((current) => [...current, flowNode(result.data)]);
+      recordSnapshot([...historyRef.current.present, result.data]);
       setSelectedId(result.data.id);
       setActiveTool("SELECT");
     });
@@ -276,6 +389,7 @@ export function WhiteboardWorkspace({
       !canMutate ||
       activeTool === "SELECT" ||
       activeTool === "PAN" ||
+      activeTool === "IMAGE" ||
       pending ||
       !flowRef.current
     )
@@ -284,15 +398,32 @@ export function WhiteboardWorkspace({
       x: event.clientX,
       y: event.clientY,
     });
-    if (activeTool === "IMAGE") {
-      imagePositionRef.current = position;
-      imageInputRef.current?.click();
-      return;
-    }
     addElement(activeTool, position);
   }
 
+  function requestImagePicker() {
+    if (!canMutate || pending || mutationLockRef.current) return;
+    const canvas = document.querySelector<HTMLElement>(
+      "[data-testid='whiteboard-canvas']",
+    );
+    const bounds = canvas?.getBoundingClientRect();
+    if (bounds && flowRef.current) {
+      imagePositionRef.current = flowRef.current.screenToFlowPosition({
+        x: bounds.left + bounds.width / 2,
+        y: bounds.top + bounds.height / 2,
+      });
+    }
+    imageInputRef.current?.click();
+  }
+
   function uploadImage(file: File) {
+    if (mutationLockRef.current) return;
+    const validation = boardImageFileSchema.safeParse(file);
+    if (!validation.success) {
+      setSaveState("ERROR");
+      setError(validation.error.issues[0]?.message ?? "Choose a valid image.");
+      return;
+    }
     const position = imagePositionRef.current;
     const size = defaultElementSize.IMAGE;
     const formData = new FormData();
@@ -302,25 +433,23 @@ export function WhiteboardWorkspace({
     formData.set("width", String(size.width));
     formData.set("x", String(position.x));
     formData.set("y", String(position.y));
-    formData.set(
-      "zIndex",
-      String(nextZIndex(nodes.map((node) => node.data.element))),
-    );
+    formData.set("zIndex", String(nextZIndex(historyRef.current.present)));
     runMutation(async () => {
       const result = await uploadBoardImageAction(formData);
       if (result.status === "error") throw new Error(result.message);
-      setNodes((current) => [
-        ...current,
-        flowNode(result.data.element, result.data.signedUrl),
-      ]);
+      imageUrlsRef.current = {
+        ...imageUrlsRef.current,
+        [result.data.element.id]: result.data.signedUrl,
+      };
+      recordSnapshot([...historyRef.current.present, result.data.element]);
       setSelectedId(result.data.element.id);
       setActiveTool("SELECT");
     });
   }
 
   function changeLayer(direction: "BACKWARD" | "FORWARD" | "FRONT" | "BACK") {
-    if (!selectedId) return;
-    const currentElements = nodes.map((node) => node.data.element);
+    if (!selectedId || mutationLockRef.current) return;
+    const currentElements = historyRef.current.present;
     const reordered = reorderElement(currentElements, selectedId, direction);
     const changed = reordered.filter(
       (element) =>
@@ -328,18 +457,7 @@ export function WhiteboardWorkspace({
           ?.z_index !== element.z_index,
     );
     if (changed.length === 0) return;
-    setNodes((current) =>
-      current.map((node) => {
-        const element = reordered.find((candidate) => candidate.id === node.id);
-        return element
-          ? {
-              ...node,
-              data: { ...node.data, element },
-              style: { ...node.style, zIndex: element.z_index },
-            }
-          : node;
-      }),
-    );
+    recordSnapshot(reordered);
     runMutation(async () => {
       const results = await Promise.all(
         changed.map((element) =>
@@ -398,23 +516,12 @@ export function WhiteboardWorkspace({
             flowRef.current = instance;
           }}
           onNodeDragStop={(_event, node) => {
-            if (!canMutate) return;
-            setNodes((current) =>
-              current.map((candidate) =>
-                candidate.id === node.id
-                  ? {
-                      ...candidate,
-                      data: {
-                        ...candidate.data,
-                        element: {
-                          ...candidate.data.element,
-                          x: node.position.x,
-                          y: node.position.y,
-                        },
-                      },
-                      position: node.position,
-                    }
-                  : candidate,
+            if (!canMutate || mutationLockRef.current) return;
+            recordSnapshot(
+              historyRef.current.present.map((element) =>
+                element.id === node.id
+                  ? { ...element, x: node.position.x, y: node.position.y }
+                  : element,
               ),
             );
             persistUpdate(node.id, {
@@ -445,8 +552,14 @@ export function WhiteboardWorkspace({
           <div className="pointer-events-auto">
             <WhiteboardToolbar
               activeTool={activeTool}
+              busy={pending}
               canMutate={canMutate}
+              canRedo={history.future.length > 0}
+              canUndo={history.past.length > 0}
+              onImageRequest={requestImagePicker}
+              onRedo={() => navigateHistory("REDO")}
               onToolChange={setActiveTool}
+              onUndo={() => navigateHistory("UNDO")}
             />
           </div>
         </div>
@@ -464,6 +577,19 @@ export function WhiteboardWorkspace({
             }}
             pending={pending}
           />
+        ) : null}
+        {selectedElement && canMutate ? (
+          <div className="pointer-events-none absolute top-16 left-1/2 z-10 -translate-x-1/2">
+            <div className="pointer-events-auto">
+              <WhiteboardInspector
+                element={selectedElement}
+                onStyleChange={(style) =>
+                  onStyleCommit(selectedElement.id, style)
+                }
+                pending={pending}
+              />
+            </div>
+          </div>
         ) : null}
         {!canMutate ? (
           <p className="bg-background/95 text-muted-foreground absolute bottom-3 left-3 z-10 rounded-md border px-3 py-2 text-xs shadow-sm">

@@ -107,4 +107,47 @@ describe("WhiteboardNode", () => {
       y: 40,
     });
   });
+
+  it("renders a new arrow horizontally", () => {
+    const arrow = {
+      ...sticky,
+      element_type: "ARROW" as const,
+      height: 24,
+      style: { color: "#52525b", strokeWidth: 2 },
+      width: 220,
+    };
+    const { container } = render(
+      <WhiteboardNode
+        {...props({
+          canMutate: true,
+          element: arrow,
+          onContentCommit: vi.fn(),
+          onResizeCommit: vi.fn(),
+        })}
+      />,
+    );
+    const line = container.querySelector("line");
+    expect(line).toHaveAttribute("y1", "12");
+    expect(line).toHaveAttribute("y2", "12");
+  });
+
+  it("applies sticky background and readable foreground colors", () => {
+    render(
+      <WhiteboardNode
+        {...props({
+          canMutate: true,
+          element: {
+            ...sticky,
+            style: { background: "#dbeafe", color: "#1e3a8a", fontSize: 20 },
+          },
+          onContentCommit: vi.fn(),
+          onResizeCommit: vi.fn(),
+        })}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /Sticky note/ })).toHaveStyle({
+      color: "rgb(30, 58, 138)",
+      fontSize: "20px",
+    });
+  });
 });

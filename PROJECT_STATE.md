@@ -7,8 +7,9 @@ Last Updated: 2026-08-25
 TASK-006 WHITEBOARD FOUNDATION / READY FOR MANUAL QA
 
 Stylus now includes a persistent organization-scoped visual canvas with private
-image storage, bounded autosave, role-aware editing and permanent isolation
-coverage. Hosted migration and authenticated visual/security QA remain.
+image storage, contextual formatting, bounded persisted undo/redo, role-aware
+editing and permanent isolation coverage. Authenticated visual/security QA must
+be repeated after the TASK-006 manual-QA completion pass.
 
 ---
 
@@ -23,8 +24,8 @@ Status: READY FOR MANUAL QA
 ## Current Objective
 
 TASK-006 is implementation-complete on
-`codex/task-006-whiteboard-foundation` and ready for migration, authenticated
-role/storage testing and responsive canvas manual QA. TASK-007 has not started.
+`codex/task-006-whiteboard-foundation` and ready for authenticated role/storage,
+pointer and responsive canvas manual QA again. TASK-007 has not started.
 
 ---
 
@@ -348,6 +349,11 @@ ambiguity:
 - bounded persistence on create, drag end, resize end and edit commit with
   visible saving/error/retry feedback
 - private validated image upload with one-hour signed rendering URLs
+- contextual font size, alignment and curated text/sticky/fill/stroke palettes
+- 75-operation local undo/redo with persisted archive, restore and update
+  transitions plus Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl+Y shortcuts
+- horizontally centered default arrows, memoized element rendering during
+  pointer updates and direct toolbar-to-native image picker activation
 - VIEWER read-only behavior and OWNER/ADMIN/MEMBER collaboration
 - no comments, mentions, realtime, presence, AI or Marketing integration
 
@@ -377,15 +383,15 @@ Introduced:
 
 Verified on 2026-08-25:
 
-- focused TASK-006 tests: passed; 9 files and 36 tests
-- full web suite: passed; 42 files and 151 tests
+- focused TASK-006 usability tests: passed
+- full web suite: passed; 44 files and 168 tests
 - `npm run format:check`: passed
 - `npm run lint`: passed with 0 warnings
 - `npm run typecheck`: passed
 - `npm run build`: passed; `/whiteboards` and `/whiteboards/[boardId]` compiled
 - unauthenticated list and direct board routes return HTTP 307 to `/login`
-- linked migration dry run: passed; only
-  `20260825000600_whiteboard_foundation.sql` is pending
+- linked migration dry run: passed; remote database is current with no pending
+  migrations; the usability pass required no schema change
 - dependency audit: 0 vulnerabilities after adding `@xyflow/react`
 - local pgTAP execution unavailable because Docker/Podman is not installed
 - in-app browser QA unavailable because no browser surface was connected
@@ -400,12 +406,12 @@ Before merge/deployment:
 
 1. Run `npm run db:start`, `npm run db:reset`, `npm run db:lint` and
    `npm run test:db` in a Docker-enabled environment.
-2. Apply `20260825000600_whiteboard_foundation.sql` with
-   `npm exec supabase -- db push --linked --skip-vault` after review.
-3. Create OWNER/ADMIN/MEMBER/VIEWER users in two organizations and confirm list,
+2. Create OWNER/ADMIN/MEMBER/VIEWER users in two organizations and confirm list,
    direct-route, board mutation and element mutation boundaries.
-4. Create a board and each element type; pan, zoom, move, resize, layer, edit and
+3. Create a board and each element type; pan, zoom, move, resize, layer, edit and
    archive elements, then navigate away/reopen and verify reconstruction.
+4. Exercise formatting and undo/redo controls and shortcuts for create, move,
+   resize, content, style, archive and layer changes; reload after undo and redo.
 5. Upload valid PNG/JPEG/WebP images and reject SVG/executable and oversized
    files; confirm Organization A cannot sign or fetch Organization B paths.
 6. Confirm save/error/retry feedback under a simulated network failure and that
@@ -545,16 +551,15 @@ locally. No in-app browser surface was available for authenticated visual QA.
 Hosted migration, storage-policy behavior, role isolation, image signed URLs,
 responsive layout and real pointer pan/zoom/drag/resize QA remain required.
 
-TASK-006 intentionally has no undo/redo, multi-select, comments, mentions,
-realtime synchronization or presence. The latter collaboration scope belongs to
-TASK-007.
+TASK-006 intentionally has no multi-select, comments, mentions, realtime
+synchronization or presence. The collaboration scope belongs to TASK-007.
 
 ---
 
 # Next Recommended Action
 
-Review and apply `20260825000600_whiteboard_foundation.sql`, execute pgTAP in a
-database-capable environment, and run TASK-006 authenticated role, storage,
+Execute pgTAP in a database-capable environment and repeat TASK-006 authenticated
+role, storage, formatting, undo/redo, image-picker, pointer-performance,
 persistence and responsive canvas QA. Do not begin TASK-007.
 
 ---
@@ -572,8 +577,8 @@ Read:
 TASK-006 is complete and ready for manual QA on
 `codex/task-006-whiteboard-foundation`.
 
-Apply the pending Phase 5 migration, run the whiteboard pgTAP suite, verify
-OWNER/ADMIN/MEMBER/VIEWER and cross-organization boundaries, exercise private
-image upload/signed access, and test canvas persistence and responsive behavior.
+Run the whiteboard pgTAP suite, verify OWNER/ADMIN/MEMBER/VIEWER and
+cross-organization boundaries, exercise private image upload/signed access, and
+repeat formatting, history, picker, pointer and responsive canvas QA.
 TASK-007 — Whiteboard Collaboration is the exact next task; do not begin it
 until TASK-006 is accepted and merged.

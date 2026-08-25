@@ -5,12 +5,13 @@ const mocks = vi.hoisted(() => {
     eq: vi.fn(),
     insert: vi.fn(),
     is: vi.fn(),
+    not: vi.fn(),
     maybeSingle: vi.fn(),
     select: vi.fn(),
     single: vi.fn(),
     update: vi.fn(),
   };
-  for (const key of ["eq", "insert", "is", "select", "update"] as const)
+  for (const key of ["eq", "insert", "is", "not", "select", "update"] as const)
     builder[key].mockReturnValue(builder);
   return {
     builder,
@@ -41,6 +42,7 @@ import {
   archiveBoardAction,
   createBoardAction,
   createBoardElementAction,
+  restoreBoardElementAction,
   updateBoardElementAction,
 } from "./actions";
 
@@ -83,7 +85,14 @@ const element = {
 describe("whiteboard actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    for (const key of ["eq", "insert", "is", "select", "update"] as const)
+    for (const key of [
+      "eq",
+      "insert",
+      "is",
+      "not",
+      "select",
+      "update",
+    ] as const)
       mocks.builder[key].mockReturnValue(mocks.builder);
     mocks.getContext.mockResolvedValue({
       membership: { role: "MEMBER" },
@@ -163,6 +172,22 @@ describe("whiteboard actions", () => {
         updated_by: userId,
       }),
     );
+  });
+
+  it("restores archived elements only in the authenticated organization", async () => {
+    mocks.builder.maybeSingle.mockResolvedValue({ data: element, error: null });
+    const result = await restoreBoardElementAction(elementId);
+    expect(result.status).toBe("success");
+    expect(mocks.builder.update).toHaveBeenCalledWith({
+      archived_at: null,
+      updated_by: userId,
+    });
+    expect(mocks.builder.eq).toHaveBeenCalledWith("id", elementId);
+    expect(mocks.builder.eq).toHaveBeenCalledWith(
+      "organization_id",
+      organizationId,
+    );
+    expect(mocks.builder.not).toHaveBeenCalledWith("archived_at", "is", null);
   });
 
   it("rejects VIEWER mutation before opening a database query", async () => {

@@ -8,6 +8,8 @@ import {
   Shapes,
   StickyNote,
   Type,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,11 +34,23 @@ const tools: {
 export function WhiteboardToolbar({
   activeTool,
   canMutate,
+  canRedo,
+  canUndo,
+  busy,
+  onImageRequest,
+  onRedo,
   onToolChange,
+  onUndo,
 }: {
   activeTool: WhiteboardTool;
   canMutate: boolean;
+  canRedo: boolean;
+  canUndo: boolean;
+  busy: boolean;
+  onImageRequest: () => void;
+  onRedo: () => void;
   onToolChange: (tool: WhiteboardTool) => void;
+  onUndo: () => void;
 }) {
   return (
     <div
@@ -52,9 +66,11 @@ export function WhiteboardToolbar({
             className={
               activeTool === value ? "bg-muted text-foreground" : undefined
             }
-            disabled={!canMutate && mutationTool}
+            disabled={(!canMutate && mutationTool) || busy}
             key={value}
-            onClick={() => onToolChange(value)}
+            onClick={() =>
+              value === "IMAGE" ? onImageRequest() : onToolChange(value)
+            }
             size="icon"
             title={label}
             variant="ghost"
@@ -64,6 +80,27 @@ export function WhiteboardToolbar({
           </Button>
         );
       })}
+      <span aria-hidden="true" className="bg-border mx-0.5 w-px" />
+      <Button
+        aria-label="Undo"
+        disabled={!canUndo || busy}
+        onClick={onUndo}
+        size="icon"
+        title="Undo (Ctrl/Cmd+Z)"
+        variant="ghost"
+      >
+        <Undo2 aria-hidden="true" className="size-4" />
+      </Button>
+      <Button
+        aria-label="Redo"
+        disabled={!canRedo || busy}
+        onClick={onRedo}
+        size="icon"
+        title="Redo (Ctrl/Cmd+Shift+Z)"
+        variant="ghost"
+      >
+        <Redo2 aria-hidden="true" className="size-4" />
+      </Button>
     </div>
   );
 }

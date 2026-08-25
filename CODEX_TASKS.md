@@ -18,9 +18,14 @@ Implemented scope:
 - private organization-scoped Supabase Storage images with signed URLs
 - OWNER/ADMIN/MEMBER collaboration and VIEWER read-only behavior
 - RLS, storage-policy, action, schema, interaction and pgTAP coverage
+- manual-QA completion pass with contextual text/sticky/shape/arrow formatting,
+  bounded persisted undo/redo, keyboard shortcuts and horizontal default arrows
+- immediate image-picker activation, duplicate-mutation protection and memoized
+  element rendering during pointer-frequency canvas updates
 
-Migration `20260825000600_whiteboard_foundation.sql` requires hosted application
-and authenticated role QA. Docker is unavailable locally, so the 22-assertion
+The manual-QA usability defects are resolved without a schema migration. The
+linked database is current. Authenticated role/storage, pointer and responsive
+manual QA should be repeated; Docker is unavailable locally, so the 22-assertion
 pgTAP suite remains to be executed in a database-capable environment.
 
 ---

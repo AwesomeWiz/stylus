@@ -251,6 +251,35 @@ export async function archiveBoardElementAction(
   }
 }
 
+export async function restoreBoardElementAction(
+  elementId: string,
+): Promise<WhiteboardActionResult<BoardElementRow>> {
+  try {
+    const parsedId = elementIdSchema.parse(elementId);
+    const current = await mutationContext();
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from("board_elements")
+      .update({ archived_at: null, updated_by: current.user.id })
+      .eq("id", parsedId)
+      .eq("organization_id", current.organization.id)
+      .not("archived_at", "is", null)
+      .select("*")
+      .maybeSingle();
+    if (error || !data) throw error ?? new Error("Element not found");
+    revalidatePath(`/whiteboards/${data.board_id}`);
+    return { data, status: "success" };
+  } catch (error) {
+    return {
+      message: actionError(
+        error,
+        "The element could not be restored. Please try again.",
+      ),
+      status: "error",
+    };
+  }
+}
+
 export async function uploadBoardImageAction(
   formData: FormData,
 ): Promise<

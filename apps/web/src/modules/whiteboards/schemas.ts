@@ -57,19 +57,21 @@ export const updateElementSchema = z
     "Provide an element change.",
   );
 
+export const boardImageFileSchema = z
+  .instanceof(File)
+  .refine((file) => file.size > 0, "Choose an image.")
+  .refine(
+    (file) => file.size <= 10 * 1024 * 1024,
+    "Images must be 10 MB or smaller.",
+  )
+  .refine(
+    (file) => ["image/png", "image/jpeg", "image/webp"].includes(file.type),
+    "Upload a PNG, JPEG, or WebP image.",
+  );
+
 export const boardImageSchema = z.object({
   boardId: boardIdSchema,
-  file: z
-    .instanceof(File)
-    .refine((file) => file.size > 0, "Choose an image.")
-    .refine(
-      (file) => file.size <= 10 * 1024 * 1024,
-      "Images must be 10 MB or smaller.",
-    )
-    .refine(
-      (file) => ["image/png", "image/jpeg", "image/webp"].includes(file.type),
-      "Upload a PNG, JPEG, or WebP image.",
-    ),
+  file: boardImageFileSchema,
   height: dimension,
   width: dimension,
   x: coordinate,
