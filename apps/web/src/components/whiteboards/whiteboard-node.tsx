@@ -9,6 +9,8 @@ export type WhiteboardNodeData = Record<string, unknown> & {
   canMutate: boolean;
   element: BoardElementRow;
   imageUrl?: string;
+  onInteractionCancel?: (elementId: string) => void;
+  onInteractionStart?: (elementId: string) => void;
   onContentCommit: (
     elementId: string,
     content: Record<string, unknown>,
@@ -57,6 +59,7 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
           setEditing(false);
           if (text !== textValue(element.content))
             data.onContentCommit(element.id, { ...element.content, text });
+          else data.onInteractionCancel?.(element.id);
         }}
         onChange={(event) => setText(event.currentTarget.value)}
         onKeyDown={(event) => {
@@ -73,9 +76,15 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
     <div
       aria-label={`${element.element_type === "STICKY" ? "Sticky note" : "Text"}: ${text || "Empty"}`}
       className="h-full w-full p-3 whitespace-pre-wrap"
-      onDoubleClick={() => setEditing(true)}
+      onDoubleClick={() => {
+        if (data.canMutate) data.onInteractionStart?.(element.id);
+        setEditing(true);
+      }}
       onKeyDown={(event) => {
-        if (event.key === "Enter" && data.canMutate) setEditing(true);
+        if (event.key === "Enter" && data.canMutate) {
+          data.onInteractionStart?.(element.id);
+          setEditing(true);
+        }
       }}
       role="button"
       style={sharedStyle}
@@ -115,6 +124,7 @@ function WhiteboardNodeComponent({
         isVisible={Boolean(selected && data.canMutate)}
         minHeight={24}
         minWidth={24}
+        onResizeStart={() => data.onInteractionStart?.(element.id)}
         onResizeEnd={(_event, params) =>
           data.onResizeCommit(element.id, {
             height: params.height,

@@ -6,6 +6,7 @@ import {
   createWhiteboardHistory,
   diffWhiteboardSnapshots,
   recordWhiteboardHistory,
+  reconcileRemoteElement,
   redoWhiteboardHistory,
   undoWhiteboardHistory,
 } from "./history";
@@ -64,5 +65,39 @@ describe("whiteboard history", () => {
       restore: [expect.objectContaining({ id: "restore" })],
       update: [expect.objectContaining({ id: "change", x: 10 })],
     });
+  });
+
+  it("undoes only the local element while preserving a remote insert", () => {
+    const initial = createWhiteboardHistory([element("local")]);
+    const moved = recordWhiteboardHistory(initial, [element("local", 40)]);
+    const withRemote = reconcileRemoteElement(moved, element("remote", 90));
+    expect(undoWhiteboardHistory(withRemote).present).toEqual([
+      expect.objectContaining({ id: "local", x: 0 }),
+      expect.objectContaining({ id: "remote", x: 90 }),
+    ]);
+  });
+
+  it("does not place remote changes in local undo history", () => {
+    const initial = createWhiteboardHistory([element("one")]);
+    const remote = reconcileRemoteElement(initial, element("two"));
+    expect(remote.past).toHaveLength(0);
+    expect(undoWhiteboardHistory(remote)).toBe(remote);
+  });
+
+  it("preserves unrelated redo and invalidates same-element history", () => {
+    const initial = createWhiteboardHistory([element("one"), element("two")]);
+    const moved = recordWhiteboardHistory(initial, [
+      element("one", 40),
+      element("two"),
+    ]);
+    const undone = undoWhiteboardHistory(moved);
+    const unrelated = reconcileRemoteElement(undone, element("two", 50));
+    expect(redoWhiteboardHistory(unrelated).present).toEqual([
+      expect.objectContaining({ id: "one", x: 40 }),
+      expect.objectContaining({ id: "two", x: 50 }),
+    ]);
+    expect(
+      reconcileRemoteElement(undone, element("one", 80)).future,
+    ).toHaveLength(0);
   });
 });

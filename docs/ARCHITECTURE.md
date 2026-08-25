@@ -187,8 +187,16 @@ with the validated organization and board IDs; membership/role storage policies
 control object access, and the editor receives one-hour signed URLs. No service
 role credential or public bucket is used.
 
-TASK-006 is intentionally single-session: comments, mentions, realtime element
-synchronization and presence are deferred to TASK-007.
+TASK-007 subscribes only while a board is open, using a private board topic for
+filtered element/comment Postgres Changes and Presence. Presence carries a user
+ID; display names and roles come from the authorized server-loaded directory.
+Connectivity failure is surfaced without disabling local editing.
+
+Editor history is now a bounded list of local element patches. Realtime rows
+never become undo entries, same-element remote changes invalidate stale local
+history, and remote changes received during an active local edit wait for the
+server response. Database timestamps determine the winner without CRDT
+infrastructure.
 
 ---
 

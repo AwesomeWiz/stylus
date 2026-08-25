@@ -101,6 +101,27 @@ dependency on the developer laptop.
 
 ---
 
+# Hosted Whiteboard Realtime
+
+After applying `20260825000700_extend_collaboration_enums.sql` and
+`20260825000710_whiteboard_collaboration.sql` to hosted Supabase:
+
+1. In Realtime Settings, disable **Allow public access** so only private channels
+   authorized by `realtime.messages` RLS policies can connect.
+2. Confirm the `supabase_realtime` publication contains `board_elements` and
+   `board_comments`. The migration adds these tables idempotently; no dashboard
+   publication edit should normally be required.
+3. Keep table RLS enabled. Postgres Changes authorization comes from the existing
+   organization-member SELECT policies, while Presence uses the private
+   `board:<uuid>` topic policies created by the migration.
+4. Perform the documented two-browser test with two organization members, then a
+   VIEWER and a user from another organization. Confirm channel cleanup by closing
+   one board and observing Presence update.
+
+Do not enable public board channels or publish additional tables for TASK-007.
+
+---
+
 # Deployment Philosophy
 
 Optimize initially for:

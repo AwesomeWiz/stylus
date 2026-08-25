@@ -51,6 +51,10 @@ export default async function WhiteboardEditorPage({
       <WhiteboardWorkspace
         {...workspace}
         canMutate={canMutateWhiteboards(context.membership.role)}
+        currentUser={{
+          displayName: context.user.displayName,
+          id: context.user.id,
+        }}
       />
     </AppShell>
   );

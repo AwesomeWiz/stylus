@@ -35,8 +35,9 @@ export type CompetitorType =
   "DIRECT" | "INDIRECT" | "ALTERNATIVE" | "INSPIRATION";
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-export type NotificationType = "TASK_DUE_24H" | "TASK_DUE_1H" | "TASK_DEADLINE";
-export type NotificationEntityType = "TASK";
+export type NotificationType =
+  "TASK_DUE_24H" | "TASK_DUE_1H" | "TASK_DEADLINE" | "BOARD_MENTION";
+export type NotificationEntityType = "TASK" | "BOARD";
 export type NotificationChannel = "IN_APP";
 export type TaskReminderKind = "DUE_24H" | "DUE_1H" | "DEADLINE";
 export type ActivityEventType =
@@ -46,7 +47,8 @@ export type ActivityEventType =
   | "TASK_COMPLETED"
   | "TASK_REOPENED"
   | "TASK_CANCELLED"
-  | "TASK_COMMENTED";
+  | "TASK_COMMENTED"
+  | "BOARD_COMMENTED";
 export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
 
 export type BoardRow = {
@@ -79,6 +81,27 @@ export type BoardElementRow = {
   x: number;
   y: number;
   z_index: number;
+};
+
+export type BoardCommentRow = {
+  archived_at: string | null;
+  author_id: string;
+  board_id: string;
+  body: string;
+  created_at: string;
+  element_id: string | null;
+  id: string;
+  organization_id: string;
+  parent_id: string | null;
+  updated_at: string;
+};
+
+export type BoardCommentMentionRow = {
+  board_id: string;
+  comment_id: string;
+  created_at: string;
+  mentioned_user_id: string;
+  organization_id: string;
 };
 
 export type OrganizationRow = {
@@ -344,6 +367,18 @@ export type Database = {
         >;
         Relationships: [];
       };
+      board_comments: {
+        Row: BoardCommentRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      board_comment_mentions: {
+        Row: BoardCommentMentionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       boards: {
         Row: BoardRow;
         Insert: Pick<
@@ -516,6 +551,10 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      archive_board_comment: {
+        Args: { p_comment_id: string };
+        Returns: BoardCommentRow;
+      };
       advance_onboarding_progress: {
         Args: {
           p_completed_step: number;
@@ -526,6 +565,16 @@ export type Database = {
       create_organization: {
         Args: { p_name: string };
         Returns: OrganizationRow;
+      };
+      create_board_comment: {
+        Args: {
+          p_board_id: string;
+          p_body: string;
+          p_element_id: string | null;
+          p_mentioned_user_ids?: string[];
+          p_parent_id: string | null;
+        };
+        Returns: BoardCommentRow;
       };
       list_organization_task_members: {
         Args: { p_organization_id: string };

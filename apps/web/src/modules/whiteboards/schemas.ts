@@ -10,6 +10,7 @@ export const boardTitleSchema = z
 
 export const boardIdSchema = z.uuid();
 export const elementIdSchema = z.uuid();
+export const commentIdSchema = z.uuid();
 export const boardElementTypeSchema = z.enum([
   "TEXT",
   "STICKY",
@@ -79,5 +80,14 @@ export const boardImageSchema = z.object({
   zIndex: z.number().int().min(-1_000_000).max(1_000_000),
 });
 
+export const createBoardCommentSchema = z.object({
+  boardId: boardIdSchema,
+  body: z.string().trim().min(1, "Write a comment.").max(2000),
+  elementId: elementIdSchema.nullable().default(null),
+  mentionedUserIds: z.array(z.uuid()).max(50).default([]),
+  parentId: commentIdSchema.nullable().default(null),
+});
+
 export type CreateElementInput = z.input<typeof createElementSchema>;
 export type UpdateElementInput = z.input<typeof updateElementSchema>;
+export type CreateBoardCommentInput = z.input<typeof createBoardCommentSchema>;

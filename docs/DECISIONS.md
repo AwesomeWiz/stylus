@@ -246,3 +246,26 @@ or restore actions, so reload reflects the last successful history state.
 This deliberately avoids event sourcing and adds no database schema. Future
 realtime collaboration must reconcile concurrent changes separately rather than
 treating this single-session history as a shared event log.
+
+---
+
+## ADR-019 — Scoped Whiteboard Realtime and Local Operation History
+
+Status: ACCEPTED
+
+TASK-007 uses one private `board:<uuid>` Supabase Realtime channel per open board.
+Postgres Changes are filtered by `board_id` for authorized element and comment
+rows. Presence carries only a user identity; presentation comes from the
+server-loaded organization member directory. Subscriptions are removed when the
+editor unmounts. Pointer movement and presence are never persisted.
+
+Local history stores at most 75 element operation patches. Remote operations do
+not enter local history, unrelated remote changes survive local undo/redo, and a
+remote change to an active local element waits for the bounded local write. The
+persisted row with the newest database `updated_at` wins. This is deterministic
+last-write reconciliation, not a CRDT or shared event log.
+
+Comments and mention identities are created atomically by a permission-checking
+`SECURITY DEFINER` RPC with an empty search path. The database derives scope,
+author, recipients, notifications and activity; shallow replies and organization
+membership are relational invariants.

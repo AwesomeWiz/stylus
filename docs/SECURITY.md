@@ -109,6 +109,14 @@ Marketing must not retrieve Agency memory.
 - `board-images` is private; path-derived organization policies protect reads,
   writes and removal, and rendering uses expiring signed URLs
 - storage service-role credentials are not used or exposed
+- board comments inherit board/organization scope through composite foreign keys;
+  browser roles receive SELECT only and use permission-checking RPCs for writes
+- mentions store validated member UUIDs rather than trusting display text, and
+  notification recipients are derived inside the same database transaction
+- private Presence topics require current board membership; displayed identity
+  and role are resolved from the member directory, not client metadata
+- Realtime Postgres Changes remain protected by table RLS and board filters;
+  cleanup prevents subscriptions surviving navigation to another board
 
 ---
 

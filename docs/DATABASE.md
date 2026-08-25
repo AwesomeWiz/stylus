@@ -166,6 +166,23 @@ WebP objects, and protected by organization-path membership/role policies.
 Archiving an image element retains its private object so non-destructive recovery
 remains possible; a future permanent purge workflow may remove archived assets.
 
+TASK-007 adds migrations `20260825000700_extend_collaboration_enums.sql` and
+`20260825000710_whiteboard_collaboration.sql`.
+
+`board_comments` stores organization/board scope, optional element context,
+optional one-level parent, authenticated author, bounded body and soft removal.
+Composite foreign keys prevent cross-board and cross-organization links.
+`board_comment_mentions` stores structural recipient UUIDs; duplicate recipients
+are constrained and every recipient must be a current organization member.
+
+Comment creation is atomic through `create_board_comment`: it validates the board,
+active element, collaborator role and mentioned memberships before committing the
+comment, mention relations, `BOARD_MENTION` notifications and `BOARD_COMMENTED`
+activity. Direct browser comment writes and hard deletes are not granted.
+
+`board_elements` and `board_comments` are added to `supabase_realtime`; RLS still
+applies to Postgres Changes. Presence is ephemeral and has no application table.
+
 ---
 
 # Company Knowledge
