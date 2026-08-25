@@ -8,6 +8,19 @@ Avoid premature microservices.
 
 ---
 
+# Repository Layout
+
+The repository uses npm workspaces:
+
+- `apps/web` contains the Next.js application and its local UI foundation.
+- `packages/typescript-config` contains shared strict TypeScript defaults.
+
+Future packages should be added only when code has a real cross-application
+or cross-module consumer. Core and plugin business modules have not been
+introduced during Phase 0.
+
+---
+
 # High-Level Architecture
 
 Users

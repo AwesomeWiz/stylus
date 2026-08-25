@@ -2,9 +2,35 @@
 
 # Current
 
-## TASK-001 — Repository Foundation
+## TASK-002 — Authentication and Organizations
 
 Status: READY
+
+Phase: 1
+
+Planned scope:
+
+- Supabase integration
+- signup
+- login
+- logout
+- session management
+- organization creation
+- organization membership
+- protected application shell
+- basic role/permission foundation
+- initial RLS
+- authorization tests
+
+Do not proceed to TASK-003 during TASK-002.
+
+---
+
+# Completed
+
+## TASK-001 — Repository Foundation
+
+Status: COMPLETE
 
 Phase: 0
 
@@ -94,32 +120,6 @@ After verification:
 3. Update docs/ROADMAP.md.
 4. Move TASK-002 to Current.
 5. Record unresolved issues if any.
-
----
-
-# Next
-
-## TASK-002 — Authentication and Organizations
-
-Status: BLOCKED_BY TASK-001
-
-Phase: 1
-
-Planned scope:
-
-- Supabase integration
-- signup
-- login
-- logout
-- session management
-- organization creation
-- organization membership
-- protected application shell
-- basic role/permission foundation
-- initial RLS
-- authorization tests
-
-Do not begin until TASK-001 is complete.
 
 ---
 

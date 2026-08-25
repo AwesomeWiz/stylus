@@ -4,9 +4,10 @@ Last Updated: 2026-08-25
 
 ## Overall Status
 
-PLANNING / BOOTSTRAP
+FOUNDATION COMPLETE / READY FOR PHASE 1
 
-Application implementation has not started.
+The verified web application foundation and initial Stylus shell are in
+place. Business functionality has not started.
 
 ---
 
@@ -14,16 +15,46 @@ Application implementation has not started.
 
 Phase 0 — Repository Foundation
 
-Status: NOT STARTED
+Status: COMPLETE
 
 ---
 
 ## Current Objective
 
-Establish the Stylus repository, documentation, engineering rules,
-development tooling, architectural boundaries and application skeleton.
+TASK-001 established the repository structure, development tooling,
+architectural boundaries and responsive application shell.
 
-Phase 0 must NOT implement business functionality.
+TASK-002 is ready but has not started.
+
+---
+
+# Phase 0 Implementation
+
+- npm workspace structure with `apps/web` and shared TypeScript config
+- Next.js App Router application with strict TypeScript
+- Tailwind CSS design tokens with light and dark theme variables
+- shadcn/ui-compatible component conventions and aliases
+- Lucide icon system
+- responsive desktop sidebar and accessible mobile navigation drawer
+- topbar with global search, notifications and account placeholders
+- placeholder Home page with no business functionality
+- Zod-backed environment validation and `.env.example`
+- ESLint, Prettier and Vitest configuration
+- focused navigation and Home placeholder tests
+
+---
+
+# Verification
+
+Verified on 2026-08-25:
+
+- `npm install`: passed; 0 audit vulnerabilities
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 3 files and 4 tests
+- `npm run build`: passed; `/` prerendered as static content
+- development server: started successfully; `/` returned HTTP 200
 
 ---
 
@@ -142,7 +173,7 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-Documentation bootstrap.
+TASK-001 complete. TASK-002 is ready for a future implementation session.
 
 ---
 
@@ -150,13 +181,11 @@ Documentation bootstrap.
 
 None.
 
-Implementation has not started.
-
 ---
 
 # Next Recommended Action
 
-Execute TASK-001 from CODEX_TASKS.md.
+Execute TASK-002 from CODEX_TASKS.md on a dedicated task branch.
 
 ---
 
@@ -170,7 +199,7 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-Continue the current task only.
+TASK-001 is complete and verified on `codex/task-001-foundation`.
 
-Do not begin business functionality until Phase 0 has been successfully
-verified.
+Begin TASK-002 only in a new session after reviewing the repository and
+current worktree. Preserve unrelated user changes and do not begin TASK-003.
