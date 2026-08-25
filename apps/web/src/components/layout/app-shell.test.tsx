@@ -20,7 +20,7 @@ describe("AppShell", () => {
       screen.getByRole("searchbox", { name: "Search" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "View notifications" }),
+      screen.getByRole("button", { name: "Notifications" }),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { OrganizationRole } from "@/lib/supabase/database.types";
+import type { NotificationSummary } from "@/modules/notifications/server/data";
 
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
@@ -20,6 +21,7 @@ interface AppShellProps {
   children: ReactNode;
   identity: ShellIdentity;
   logoutAction: () => Promise<void>;
+  notifications?: NotificationSummary;
   organization: ShellOrganization;
 }
 
@@ -28,6 +30,7 @@ export function AppShell({
   children,
   identity,
   logoutAction,
+  notifications = { items: [], unreadCount: 0 },
   organization,
 }: AppShellProps) {
   return (
@@ -45,6 +48,7 @@ export function AppShell({
           activePath={activePath}
           identity={identity}
           logoutAction={logoutAction}
+          notifications={notifications}
           organization={organization}
         />
         <main className="mx-auto w-full max-w-[96rem] px-4 py-7 sm:px-6 lg:px-8 lg:py-8">

@@ -48,6 +48,7 @@ function renderWorkspace(
   canMutate: boolean,
   tasks: TaskRow[] = [task],
   nextDeadlineIso: string | null = null,
+  selectedTaskId?: string,
 ) {
   return render(
     <TaskWorkspace
@@ -58,6 +59,7 @@ function renderWorkspace(
       members={members}
       nextDeadlineIso={nextDeadlineIso}
       nowIso="2026-08-25T12:00:00.000Z"
+      selectedTaskId={selectedTaskId}
       tasks={tasks}
     />,
   );
@@ -124,5 +126,12 @@ describe("task workspace", () => {
     expect(router.refresh).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(router.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens a safely selected task context from internal navigation", () => {
+    renderWorkspace(true, [task], null, task.id);
+    expect(
+      screen.getByRole("dialog", { name: "Prepare launch notes" }),
+    ).toBeInTheDocument();
   });
 });

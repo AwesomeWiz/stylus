@@ -197,6 +197,19 @@ Examples:
 Events enable loosely coupled reactions such as notifications and
 activity logging.
 
+Phase 4 keeps recipient notifications separate from organization activity.
+Task and comment triggers write immutable audit entries after successful
+database mutations. A narrowly executable PostgreSQL reminder processor reads
+current task/member state, versions deduplication by the exact UTC deadline, and
+atomically creates in-app notification plus delivery ledger records.
+The ledger includes a controlled `IN_APP` channel so future delivery adapters
+can share the reminder event/version boundary without changing current UX.
+
+Hosted Supabase Cron is the deployment scheduler boundary and should call
+`public.process_task_reminders()` every five minutes. No browser, local laptop,
+Node daemon, queue service or always-on VPS participates. The schedule is an
+explicit hosted deployment step rather than a migration side effect.
+
 ---
 
 # Heavy Work

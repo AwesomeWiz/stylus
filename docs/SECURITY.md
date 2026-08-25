@@ -76,6 +76,25 @@ Marketing must not retrieve Agency memory.
 
 ---
 
+# Notifications, Reminders and Activity
+
+- notification reads require both the authenticated recipient identity and
+  current organization membership through RLS
+- read timestamps are set with database time through organization/recipient
+  checked functions; browsers cannot update notification rows directly
+- notification rows contain controlled entity references and never arbitrary
+  redirect URLs
+- activity is immutable, organization-readable audit history created by
+  security-definer triggers after authorized task/comment writes
+- authenticated/anonymous roles receive no notification insert, activity write
+  or reminder-delivery access
+- the reminder processor is revoked from browser roles, joins current
+  membership, and rechecks current assignee, active status and exact deadline
+- the service-role credential remains server-side; hosted database Cron invokes
+  the processor without exposing credentials to application clients
+
+---
+
 # Secrets
 
 Never expose:

@@ -83,27 +83,42 @@ required.
 
 # Notifications
 
-notifications
+Phase 4 introduces migration
+`20260825000500_reminders_notifications_activity.sql`.
 
-Possible fields:
+`notifications`
 
-- organization_id
-- user_id
-- type
-- title
-- body
-- entity_type
-- entity_id
-- read_at
-- created_at
+- organization boundary and composite recipient membership foreign key
+- controlled deadline-reminder type
+- concise title/body and optional controlled entity reference; no stored URL
+- database timestamps for creation and read state
+- recipient/recent and recipient/unread indexes
+- recipient-only reads through RLS
+- scoped database functions for marking one or all notifications read
+
+`task_reminder_deliveries`
+
+- immutable task, recipient, reminder kind, exact deadline version and channel
+- initial `IN_APP` channel with a channel-aware idempotency key that later
+  delivery adapters can reuse
+- notification reference and database processing timestamp
+- no browser grants or policies
+
+`process_task_reminders(timestamptz)` reads current assigned TODO/IN_PROGRESS
+tasks and memberships. It creates at most one 24-hour, one-hour or deadline
+notification per deadline version and is executable only by a trusted database
+role.
 
 ---
 
 # Activity
 
-activity_events
+`activity_events`
 
-Used for auditable team activity.
+- immutable organization, actor, controlled event, entity and timestamp fields
+- compact JSON metadata limited to task presentation context
+- created by trusted task/comment triggers, never browser inserts
+- organization-member read policy and no update/delete grants
 
 ---
 

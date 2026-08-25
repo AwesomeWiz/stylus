@@ -18,6 +18,7 @@ import {
 } from "@/modules/tasks/filters";
 import { taskPriorityValues, taskStatusValues } from "@/modules/tasks/schemas";
 import { getTaskWorkspaceData } from "@/modules/tasks/server/data";
+import { getNotificationSummary } from "@/modules/notifications/server/data";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -31,6 +32,7 @@ function parseFilters(params: Awaited<SearchParams>): TaskFilters {
   const requestedStatus = single(params.status);
   const query = single(params.query)?.trim().slice(0, 100);
   const assigneeId = single(params.assignee)?.slice(0, 64);
+  const selectedTaskId = single(params.task)?.slice(0, 64);
   return {
     assigneeId,
     priority: taskPriorityValues.includes(requestedPriority as TaskPriority)
@@ -40,6 +42,7 @@ function parseFilters(params: Awaited<SearchParams>): TaskFilters {
     status: taskStatusValues.includes(requestedStatus as TaskStatus)
       ? (requestedStatus as TaskStatus)
       : undefined,
+    selectedTaskId,
     view: taskViewValues.includes(requestedView as TaskView)
       ? (requestedView as TaskView)
       : "my",
@@ -62,9 +65,10 @@ export default async function TasksPage({
   });
   if (onboardingDecision) redirect(onboardingDecision as Route);
 
-  const [workspace, params] = await Promise.all([
+  const [workspace, params, notifications] = await Promise.all([
     getTaskWorkspaceData(context.organization.id),
     searchParams,
+    getNotificationSummary(context.organization.id, context.user.id),
   ]);
   const now = new Date();
   const filters = parseFilters(params);
@@ -79,6 +83,7 @@ export default async function TasksPage({
         email: context.user.email,
       }}
       logoutAction={logoutAction}
+      notifications={notifications}
       organization={{
         name: context.organization.name,
         role: context.membership.role,
@@ -92,6 +97,7 @@ export default async function TasksPage({
         members={workspace.members}
         nextDeadlineIso={nextDeadlineIso}
         nowIso={now.toISOString()}
+        selectedTaskId={filters.selectedTaskId}
         tasks={tasks}
       />
     </AppShell>

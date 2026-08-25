@@ -1,20 +1,19 @@
-import { redirect } from "next/navigation";
 import type { Route } from "next";
+import { redirect } from "next/navigation";
 
+import { ActivityList } from "@/components/activity/activity-list";
 import { AppShell } from "@/components/layout/app-shell";
-import { HomePlaceholder } from "@/components/home/home-placeholder";
+import { PageHeader } from "@/components/ui/page-header";
+import { getActivityHistory } from "@/modules/activity/server/data";
 import { logoutAction } from "@/modules/auth/actions";
+import { getNotificationSummary } from "@/modules/notifications/server/data";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
 import { getWorkspaceRouteDecision } from "@/modules/onboarding/routing";
 import { getOnboardingData } from "@/modules/onboarding/server/data";
-import { getNotificationSummary } from "@/modules/notifications/server/data";
 
-export default async function HomePage() {
+export default async function ActivityPage() {
   const context = await getCurrentOrganizationContext();
-
-  if (!context) {
-    redirect("/organization/new");
-  }
+  if (!context) redirect("/organization/new");
 
   const onboarding = await getOnboardingData(context.organization.id);
   const onboardingDecision = getWorkspaceRouteDecision({
@@ -22,19 +21,16 @@ export default async function HomePage() {
     currentStep: onboarding.progress?.current_step ?? 1,
     role: context.membership.role,
   });
+  if (onboardingDecision) redirect(onboardingDecision as Route);
 
-  if (onboardingDecision) {
-    redirect(onboardingDecision as Route);
-  }
-
-  const notifications = await getNotificationSummary(
-    context.organization.id,
-    context.user.id,
-  );
+  const [activity, notifications] = await Promise.all([
+    getActivityHistory(context.organization.id),
+    getNotificationSummary(context.organization.id, context.user.id),
+  ]);
 
   return (
     <AppShell
-      activePath="/"
+      activePath="/activity"
       identity={{
         displayName: context.user.displayName,
         email: context.user.email,
@@ -46,7 +42,11 @@ export default async function HomePage() {
         role: context.membership.role,
       }}
     >
-      <HomePlaceholder />
+      <PageHeader
+        description="A concise history of meaningful task collaboration across your organization."
+        title="Activity"
+      />
+      <ActivityList events={activity.events} members={activity.members} />
     </AppShell>
   );
 }

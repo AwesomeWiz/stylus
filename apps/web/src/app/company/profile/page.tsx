@@ -8,12 +8,18 @@ import { logoutAction } from "@/modules/auth/actions";
 import { canManageOrganization } from "@/modules/organizations/authorization";
 import { getCurrentOnboardingData } from "@/modules/onboarding/server/data";
 import { getOnboardingPath } from "@/modules/onboarding/steps";
+import { getNotificationSummary } from "@/modules/notifications/server/data";
 
 export default async function CompanyProfilePage() {
   const data = await getCurrentOnboardingData();
   if (!data) redirect("/organization/new");
   if (!data.progress?.completed_at)
     redirect(getOnboardingPath(data.progress?.current_step ?? 1) as Route);
+
+  const notifications = await getNotificationSummary(
+    data.context.organization.id,
+    data.context.user.id,
+  );
 
   return (
     <AppShell
@@ -23,6 +29,7 @@ export default async function CompanyProfilePage() {
         email: data.context.user.email,
       }}
       logoutAction={logoutAction}
+      notifications={notifications}
       organization={{
         name: data.context.organization.name,
         role: data.context.membership.role,

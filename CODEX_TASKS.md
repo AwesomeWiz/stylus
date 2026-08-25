@@ -2,43 +2,66 @@
 
 # Current
 
-## TASK-004 — Task Management Manual QA
+## TASK-005 — Reminders, Notifications and Activity
 
-Status: COMPLETE / READY FOR MANUAL QA AGAIN
+Status: COMPLETE / READY FOR MANUAL QA
 
-The overdue-deadline defect found during manual QA is resolved. Local date/time
-values are persisted as correct UTC instants, overdue uses the inclusive
-deadline boundary, and the open workspace refreshes at the nearest active
-deadline. TASK-004 remains current until manual QA accepts the fix.
+Phase: 4
+
+Implemented scope:
+
+- private recipient-targeted in-app notifications and unread controls
+- safe task-context navigation without stored redirect URLs
+- deterministic 24-hour, one-hour and deadline reminder processing
+- deadline-version idempotency and current task/member eligibility checks
+- immutable database-triggered task and comment activity history
+- compact notification popover and responsive Activity page
+- hosted Supabase Cron execution documentation and permanent security tests
+
+Migration `20260825000500_reminders_notifications_activity.sql` and the hosted
+Cron job require deployment/manual verification. Cron is not automatically
+provisioned by the repository.
+
+Manual QA found and resolved an ambiguous `reminder_kind` PL/pgSQL identifier in
+the hosted processor. Forward migration
+`20260825000510_fix_reminder_processor.sql` safely replaces the function; it
+must be applied before Cron delivery is reverified.
 
 ---
 
 # Next
 
-## TASK-005 — Reminders, Notifications and Activity
+## TASK-006 — Whiteboard Foundation
 
 Status: READY
 
-Phase: 4
+Phase: 5
 
 Planned scope:
 
-- task reminder infrastructure
-- 24-hour reminder
-- 1-hour reminder
-- deadline notification
-- overdue notification
-- notification center
-- activity feed
-- mentions
-- idempotent notification creation
+- boards and infinite/canvas workspace
+- pan and zoom
+- text and sticky notes
+- images, shapes and arrows
+- drag, resize and layering
 
-Do not begin until TASK-004 has completed manual QA and is merged through the
+Do not begin until TASK-005 has completed manual QA and is merged through the
 normal workflow.
 
 ---
 
 # Completed
+
+## TASK-005 — Reminders, Notifications and Activity
+
+Status: COMPLETE / READY FOR MANUAL QA
+
+Phase: 4
+
+Implemented scope matches the current TASK-005 handoff above. External delivery
+channels and mention notifications remain future work.
+
+---
 
 ## TASK-004 — Task Management
 
