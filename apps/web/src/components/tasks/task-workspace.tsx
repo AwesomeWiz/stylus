@@ -1,7 +1,8 @@
 "use client";
 
 import { CalendarDays, Plus } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -25,6 +26,7 @@ interface TaskWorkspaceProps {
   currentUserId: string;
   filters: TaskFilters;
   members: TaskMember[];
+  nextDeadlineIso: string | null;
   nowIso: string;
   tasks: TaskRow[];
 }
@@ -70,14 +72,23 @@ export function TaskWorkspace({
   currentUserId,
   filters,
   members,
+  nextDeadlineIso,
   nowIso,
   tasks,
 }: TaskWorkspaceProps) {
+  const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null);
   const closeCreate = useCallback(() => setCreating(false), []);
   const closeDetail = useCallback(() => setSelectedTask(null), []);
   const now = new Date(nowIso);
+
+  useEffect(() => {
+    if (!nextDeadlineIso) return;
+    const delay = Math.max(0, Date.parse(nextDeadlineIso) - Date.now());
+    const timer = window.setTimeout(() => router.refresh(), delay);
+    return () => window.clearTimeout(timer);
+  }, [nextDeadlineIso, router]);
 
   return (
     <>
@@ -126,8 +137,8 @@ export function TaskWorkspace({
 
       <p className="text-muted-foreground mt-3 flex items-center gap-1.5 text-xs">
         <CalendarDays aria-hidden="true" className="size-3.5" />
-        Dates are shown in UTC. Recently completed work remains visible for 14
-        days before appearing in Archive.
+        Dates are shown in your local time. Recently completed work remains
+        visible for 14 days before appearing in Archive.
       </p>
 
       <Dialog

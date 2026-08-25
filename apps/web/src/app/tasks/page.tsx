@@ -11,6 +11,7 @@ import { getWorkspaceRouteDecision } from "@/modules/onboarding/routing";
 import { canMutateTasks } from "@/modules/tasks/authorization";
 import {
   filterTasks,
+  nextActiveDeadline,
   type TaskFilters,
   type TaskView,
   taskViewValues,
@@ -68,6 +69,7 @@ export default async function TasksPage({
   const now = new Date();
   const filters = parseFilters(params);
   const tasks = filterTasks(workspace.tasks, filters, context.user.id, now);
+  const nextDeadlineIso = nextActiveDeadline(workspace.tasks, now);
 
   return (
     <AppShell
@@ -88,6 +90,7 @@ export default async function TasksPage({
         currentUserId={context.user.id}
         filters={filters}
         members={workspace.members}
+        nextDeadlineIso={nextDeadlineIso}
         nowIso={now.toISOString()}
         tasks={tasks}
       />

@@ -14,7 +14,6 @@ export function formatTaskDate(value: string) {
     hour: "numeric",
     minute: "2-digit",
     month: "short",
-    timeZone: "UTC",
     timeZoneName: "short",
   }).format(new Date(value));
 }

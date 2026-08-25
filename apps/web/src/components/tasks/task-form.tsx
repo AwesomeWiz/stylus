@@ -9,6 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import type { TaskMember, TaskRow } from "@/lib/supabase/database.types";
 import { createTaskAction, updateTaskAction } from "@/modules/tasks/actions";
 import {
+  isoToLocalDateTime,
+  localDateTimeToIso,
+} from "@/modules/tasks/datetime";
+import {
   initialTaskActionState,
   taskPriorityValues,
   taskStatusValues,
@@ -38,19 +42,18 @@ function DateTimeField({
   label: string;
   name: string;
 }) {
-  const [isoValue, setIsoValue] = useState(initialValue ?? "");
-  const displayValue = isoValue ? isoValue.slice(0, 16) : "";
+  const [displayValue, setDisplayValue] = useState(() =>
+    isoToLocalDateTime(initialValue),
+  );
+  const isoValue = localDateTimeToIso(displayValue);
   return (
     <label className="text-sm font-medium">
-      {label} <span className="text-muted-foreground font-normal">(UTC)</span>
+      {label}
       <Input
         className="mt-1.5"
-        defaultValue={displayValue}
-        onChange={(event) => {
-          const next = event.currentTarget.value;
-          setIsoValue(next ? new Date(`${next}:00.000Z`).toISOString() : "");
-        }}
+        onChange={(event) => setDisplayValue(event.currentTarget.value)}
         type="datetime-local"
+        value={displayValue}
       />
       <input name={name} readOnly type="hidden" value={isoValue} />
     </label>

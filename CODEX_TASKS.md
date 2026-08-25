@@ -2,6 +2,19 @@
 
 # Current
 
+## TASK-004 — Task Management Manual QA
+
+Status: COMPLETE / READY FOR MANUAL QA AGAIN
+
+The overdue-deadline defect found during manual QA is resolved. Local date/time
+values are persisted as correct UTC instants, overdue uses the inclusive
+deadline boundary, and the open workspace refreshes at the nearest active
+deadline. TASK-004 remains current until manual QA accepts the fix.
+
+---
+
+# Next
+
 ## TASK-005 — Reminders, Notifications and Activity
 
 Status: READY
@@ -29,7 +42,7 @@ normal workflow.
 
 ## TASK-004 — Task Management
 
-Status: COMPLETE / READY FOR MANUAL QA
+Status: COMPLETE / READY FOR MANUAL QA AGAIN
 
 Phase: 3
 

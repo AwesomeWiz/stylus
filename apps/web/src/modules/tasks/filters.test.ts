@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { TaskRow } from "@/lib/supabase/database.types";
 
-import { filterTasks, isOverdue, recentCompletionThreshold } from "./filters";
+import {
+  filterTasks,
+  isOverdue,
+  nextActiveDeadline,
+  recentCompletionThreshold,
+} from "./filters";
 
 const now = new Date("2026-08-25T12:00:00.000Z");
 const currentUserId = "00000000-0000-4000-8000-000000000001";
@@ -28,19 +33,61 @@ function task(overrides: Partial<TaskRow> = {}): TaskRow {
 }
 
 describe("task views and filters", () => {
-  it("treats only unfinished work past its deadline as overdue", () => {
-    const due = "2026-08-25T11:59:59.999Z";
-    expect(isOverdue(task({ due_at: due }), now)).toBe(true);
+  it("derives overdue state for active work at and after its deadline", () => {
+    const pastDue = "2026-08-25T11:59:59.999Z";
+    const futureDue = "2026-08-25T12:00:00.001Z";
+    expect(isOverdue(task({ due_at: futureDue }), now)).toBe(false);
+    expect(isOverdue(task({ due_at: pastDue }), now)).toBe(true);
+    expect(
+      isOverdue(task({ due_at: pastDue, status: "IN_PROGRESS" }), now),
+    ).toBe(true);
     expect(
       isOverdue(
-        task({ completed_at: due, due_at: due, status: "COMPLETED" }),
+        task({ completed_at: pastDue, due_at: pastDue, status: "COMPLETED" }),
         now,
       ),
     ).toBe(false);
-    expect(isOverdue(task({ due_at: due, status: "CANCELLED" }), now)).toBe(
+    expect(isOverdue(task({ due_at: pastDue, status: "CANCELLED" }), now)).toBe(
       false,
     );
-    expect(isOverdue(task({ due_at: now.toISOString() }), now)).toBe(false);
+    expect(isOverdue(task({ due_at: now.toISOString() }), now)).toBe(true);
+  });
+
+  it("selects only the nearest future deadline that can change derived state", () => {
+    expect(
+      nextActiveDeadline(
+        [
+          task({ due_at: "2026-08-25T12:04:00.000Z" }),
+          task({
+            due_at: "2026-08-25T12:02:00.000Z",
+            id: "10000000-0000-4000-8000-000000000002",
+            status: "IN_PROGRESS",
+          }),
+          task({
+            completed_at: "2026-08-25T11:00:00.000Z",
+            due_at: "2026-08-25T12:01:00.000Z",
+            id: "10000000-0000-4000-8000-000000000003",
+            status: "COMPLETED",
+          }),
+        ],
+        now,
+      ),
+    ).toBe("2026-08-25T12:02:00.000Z");
+  });
+
+  it("recomputes the overdue view correctly after navigation or refresh", () => {
+    const crossingTask = task({ due_at: "2026-08-25T12:04:00.000Z" });
+    expect(
+      filterTasks([crossingTask], { view: "overdue" }, currentUserId, now),
+    ).toEqual([]);
+    expect(
+      filterTasks(
+        [crossingTask],
+        { view: "overdue" },
+        currentUserId,
+        new Date("2026-08-25T12:04:00.000Z"),
+      ),
+    ).toEqual([crossingTask]);
   });
 
   it("returns only the authenticated user's assignments in My Tasks", () => {

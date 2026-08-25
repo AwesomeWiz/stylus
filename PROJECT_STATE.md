@@ -4,7 +4,7 @@ Last Updated: 2026-08-25
 
 ## Overall Status
 
-TASK-004 TASK MANAGEMENT / READY FOR MANUAL QA
+TASK-004 TASK MANAGEMENT / READY FOR MANUAL QA AGAIN
 
 The verified authentication, organization and company-onboarding foundation now
 includes lightweight collaborative task management. The implementation is ready
@@ -16,14 +16,15 @@ for authenticated role, responsive and migration QA before merge.
 
 Phase 3 — Tasks
 
-Status: READY FOR MANUAL QA
+Status: READY FOR MANUAL QA AGAIN
 
 ---
 
 ## Current Objective
 
-TASK-004 is implementation-complete on `codex/task-004-task-management` and is
-ready for manual QA. TASK-005 is documented as next but has not started.
+TASK-004 includes the resolved overdue-deadline manual-QA defect on
+`codex/task-004-task-management` and is ready for manual QA again. TASK-005 is
+documented as next but has not started.
 
 ---
 
@@ -237,6 +238,24 @@ Verified on 2026-08-25:
 - component coverage verifies compact task display, collaborator dialogs,
   VIEWER read-only behavior and view-specific empty states
 
+## Manual-QA Overdue Deadline Fix
+
+Resolved on 2026-08-25:
+
+- local date/time inputs now convert through the browser timezone to UTC
+  instants before persistence, and stored instants display in local time
+- overdue uses the inclusive `due_at <= now` boundary for active tasks only
+- the open workspace schedules one refresh at the nearest future active
+  deadline, with timer cleanup and no polling when no deadline can change state
+- deterministic coverage verifies timezone conversion, active/inactive status
+  behavior, the deadline boundary, refresh-time filtering and the existing
+  14-day completion split
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 26 files and 97 tests
+- `npm run build`: passed; protected `/tasks` route compiled
+
 ---
 
 # Manual Verification Still Required
@@ -375,14 +394,15 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-004 task management is ready for manual QA on
+TASK-004 task management is ready for manual QA again on
 `codex/task-004-task-management`. TASK-005 has not started.
 
 ---
 
 # Known Issues
 
-No known unresolved TASK-004 implementation defect after the automated suite.
+No known unresolved TASK-004 implementation defect after the overdue-deadline
+manual-QA fix and automated suite.
 
 Docker is unavailable, so the new pgTAP suite has not run locally. The in-app
 browser runtime reported no available browser surface, so authenticated visual,

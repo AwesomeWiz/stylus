@@ -10,7 +10,14 @@ vi.mock("@/modules/tasks/actions", () => ({
   updateTaskAction: vi.fn(),
 }));
 
+const router = vi.hoisted(() => ({ refresh: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+}));
+
 import { TaskWorkspace } from "./task-workspace";
+import { formatTaskDate } from "./presentation";
 
 const members: TaskMember[] = [
   {
@@ -37,7 +44,11 @@ const task: TaskRow = {
   updated_by: members[0]!.member_user_id,
 };
 
-function renderWorkspace(canMutate: boolean, tasks: TaskRow[] = [task]) {
+function renderWorkspace(
+  canMutate: boolean,
+  tasks: TaskRow[] = [task],
+  nextDeadlineIso: string | null = null,
+) {
   return render(
     <TaskWorkspace
       canMutate={canMutate}
@@ -45,6 +56,7 @@ function renderWorkspace(canMutate: boolean, tasks: TaskRow[] = [task]) {
       currentUserId={members[0]!.member_user_id}
       filters={{ view: "my" }}
       members={members}
+      nextDeadlineIso={nextDeadlineIso}
       nowIso="2026-08-25T12:00:00.000Z"
       tasks={tasks}
     />,
@@ -54,6 +66,7 @@ function renderWorkspace(canMutate: boolean, tasks: TaskRow[] = [task]) {
 describe("task workspace", () => {
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -64,7 +77,7 @@ describe("task workspace", () => {
       screen.getByRole("button", { name: "Complete Prepare launch notes" }),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Alex Morgan").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Aug 24, 12:00 PM UTC/i)).toHaveLength(2);
+    expect(screen.getAllByText(formatTaskDate(task.due_at!))).toHaveLength(2);
   });
 
   it("offers an accessible creation dialog to collaborators", () => {
@@ -100,5 +113,16 @@ describe("task workspace", () => {
   it("shows view-specific empty states", () => {
     renderWorkspace(true, []);
     expect(screen.getByText("No tasks assigned to you.")).toBeInTheDocument();
+  });
+
+  it("refreshes once when the nearest active deadline is crossed", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime("2026-08-25T12:00:00.000Z");
+    renderWorkspace(true, [], "2026-08-25T12:04:00.000Z");
+
+    vi.advanceTimersByTime(4 * 60 * 1000 - 1);
+    expect(router.refresh).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(router.refresh).toHaveBeenCalledTimes(1);
   });
 });

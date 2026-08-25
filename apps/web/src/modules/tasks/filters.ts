@@ -33,8 +33,18 @@ export function isOverdue(task: TaskRow, now: Date) {
   return Boolean(
     isActiveTask(task) &&
     task.due_at &&
-    Date.parse(task.due_at) < now.getTime(),
+    Date.parse(task.due_at) <= now.getTime(),
   );
+}
+
+export function nextActiveDeadline(tasks: TaskRow[], now: Date) {
+  const nowTime = now.getTime();
+  const deadlines = tasks
+    .filter(isActiveTask)
+    .map((task) => (task.due_at ? Date.parse(task.due_at) : Number.NaN))
+    .filter((deadline) => Number.isFinite(deadline) && deadline > nowTime);
+  if (!deadlines.length) return null;
+  return new Date(Math.min(...deadlines)).toISOString();
 }
 
 export function recentCompletionThreshold(now: Date) {
