@@ -21,17 +21,19 @@ Status: COMPLETE
 
 ## Phase 1 — Authentication & Organizations
 
-- [ ] Supabase
-- [ ] signup
-- [ ] login
-- [ ] logout
-- [ ] sessions
-- [ ] organizations
-- [ ] memberships
-- [ ] protected routes
-- [ ] role/permission foundation
-- [ ] RLS
-- [ ] authorization tests
+Status: COMPLETE
+
+- [x] Supabase
+- [x] signup
+- [x] login
+- [x] logout
+- [x] sessions
+- [x] organizations
+- [x] memberships
+- [x] protected routes
+- [x] role/permission foundation
+- [x] RLS
+- [x] authorization tests
 
 ---
 

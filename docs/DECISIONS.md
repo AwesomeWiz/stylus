@@ -145,3 +145,22 @@ Codex sessions must not depend on previous conversation history.
 
 AGENTS.md, PROJECT_STATE.md, CODEX_TASKS.md and /docs are the persistent
 handoff mechanism.
+
+---
+
+## ADR-013 — Supabase SSR and Defense-in-Depth Tenancy
+
+Status: ACCEPTED
+
+Stylus uses Supabase Auth through `@supabase/ssr` with cookie-backed sessions.
+Next.js Proxy refreshes sessions and provides early redirects, but every
+protected server operation independently verifies identity and organization
+membership.
+
+Organization isolation is enforced by both reusable server authorization
+helpers and PostgreSQL grants/RLS. Initial organization creation uses a narrowly
+granted, security-definer database function with an empty search path so the
+organization and creator `OWNER` membership are committed atomically.
+
+No service-role client is introduced for normal authentication or organization
+operations.

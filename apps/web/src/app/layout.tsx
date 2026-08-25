@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-import { env } from "@/lib/env";
+import { serverEnv } from "@/lib/env/server";
 
 import "./globals.css";
 
-void env;
+void serverEnv;
 
 export const metadata: Metadata = {
   title: "Stylus",

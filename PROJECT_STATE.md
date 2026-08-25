@@ -4,16 +4,16 @@ Last Updated: 2026-08-25
 
 ## Overall Status
 
-FOUNDATION COMPLETE / READY FOR PHASE 1
+AUTHENTICATION AND ORGANIZATIONS COMPLETE / READY FOR PHASE 2
 
-The verified web application foundation and initial Stylus shell are in
-place. Business functionality has not started.
+The verified Supabase authentication and organization-isolation foundation is
+in place. Company onboarding and later business functionality have not started.
 
 ---
 
 ## Current Phase
 
-Phase 0 — Repository Foundation
+Phase 1 — Authentication and Organizations
 
 Status: COMPLETE
 
@@ -21,10 +21,10 @@ Status: COMPLETE
 
 ## Current Objective
 
-TASK-001 established the repository structure, development tooling,
-architectural boundaries and responsive application shell.
+TASK-002 established secure multi-user authentication, organization membership,
+server-side organization context and database row-level security.
 
-TASK-002 is ready but has not started.
+TASK-003 is ready but has not started.
 
 ---
 
@@ -44,7 +44,7 @@ TASK-002 is ready but has not started.
 
 ---
 
-# Verification
+# Phase 0 Verification
 
 Verified on 2026-08-25:
 
@@ -55,6 +55,71 @@ Verified on 2026-08-25:
 - `npm run test`: passed; 3 files and 4 tests
 - `npm run build`: passed; `/` prerendered as static content
 - development server: started successfully; `/` returned HTTP 200
+
+---
+
+# Phase 1 Implementation
+
+- browser-safe and server-only Supabase clients using `@supabase/ssr`
+- Next.js Proxy session refresh using verified Supabase claims
+- signup, email-confirmation, login and logout flows
+- protected application and organization-setup routes
+- server-side identity and organization-membership helpers
+- organization setup boundary before entering the Stylus shell
+- shell account identity, organization name, role and logout menu
+- Zod validation for required public environment configuration and forms
+- generic authentication errors that do not expose credentials or account state
+
+---
+
+# Phase 1 Database
+
+Migration: `supabase/migrations/20260825000100_auth_organizations.sql`
+
+Introduced:
+
+- `public.organization_role`: `OWNER`, `ADMIN`, `MEMBER`, `VIEWER`
+- `public.organizations`
+- `public.memberships` with `(organization_id, user_id)` primary key
+- private membership/role authorization functions with pinned search paths
+- atomic `public.create_organization(text)` RPC
+- restricted table/function grants
+- RLS policies for organization reads, organization updates and membership reads
+- pgTAP policy suite at `supabase/tests/database/organizations_rls.test.sql`
+
+---
+
+# Phase 1 Verification
+
+Verified on 2026-08-25 with browser-safe test configuration:
+
+- dependency installation: passed; 0 audit vulnerabilities
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- `npm run test`: passed; 10 files and 27 tests
+- `npm run build`: passed; 7 application routes plus Proxy compiled
+- development server: passed
+- `/login` and `/signup`: HTTP 200 with expected labeled forms
+- `/` and `/organization/new` while unauthenticated: HTTP 307 to `/login`
+- browser bundle scan: no service-role environment names or secret-key prefixes
+- source scan: no credential/token logging or service-role client
+
+---
+
+# Manual Verification Still Required
+
+The current machine does not have Docker, Supabase project credentials or an
+available in-app browser surface. Before production deployment:
+
+1. Run `npm run db:start`, `npm run db:reset`, `npm run db:lint` and
+   `npm run test:db` in a Docker-enabled environment.
+2. Apply the migration to a non-production Supabase project.
+3. Configure the Site URL, allowed redirect URL and confirmation email template
+   to use `/auth/confirm?token_hash={{ .TokenHash }}&type=email`.
+4. Manually verify signup, confirmation, login, session refresh, organization
+   creation, cross-user isolation and logout with real accounts.
+5. Perform desktop and mobile visual QA in a browser.
 
 ---
 
@@ -173,19 +238,22 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-001 complete. TASK-002 is ready for a future implementation session.
+TASK-002 complete. TASK-003 is ready for a future implementation session.
 
 ---
 
 # Known Issues
 
-None.
+No known implementation defects.
+
+Real Supabase/pgTAP and interactive browser verification remain required as
+described above because the necessary external environment was unavailable.
 
 ---
 
 # Next Recommended Action
 
-Execute TASK-002 from CODEX_TASKS.md on a dedicated task branch.
+Execute TASK-003 from CODEX_TASKS.md on a dedicated task branch.
 
 ---
 
@@ -199,7 +267,7 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-001 is complete and verified on `codex/task-001-foundation`.
+TASK-002 is complete and verified on `codex/task-002-auth`.
 
-Begin TASK-002 only in a new session after reviewing the repository and
-current worktree. Preserve unrelated user changes and do not begin TASK-003.
+Begin TASK-003 only in a new session after reviewing the repository and current
+worktree. Preserve unrelated user changes and do not begin TASK-004.

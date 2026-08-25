@@ -8,11 +8,36 @@ Exact schemas are introduced through migrations during implementation.
 
 # Identity
 
-users
-organizations
-memberships
-roles
-permissions
+Supabase Auth owns users in `auth.users`.
+
+Phase 1 introduces:
+
+`organizations`
+
+- `id` UUID primary key
+- `name` constrained to 2–80 trimmed characters
+- `created_by` references `auth.users`
+- `created_at`
+- `updated_at`
+
+`memberships`
+
+- `organization_id` references `organizations`
+- `user_id` references `auth.users`
+- `role` uses `OWNER`, `ADMIN`, `MEMBER` or `VIEWER`
+- `created_at`
+- primary key: `(organization_id, user_id)`
+
+Initial organization creation uses the authenticated-only
+`create_organization` database function. Organization insertion and the
+creator's `OWNER` membership occur in one transaction.
+
+Direct client mutation of memberships is not granted in Phase 1. Organization
+members may read their organization, users may read their own memberships, and
+only owners/admins may update the organization name. RLS and server-side
+authorization both enforce these boundaries.
+
+Granular roles and permissions remain future work.
 
 ---
 
