@@ -202,6 +202,28 @@ store.
 
 ---
 
+# AI Platform
+
+Stylus provides organization-controlled AI execution through one server-side
+ModelGateway. Business plugins request logical tiers rather than vendor models,
+and cannot access provider clients or credentials directly.
+
+OWNER and ADMIN manage whether AI is disabled, local-only or remote-allowed,
+choose a default logical tier and optionally set a monthly estimated remote-cost
+ceiling. MEMBER can use future explicitly authorized Core/plugin AI operations;
+VIEWER is read-only and cannot execute AI. All members may inspect safe run
+metadata for their organization.
+
+Run diagnostics include status, selected model/provider, timing, token usage,
+estimated cost and normalized errors. Complete prompts and model responses are
+not persisted or displayed. AI being disabled or a provider being offline does
+not make Core collaboration unavailable.
+
+TASK-009 supplies execution infrastructure only. It does not add agents,
+Marketing generation, memory retrieval, embeddings or autonomous tools.
+
+---
+
 # Marketing
 
 Marketing is the first major Stylus plugin.

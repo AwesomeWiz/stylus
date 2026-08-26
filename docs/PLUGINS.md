@@ -131,9 +131,19 @@ later use the persisted job infrastructure.
 
 ## AI Tools and Memory Domains
 
-Tool entries are metadata-only extension points: ID, name and description. There
-is no ModelGateway, tool execution, agent, workflow, provider or LLM integration
-in TASK-008.
+TASK-008 manifest tool entries remain discovery metadata: ID, name and
+description. TASK-009 adds a separate trusted server tool-definition registry
+with an owning plugin, required capability, Zod schemas and `read`, `write` or
+`external_side_effect` classification. It does not add an autonomous tool loop.
+
+A model-produced tool name is untrusted data. Future execution must resolve an
+explicit registered tool and independently verify current organization, actor,
+plugin enablement, capability, schemas, memory policy and side-effect approval.
+The model cannot register or select arbitrary functions, URLs or credentials.
+
+Plugins may use the normalized contracts from `@/core/ai/public` and the
+server-only gateway entrypoint from `@/core/ai/server`. They must not import
+provider adapters, model configuration or provider environment values.
 
 Memory-domain declarations are also metadata and never authorize retrieval.
 Core policy recognizes only `company`, `marketing`, and `agency` and establishes:
@@ -142,8 +152,10 @@ Core policy recognizes only `company`, `marketing`, and `agency` and establishes
 - future Web Agency is restricted to `agency` by default
 - installing either plugin never grants the other's domain
 
-Future memory code must still enforce organization and domain scope at the
-database/application boundary.
+TASK-009 copies these declared domains into safe AI run context for audit only.
+Future memory code must still independently enforce organization and domain
+scope at the database/application boundary. Declaration is not authorization and
+no memory records are queried by the ModelGateway.
 
 ## Configuration and Secrets
 

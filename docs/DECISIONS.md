@@ -306,3 +306,30 @@ public plugin contract and never imports business-plugin private internals.
 This decision deliberately excludes marketplaces, runtime filesystem discovery,
 remote packages, `eval`, MCP, AI execution, secrets configuration and Marketing
 or Web Agency implementation.
+
+---
+
+## ADR-022 — Provider-Neutral, Policy-Gated AI Execution
+
+Status: ACCEPTED
+
+Stylus AI consumers use one server-only ModelGateway with normalized messages,
+logical tiers and validated results. Deployment-configured adapters and models
+remain implementation details. The initial OpenAI-compatible transport supports
+both optional hosted endpoints and local Ollama without requiring either at
+startup or in automated tests.
+
+Routing is deterministic and filters organization execution mode, provider
+allowlist, required capabilities and estimated-cost budget before invocation.
+LOCAL_ONLY can never fall back remotely. Plugin calls additionally require
+static registration, organization enablement and a declared capability; manifest
+memory domains are trace context, not retrieval authority.
+
+AI runs persist safe operational metadata rather than complete prompts,
+responses or chain-of-thought. Provider errors, usage and estimated cost are
+normalized. Every request has bounded timeout/cancellation and narrowly bounded
+transient retry behavior. Model-produced tool names remain untrusted and can only
+resolve through a future authorization-aware trusted tool executor.
+
+This decision excludes agents, memory/RAG, embeddings, autonomous tool loops,
+long-running workflows, custom secret vaults and remote laptop networking.

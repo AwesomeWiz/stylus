@@ -27,7 +27,10 @@ describe("plugin architecture boundary", () => {
       expect(imports, relative(sourceRoot, file)).toEqual(
         imports.filter(
           (specifier) =>
-            specifier === "@/core/plugins/public" || specifier.startsWith("."),
+            specifier === "@/core/plugins/public" ||
+            specifier === "@/core/ai/public" ||
+            specifier === "@/core/ai/server" ||
+            specifier.startsWith("."),
         ),
       );
     }

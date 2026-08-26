@@ -147,6 +147,51 @@ without deleting its `organization_plugins` row.
 
 ---
 
+# AI Foundation Configuration
+
+Apply `20260825000900_ai_foundation.sql` and forward correction
+`20260825000910_fix_ai_trace_metadata_constraint.sql` before exercising AI. No
+paid provider, model download, worker, pgvector extension or service-role
+credential is required. Organization policy defaults to disabled until
+OWNER/ADMIN saves it.
+
+Optional local development uses server-only values:
+
+```text
+STYLUS_AI_OLLAMA_BASE_URL=http://127.0.0.1:11434
+STYLUS_AI_OLLAMA_MODEL=<installed-model-name>
+```
+
+Ollama is installed, secured and operated separately. Stylus does not start it,
+download weights or fail startup when it is absent. Use LOCAL_ONLY during local
+testing to prove remote fallback cannot occur.
+
+An optional hosted OpenAI-compatible endpoint uses:
+
+```text
+STYLUS_AI_OPENAI_COMPATIBLE_BASE_URL=https://configured-provider.example/v1
+STYLUS_AI_OPENAI_COMPATIBLE_MODEL=<provider-model-name>
+STYLUS_AI_OPENAI_COMPATIBLE_API_KEY=<server-secret-if-required>
+STYLUS_AI_REMOTE_INPUT_USD_PER_MILLION=<optional-estimate>
+STYLUS_AI_REMOTE_OUTPUT_USD_PER_MILLION=<optional-estimate>
+```
+
+These values must remain server environment configuration and must never use a
+`NEXT_PUBLIC_` prefix. Base URLs are deployment-controlled; the AI Settings page
+contains provider IDs only and cannot turn Stylus into an arbitrary URL proxy.
+
+A hosted deployment cannot reach `127.0.0.1` on a developer laptop. Configure a
+provider reachable from the hosted server or leave hosted AI disabled. Do not
+create an unauthenticated tunnel to Ollama. The later outbound worker/job system
+will address optional laptop compute separately.
+
+Hosted QA requires two organizations and OWNER/ADMIN/MEMBER/VIEWER accounts.
+Verify manager-only policy changes, member-readable safe run metadata, VIEWER
+execution denial, cross-organization RLS, LOCAL_ONLY behavior and the absence of
+prompts, responses and credentials in database/browser-visible data.
+
+---
+
 # Deployment Philosophy
 
 Optimize initially for:

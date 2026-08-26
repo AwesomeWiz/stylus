@@ -135,15 +135,22 @@ Agency implementations remain future tasks.
 
 ## Phase 7 — AI Platform
 
-- [ ] ModelGateway
-- [ ] providers
-- [ ] logical model profiles
+Status: READY FOR MANUAL QA
+
+- [x] ModelGateway
+- [x] providers
+- [x] logical model profiles
 - [ ] agent interface
-- [ ] tools
+- [x] trusted tool registry foundation
 - [ ] workflows
-- [ ] structured outputs
-- [ ] reasoning sessions
-- [ ] fake AI provider for tests
+- [x] structured outputs
+- [x] AI run metadata
+- [x] organization AI policy and budget foundation
+- [x] fake AI provider for tests
+
+TASK-009 provides provider-neutral synchronous execution, deterministic routing,
+local/remote policy, safe run metadata and future tool contracts. It deliberately
+does not implement agents, orchestration, memory retrieval or long-running jobs.
 
 ---
 

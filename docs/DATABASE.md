@@ -297,22 +297,45 @@ Additional conceptual fields:
 
 ---
 
-# AI Runs
+# Organization AI Policy and Runs
 
-reasoning_sessions
-reasoning_steps
+TASK-009 migration `20260825000900_ai_foundation.sql` introduces:
 
-Record enough information to understand:
+`organization_ai_policies`
 
-- workflow
-- participating agents
-- models
-- inputs
-- outputs
-- timing
-- status
+- one optional row per organization; absence is treated as AI disabled
+- controlled `DISABLED`, `LOCAL_ONLY` and `REMOTE_ALLOWED` execution modes
+- controlled FAST, BALANCED and REASONING default logical tier
+- bounded deployment provider-ID allowlist, never provider URLs or credentials
+- optional monthly estimated remote-cost ceiling
+- manager updater provenance and timestamps
 
-Do not expose hidden model chain-of-thought.
+`ai_runs`
+
+- stable UUID and explicit organization/actor membership provenance
+- nullable plugin identity for explicit Core operations
+- operation, declared capability and manifest memory-domain trace metadata
+- requested tier plus selected stable model/provider IDs and local/remote flag
+- controlled lifecycle status and safe normalized error category
+- timing, token usage and optional estimated cost
+- optional same-organization parent run for future bounded composition
+- bounded JSON object trace metadata that rejects raw prompt/response key names
+
+Corrective migration `20260825000910_fix_ai_trace_metadata_constraint.sql`
+replaces the applied recursive JSONPath expression with an immutable recursive
+helper. The original expression called object-only `keyvalue()` on scalar
+descendants and blocked otherwise valid run initialization. The replacement
+continues rejecting forbidden keys at every object/array depth without applying
+object methods to scalar values.
+
+Run rows do not contain API keys, complete prompts, model responses or hidden
+chain-of-thought. Provider diagnostics are normalized before persistence.
+Organization members can read their organization's metadata through RLS. Tables
+have no direct browser writes: pinned-search-path functions derive the actor,
+verify active role and enabled plugin state, and enforce one terminal transition.
+
+Future agent/workflow records may reference `ai_runs`; TASK-009 does not create
+reasoning-step or memory-retrieval tables.
 
 Store explicit agent outputs, decisions and rationale designed for the
 application.

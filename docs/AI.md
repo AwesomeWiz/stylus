@@ -2,169 +2,268 @@
 
 ## Principle
 
-AI is a platform capability used by Stylus modules and plugins.
+AI is an optional Core platform capability. Business modules and plugins never
+call provider SDKs, Ollama, provider endpoints or credentials directly.
 
-No business module directly integrates with a model vendor.
+```text
+Core or enabled plugin
+  -> Stylus AI public contract
+  -> ModelGateway
+  -> deterministic ModelRouter
+  -> configured provider adapter
+  -> model
+```
 
----
+Core collaboration remains usable when organization AI is disabled, no model is
+configured, or a local provider is offline.
 
-# ModelGateway
+## Public Contract and Server Boundary
 
-All AI inference goes through ModelGateway.
+`core/ai/public.ts` defines provider-neutral messages, logical tiers, usage and
+normalized text/structured results. Messages currently support `system`, `user`
+and `assistant`; the shape can later add trusted tool-result messages without
+exposing vendor objects.
 
-Logical capabilities:
+`core/ai/server.ts` is the server-only execution entrypoint. It derives the
+authenticated actor, active organization membership and a fresh run UUID. An
+ordinary browser request cannot supply organization, actor, run ID, provider,
+model or base URL. Raw provider clients and raw responses never cross this API.
 
-- fast
-- general
-- reasoning
-- vision
-- embedding
-- transcription
+Provider adapters, endpoint configuration and API keys live only under
+server-only modules and non-`NEXT_PUBLIC` environment variables.
 
-Providers may include:
+## ModelGateway
 
-- Ollama
-- hosted open-model providers
-- optional API fallback providers
+`ModelGateway` exposes normalized text and Zod-typed structured generation. It:
 
-Provider selection is configuration.
+1. validates bounded messages and generation options;
+2. creates a metadata-only RUNNING record;
+3. obtains deterministic policy-compliant candidates from `ModelRouter`;
+4. invokes only statically configured provider adapters;
+5. normalizes usage, finish reason and provider failures;
+6. validates structured output before returning typed data;
+7. estimates cost only when model pricing and token usage are known; and
+8. records one terminal run transition.
 
----
+It does not implement agents, memory retrieval, autonomous tools, streaming,
+multi-agent orchestration or persisted background jobs.
 
-# Agents
+## Provider Adapters
 
-Agents are logical roles consisting of:
+The adapter contract receives normalized messages, configured provider model,
+optional temperature, maximum output tokens, optional structured-output schema
+and an AbortSignal. It returns normalized text, usage, finish reason and an
+optional provider request identifier. Unsupported capabilities remain explicit
+model metadata rather than being assumed.
 
-- identity
-- instructions
-- tools
-- memory permissions
-- model profile
-- input schema
-- output schema
+TASK-009 provides:
 
-Agents are not separate permanently-running model processes.
+- a small OpenAI-compatible HTTP adapter for deployment-configured endpoints;
+- Ollama/local support through its OpenAI-compatible chat endpoint; and
+- a deterministic fake adapter for automated success, malformed-output,
+  unavailable, rate-limit, timeout, cancellation, usage and retry tests.
 
----
+Endpoints are server deployment configuration, must use HTTP(S), and cannot
+contain embedded credentials, query strings or fragments. Browser-supplied URLs
+are never accepted, preventing Stylus from becoming an arbitrary SSRF proxy.
+Provider availability is evaluated at explicit health/execution boundaries, not
+on every render or during application startup.
 
-# Workflows
+## Model Registry and Logical Tiers
 
-Prefer bounded workflows.
+Each registered model has a stable Stylus ID, provider ID/model name, enabled
+state, priority, logical tiers, local/remote classification, structured-output
+and tool capability flags, optional context window, relative cost class and
+optional deployment-maintained pricing metadata.
 
-Example Marketing workflow:
+The initial logical tiers are:
 
-Evidence
--> Audience Research
--> Competitor Research
--> Concepts
--> Hook
--> Script
--> Retention
--> Visual Direction
--> Brand Review
--> Critic
--> limited revision
--> Judge
--> Reel Brief
+- `fast`: low-latency classification and simple transformation;
+- `balanced`: normal summaries and generation; and
+- `reasoning`: higher-effort future strategic work.
 
----
+Plugins request a tier and required capabilities, not a vendor model. Duplicate
+model IDs fail registration; disabled and unsupported models are unavailable.
+Pricing is optional configuration, not volatile business logic.
 
-# Memory
+## Routing and Fallback
 
-Retrieval must specify organization and domain.
+The router filters and orders candidates deterministically by:
 
-No global unrestricted vector search.
+- requested/default logical tier;
+- required structured/tool capability;
+- enabled model state and configured adapter;
+- organization execution mode;
+- organization provider allowlist; and
+- estimated remote-cost ceiling.
 
-Marketing:
+Candidates retain explicit priority order and traces store a safe selection
+reason. Fallback occurs only after a transient candidate failure and only among
+the already filtered candidates.
 
-company + marketing
+`LOCAL_ONLY` removes every remote model before invocation. It can never fall back
+remotely. `REMOTE_ALLOWED` permits configured remote candidates but does not
+require them; lower-priority remote fallback may follow a local unavailable
+result. Disabled policy selects nothing. Reaching a hard estimated-cost ceiling
+blocks paid remote candidates before any provider request; local and explicitly
+zero-cost models remain eligible.
 
-Agency:
+## Organization AI Policy
 
-agency
+`organization_ai_policies` is optional; absence means disabled. OWNER and ADMIN
+manage:
 
----
+- `DISABLED`, `LOCAL_ONLY` or `REMOTE_ALLOWED` execution mode;
+- FAST, BALANCED or REASONING default tier;
+- optional configured-provider allowlist; and
+- optional monthly estimated remote-cost ceiling.
 
-# Reasoning Transparency
+MEMBER and VIEWER may inspect policy. MEMBER may execute only future explicitly
+authorized operations; VIEWER cannot execute. Provider URLs and credentials are
+not organization policy fields and never appear in the UI.
 
-Stylus should expose useful application-level reasoning artifacts such as:
+## Plugin Execution Context and Memory Domains
 
-- evidence used
-- proposals
-- critiques
-- scores
-- explicit rationale
-- final decision
+Every plugin-originated request requires:
 
-Do not design the application around exposing private model
-chain-of-thought.
+- authenticated active membership;
+- server-derived organization and actor;
+- a statically registered plugin currently enabled for that organization;
+- an exactly declared plugin capability; and
+- a server-generated run ID.
 
----
+Memory domains are copied from the validated plugin manifest into run metadata.
+They are audit context only. They do not query memory and do not authorize future
+retrieval. A future memory service must independently enforce organization,
+workspace and domain scope. Marketing remains limited to `company` and
+`marketing`; Web Agency remains limited to `agency` by default.
 
-# Cost Strategy
+## Structured Output
 
-Use the cheapest suitable computation.
+`generateStructured` accepts a Zod schema. The schema is translated to JSON
+schema for providers that support compatible constrained output. Regardless of
+provider claims, returned text is parsed as JSON and validated again with Zod.
+Malformed JSON or a schema mismatch becomes `invalid_response`, records a failed
+run and never reaches application code as typed data.
 
-Tier 0:
-No model.
+Plain text generation returns only normalized text, stable model/provider IDs,
+usage, estimated cost, finish reason and run ID. Raw provider response objects
+are not returned.
 
-Examples:
-- SQL
-- filtering
-- deduplication
-- FFmpeg
-- OpenCV
-- statistics
+## Future Tool Boundary
 
-Tier 1:
-Small model.
+The trusted server tool registry defines:
 
-Examples:
-- classification
-- tagging
+- stable namespaced ID and description;
+- owning plugin and required capability;
+- Zod input and optional output schema;
+- `read`, `write` or `external_side_effect` classification; and
+- an explicitly registered execution function.
 
-Tier 2:
-General model.
+Model output is untrusted input. A generated tool name does not authorize or
+execute anything. Future execution must recheck registry membership, active
+organization/actor, plugin enablement, capability, schemas, memory policy and
+side-effect approval. TASK-009 intentionally has no autonomous tool-calling loop
+or approval workflow.
 
-Examples:
-- summaries
-- content ideation
+## Run Lifecycle and Diagnostics
 
-Tier 3:
-Reasoning/vision.
+`ai_runs` uses controlled PENDING, RUNNING, SUCCEEDED, FAILED, CANCELLED and
+TIMED_OUT states. Current synchronous execution creates RUNNING directly and
+permits one terminal transition. Stable IDs prevent accidental duplicate run
+creation; optional parent IDs support future bounded composition without
+implementing it now.
 
-Examples:
-- creative analysis
-- script critique
-- visual reasoning
+Stored metadata includes organization, database-derived actor, plugin/Core
+origin, operation, capability, requested tier, selected model/provider,
+local/remote flag, timing, token usage, estimated cost, safe error category and
+bounded trace metadata. The `/ai` diagnostics view shows these operational fields.
 
-Tier 4:
-Optional powerful fallback.
+Complete prompts, model responses, provider error bodies, credentials and hidden
+chain-of-thought are not stored or displayed. Trace JSON rejects common raw
+content keys and application tracing stores counts/selection data only. Production
+code does not log prompt content to the console.
 
-Examples:
-- difficult final judgment
+Trace validation recursively walks only JSON objects and arrays. Scalar metadata
+is valid and never receives object-only JSON operations. Persistence failures
+remain a normalized `unknown` client error, while server logs record only the
+failed lifecycle stage and database error code—not row data, prompts or provider
+content.
 
----
+### Connection Diagnostic
 
-# Local Hardware
+`/ai` provides OWNER, ADMIN and MEMBER with a fixed-input connection test. Its
+Server Action calls `generateAIText` with `core.ai.connection-test`, the `fast`
+tier, an eight-token output ceiling and a 15-second timeout. It accepts no prompt,
+organization, actor, plugin, provider URL/ID or model ID from the browser.
 
-Current development machine:
+The request therefore follows the same authenticated organization context,
+policy routing, provider configuration and `ai_runs` lifecycle as every trusted
+AI consumer. `LOCAL_ONLY` cannot fall back remotely, `DISABLED` is denied and
+VIEWER has no execution control. The UI discards model text and exposes only
+success/failure, provider, selected model, duration and normalized error category.
 
-- Windows
-- 8 GB system RAM
-- GTX 1650
-- ample disk space
+## Usage, Cost and Budgets
 
-Design local inference conservatively.
+Adapters report input/output/total tokens when available. Unknown usage remains
+`null`; Stylus does not invent token counts. Cost is an estimate only when both
+deployment pricing metadata and required usage are available. Local models use
+an estimated API cost of zero while still consuming local hardware.
 
-Prefer small quantized models and sequential inference.
+Monthly remote spend sums successful remote run estimates. It is not a provider
+invoice or billing platform. A configured hard ceiling prevents another paid
+remote selection once recorded estimated spend reaches the ceiling.
 
-Do not require large models for basic application functionality.
+## Errors, Timeouts, Cancellation and Retries
 
----
+Provider failures normalize to:
 
-# Testing
+- `provider_unavailable`
+- `authentication_failed`
+- `rate_limited`
+- `timeout`
+- `invalid_response`
+- `context_limit`
+- `budget_exceeded`
+- `policy_denied`
+- `cancelled`
+- `unknown`
 
-AI-dependent application logic must support fake/mock providers.
+Public errors never include credentials or large provider bodies. Requests use a
+configurable 1–120 second timeout with a 30-second default and accept an external
+AbortSignal. Timeout and cancellation receive distinct terminal states.
 
-Automated tests should not require real paid AI calls.
+Only provider-unavailable, rate-limit and unknown transient failures receive one
+retry. Authentication, policy, budget, invalid response, timeout and cancellation
+are not retried. This avoids retry storms and unexpected paid-provider cost.
+
+## Zero-Cost Local Development
+
+No paid API, local model or network call is required for installation, build or
+tests. Automated tests use the fake adapter.
+
+For optional local execution:
+
+1. Install and operate Ollama separately; Stylus never downloads model weights.
+2. Choose a small quantized model appropriate for the Windows machine.
+3. Set server-only `STYLUS_AI_OLLAMA_BASE_URL` (normally
+   `http://127.0.0.1:11434`) and `STYLUS_AI_OLLAMA_MODEL`.
+4. Restart the local Next.js server.
+5. Apply the TASK-009 migration and set organization policy to LOCAL_ONLY.
+
+If Ollama is stopped, execution returns `provider_unavailable`; the application
+and Core collaboration continue normally.
+
+## Hosted Deployment Limitation
+
+A hosted Stylus server cannot reach an Ollama process bound to a developer
+laptop's localhost. TASK-009 does not create tunnels, expose Ollama publicly or
+solve remote worker networking. Hosted deployments must configure a provider
+reachable from the server environment. A later authenticated outbound worker/job
+architecture may safely use the optional laptop for heavy work.
+
+## Deferred Work
+
+TASK-010 will add Company Knowledge and memory with explicit promotion and domain
+isolation. Later tasks add jobs/workers, agents, workflows and Marketing. None of
+those systems are implemented by TASK-009.
