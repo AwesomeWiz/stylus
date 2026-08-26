@@ -94,6 +94,16 @@ PostgreSQL grants and RLS provide defense in depth. Organization creation is an
 authenticated atomic database function that creates both the organization and
 its creator's `OWNER` membership.
 
+Team invitations use server-generated 256-bit random tokens. Only SHA-256 hashes
+are stored; the plaintext token is returned once for manual sharing. Atomic
+database functions derive organization and role, verify the authenticated email,
+create/reactivate membership and mark acceptance. A validated HTTP-only
+organization-selection cookie selects the accepted tenant without becoming an
+authorization source.
+
+Member removal is soft so provenance foreign keys and business history remain
+intact. Authorization helpers and directories exclude removed rows.
+
 Company onboarding never accepts an organization boundary from browser form
 data. Server Actions derive the current organization from the authenticated
 membership context, explicitly require `OWNER` or `ADMIN`, map accepted fields,

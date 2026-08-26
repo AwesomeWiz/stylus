@@ -1,4 +1,5 @@
 export type OrganizationRole = "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
+export type OrganizationInvitationStatus = "PENDING" | "ACCEPTED" | "REVOKED";
 export type CompanyStage =
   | "IDEA"
   | "VALIDATION"
@@ -116,7 +117,49 @@ export type MembershipRow = {
   created_at: string;
   organization_id: string;
   role: OrganizationRole;
+  removed_at: string | null;
   user_id: string;
+};
+
+export type OrganizationInvitationRow = {
+  accepted_at: string | null;
+  accepted_by: string | null;
+  created_at: string;
+  email: string;
+  expires_at: string;
+  id: string;
+  invited_by: string;
+  organization_id: string;
+  revoked_at: string | null;
+  role: OrganizationRole;
+  status: OrganizationInvitationStatus;
+  token_hash: string;
+  updated_at: string;
+};
+
+export type OrganizationTeamMember = {
+  created_at: string;
+  display_name: string;
+  email: string;
+  member_user_id: string;
+  role: OrganizationRole;
+};
+
+export type OrganizationInvitationSummary = Pick<
+  OrganizationInvitationRow,
+  | "accepted_at"
+  | "created_at"
+  | "email"
+  | "expires_at"
+  | "id"
+  | "role"
+  | "status"
+> & { inviter_name: string };
+
+export type OrganizationInvitationPreview = {
+  expires_at: string;
+  organization_name: string;
+  role: OrganizationRole;
 };
 
 export type CompanyProfileRow = {
@@ -446,11 +489,19 @@ export type Database = {
           created_at?: string;
           organization_id: string;
           role?: OrganizationRole;
+          removed_at?: string | null;
           user_id: string;
         };
         Update: {
           role?: OrganizationRole;
+          removed_at?: string | null;
         };
+        Relationships: [];
+      };
+      organization_invitations: {
+        Row: OrganizationInvitationRow;
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       notifications: {
@@ -551,6 +602,20 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      accept_organization_invitation: {
+        Args: { p_token: string };
+        Returns: string;
+      };
+      create_organization_invitation: {
+        Args: {
+          p_email: string;
+          p_expires_at: string;
+          p_organization_id: string;
+          p_role: OrganizationRole;
+          p_token_hash: string;
+        };
+        Returns: string;
+      };
       archive_board_comment: {
         Args: { p_comment_id: string };
         Returns: BoardCommentRow;
@@ -580,6 +645,14 @@ export type Database = {
         Args: { p_organization_id: string };
         Returns: TaskMember[];
       };
+      list_organization_invitations: {
+        Args: { p_organization_id: string };
+        Returns: OrganizationInvitationSummary[];
+      };
+      list_organization_team: {
+        Args: { p_organization_id: string };
+        Returns: OrganizationTeamMember[];
+      };
       mark_all_notifications_read: {
         Args: { p_organization_id: string };
         Returns: number;
@@ -591,6 +664,35 @@ export type Database = {
       process_task_reminders: {
         Args: { p_now?: string };
         Returns: number;
+      };
+      preview_organization_invitation: {
+        Args: { p_token: string };
+        Returns: OrganizationInvitationPreview[];
+      };
+      regenerate_organization_invitation: {
+        Args: {
+          p_expires_at: string;
+          p_invitation_id: string;
+          p_organization_id: string;
+          p_token_hash: string;
+        };
+        Returns: string;
+      };
+      remove_organization_member: {
+        Args: { p_organization_id: string; p_user_id: string };
+        Returns: boolean;
+      };
+      revoke_organization_invitation: {
+        Args: { p_invitation_id: string; p_organization_id: string };
+        Returns: string;
+      };
+      update_organization_member_role: {
+        Args: {
+          p_organization_id: string;
+          p_role: OrganizationRole;
+          p_user_id: string;
+        };
+        Returns: MembershipRow;
       };
     };
     Enums: {
@@ -605,6 +707,7 @@ export type Database = {
       notification_channel: NotificationChannel;
       notification_type: NotificationType;
       organization_role: OrganizationRole;
+      organization_invitation_status: OrganizationInvitationStatus;
       product_status: ProductStatus;
       task_priority: TaskPriority;
       task_reminder_kind: TaskReminderKind;

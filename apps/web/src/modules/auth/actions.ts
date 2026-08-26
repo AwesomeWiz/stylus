@@ -2,12 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 
 import { serverEnv } from "@/lib/env/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { getLoginErrorMessage, getSignupErrorMessage } from "./errors";
-import { loginSchema, signupSchema, type AuthActionState } from "./schemas";
+import {
+  loginSchema,
+  safeAuthReturnPath,
+  signupSchema,
+  type AuthActionState,
+} from "./schemas";
 
 export async function loginAction(
   _previousState: AuthActionState,
@@ -17,6 +23,7 @@ export async function loginAction(
     email: formData.get("email"),
     password: formData.get("password"),
   });
+  const returnPath = safeAuthReturnPath(formData.get("next"));
 
   if (!parsed.success) {
     return {
@@ -33,7 +40,7 @@ export async function loginAction(
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect((returnPath ?? "/") as Route);
 }
 
 export async function signupAction(
@@ -45,6 +52,7 @@ export async function signupAction(
     fullName: formData.get("fullName"),
     password: formData.get("password"),
   });
+  const returnPath = safeAuthReturnPath(formData.get("next"));
 
   if (!parsed.success) {
     return {
@@ -59,7 +67,9 @@ export async function signupAction(
     options: {
       data: { full_name: parsed.data.fullName },
       emailRedirectTo: new URL(
-        "/auth/confirm",
+        returnPath
+          ? `/auth/confirm?next=${encodeURIComponent(returnPath)}`
+          : "/auth/confirm",
         serverEnv.NEXT_PUBLIC_SITE_URL,
       ).toString(),
     },
@@ -79,7 +89,7 @@ export async function signupAction(
   }
 
   revalidatePath("/", "layout");
-  redirect("/organization/new");
+  redirect((returnPath ?? "/organization/new") as Route);
 }
 
 export async function logoutAction() {

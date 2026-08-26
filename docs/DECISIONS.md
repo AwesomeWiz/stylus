@@ -269,3 +269,19 @@ Comments and mention identities are created atomically by a permission-checking
 `SECURITY DEFINER` RPC with an empty search path. The database derives scope,
 author, recipients, notifications and activity; shallow replies and organization
 membership are relational invariants.
+
+---
+
+## ADR-020 — Hashed Manual-Link Organization Invitations
+
+Status: ACCEPTED
+
+The TASK-007 multi-user QA prerequisite uses application-generated 256-bit
+invitation tokens with SHA-256 hashes stored in PostgreSQL. Email delivery is not
+fabricated: managers manually share the link until a transactional-email adapter
+is configured.
+
+Acceptance is atomic and takes only the token. PostgreSQL locks the invitation
+and derives organization, role and expected normalized email. Invitations grant
+only MEMBER or VIEWER. Membership removal softly revokes access because existing
+business records retain membership provenance foreign keys.

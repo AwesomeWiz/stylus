@@ -120,6 +120,24 @@ Marketing must not retrieve Agency memory.
 
 ---
 
+# Team Invitations
+
+- links contain 256-bit random URL-safe tokens; PostgreSQL stores only SHA-256
+  hashes and never exposes them through team/list RPCs
+- anonymous users cannot query invitation rows; a strong token permits only a
+  minimal organization/role preview
+- acceptance accepts no organization, role or invitee identifier; the locked
+  invitation and authenticated Supabase email determine them
+- OWNER/ADMIN RPCs repeat authorization; MEMBER and VIEWER receive no direct
+  invitation or membership mutation grants
+- invites grant only MEMBER or VIEWER; OWNER cannot be removed or changed, and
+  ADMIN cannot manage another ADMIN
+- revoked, expired, wrong-email and cross-organization attempts fail atomically
+- removed memberships retain provenance but are excluded by authorization/RLS
+  helpers and collaboration directories
+
+---
+
 # Secrets
 
 Never expose:

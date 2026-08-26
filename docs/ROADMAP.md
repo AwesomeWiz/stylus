@@ -30,6 +30,7 @@ Status: COMPLETE
 - [x] sessions
 - [x] organizations
 - [x] memberships
+- [x] team invitations and member management
 - [x] protected routes
 - [x] role/permission foundation
 - [x] RLS

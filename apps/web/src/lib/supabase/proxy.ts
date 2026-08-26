@@ -11,7 +11,7 @@ const publicPaths = new Set([
 ]);
 
 function isPublicPath(pathname: string) {
-  return publicPaths.has(pathname);
+  return publicPaths.has(pathname) || pathname.startsWith("/invite/");
 }
 
 export function getSessionRouteDecision(

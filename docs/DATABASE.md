@@ -27,6 +27,18 @@ Phase 1 introduces:
 - `role` uses `OWNER`, `ADMIN`, `MEMBER` or `VIEWER`
 - `created_at`
 - primary key: `(organization_id, user_id)`
+- nullable `removed_at`; removed members retain provenance but have no active access
+
+TASK-007 prerequisite migration
+`20260825000720_organization_team_invitations.sql` introduces
+`organization_invitations` with normalized email, MEMBER/VIEWER role, unique
+SHA-256 token hash, inviter, status, expiry and acceptance/revocation timestamps.
+A partial unique index prevents duplicate pending email invitations per tenant.
+
+Invitation lists never return token hashes. Manager functions create, regenerate
+and revoke invitations; acceptance takes only the raw token, locks the row,
+verifies status/expiry/authenticated email and atomically creates or reactivates
+membership. Removal softly revokes access to preserve historical provenance.
 
 Initial organization creation uses the authenticated-only
 `create_organization` database function. Organization insertion and the

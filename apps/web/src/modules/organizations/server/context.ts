@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import { cookies } from "next/headers";
 
 import type {
   MembershipRow,
@@ -28,7 +29,7 @@ function createMembershipLookup(
     async findMembership({ organizationId, userId }) {
       const { data, error } = await supabase
         .from("memberships")
-        .select("created_at, organization_id, role, user_id")
+        .select("created_at, organization_id, removed_at, role, user_id")
         .eq("organization_id", organizationId)
         .eq("user_id", userId)
         .maybeSingle();
@@ -67,13 +68,30 @@ export const getCurrentOrganizationContext = cache(
   async (): Promise<OrganizationContext | null> => {
     const user = await requireAuthenticatedUser();
     const supabase = await createServerSupabaseClient();
-    const { data: membership, error } = await supabase
+    const selectedOrganizationId = (await cookies()).get(
+      "stylus_organization_id",
+    )?.value;
+    const baseQuery = supabase
       .from("memberships")
-      .select("created_at, organization_id, role, user_id")
+      .select("created_at, organization_id, removed_at, role, user_id")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+      .is("removed_at", null);
+    const selectedResult = selectedOrganizationId
+      ? await baseQuery
+          .eq("organization_id", selectedOrganizationId)
+          .maybeSingle()
+      : { data: null, error: null };
+    const fallbackResult = selectedResult.data
+      ? selectedResult
+      : await supabase
+          .from("memberships")
+          .select("created_at, organization_id, removed_at, role, user_id")
+          .eq("user_id", user.id)
+          .is("removed_at", null)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+    const { data: membership, error } = fallbackResult;
 
     if (error) {
       throw new OrganizationAccessDeniedError();

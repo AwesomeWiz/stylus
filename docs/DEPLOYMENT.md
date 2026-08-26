@@ -122,6 +122,18 @@ Do not enable public board channels or publish additional tables for TASK-007.
 
 ---
 
+# Team Invitation Delivery
+
+Apply `20260825000720_organization_team_invitations.sql` before TASK-007
+multi-user QA. OWNER/ADMIN creates an invitation on Team and copies the displayed
+seven-day link for manual sharing. Regeneration invalidates the previous link.
+
+Transactional email is not configured and the UI does not claim delivery. A
+future provider may send the same application-generated link, but must not receive
+database credentials or bypass the invitation acceptance function.
+
+---
+
 # Deployment Philosophy
 
 Optimize initially for:

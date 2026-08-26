@@ -16,6 +16,7 @@ function membership(overrides: Partial<MembershipRow> = {}): MembershipRow {
   return {
     created_at: "2026-08-25T00:00:00.000Z",
     organization_id: organizationA,
+    removed_at: null,
     role: "OWNER",
     user_id: userA,
     ...overrides,
@@ -37,6 +38,19 @@ describe("organization authorization", () => {
       organizationId: organizationA,
       userId: userA,
     });
+  });
+
+  it("rejects a removed membership", async () => {
+    const findMembership = vi
+      .fn()
+      .mockResolvedValue(membership({ removed_at: "2026-08-25T01:00:00Z" }));
+    await expect(
+      authorizeOrganizationMembership({
+        lookup: { findMembership },
+        organizationId: organizationA,
+        userId: userA,
+      }),
+    ).rejects.toBeInstanceOf(OrganizationAccessDeniedError);
   });
 
   it("rejects non-members and cross-user lookup results", async () => {

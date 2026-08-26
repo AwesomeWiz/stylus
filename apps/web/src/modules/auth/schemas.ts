@@ -36,3 +36,8 @@ export interface AuthActionState {
 }
 
 export const initialAuthActionState: AuthActionState = { status: "idle" };
+
+export function safeAuthReturnPath(value: FormDataEntryValue | string | null) {
+  if (typeof value !== "string") return null;
+  return /^\/invite\/[A-Za-z0-9_-]{40,200}$/.test(value) ? value : null;
+}

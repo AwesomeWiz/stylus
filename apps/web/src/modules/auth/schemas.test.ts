@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { loginSchema, signupSchema } from "./schemas";
+import { loginSchema, safeAuthReturnPath, signupSchema } from "./schemas";
 
 describe("authentication schemas", () => {
   it("normalizes valid credentials", () => {
@@ -31,5 +31,14 @@ describe("authentication schemas", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("safeAuthReturnPath", () => {
+  it("preserves only strong invitation routes", () => {
+    const token = "A".repeat(43);
+    expect(safeAuthReturnPath(`/invite/${token}`)).toBe(`/invite/${token}`);
+    expect(safeAuthReturnPath("https://evil.example/invite/token")).toBeNull();
+    expect(safeAuthReturnPath("/tasks")).toBeNull();
   });
 });

@@ -16,11 +16,14 @@ Implemented scope:
 - structural organization-validated mentions, notifications and activity
 - operation-based local undo/redo with conflict deferral and database timestamps
 - member/viewer, organization-isolation, Realtime, history and pgTAP coverage
+- manual-QA prerequisite: Team page, hashed invitations, atomic acceptance,
+  role management and soft membership access removal
 
-The linked dry run reports only the two TASK-007 migrations. Docker is unavailable
-locally, so the 32-assertion whiteboard pgTAP suite remains to be executed in a
-database-capable environment. Authenticated two-user, reconnect, role and
-responsive manual QA is required.
+The TASK-007 Realtime migrations are hosted. The linked dry run reports only the
+forward-only team invitation prerequisite migration. Docker is unavailable
+locally, so whiteboard and invitation pgTAP suites remain to be executed in a
+database-capable environment. Invitation-driven authenticated two-user,
+reconnect, role and responsive manual QA is required.
 
 ---
 

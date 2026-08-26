@@ -8,7 +8,9 @@ TASK-007 WHITEBOARD COLLABORATION / READY FOR MANUAL QA
 
 Stylus now adds scoped live element synchronization, private presence, relational
 board/element comments, shallow replies, structural mentions, notifications,
-activity and collaboration-safe local history to the persistent whiteboard.
+activity and collaboration-safe local history to the persistent whiteboard. The
+manual-QA prerequisite now provides real team invitations and membership
+management for multi-user verification.
 
 ---
 
@@ -22,10 +24,10 @@ Status: TASK-007 READY FOR MANUAL QA
 
 ## Current Objective
 
-TASK-007 is implementation-complete on
-`codex/task-007-whiteboard-collaboration`. Apply the two pending migrations, run
-pgTAP in a database-capable environment, and perform authenticated two-user,
-reconnect, role and responsive manual QA. Do not start TASK-008.
+TASK-007 remains current on `codex/task-007-whiteboard-collaboration`. Apply the
+pending team invitation migration, run pgTAP in a database-capable environment,
+then perform invitation-driven authenticated two-user, reconnect, role and
+responsive manual QA. Do not start TASK-008.
 
 ---
 
@@ -546,19 +548,20 @@ TASK-007 is ready for manual QA on
 
 # Known Issues
 
-Docker/Podman is unavailable, so the expanded 32-assertion whiteboard pgTAP suite
-has not run locally. The hosted dry run lists only the two TASK-007 migrations.
-Authenticated two-user Realtime, private Presence, role/isolation, reconnect,
-comment/mention notification and responsive manual QA remain required. Live
-cursors and CRDT editing are intentionally deferred.
+Docker/Podman is unavailable, so whiteboard and organization-invitation pgTAP
+suites have not run locally. The hosted dry run lists only the invitation
+prerequisite migration. Invitation acceptance, authenticated two-user Realtime,
+private Presence, role/isolation, reconnect, comment/mention notification and
+responsive manual QA remain required. Live cursors and CRDT editing are deferred.
 
 ---
 
 # Next Recommended Action
 
-Apply the two TASK-007 migrations, execute pgTAP in a database-capable
-environment, then perform authenticated two-user collaboration, reconnect,
-role/isolation and responsive QA. Do not begin TASK-008.
+Apply the pending invitation migration, execute pgTAP in a database-capable
+environment, complete OWNER-to-MEMBER and OWNER-to-VIEWER invitations, then
+perform two-user collaboration, reconnect, role/isolation and responsive QA.
+Do not begin TASK-008.
 
 ---
 
@@ -572,10 +575,10 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-007 is implementation-complete and ready for manual QA on
+TASK-007 plus its invitation prerequisite is ready for manual QA on
 `codex/task-007-whiteboard-collaboration`.
 
-Apply both pending migrations, run whiteboard pgTAP, verify two authenticated
-users receive scoped element/comment updates and Presence, test mention
+Apply the pending invitation migration, run pgTAP, invite a second authenticated
+user through Team, then verify scoped element/comment updates, Presence, mention
 notifications, role/isolation boundaries, reconnect and responsive behavior.
 TASK-008 must not begin until TASK-007 is accepted and merged.
