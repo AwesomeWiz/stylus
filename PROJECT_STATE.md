@@ -23,10 +23,10 @@ Status: TASK-009 READY FOR MANUAL QA AGAIN
 
 ## Current Objective
 
-TASK-009 remains current on `codex/task-009-ai-foundation`. The linked AI
-migration is applied. Run pgTAP in a database-capable environment, then repeat
-role, organization-isolation, policy-save, diagnostics and optional
-local-provider QA. Do not start TASK-010.
+TASK-009 remains current on `codex/task-009-ai-foundation`. Apply the pending
+forward trace-constraint correction, run pgTAP in a database-capable environment,
+then repeat role, organization-isolation, policy-save, diagnostics and local-
+provider QA. Do not start TASK-010.
 
 ---
 
@@ -501,7 +501,10 @@ Verified on 2026-08-26:
 
 # Phase 7 Database and Security
 
-Migration: `supabase/migrations/20260825000900_ai_foundation.sql`
+Migrations:
+
+- `supabase/migrations/20260825000900_ai_foundation.sql`
+- `supabase/migrations/20260825000910_fix_ai_trace_metadata_constraint.sql`
 
 Introduced:
 
@@ -530,9 +533,10 @@ Verified on 2026-08-26:
 - formatting passed
 - lint passed with zero warnings
 - type checking passed
-- 73 test files passed with 313 tests
+- 74 test files passed with 316 tests
 - production build passed, including the `/ai` route
-- linked Supabase migration dry-run passed with the remote database up to date
+- linked Supabase migration dry-run passed and reported only
+  `20260825000910_fix_ai_trace_metadata_constraint.sql` as pending
 - dependency audit passed with zero production vulnerabilities
 - migration and application security reviews passed
 
@@ -558,6 +562,15 @@ organization policy/router, records the normal run lifecycle and returns only
 provider, model, duration or normalized error category. VIEWER cannot execute,
 and the browser cannot supply prompts, organization/actor IDs, plugin identity,
 provider URL/ID or model ID.
+
+The first live connection test then failed before Ollama invocation. The applied
+trace constraint used recursive JSONPath descent followed by `keyvalue()`, an
+object-only method, so valid scalar trace values raised during the
+`start_ai_run` insert. The run store discarded the database error as a plain
+`Error`, which normalized to `unknown`. The forward-only corrective migration
+replaces that expression with a type-safe recursive helper, retains nested raw
+content-key rejection and adds stage/code-only server diagnostics. The linked
+dry run reports only the corrective migration as pending.
 
 ---
 
@@ -683,19 +696,19 @@ TASK-010 has not started.
 
 # Known Issues
 
-Docker/Podman is unavailable, so the AI pgTAP suite has not run locally. Hosted
-OWNER/ADMIN/MEMBER/VIEWER policy and two-organization isolation QA remain
-required. Local provider execution is optional and requires a separately
-installed/configured model server. Agent/workflow orchestration, memory/RAG,
+Docker/Podman is unavailable, so the AI pgTAP suite has not run locally. The
+forward trace-constraint correction is pending on linked Supabase. Hosted
+OWNER/ADMIN/MEMBER/VIEWER policy, two-organization isolation and local connection
+diagnostic QA remain required. Agent/workflow orchestration, memory/RAG,
 organization-specific secret storage, Marketing and Web Agency remain deferred.
 
 ---
 
 # Next Recommended Action
 
-Execute pgTAP in a database-capable environment and repeat role,
-organization-isolation, policy-save, diagnostics and optional local-provider QA.
-Do not begin TASK-010.
+Apply `20260825000910_fix_ai_trace_metadata_constraint.sql`, execute pgTAP in a
+database-capable environment and repeat role, organization-isolation,
+policy-save and local diagnostic QA. Do not begin TASK-010.
 
 ---
 
@@ -711,6 +724,7 @@ Read:
 
 TASK-009 is ready for manual QA again on `codex/task-009-ai-foundation`.
 
-Run pgTAP, then verify policy roles, policy persistence, run metadata,
-organization isolation, local-only enforcement and optional local provider
-behavior. TASK-010 must not begin until TASK-009 is accepted and merged.
+Apply the corrective migration and run pgTAP, then verify policy roles, policy
+persistence, run metadata, organization isolation, local-only enforcement and
+local provider behavior. TASK-010 must not begin until TASK-009 is accepted and
+merged.

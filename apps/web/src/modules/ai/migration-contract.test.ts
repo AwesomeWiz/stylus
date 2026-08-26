@@ -10,6 +10,13 @@ const migration = readFileSync(
   ),
   "utf8",
 );
+const traceConstraintFix = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825000910_fix_ai_trace_metadata_constraint.sql",
+  ),
+  "utf8",
+);
 
 describe("AI foundation migration contract", () => {
   it("creates isolated policy and metadata-only run storage", () => {
@@ -39,5 +46,19 @@ describe("AI foundation migration contract", () => {
     expect(migration).toContain("v_actor uuid := (select auth.uid())");
     expect(migration).toContain("not trace_metadata ?| array[");
     expect(migration).toContain("not jsonb_path_exists(");
+  });
+
+  it("repairs recursive trace validation without applying object methods to scalars", () => {
+    expect(traceConstraintFix).toContain(
+      "private.ai_trace_metadata_has_forbidden_key",
+    );
+    expect(traceConstraintFix).toContain(
+      "drop constraint ai_runs_trace_metadata_valid",
+    );
+    expect(traceConstraintFix).toContain(
+      "add constraint ai_runs_trace_metadata_valid",
+    );
+    expect(traceConstraintFix).not.toContain("jsonb_path_exists");
+    expect(traceConstraintFix).not.toContain("keyvalue()");
   });
 });

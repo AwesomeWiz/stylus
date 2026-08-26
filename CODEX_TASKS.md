@@ -24,10 +24,13 @@ Implemented scope:
   coverage for policy loading, disabled defaults, safe errors and mutations
 - added an authenticated `core.ai.connection-test` diagnostic that uses the
   normal policy-gated gateway lifecycle without accepting browser routing input
+- repaired the applied recursive trace constraint that blocked valid `ai_runs`
+  initialization before routing or provider invocation
 
-The TASK-009 migration is applied on the linked project. Run the AI pgTAP suite
-in a database-capable environment before repeating hosted policy/isolation,
-policy-save and optional local-provider QA.
+Apply pending corrective migration
+`20260825000910_fix_ai_trace_metadata_constraint.sql`, then run the AI pgTAP
+suite in a database-capable environment before repeating hosted
+policy/isolation, policy-save and local-provider QA.
 
 ---
 

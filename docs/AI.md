@@ -184,6 +184,12 @@ chain-of-thought are not stored or displayed. Trace JSON rejects common raw
 content keys and application tracing stores counts/selection data only. Production
 code does not log prompt content to the console.
 
+Trace validation recursively walks only JSON objects and arrays. Scalar metadata
+is valid and never receives object-only JSON operations. Persistence failures
+remain a normalized `unknown` client error, while server logs record only the
+failed lifecycle stage and database error code—not row data, prompts or provider
+content.
+
 ### Connection Diagnostic
 
 `/ai` provides OWNER, ADMIN and MEMBER with a fixed-input connection test. Its

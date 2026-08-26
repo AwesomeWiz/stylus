@@ -149,9 +149,11 @@ without deleting its `organization_plugins` row.
 
 # AI Foundation Configuration
 
-Apply `20260825000900_ai_foundation.sql` before opening `/ai`. No paid provider,
-model download, worker, pgvector extension or service-role credential is required.
-Organization policy defaults to disabled until OWNER/ADMIN saves it.
+Apply `20260825000900_ai_foundation.sql` and forward correction
+`20260825000910_fix_ai_trace_metadata_constraint.sql` before exercising AI. No
+paid provider, model download, worker, pgvector extension or service-role
+credential is required. Organization policy defaults to disabled until
+OWNER/ADMIN saves it.
 
 Optional local development uses server-only values:
 

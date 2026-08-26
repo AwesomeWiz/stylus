@@ -91,7 +91,7 @@ select throws_ok(
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000091',true);
 select lives_ok(
   $$ select public.start_ai_run('20000000-0000-0000-0000-000000000091','10000000-0000-0000-0000-000000000091',null,'generate_text','core.ai.test','{}','FAST',null,'{"messageCount":1}') $$,
-  'OWNER can start a Core AI run'
+  'valid scalar trace metadata does not block Core run initialization'
 );
 select results_eq(
   $$ select actor_id from public.ai_runs where id='20000000-0000-0000-0000-000000000091' $$,

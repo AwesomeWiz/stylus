@@ -321,6 +321,13 @@ TASK-009 migration `20260825000900_ai_foundation.sql` introduces:
 - optional same-organization parent run for future bounded composition
 - bounded JSON object trace metadata that rejects raw prompt/response key names
 
+Corrective migration `20260825000910_fix_ai_trace_metadata_constraint.sql`
+replaces the applied recursive JSONPath expression with an immutable recursive
+helper. The original expression called object-only `keyvalue()` on scalar
+descendants and blocked otherwise valid run initialization. The replacement
+continues rejecting forbidden keys at every object/array depth without applying
+object methods to scalar values.
+
 Run rows do not contain API keys, complete prompts, model responses or hidden
 chain-of-thought. Provider diagnostics are normalized before persistence.
 Organization members can read their organization's metadata through RLS. Tables

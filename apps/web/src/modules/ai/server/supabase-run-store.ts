@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { createServerSupabaseClient } from "@/lib/supabase/server";
+import { AIError } from "@/modules/ai/errors";
 
 import type { AIRunCompletion, AIRunStart, AIRunStore } from "./run-store";
 
@@ -13,6 +14,14 @@ const tierToRecord = {
   fast: "FAST",
   reasoning: "REASONING",
 } as const;
+
+function persistenceError(stage: "complete" | "start", code?: string) {
+  const safeCode = code ?? "unavailable";
+  console.error("AI run persistence failed", { code: safeCode, stage });
+  return new AIError("unknown", {
+    diagnostic: `run_${stage}:${safeCode}`,
+  });
+}
 
 export class SupabaseAIRunStore implements AIRunStore {
   constructor(private readonly supabase: ServerSupabaseClient) {}
@@ -29,7 +38,7 @@ export class SupabaseAIRunStore implements AIRunStore {
       p_requested_tier: tierToRecord[input.requestedTier],
       p_trace_metadata: { ...input.trace },
     });
-    if (error) throw new Error("AI run could not be started");
+    if (error) throw persistenceError("start", error.code);
   }
 
   async complete(input: AIRunCompletion) {
@@ -48,6 +57,6 @@ export class SupabaseAIRunStore implements AIRunStore {
       p_total_tokens: input.usage.totalTokens,
       p_trace_metadata: { ...input.trace },
     });
-    if (error) throw new Error("AI run result could not be saved");
+    if (error) throw persistenceError("complete", error.code);
   }
 }
