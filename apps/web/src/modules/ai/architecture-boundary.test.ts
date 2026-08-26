@@ -97,4 +97,17 @@ describe("AI architecture boundary", () => {
       "export const initialAIPolicyActionState",
     );
   });
+
+  it("keeps the connection diagnostic fixed-input and server-routed", () => {
+    const action = source("modules/ai/actions.ts");
+    const component = source("components/ai/ai-management.tsx");
+    expect(action).toContain('capability: "core.ai.connection-test"');
+    expect(action).toContain("await generateAIText(connectionTestRequest)");
+    expect(action).not.toMatch(
+      /_formData\.(?:get|getAll)\(["'](?:organizationId|actorId|providerUrl|providerId|modelId|pluginId|prompt)["']\)/,
+    );
+    expect(component).not.toMatch(
+      /name=["'](?:organizationId|actorId|providerUrl|providerId|modelId|pluginId|prompt)["']/,
+    );
+  });
 });

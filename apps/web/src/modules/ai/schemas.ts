@@ -1,11 +1,26 @@
 import { z } from "zod";
 
+import type { AIErrorCategory } from "./errors";
+
 export interface AIPolicyActionState {
   message?: string;
   status: "idle" | "error" | "success";
 }
 
 export const initialAIPolicyActionState: AIPolicyActionState = {
+  status: "idle",
+};
+
+export interface AIConnectionTestActionState {
+  durationMs?: number;
+  errorCategory?: AIErrorCategory;
+  message?: string;
+  modelId?: string;
+  providerId?: string;
+  status: "idle" | "error" | "success";
+}
+
+export const initialAIConnectionTestActionState: AIConnectionTestActionState = {
   status: "idle",
 };
 

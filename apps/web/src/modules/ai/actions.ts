@@ -3,15 +3,29 @@
 import { revalidatePath } from "next/cache";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { normalizeAIError } from "@/modules/ai/errors";
 import { canManageOrganization } from "@/modules/organizations/authorization";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
 
 import {
   aiPolicySchema,
+  type AIConnectionTestActionState,
   initialAIPolicyActionState,
   type AIPolicyActionState,
 } from "./schemas";
 import { getConfiguredAIProviderIds } from "./server/configured";
+import { generateAIText } from "./server/execution";
+
+const connectionTestRequest = {
+  capability: "core.ai.connection-test",
+  options: {
+    maxOutputTokens: 8,
+    messages: [{ content: "Reply exactly OK.", role: "user" as const }],
+    temperature: 0,
+    tier: "fast" as const,
+    timeoutMs: 15_000,
+  },
+} as const;
 
 export async function updateOrganizationAIPolicyAction(
   _state: AIPolicyActionState = initialAIPolicyActionState,
@@ -54,5 +68,34 @@ export async function updateOrganizationAIPolicyAction(
     return { message: "AI policy saved.", status: "success" };
   } catch {
     return { message: "The AI policy could not be saved.", status: "error" };
+  }
+}
+
+export async function testAIConnectionAction(
+  _state: AIConnectionTestActionState,
+  _formData: FormData,
+): Promise<AIConnectionTestActionState> {
+  void _state;
+  void _formData;
+  const startedAt = Date.now();
+  try {
+    const result = await generateAIText(connectionTestRequest);
+    revalidatePath("/ai");
+    return {
+      durationMs: Date.now() - startedAt,
+      message: "AI connection succeeded.",
+      modelId: result.modelId,
+      providerId: result.providerId,
+      status: "success",
+    };
+  } catch (error) {
+    const normalized = normalizeAIError(error);
+    revalidatePath("/ai");
+    return {
+      durationMs: Date.now() - startedAt,
+      errorCategory: normalized.category,
+      message: normalized.message,
+      status: "error",
+    };
   }
 }

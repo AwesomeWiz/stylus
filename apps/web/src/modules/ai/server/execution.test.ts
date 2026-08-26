@@ -35,7 +35,7 @@ describe("AI execution authorization", () => {
   it("denies VIEWER execution and disabled organization AI", () => {
     expect(() =>
       authorizeAIExecution({
-        capability: "core.ai.test",
+        capability: "core.ai.connection-test",
         enabledPluginIds: [],
         pluginId: null,
         policy,

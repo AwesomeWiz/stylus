@@ -1,8 +1,21 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const actions = vi.hoisted(() => ({
+  testConnection: vi.fn(),
+  updatePolicy: vi.fn(),
+}));
+
 vi.mock("@/modules/ai/actions", () => ({
-  updateOrganizationAIPolicyAction: vi.fn(),
+  testAIConnectionAction: actions.testConnection,
+  updateOrganizationAIPolicyAction: actions.updatePolicy,
 }));
 
 import type {
@@ -12,7 +25,10 @@ import type {
 
 import { AIManagement } from "./ai-management";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 const policy: OrganizationAIPolicyRow = {
   allowed_provider_ids: ["ollama"],
@@ -86,8 +102,48 @@ describe("AIManagement", () => {
       expect(
         screen.queryByRole("button", { name: "Save policy" }),
       ).not.toBeInTheDocument();
+      if (role === "VIEWER")
+        expect(
+          screen.queryByRole("button", { name: "Test connection" }),
+        ).not.toBeInTheDocument();
+      else
+        expect(
+          screen.getByRole("button", { name: "Test connection" }),
+        ).toBeInTheDocument();
     },
   );
+
+  it("shows only safe connection metadata after a successful test", async () => {
+    actions.testConnection.mockResolvedValue({
+      durationMs: 42,
+      message: "AI connection succeeded.",
+      modelId: "ollama-default",
+      providerId: "ollama",
+      status: "success",
+    });
+    render(
+      <AIManagement
+        configuredProviderIds={["ollama"]}
+        currentRole="OWNER"
+        policy={policy}
+        runs={[]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
+    await waitFor(() =>
+      expect(screen.getByText("AI connection succeeded.")).toBeInTheDocument(),
+    );
+    const result = screen.getByRole("status");
+    expect(within(result).getByText("ollama-default")).toBeInTheDocument();
+    expect(within(result).getByText("ollama")).toBeInTheDocument();
+    expect(within(result).getByText("42 ms")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: /prompt/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Private provider response"),
+    ).not.toBeInTheDocument();
+  });
 
   it("renders a missing persisted policy as the disabled default", () => {
     render(

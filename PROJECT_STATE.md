@@ -494,7 +494,8 @@ Verified on 2026-08-26:
   external-side-effect metadata; no autonomous tool execution loop
 - bounded timeouts, cancellation signals and one conservative transient retry
 - optional pricing metadata, normalized usage and estimated-cost accounting
-- `/ai` organization policy and metadata-only run diagnostics UI
+- `/ai` organization policy, metadata-only run diagnostics and fixed-input AI
+  connection test
 
 ---
 
@@ -529,7 +530,7 @@ Verified on 2026-08-26:
 - formatting passed
 - lint passed with zero warnings
 - type checking passed
-- 73 test files passed with 308 tests
+- 73 test files passed with 313 tests
 - production build passed, including the `/ai` route
 - linked Supabase migration dry-run passed with the remote database up to date
 - dependency audit passed with zero production vulnerabilities
@@ -548,6 +549,15 @@ disabled default policy, safe failure UI and policy mutation paths. The linked
 migration was confirmed applied; the generic settings fallback was caused by
 the same module-loader failure rather than a demonstrated database connection
 failure.
+
+Manual QA confirmed the migration, policy persistence and local Ollama setup,
+then identified the absence of an authenticated application execution path. The
+`/ai` page now provides a fixed-input `core.ai.connection-test` diagnostic for
+OWNER, ADMIN and MEMBER. It calls `generateAIText`, obeys the existing
+organization policy/router, records the normal run lifecycle and returns only
+provider, model, duration or normalized error category. VIEWER cannot execute,
+and the browser cannot supply prompts, organization/actor IDs, plugin identity,
+provider URL/ID or model ID.
 
 ---
 

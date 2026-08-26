@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/modules/ai/actions", () => ({
+  testAIConnectionAction: vi.fn(async () => ({ status: "idle" })),
   updateOrganizationAIPolicyAction: vi.fn(async () => ({ status: "idle" })),
 }));
 vi.mock("@/components/layout/app-shell", () => ({

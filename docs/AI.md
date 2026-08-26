@@ -184,6 +184,19 @@ chain-of-thought are not stored or displayed. Trace JSON rejects common raw
 content keys and application tracing stores counts/selection data only. Production
 code does not log prompt content to the console.
 
+### Connection Diagnostic
+
+`/ai` provides OWNER, ADMIN and MEMBER with a fixed-input connection test. Its
+Server Action calls `generateAIText` with `core.ai.connection-test`, the `fast`
+tier, an eight-token output ceiling and a 15-second timeout. It accepts no prompt,
+organization, actor, plugin, provider URL/ID or model ID from the browser.
+
+The request therefore follows the same authenticated organization context,
+policy routing, provider configuration and `ai_runs` lifecycle as every trusted
+AI consumer. `LOCAL_ONLY` cannot fall back remotely, `DISABLED` is denied and
+VIEWER has no execution control. The UI discards model text and exposes only
+success/failure, provider, selected model, duration and normalized error category.
+
 ## Usage, Cost and Budgets
 
 Adapters report input/output/total tokens when available. Unknown usage remains

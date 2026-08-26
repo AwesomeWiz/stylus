@@ -18,10 +18,12 @@ Implemented scope:
 - bounded timeout, cancellation and conservative transient retries
 - trusted future AI tool registry with side-effect metadata and no tool loop
 - organization/plugin/capability/memory-declaration authorization boundaries
-- role-aware `/ai` policy and safe run-diagnostics interface
+- role-aware `/ai` policy, safe run diagnostics and fixed-input connection test
 - RLS, application, provider, routing, lifecycle, UI and architecture coverage
 - repaired Next.js Server Action export boundary with permanent regression
   coverage for policy loading, disabled defaults, safe errors and mutations
+- added an authenticated `core.ai.connection-test` diagnostic that uses the
+  normal policy-gated gateway lifecycle without accepting browser routing input
 
 The TASK-009 migration is applied on the linked project. Run the AI pgTAP suite
 in a database-capable environment before repeating hosted policy/isolation,

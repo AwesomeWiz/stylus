@@ -1,6 +1,12 @@
 "use client";
 
-import { CircleAlert, CircleCheck, Cpu, ShieldCheck } from "lucide-react";
+import {
+  Activity,
+  CircleAlert,
+  CircleCheck,
+  Cpu,
+  ShieldCheck,
+} from "lucide-react";
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,8 +16,14 @@ import type {
   OrganizationAIPolicyRow,
   OrganizationRole,
 } from "@/lib/supabase/database.types";
-import { updateOrganizationAIPolicyAction } from "@/modules/ai/actions";
-import { initialAIPolicyActionState } from "@/modules/ai/schemas";
+import {
+  testAIConnectionAction,
+  updateOrganizationAIPolicyAction,
+} from "@/modules/ai/actions";
+import {
+  initialAIConnectionTestActionState,
+  initialAIPolicyActionState,
+} from "@/modules/ai/schemas";
 
 function formatRunTime(value: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -41,6 +53,7 @@ export function AIManagement({
   runs: AIRunRow[];
 }) {
   const canManage = currentRole === "OWNER" || currentRole === "ADMIN";
+  const canExecute = currentRole !== "VIEWER";
   const effectivePolicy = policy ?? {
     allowed_provider_ids: [],
     default_tier: "FAST" as const,
@@ -91,6 +104,8 @@ export function AIManagement({
         )}
       </section>
 
+      {canExecute ? <AIConnectionDiagnostic /> : null}
+
       <section aria-labelledby="ai-runs-heading">
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
@@ -109,6 +124,68 @@ export function AIManagement({
         <AIRunList runs={runs} />
       </section>
     </div>
+  );
+}
+
+function AIConnectionDiagnostic() {
+  const [state, action, pending] = useActionState(
+    testAIConnectionAction,
+    initialAIConnectionTestActionState,
+  );
+  return (
+    <section aria-labelledby="ai-connection-heading" className="border-y py-5">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div className="flex items-start gap-3">
+          <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-md border">
+            <Activity aria-hidden="true" className="size-4" />
+          </span>
+          <div>
+            <h2 className="font-semibold" id="ai-connection-heading">
+              AI connection
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Test the currently permitted AI execution path with a fixed,
+              minimal request.
+            </p>
+          </div>
+        </div>
+        <form action={action}>
+          <Button disabled={pending} type="submit" variant="secondary">
+            {pending ? "Testing…" : "Test connection"}
+          </Button>
+        </form>
+      </div>
+      {state.status !== "idle" ? (
+        <div
+          className="mt-4 border-t pt-4 text-sm"
+          role={state.status === "error" ? "alert" : "status"}
+        >
+          <p className={state.status === "error" ? "text-destructive" : ""}>
+            {state.message}
+          </p>
+          <dl className="mt-2 grid gap-3 text-xs sm:grid-cols-3">
+            <PolicyValue
+              label="Provider"
+              value={state.providerId ?? "Unavailable"}
+            />
+            <PolicyValue label="Model" value={state.modelId ?? "Unavailable"} />
+            <PolicyValue
+              label="Duration"
+              value={
+                state.durationMs === undefined
+                  ? "Unavailable"
+                  : `${state.durationMs} ms`
+              }
+            />
+          </dl>
+          {state.errorCategory ? (
+            <p className="text-muted-foreground mt-2 text-xs">
+              Error category: {state.errorCategory}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
