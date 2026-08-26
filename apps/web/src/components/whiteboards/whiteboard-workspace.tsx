@@ -77,6 +77,7 @@ function flowNode(
   return {
     data: {
       canMutate: false,
+      commentCount: 0,
       element,
       imageUrl,
       onInteractionCancel: () => undefined,
@@ -437,30 +438,38 @@ export function WhiteboardWorkspace({
     [persistUpdate, recordSnapshot],
   );
 
-  const renderedNodes = useMemo(
-    () =>
-      nodes.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          canMutate,
-          onContentCommit,
-          onInteractionCancel: cancelElementInteraction,
-          onInteractionStart: (elementId: string) =>
-            activeElementsRef.current.add(elementId),
-          onResizeCommit,
-        },
-        draggable: canMutate && activeTool === "SELECT",
-      })),
-    [
-      activeTool,
-      canMutate,
-      cancelElementInteraction,
-      nodes,
-      onContentCommit,
-      onResizeCommit,
-    ],
-  );
+  const renderedNodes = useMemo(() => {
+    const commentCounts = comments.reduce((counts, comment) => {
+      if (!comment.archived_at && comment.element_id)
+        counts.set(
+          comment.element_id,
+          (counts.get(comment.element_id) ?? 0) + 1,
+        );
+      return counts;
+    }, new Map<string, number>());
+    return nodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        canMutate,
+        commentCount: commentCounts.get(node.id) ?? 0,
+        onContentCommit,
+        onInteractionCancel: cancelElementInteraction,
+        onInteractionStart: (elementId: string) =>
+          activeElementsRef.current.add(elementId),
+        onResizeCommit,
+      },
+      draggable: canMutate && activeTool === "SELECT",
+    }));
+  }, [
+    activeTool,
+    canMutate,
+    cancelElementInteraction,
+    comments,
+    nodes,
+    onContentCommit,
+    onResizeCommit,
+  ]);
   const selectedElement = nodes.find((node) => node.id === selectedId)?.data
     .element;
 

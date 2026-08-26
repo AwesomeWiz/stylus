@@ -18,6 +18,8 @@ Implemented scope:
 - member/viewer, organization-isolation, Realtime, history and pgTAP coverage
 - manual-QA prerequisite: Team page, hashed invitations, atomic acceptance,
   role management and soft membership access removal
+- transient invitation-copy confirmation and live comment-count badges on
+  commented whiteboard elements
 
 The TASK-007 Realtime migrations are hosted. The linked dry run reports only the
 forward-only team invitation prerequisite migration. Docker is unavailable

@@ -1,6 +1,6 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-25
+Last Updated: 2026-08-26
 
 ## Overall Status
 
@@ -10,7 +10,8 @@ Stylus now adds scoped live element synchronization, private presence, relationa
 board/element comments, shallow replies, structural mentions, notifications,
 activity and collaboration-safe local history to the persistent whiteboard. The
 manual-QA prerequisite now provides real team invitations and membership
-management for multi-user verification.
+management for multi-user verification. Invitation copy controls now reset after
+a brief confirmation, and commented elements display live comment-count badges.
 
 ---
 

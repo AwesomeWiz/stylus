@@ -32,7 +32,11 @@ vi.mock("@xyflow/react", () => ({
     onSelectionChange,
   }: {
     children: React.ReactNode;
-    nodes: { id: string; position: { x: number; y: number } }[];
+    nodes: {
+      data: { commentCount: number };
+      id: string;
+      position: { x: number; y: number };
+    }[];
     onInit: (value: unknown) => void;
     onNodeDragStop: (event: unknown, node: unknown) => void;
     onNodesChange: (changes: unknown[]) => void;
@@ -45,6 +49,9 @@ vi.mock("@xyflow/react", () => ({
     return (
       <div>
         <span data-testid="node-count">{nodes.length}</span>
+        <span data-testid="first-node-comment-count">
+          {nodes[0]?.data.commentCount ?? 0}
+        </span>
         <button onClick={() => onPaneClick({ clientX: 40, clientY: 60 })}>
           Canvas pane
         </button>
@@ -104,7 +111,11 @@ vi.mock("@/modules/whiteboards/actions", () => ({
   uploadBoardImageAction: mocks.upload,
 }));
 
-import type { BoardElementRow, BoardRow } from "@/lib/supabase/database.types";
+import type {
+  BoardCommentRow,
+  BoardElementRow,
+  BoardRow,
+} from "@/lib/supabase/database.types";
 import { WhiteboardWorkspace } from "./whiteboard-workspace";
 
 const board: BoardRow = {
@@ -136,6 +147,18 @@ const sticky: BoardElementRow = {
   x: 10,
   y: 20,
   z_index: 1,
+};
+const elementComment: BoardCommentRow = {
+  archived_at: null,
+  author_id: "u",
+  board_id: board.id,
+  body: "Needs another pass",
+  created_at: "2026-08-25T00:01:00Z",
+  element_id: sticky.id,
+  id: "40000000-0000-4000-8000-000000000001",
+  organization_id: "o",
+  parent_id: null,
+  updated_at: "2026-08-25T00:01:00Z",
 };
 
 describe("WhiteboardWorkspace", () => {
@@ -170,6 +193,21 @@ describe("WhiteboardWorkspace", () => {
     );
     expect(screen.getByTestId("node-count")).toHaveTextContent("1");
     expect(screen.getByText("Saved")).toBeInTheDocument();
+  });
+
+  it("maps active element comments to the corresponding canvas element", () => {
+    render(
+      <WhiteboardWorkspace
+        board={board}
+        canMutate
+        comments={[elementComment]}
+        elements={[sticky]}
+        imageUrls={{}}
+      />,
+    );
+    expect(screen.getByTestId("first-node-comment-count")).toHaveTextContent(
+      "1",
+    );
   });
 
   it("creates the selected tool at canvas coordinates", async () => {

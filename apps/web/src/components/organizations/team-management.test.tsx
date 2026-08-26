@@ -1,4 +1,10 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/modules/organizations/team-actions", () => ({
@@ -9,9 +15,12 @@ vi.mock("@/modules/organizations/team-actions", () => ({
   updateMemberRoleAction: vi.fn(),
 }));
 
-import { TeamManagement } from "./team-management";
+import { InvitationCopyButton, TeamManagement } from "./team-management";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 const members = [
   {
@@ -66,5 +75,32 @@ describe("TeamManagement", () => {
     expect(
       screen.queryByRole("button", { name: /Remove/ }),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows copy confirmation briefly before restoring the copy icon", async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    render(
+      <InvitationCopyButton
+        aria-label="Copy invitation link"
+        link="https://stylus.test/invite/secure-token"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy invitation link" }),
+    );
+    await act(async () => Promise.resolve());
+    expect(writeText).toHaveBeenCalledWith(
+      "https://stylus.test/invite/secure-token",
+    );
+    expect(screen.getByTestId("copy-check")).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.queryByTestId("copy-check")).not.toBeInTheDocument();
   });
 });

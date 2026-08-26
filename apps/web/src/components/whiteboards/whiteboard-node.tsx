@@ -1,12 +1,14 @@
 "use client";
 
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
+import { MessageSquare } from "lucide-react";
 import { memo, useState } from "react";
 
 import type { BoardElementRow } from "@/lib/supabase/database.types";
 
 export type WhiteboardNodeData = Record<string, unknown> & {
   canMutate: boolean;
+  commentCount: number;
   element: BoardElementRow;
   imageUrl?: string;
   onInteractionCancel?: (elementId: string) => void;
@@ -115,7 +117,7 @@ function WhiteboardNodeComponent({
     typeof element.style.color === "string" ? element.style.color : "#52525b";
   return (
     <div
-      className={`h-full w-full ${selected ? "outline-primary outline-2 outline-offset-2" : ""}`}
+      className={`relative h-full w-full ${selected ? "outline-primary outline-2 outline-offset-2" : ""}`}
       data-element-type={element.element_type}
       style={{ transform: `rotate(${element.rotation}deg)` }}
     >
@@ -134,6 +136,16 @@ function WhiteboardNodeComponent({
           })
         }
       />
+      {data.commentCount > 0 ? (
+        <div
+          aria-label={`${data.commentCount} ${data.commentCount === 1 ? "comment" : "comments"} on this element`}
+          className="bg-background text-foreground pointer-events-none absolute -top-3 -right-3 z-10 flex h-6 min-w-6 items-center justify-center gap-1 rounded-full border px-1.5 text-[11px] font-semibold shadow-sm"
+          role="status"
+        >
+          <MessageSquare aria-hidden="true" className="size-3" />
+          {data.commentCount}
+        </div>
+      ) : null}
       {element.element_type === "TEXT" ? (
         <EditableText data={data} key={textValue(element.content)} />
       ) : null}
@@ -229,5 +241,6 @@ export const WhiteboardNode = memo(
     previous.selected === next.selected &&
     previous.data.element === next.data.element &&
     previous.data.imageUrl === next.data.imageUrl &&
+    previous.data.commentCount === next.data.commentCount &&
     previous.data.canMutate === next.data.canMutate,
 );

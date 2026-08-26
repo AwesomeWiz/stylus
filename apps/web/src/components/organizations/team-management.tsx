@@ -8,7 +8,7 @@ import {
   UserMinus,
   X,
 } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -204,7 +204,6 @@ function InviteForm() {
     initialTeamActionState,
   );
   const link = state.inviteLink;
-  const [copied, setCopied] = useState(false);
   return (
     <section aria-labelledby="invite-heading" className="border-b pb-8">
       <div className="mb-4">
@@ -262,22 +261,7 @@ function InviteForm() {
       {link ? (
         <div className="bg-muted mt-3 flex items-center gap-2 rounded-md border p-2">
           <code className="min-w-0 flex-1 truncate px-1 text-xs">{link}</code>
-          <Button
-            aria-label="Copy invitation link"
-            onClick={async () => {
-              await navigator.clipboard.writeText(link);
-              setCopied(true);
-            }}
-            size="icon"
-            type="button"
-            variant="secondary"
-          >
-            {copied ? (
-              <Check aria-hidden="true" className="size-4" />
-            ) : (
-              <Clipboard aria-hidden="true" className="size-4" />
-            )}
-          </Button>
+          <InvitationCopyButton aria-label="Copy invitation link" link={link} />
         </div>
       ) : null}
     </section>
@@ -295,24 +279,11 @@ function RegenerateInvitation({
     regenerateInvitationAction,
     initialTeamActionState,
   );
-  const [copied, setCopied] = useState(false);
   return state.inviteLink ? (
-    <Button
+    <InvitationCopyButton
       aria-label={`Copy regenerated invitation for ${email}`}
-      onClick={async () => {
-        await navigator.clipboard.writeText(state.inviteLink!);
-        setCopied(true);
-      }}
-      size="icon"
-      type="button"
-      variant="secondary"
-    >
-      {copied ? (
-        <Check aria-hidden="true" className="size-4" />
-      ) : (
-        <Clipboard aria-hidden="true" className="size-4" />
-      )}
-    </Button>
+      link={state.inviteLink}
+    />
   ) : (
     <form action={action}>
       <input name="invitationId" type="hidden" value={invitationId} />
@@ -325,5 +296,44 @@ function RegenerateInvitation({
         <RefreshCw aria-hidden="true" className="size-4" />
       </Button>
     </form>
+  );
+}
+
+export function InvitationCopyButton({
+  "aria-label": ariaLabel,
+  link,
+}: {
+  "aria-label": string;
+  link: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(
+    () => () => {
+      if (resetTimer.current) clearTimeout(resetTimer.current);
+    },
+    [],
+  );
+
+  return (
+    <Button
+      aria-label={ariaLabel}
+      onClick={async () => {
+        await navigator.clipboard.writeText(link);
+        setCopied(true);
+        if (resetTimer.current) clearTimeout(resetTimer.current);
+        resetTimer.current = setTimeout(() => setCopied(false), 1000);
+      }}
+      size="icon"
+      type="button"
+      variant="secondary"
+    >
+      {copied ? (
+        <Check aria-hidden="true" className="size-4" data-testid="copy-check" />
+      ) : (
+        <Clipboard aria-hidden="true" className="size-4" />
+      )}
+    </Button>
   );
 }
