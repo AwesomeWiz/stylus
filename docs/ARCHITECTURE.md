@@ -212,14 +212,34 @@ infrastructure.
 
 # Plugin Modules
 
-Initial:
+TASK-008 establishes a trusted built-in modular-monolith plugin host:
 
-- marketing
+- `src/core/plugins/public.ts` is the explicit contract available to plugins.
+- `src/plugins/<plugin-id>` contains private business-plugin definitions.
+- `src/plugins/index.ts` is the static composition root and registry entrypoint.
+- `src/modules/plugins` owns Core enablement, authorization and persistence APIs.
+- Core/application modules may import the plugin root entrypoint but never a
+  plugin's private directory.
 
-Future:
+Definitions are validated at module load and registered into an instance-scoped
+registry. Duplicate plugin IDs and exclusive capability collisions fail loudly.
+There is no filesystem scanning, URL import, package download, `eval`, MCP or
+untrusted code execution.
 
-- web-agency
-- additional business capabilities
+The shell combines stable Core navigation with contributions from enabled
+plugins after one organization-state query. Controlled icon identifiers resolve
+through a Lucide registry. A shared server guard repeats registered/enabled checks
+for direct plugin routes; hiding navigation is never the authorization boundary.
+
+Plugin events are explicit synchronous in-process handlers. Dispatch continues
+after a handler failure and returns structured failures, with an optional failure
+observer for logging. Callers decide whether a source workflow may continue; no
+job infrastructure is implied.
+
+Manifests declare permissions, memory domains and future AI tool metadata, but
+these declarations grant no access or execution. Core authorization remains
+authoritative. Marketing may later request company and marketing domains; Web
+Agency is restricted to agency by default.
 
 ---
 

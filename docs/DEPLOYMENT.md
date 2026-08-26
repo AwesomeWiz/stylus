@@ -134,6 +134,19 @@ database credentials or bypass the invitation acceptance function.
 
 ---
 
+# Hosted Plugin Framework
+
+Apply `20260825000800_plugin_framework.sql` before TASK-008 hosted QA. No hosted
+extension, worker, service-role credential, plugin package download or secret
+configuration is required.
+
+After migration, use two organizations and OWNER/ADMIN/MEMBER/VIEWER accounts to
+verify Apps state isolation, manager-only enablement, enabled navigation and the
+guarded `/apps/example` route. Disablement must hide and deny the example route
+without deleting its `organization_plugins` row.
+
+---
+
 # Deployment Philosophy
 
 Optimize initially for:

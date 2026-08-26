@@ -1,15 +1,11 @@
 import {
-  AppWindow,
-  Bot,
+  Blocks,
   BrainCircuit,
   Building2,
   CalendarCheck2,
-  Clapperboard,
-  FlaskConical,
   Home,
   History,
   LayoutDashboard,
-  Megaphone,
   Settings,
   Users,
   type LucideIcon,
@@ -26,7 +22,7 @@ export interface NavigationGroup {
   items: NavigationItem[];
 }
 
-export const navigationGroups: NavigationGroup[] = [
+export const coreNavigationGroups: NavigationGroup[] = [
   {
     label: "Core",
     items: [
@@ -38,20 +34,10 @@ export const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    label: "Marketing",
-    items: [
-      { label: "Overview", icon: Megaphone, href: "#marketing" },
-      { label: "Reels", icon: Clapperboard, href: "#reels" },
-      { label: "Competitors", icon: Users, href: "#competitors" },
-      { label: "Research", icon: FlaskConical, href: "#research" },
-      { label: "Campaigns", icon: AppWindow, href: "#campaigns" },
-    ],
-  },
-  {
     label: "Platform",
     items: [
       { label: "AI", icon: BrainCircuit, href: "#ai" },
-      { label: "Apps", icon: Bot, href: "#apps" },
+      { label: "Apps", icon: Blocks, href: "/apps" },
     ],
   },
   {
@@ -62,3 +48,5 @@ export const navigationGroups: NavigationGroup[] = [
     ],
   },
 ];
+
+export const navigationGroups = coreNavigationGroups;

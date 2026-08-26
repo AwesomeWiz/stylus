@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import type { OrganizationRole } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import type { NotificationSummary } from "@/modules/notifications/server/data";
+import { getEnabledOrganizationPluginIds } from "@/modules/plugins/server/data";
+import { getApplicationNavigation } from "@/plugins";
 
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
@@ -13,6 +15,7 @@ export interface ShellIdentity {
 }
 
 export interface ShellOrganization {
+  id: string;
   name: string;
   role: OrganizationRole;
 }
@@ -27,7 +30,7 @@ interface AppShellProps {
   mainClassName?: string;
 }
 
-export function AppShell({
+export async function AppShell({
   activePath,
   children,
   identity,
@@ -36,6 +39,9 @@ export function AppShell({
   organization,
   mainClassName,
 }: AppShellProps) {
+  const navigationGroups = getApplicationNavigation(
+    await getEnabledOrganizationPluginIds(organization.id),
+  );
   return (
     <div className="min-h-screen lg:pl-64">
       <aside className="bg-sidebar border-sidebar-border fixed inset-y-0 left-0 z-40 hidden w-64 border-r lg:block">
@@ -43,6 +49,7 @@ export function AppShell({
           activePath={activePath}
           identity={identity}
           logoutAction={logoutAction}
+          navigationGroups={navigationGroups}
           organization={organization}
         />
       </aside>
@@ -52,6 +59,7 @@ export function AppShell({
           identity={identity}
           logoutAction={logoutAction}
           notifications={notifications}
+          navigationGroups={navigationGroups}
           organization={organization}
         />
         <main

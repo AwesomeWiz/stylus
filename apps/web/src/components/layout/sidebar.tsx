@@ -4,13 +4,14 @@ import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 import { Brand } from "./brand";
-import { navigationGroups } from "./navigation";
+import type { NavigationGroup } from "./navigation";
 import type { ShellIdentity, ShellOrganization } from "./app-shell";
 
 interface SidebarProps {
   activePath: string;
   identity: ShellIdentity;
   logoutAction: () => Promise<void>;
+  navigationGroups: NavigationGroup[];
   organization: ShellOrganization;
 }
 
@@ -28,6 +29,7 @@ export function Sidebar({
   activePath,
   identity,
   logoutAction,
+  navigationGroups,
   organization,
 }: SidebarProps) {
   return (

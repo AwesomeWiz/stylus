@@ -2,50 +2,54 @@
 
 # Current
 
-## TASK-007 — Whiteboard Collaboration
+## TASK-008 — Plugin Framework
 
 Status: COMPLETE / READY FOR MANUAL QA
 
-Phase: 5
+Phase: 6
 
 Implemented scope:
 
-- board-scoped Realtime element updates with cleanup and degraded state
-- private presence resolved from the authorized organization member directory
-- board/element comment threads, shallow replies and soft removal
-- structural organization-validated mentions, notifications and activity
-- operation-based local undo/redo with conflict deferral and database timestamps
-- member/viewer, organization-isolation, Realtime, history and pgTAP coverage
-- manual-QA prerequisite: Team page, hashed invitations, atomic acceptance,
-  role management and soft membership access removal
-- transient invitation-copy confirmation and live comment-count badges on
-  commented whiteboard elements
+- Zod-validated trusted built-in plugin manifest and static registry
+- deterministic capability, permission, navigation, event and tool metadata
+- organization-scoped persisted enable/disable state with manager-only mutation
+- enabled-only navigation, capability lookup, event dispatch and route guarding
+- compact Apps management UI and a guarded development example plugin
+- safe Lucide icon registry and Core/plugin import-boundary enforcement
+- RLS, application, registry, UI, route, event and architecture coverage
 
-The TASK-007 Realtime migrations are hosted. The linked dry run reports only the
-forward-only team invitation prerequisite migration. Docker is unavailable
-locally, so whiteboard and invitation pgTAP suites remain to be executed in a
-database-capable environment. Invitation-driven authenticated two-user,
-reconnect, role and responsive manual QA is required.
+Apply the TASK-008 migration and run the plugin pgTAP suite in a database-capable
+environment before hosted role/isolation and route/navigation manual QA.
 
 ---
 
 # Next
 
-## TASK-008 — Plugin Framework
+## TASK-009 — AI Foundation
 
 Status: READY
 
-Phase: 6
+Phase: 7
 
-Planned scope: plugin manifest, registry, capabilities, permissions, navigation
-contributions, events, isolation and an example plugin.
+Planned scope: ModelGateway, providers, logical model profiles, agent/tool/workflow
+interfaces, structured outputs and a fake provider.
 
-Do not begin until TASK-007 has completed manual QA and is merged through the
+Do not begin until TASK-008 has completed manual QA and is merged through the
 normal workflow.
 
 ---
 
 # Completed
+
+## TASK-007 — Whiteboard Collaboration
+
+Status: COMPLETE
+
+Implemented scope includes board-scoped Realtime, private Presence, comments,
+mentions, activity, bounded collaborative history, team invitations and the
+final comment/copy usability refinements.
+
+---
 
 ## TASK-005 — Reminders, Notifications and Activity
 

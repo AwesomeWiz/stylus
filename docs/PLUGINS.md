@@ -1,91 +1,174 @@
 # Stylus — Plugin Architecture
 
-## Goal
+## Purpose
 
-Stylus must allow new business capabilities to be integrated without
-modifying unrelated Core systems.
+Stylus plugins add business capabilities without placing their implementation in
+Core. The framework is a modular-monolith boundary, not a marketplace or sandbox.
+Plugins are trusted repository modules compiled and deployed with Stylus.
 
----
+Core collaboration features—authentication, organizations, Team, tasks,
+notifications, activity, whiteboards and Company Profile—are not optional
+plugins.
 
-# Plugin Responsibilities
+## Dependency Boundary
 
-Plugins may contribute:
+The allowed direction is:
 
-- routes
-- UI navigation
-- pages
-- permissions
-- capabilities
-- AI tools
-- agents
-- workflows
-- event handlers
-- database migrations where supported
+```text
+Business plugin
+  -> public Stylus Core plugin contract
+```
 
----
+Plugin implementations live under `apps/web/src/plugins/<plugin-id>` and may
+import `@/core/plugins/public`. They must not import arbitrary files from Core or
+another plugin's private directory. Core/application hosts may import the static
+`@/plugins` composition root but never a plugin-private subpath.
 
-# Plugin Manifest
+`architecture-boundary.test.ts` enforces these rules. Cross-plugin cooperation
+must use capabilities, explicit public APIs or events.
 
-Conceptual example:
+## Trusted Static Discovery
 
-id: marketing
-name: Marketing
-version: 0.1.0
+`apps/web/src/plugins/index.ts` explicitly imports each trusted built-in plugin
+and constructs a fresh `PluginRegistry`. Static discovery is deterministic and
+works in Next.js/serverless builds. There is no runtime filesystem scanning,
+remote URL import, npm download, uploaded code, `eval`, MCP or third-party script
+execution.
 
-permissions:
-  - company.read
-  - marketing.read
-  - marketing.write
+Invalid definitions fail during module import/build. Duplicate plugin IDs and
+exclusive capability identifiers fail registration before the conflicting
+definition becomes visible.
 
-memory_domains:
-  - company
-  - marketing
+## Manifest Contract
 
-capabilities:
-  - reels.analyze
-  - reels.plan
-  - campaigns.create
+`@/core/plugins/public` exports the Zod schema, types, `definePlugin`, and
+registry. A manifest contains only bounded declarative metadata:
 
----
+- stable lowercase machine-safe `id`
+- display `name`, `description`, semantic `version`, and category
+- controlled Lucide `icon` identifier
+- declared permissions and exclusive capabilities
+- navigation contributions under `/apps/<plugin-id>`
+- explicit event subscriptions
+- approved memory-domain names
+- future AI tool metadata without an executor
 
-# Boundaries
+Permission and tool IDs must be owned by the plugin namespace. Routes cannot
+escape it. Persistent database metadata never stores JSX, components, URLs,
+handlers or executable code.
 
-Core does not depend on Marketing.
+Plugin IDs are durable security/application identifiers and must not be renamed
+after persistent organization state or business data uses them.
 
-Marketing depends on public Core interfaces.
+## Registry and Capabilities
 
-Plugins must not directly import private internals from other plugins.
+The registry is instance-scoped rather than hidden global mutable state. It can:
 
-Cross-plugin communication occurs through:
+- register, get and deterministically list plugin definitions
+- find the owner of an exclusive capability
+- expose a capability only when its plugin is enabled
+- collect enabled navigation contributions in stable order
+- dispatch declared handlers for enabled plugins
 
-- capabilities
-- public APIs
-- events
+Capabilities are identifiers and discovery metadata in TASK-008. The framework
+does not execute Marketing workflows or AI tools.
 
----
+## Organization Enablement
 
-# Memory
+`organization_plugins` stores one non-destructive availability row per
+organization/plugin ID. OWNER and ADMIN may change state through the guarded
+database function. MEMBER and VIEWER may read their organization's state only.
+Application actions derive the organization and accept only IDs present in the
+static registry. Database RLS prevents cross-organization access and direct
+browser writes.
 
-Plugins declare permitted memory domains.
+The SQL layer validates a safe ID shape rather than duplicating the TypeScript
+registry as a brittle enum. A well-formed but unregistered row is inert: it has no
+manifest, route, navigation, capability or handler.
 
-The runtime must enforce them.
+Disabling a plugin:
 
----
+- removes its navigation
+- makes its capabilities unavailable
+- excludes it from normal event dispatch
+- denies its guarded feature routes
+- prevents new guarded workflows from starting
 
-# Web Agency
+Disabling does not delete plugin data, configuration, memory or historical
+activity. It is not an uninstall operation.
 
-The future Web Agency plugin is an integration adapter to a separate
-system.
+## Navigation and Icons
 
-It should not require merging the Web Agency source tree or database into
-Stylus.
+The application shell combines stable Core groups with enabled plugin
+contributions after one organization-state query. Contributions specify a
+validated label, namespaced route, order and icon ID. Icon IDs resolve through
+the fixed Lucide registry in `core/plugins/icons.ts`; arbitrary component code is
+not accepted.
 
-Potential capabilities:
+Hiding a link is only presentation. Every plugin page must call the shared server
+route guard, which verifies authentication, organization membership, static
+registration and current organization enablement. Disabled or unknown plugin
+routes return not found without redirect loops.
 
-- agency.leads.list
-- agency.audit.start
-- agency.redesign.start
-- agency.pipeline.read
-- agency.revenue.read
+## Permissions
 
-Agency memory remains isolated.
+Manifest permissions declare what a plugin expects, such as `marketing.read` or
+`marketing.approve`. They are not organization roles and grant nothing by
+themselves. Existing OWNER/ADMIN/MEMBER/VIEWER behavior remains authoritative.
+A custom permission editor or mapping system is deliberately deferred until a
+real plugin requires it.
+
+## Events and Failure Policy
+
+Subscriptions and handlers are explicit and must match exactly. TASK-008
+dispatch is synchronous and in-process, in deterministic plugin order. A failing
+handler does not stop later handlers and does not implicitly roll back the source
+business transaction. Dispatch returns structured failures and accepts a failure
+observer so callers can surface or log them; errors are never silently discarded.
+
+No background jobs are introduced for plugin events. Long-running reactions must
+later use the persisted job infrastructure.
+
+## AI Tools and Memory Domains
+
+Tool entries are metadata-only extension points: ID, name and description. There
+is no ModelGateway, tool execution, agent, workflow, provider or LLM integration
+in TASK-008.
+
+Memory-domain declarations are also metadata and never authorize retrieval.
+Core policy recognizes only `company`, `marketing`, and `agency` and establishes:
+
+- future Marketing may request `company` and `marketing`
+- future Web Agency is restricted to `agency` by default
+- installing either plugin never grants the other's domain
+
+Future memory code must still enforce organization and domain scope at the
+database/application boundary.
+
+## Configuration and Secrets
+
+TASK-008 does not add a generic configuration editor because the example plugin
+needs no settings. Generic JSON must not become an unvalidated credential store.
+Future integrations require typed configuration and a dedicated server-side
+secret/integration boundary.
+
+## Example Plugin
+
+The built-in `example` plugin is explicitly categorized as development. It has
+one capability, one guarded placeholder route, one navigation contribution, one
+harmless `plugin.enabled` handler and one metadata-only future tool declaration.
+It exists only to verify the framework and contains no Marketing functionality.
+
+## Adding a Future Plugin
+
+1. Create `src/plugins/<stable-id>`.
+2. Import only the public Core plugin contract.
+3. Define and validate the manifest and any explicit handlers.
+4. Register it statically in `src/plugins/index.ts`.
+5. Add namespaced guarded routes and business-owned migrations.
+6. Add capability, event, enablement, route and isolation tests.
+7. Document any public Core API genuinely required by the plugin.
+
+Marketing can follow this process without moving its business logic into Core.
+Web Agency can later use the same public contracts while retaining its separate
+system and agency-only memory boundary.

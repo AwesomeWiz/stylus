@@ -4,31 +4,29 @@ Last Updated: 2026-08-26
 
 ## Overall Status
 
-TASK-007 WHITEBOARD COLLABORATION / READY FOR MANUAL QA
+TASK-008 PLUGIN FRAMEWORK / READY FOR MANUAL QA
 
-Stylus now adds scoped live element synchronization, private presence, relational
-board/element comments, shallow replies, structural mentions, notifications,
-activity and collaboration-safe local history to the persistent whiteboard. The
-manual-QA prerequisite now provides real team invitations and membership
-management for multi-user verification. Invitation copy controls now reset after
-a brief confirmation, and commented elements display live comment-count badges.
+Stylus now has a trusted static business-plugin framework with validated
+manifests, deterministic capabilities and events, organization-scoped enablement,
+enabled-only navigation and route guards, an internal Apps screen and a minimal
+development example plugin. Marketing and AI execution are not implemented.
 
 ---
 
 ## Current Phase
 
-Phase 5 — Whiteboards
+Phase 6 — Plugin Platform
 
-Status: TASK-007 READY FOR MANUAL QA
+Status: TASK-008 READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-007 remains current on `codex/task-007-whiteboard-collaboration`. Apply the
-pending team invitation migration, run pgTAP in a database-capable environment,
-then perform invitation-driven authenticated two-user, reconnect, role and
-responsive manual QA. Do not start TASK-008.
+TASK-008 remains current on `codex/task-008-plugin-framework`. Apply the pending
+plugin migration, run pgTAP in a database-capable environment, then perform
+two-organization role, enablement, navigation and direct-route manual QA. Do not
+start TASK-009.
 
 ---
 
@@ -427,6 +425,58 @@ Before merge/deployment:
 
 ---
 
+# Phase 6 Implementation
+
+- trusted built-in plugin definitions with explicit static discovery
+- Zod-validated stable IDs, metadata, permissions, capabilities, navigation,
+  event subscriptions, memory domains and future AI tool descriptions
+- instance-scoped deterministic registry with duplicate ID/capability rejection
+- controlled Lucide icon resolution and namespaced plugin routes
+- organization-scoped enable/disable state with non-destructive semantics
+- enabled-only capabilities, navigation, event dispatch and server route guards
+- compact `/apps` management UI with OWNER/ADMIN controls and member reads
+- guarded `/apps/example` development proof plugin with no business functionality
+- focused Core/plugin import-boundary enforcement
+
+---
+
+# Phase 6 Database and Security
+
+Migration: `supabase/migrations/20260825000800_plugin_framework.sql`
+
+Introduced:
+
+- `organization_plugins` with organization/plugin composite identity
+- enable, disable, creation and update timestamps with member provenance
+- active plugin index and stable safe plugin-ID constraint
+- organization-member SELECT RLS and no direct browser writes
+- OWNER/ADMIN-only `set_organization_plugin_enabled` with derived actor,
+  validated organization membership and an empty `search_path`
+- 19-assertion pgTAP suite at
+  `supabase/tests/database/plugin_framework_rls.test.sql`
+
+Disablement preserves the row and does not delete plugin data, memory,
+configuration or historical activity. Unknown well-formed database IDs remain
+inert because only the static application registry can provide behavior.
+
+---
+
+# Phase 6 Verification
+
+Verified on 2026-08-26:
+
+- `npm run format:check`: passed
+- `npm run lint`: passed with 0 warnings
+- `npm run typecheck`: passed
+- full web suite: passed; 58 files and 240 tests
+- `npm run build`: passed; `/apps` and guarded `/apps/example` compiled
+- focused registry, event, enablement, UI, route and architecture tests passed
+- local pgTAP execution unavailable because Docker/Podman is not installed
+- linked migration dry run: passed; only
+  `20260825000800_plugin_framework.sql` is pending and no remote change was made
+
+---
+
 # Product Direction
 
 Stylus is a collaborative startup operating system.
@@ -542,27 +592,27 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-007 is ready for manual QA on
-`codex/task-007-whiteboard-collaboration`. TASK-008 has not started.
+TASK-008 is ready for manual QA on `codex/task-008-plugin-framework`.
+TASK-009 has not started.
 
 ---
 
 # Known Issues
 
-Docker/Podman is unavailable, so whiteboard and organization-invitation pgTAP
-suites have not run locally. The hosted dry run lists only the invitation
-prerequisite migration. Invitation acceptance, authenticated two-user Realtime,
-private Presence, role/isolation, reconnect, comment/mention notification and
-responsive manual QA remain required. Live cursors and CRDT editing are deferred.
+Docker/Podman is unavailable, so the plugin pgTAP suite has not run locally.
+No in-app browser surface was available for live visual QA.
+Hosted OWNER/ADMIN/MEMBER/VIEWER, two-organization enablement, navigation and
+route-guard QA remain required. Plugin events are synchronous and caller-driven;
+custom permission mapping, typed settings/secrets, AI execution, remote plugins,
+Marketing and Web Agency integration are deliberately deferred.
 
 ---
 
 # Next Recommended Action
 
-Apply the pending invitation migration, execute pgTAP in a database-capable
-environment, complete OWNER-to-MEMBER and OWNER-to-VIEWER invitations, then
-perform two-user collaboration, reconnect, role/isolation and responsive QA.
-Do not begin TASK-008.
+Apply the pending plugin migration, execute pgTAP in a database-capable
+environment, and complete two-organization manager/member enablement,
+navigation/capability and guarded-route QA. Do not begin TASK-009.
 
 ---
 
@@ -576,10 +626,8 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-007 plus its invitation prerequisite is ready for manual QA on
-`codex/task-007-whiteboard-collaboration`.
+TASK-008 is ready for manual QA on `codex/task-008-plugin-framework`.
 
-Apply the pending invitation migration, run pgTAP, invite a second authenticated
-user through Team, then verify scoped element/comment updates, Presence, mention
-notifications, role/isolation boundaries, reconnect and responsive behavior.
-TASK-008 must not begin until TASK-007 is accepted and merged.
+Apply the pending plugin migration, run pgTAP, then verify Apps state and the
+example navigation/route with OWNER, ADMIN, MEMBER and VIEWER users across two
+organizations. TASK-009 must not begin until TASK-008 is accepted and merged.

@@ -8,12 +8,14 @@ import type { NotificationSummary } from "@/modules/notifications/server/data";
 
 import { Sidebar } from "./sidebar";
 import type { ShellIdentity, ShellOrganization } from "./app-shell";
+import type { NavigationGroup } from "./navigation";
 
 interface TopbarProps {
   activePath: string;
   identity: ShellIdentity;
   logoutAction: () => Promise<void>;
   notifications: NotificationSummary;
+  navigationGroups: NavigationGroup[];
   organization: ShellOrganization;
 }
 
@@ -22,6 +24,7 @@ export function Topbar({
   identity,
   logoutAction,
   notifications,
+  navigationGroups,
   organization,
 }: TopbarProps) {
   return (
@@ -39,6 +42,7 @@ export function Topbar({
             activePath={activePath}
             identity={identity}
             logoutAction={logoutAction}
+            navigationGroups={navigationGroups}
             organization={organization}
           />
         </Sheet>
