@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 
-import type { BoardElementRow, BoardRow } from "@/lib/supabase/database.types";
+import type {
+  BoardCommentRow,
+  BoardElementRow,
+  BoardRow,
+} from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
 
@@ -12,9 +16,12 @@ import {
   boardIdSchema,
   boardImageSchema,
   boardTitleSchema,
+  commentIdSchema,
+  createBoardCommentSchema,
   createElementSchema,
   elementIdSchema,
   type CreateElementInput,
+  type CreateBoardCommentInput,
   type UpdateElementInput,
   updateElementSchema,
 } from "./schemas";
@@ -221,7 +228,7 @@ export async function updateBoardElementAction(
 
 export async function archiveBoardElementAction(
   elementId: string,
-): Promise<WhiteboardActionResult> {
+): Promise<WhiteboardActionResult<BoardElementRow>> {
   try {
     const parsedId = elementIdSchema.parse(elementId);
     const current = await mutationContext();
@@ -235,11 +242,11 @@ export async function archiveBoardElementAction(
       .eq("id", parsedId)
       .eq("organization_id", current.organization.id)
       .is("archived_at", null)
-      .select("board_id")
+      .select("*")
       .maybeSingle();
     if (error || !data) throw error ?? new Error("Element not found");
     revalidatePath(`/whiteboards/${data.board_id}`);
-    return { data: undefined, status: "success" };
+    return { data, status: "success" };
   } catch (error) {
     return {
       message: actionError(
@@ -348,6 +355,60 @@ export async function uploadBoardImageAction(
       message: actionError(
         error,
         "The image could not be uploaded. Please try again.",
+      ),
+      status: "error",
+    };
+  }
+}
+
+export async function createBoardCommentAction(
+  input: CreateBoardCommentInput,
+): Promise<WhiteboardActionResult<BoardCommentRow>> {
+  try {
+    const parsed = createBoardCommentSchema.parse(input);
+    await mutationContext();
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase.rpc("create_board_comment", {
+      p_board_id: parsed.boardId,
+      p_body: parsed.body,
+      p_element_id: parsed.elementId,
+      p_mentioned_user_ids: [...new Set(parsed.mentionedUserIds)],
+      p_parent_id: parsed.parentId,
+    });
+    if (error || !data) throw error ?? new Error("Comment not created");
+    revalidatePath(`/whiteboards/${parsed.boardId}`);
+    revalidatePath("/activity");
+    revalidatePath("/", "layout");
+    return { data, status: "success" };
+  } catch (error) {
+    return {
+      message: actionError(
+        error,
+        "The comment could not be added. Please try again.",
+      ),
+      status: "error",
+    };
+  }
+}
+
+export async function archiveBoardCommentAction(
+  commentId: string,
+): Promise<WhiteboardActionResult<BoardCommentRow>> {
+  try {
+    const parsedId = commentIdSchema.parse(commentId);
+    await mutationContext();
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase.rpc("archive_board_comment", {
+      p_comment_id: parsedId,
+    });
+    if (error || !data) throw error ?? new Error("Comment not found");
+    revalidatePath(`/whiteboards/${data.board_id}`);
+    return { data, status: "success" };
+  } catch (error) {
+    return {
+      message: actionError(
+        error,
+        "The comment could not be removed. Please try again.",
       ),
       status: "error",
     };

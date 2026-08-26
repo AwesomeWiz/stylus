@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ import type { BoardElementRow } from "@/lib/supabase/database.types";
 export type WhiteboardSaveState = "SAVED" | "SAVING" | "ERROR";
 
 export function WhiteboardHeader({
+  actions,
   canMutate,
   onRename,
   onRenamingChange,
@@ -31,6 +33,7 @@ export function WhiteboardHeader({
   setTitle,
   title,
 }: {
+  actions?: ReactNode;
   canMutate: boolean;
   onRename: () => void;
   onRenamingChange: (renaming: boolean) => void;
@@ -77,9 +80,10 @@ export function WhiteboardHeader({
           {title}
         </button>
       )}
+      {actions}
       <div
         aria-live="polite"
-        className={`ml-auto flex items-center gap-1.5 text-xs ${saveState === "ERROR" ? "text-destructive" : "text-muted-foreground"}`}
+        className={`flex items-center gap-1.5 text-xs ${actions ? "" : "ml-auto"} ${saveState === "ERROR" ? "text-destructive" : "text-muted-foreground"}`}
       >
         {saveState === "SAVING" ? (
           <LoaderCircle aria-hidden="true" className="size-3.5 animate-spin" />

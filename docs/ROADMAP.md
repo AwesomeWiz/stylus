@@ -30,6 +30,7 @@ Status: COMPLETE
 - [x] sessions
 - [x] organizations
 - [x] memberships
+- [x] team invitations and member management
 - [x] protected routes
 - [x] role/permission foundation
 - [x] RLS
@@ -101,14 +102,15 @@ notification/activity foundations without external delivery channels.
 - [x] shapes
 - [x] arrows
 - [x] drag/resize
-- [ ] comments
-- [ ] mentions
-- [ ] realtime collaboration
+- [x] comments
+- [x] mentions
+- [x] realtime collaboration
 - [x] permissions
 
-TASK-006 provides the persistent single-session editor, private image storage,
-layering, autosave boundaries and viewer read-only access. Comments, mentions,
-realtime synchronization and presence remain TASK-007.
+TASK-006 provides the persistent editor and TASK-007 adds board-scoped Realtime
+updates, private presence, comments/replies, structural mentions, notifications,
+activity and collaboration-safe local operation history. Live cursors and a CRDT
+remain deliberately outside this milestone.
 
 ---
 

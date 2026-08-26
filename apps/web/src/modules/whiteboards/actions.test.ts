@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => {
     from: vi.fn(() => builder),
     getContext: vi.fn(),
     revalidatePath: vi.fn(),
+    rpc: vi.fn(),
   };
 });
 
@@ -34,12 +35,14 @@ vi.mock("@/modules/organizations/server/context", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: mocks.from,
+    rpc: mocks.rpc,
     storage: { from: vi.fn() },
   })),
 }));
 
 import {
   archiveBoardAction,
+  createBoardCommentAction,
   createBoardAction,
   createBoardElementAction,
   restoreBoardElementAction,
@@ -50,6 +53,7 @@ const userId = "00000000-0000-4000-8000-000000000001";
 const organizationId = "10000000-0000-4000-8000-000000000001";
 const boardId = "20000000-0000-4000-8000-000000000001";
 const elementId = "30000000-0000-4000-8000-000000000001";
+const commentId = "40000000-0000-4000-8000-000000000001";
 
 const board = {
   archived_at: null,
@@ -80,6 +84,18 @@ const element = {
   x: 10,
   y: 20,
   z_index: 1,
+};
+const comment = {
+  archived_at: null,
+  author_id: userId,
+  board_id: boardId,
+  body: "Please review @Teammate",
+  created_at: "2026-08-25T00:00:00Z",
+  element_id: null,
+  id: commentId,
+  organization_id: organizationId,
+  parent_id: null,
+  updated_at: "2026-08-25T00:00:00Z",
 };
 
 describe("whiteboard actions", () => {
@@ -199,5 +215,43 @@ describe("whiteboard actions", () => {
     const result = await createBoardAction("Private plan");
     expect(result.status).toBe("error");
     expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("passes structural mention identities to the guarded comment RPC", async () => {
+    const mentionedUserId = "50000000-0000-4000-8000-000000000001";
+    mocks.rpc.mockResolvedValue({ data: comment, error: null });
+    await expect(
+      createBoardCommentAction({
+        boardId,
+        body: "Please review @Teammate",
+        elementId: null,
+        mentionedUserIds: [mentionedUserId, mentionedUserId],
+        parentId: null,
+      }),
+    ).resolves.toEqual({ data: comment, status: "success" });
+    expect(mocks.rpc).toHaveBeenCalledWith("create_board_comment", {
+      p_board_id: boardId,
+      p_body: "Please review @Teammate",
+      p_element_id: null,
+      p_mentioned_user_ids: [mentionedUserId],
+      p_parent_id: null,
+    });
+  });
+
+  it("rejects VIEWER comments before invoking the security-definer RPC", async () => {
+    mocks.getContext.mockResolvedValue({
+      membership: { role: "VIEWER" },
+      organization: { id: organizationId },
+      user: { id: userId },
+    });
+    const result = await createBoardCommentAction({
+      boardId,
+      body: "Cannot write",
+      elementId: null,
+      mentionedUserIds: [],
+      parentId: null,
+    });
+    expect(result.status).toBe("error");
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 });

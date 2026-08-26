@@ -1,15 +1,17 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-25
+Last Updated: 2026-08-26
 
 ## Overall Status
 
-TASK-006 WHITEBOARD FOUNDATION / READY FOR MANUAL QA
+TASK-007 WHITEBOARD COLLABORATION / READY FOR MANUAL QA
 
-Stylus now includes a persistent organization-scoped visual canvas with private
-image storage, contextual formatting, bounded persisted undo/redo, role-aware
-editing and permanent isolation coverage. Authenticated visual/security QA must
-be repeated after the TASK-006 manual-QA completion pass.
+Stylus now adds scoped live element synchronization, private presence, relational
+board/element comments, shallow replies, structural mentions, notifications,
+activity and collaboration-safe local history to the persistent whiteboard. The
+manual-QA prerequisite now provides real team invitations and membership
+management for multi-user verification. Invitation copy controls now reset after
+a brief confirmation, and commented elements display live comment-count badges.
 
 ---
 
@@ -17,15 +19,16 @@ be repeated after the TASK-006 manual-QA completion pass.
 
 Phase 5 — Whiteboards
 
-Status: READY FOR MANUAL QA
+Status: TASK-007 READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-006 is implementation-complete on
-`codex/task-006-whiteboard-foundation` and ready for authenticated role/storage,
-pointer and responsive canvas manual QA again. TASK-007 has not started.
+TASK-007 remains current on `codex/task-007-whiteboard-collaboration`. Apply the
+pending team invitation migration, run pgTAP in a database-capable environment,
+then perform invitation-driven authenticated two-user, reconnect, role and
+responsive manual QA. Do not start TASK-008.
 
 ---
 
@@ -539,28 +542,27 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-006 is ready for manual QA on
-`codex/task-006-whiteboard-foundation`. TASK-007 has not started.
+TASK-007 is ready for manual QA on
+`codex/task-007-whiteboard-collaboration`. TASK-008 has not started.
 
 ---
 
 # Known Issues
 
-Docker/Podman is unavailable, so the Phase 5 22-assertion pgTAP suite has not run
-locally. No in-app browser surface was available for authenticated visual QA.
-Hosted migration, storage-policy behavior, role isolation, image signed URLs,
-responsive layout and real pointer pan/zoom/drag/resize QA remain required.
-
-TASK-006 intentionally has no multi-select, comments, mentions, realtime
-synchronization or presence. The collaboration scope belongs to TASK-007.
+Docker/Podman is unavailable, so whiteboard and organization-invitation pgTAP
+suites have not run locally. The hosted dry run lists only the invitation
+prerequisite migration. Invitation acceptance, authenticated two-user Realtime,
+private Presence, role/isolation, reconnect, comment/mention notification and
+responsive manual QA remain required. Live cursors and CRDT editing are deferred.
 
 ---
 
 # Next Recommended Action
 
-Execute pgTAP in a database-capable environment and repeat TASK-006 authenticated
-role, storage, formatting, undo/redo, image-picker, pointer-performance,
-persistence and responsive canvas QA. Do not begin TASK-007.
+Apply the pending invitation migration, execute pgTAP in a database-capable
+environment, complete OWNER-to-MEMBER and OWNER-to-VIEWER invitations, then
+perform two-user collaboration, reconnect, role/isolation and responsive QA.
+Do not begin TASK-008.
 
 ---
 
@@ -574,11 +576,10 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-006 is complete and ready for manual QA on
-`codex/task-006-whiteboard-foundation`.
+TASK-007 plus its invitation prerequisite is ready for manual QA on
+`codex/task-007-whiteboard-collaboration`.
 
-Run the whiteboard pgTAP suite, verify OWNER/ADMIN/MEMBER/VIEWER and
-cross-organization boundaries, exercise private image upload/signed access, and
-repeat formatting, history, picker, pointer and responsive canvas QA.
-TASK-007 — Whiteboard Collaboration is the exact next task; do not begin it
-until TASK-006 is accepted and merged.
+Apply the pending invitation migration, run pgTAP, invite a second authenticated
+user through Team, then verify scoped element/comment updates, Presence, mention
+notifications, role/isolation boundaries, reconnect and responsive behavior.
+TASK-008 must not begin until TASK-007 is accepted and merged.

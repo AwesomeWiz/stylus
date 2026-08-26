@@ -59,19 +59,24 @@ function props(data: WhiteboardNodeData) {
   } as unknown as React.ComponentProps<typeof WhiteboardNode>;
 }
 
+function nodeData(overrides: Partial<WhiteboardNodeData> = {}) {
+  return {
+    canMutate: true,
+    commentCount: 0,
+    element: sticky,
+    onContentCommit: vi.fn(),
+    onResizeCommit: vi.fn(),
+    ...overrides,
+  } satisfies WhiteboardNodeData;
+}
+
 describe("WhiteboardNode", () => {
   afterEach(cleanup);
+
   it("commits text on blur without rendering unsafe HTML", () => {
     const commit = vi.fn();
     render(
-      <WhiteboardNode
-        {...props({
-          canMutate: true,
-          element: sticky,
-          onContentCommit: commit,
-          onResizeCommit: vi.fn(),
-        })}
-      />,
+      <WhiteboardNode {...props(nodeData({ onContentCommit: commit }))} />,
     );
     fireEvent.doubleClick(
       screen.getByRole("button", { name: /Sticky note: Original/ }),
@@ -89,16 +94,7 @@ describe("WhiteboardNode", () => {
 
   it("commits valid final resize geometry", () => {
     const resize = vi.fn();
-    render(
-      <WhiteboardNode
-        {...props({
-          canMutate: true,
-          element: sticky,
-          onContentCommit: vi.fn(),
-          onResizeCommit: resize,
-        })}
-      />,
-    );
+    render(<WhiteboardNode {...props(nodeData({ onResizeCommit: resize }))} />);
     fireEvent.click(screen.getByRole("button", { name: "Resize element" }));
     expect(resize).toHaveBeenCalledWith(sticky.id, {
       height: 220,
@@ -117,14 +113,7 @@ describe("WhiteboardNode", () => {
       width: 220,
     };
     const { container } = render(
-      <WhiteboardNode
-        {...props({
-          canMutate: true,
-          element: arrow,
-          onContentCommit: vi.fn(),
-          onResizeCommit: vi.fn(),
-        })}
-      />,
+      <WhiteboardNode {...props(nodeData({ element: arrow }))} />,
     );
     const line = container.querySelector("line");
     expect(line).toHaveAttribute("y1", "12");
@@ -134,20 +123,31 @@ describe("WhiteboardNode", () => {
   it("applies sticky background and readable foreground colors", () => {
     render(
       <WhiteboardNode
-        {...props({
-          canMutate: true,
-          element: {
-            ...sticky,
-            style: { background: "#dbeafe", color: "#1e3a8a", fontSize: 20 },
-          },
-          onContentCommit: vi.fn(),
-          onResizeCommit: vi.fn(),
-        })}
+        {...props(
+          nodeData({
+            element: {
+              ...sticky,
+              style: { background: "#dbeafe", color: "#1e3a8a", fontSize: 20 },
+            },
+          }),
+        )}
       />,
     );
     expect(screen.getByRole("button", { name: /Sticky note/ })).toHaveStyle({
       color: "rgb(30, 58, 138)",
       fontSize: "20px",
     });
+  });
+
+  it("shows the active comment count on a commented element", () => {
+    render(<WhiteboardNode {...props(nodeData({ commentCount: 2 }))} />);
+    expect(
+      screen.getByRole("status", { name: "2 comments on this element" }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show a comment badge when the element has no active comments", () => {
+    render(<WhiteboardNode {...props(nodeData())} />);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });

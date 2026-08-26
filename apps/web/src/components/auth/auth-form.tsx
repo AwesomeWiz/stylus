@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useActionState } from "react";
 
 import { Input } from "@/components/ui/input";
@@ -10,9 +11,10 @@ import { initialAuthActionState } from "@/modules/auth/schemas";
 
 interface AuthFormProps {
   mode: "login" | "signup";
+  returnPath?: string;
 }
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, returnPath }: AuthFormProps) {
   const isSignup = mode === "signup";
   const [state, action] = useActionState(
     isSignup ? signupAction : loginAction,
@@ -21,6 +23,9 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <form action={action} className="space-y-5" noValidate>
+      {returnPath ? (
+        <input name="next" type="hidden" value={returnPath} />
+      ) : null}
       {isSignup ? (
         <Field
           autoComplete="name"
@@ -71,7 +76,9 @@ export function AuthForm({ mode }: AuthFormProps) {
         {isSignup ? "Already have an account?" : "New to Stylus?"}{" "}
         <Link
           className="text-foreground font-medium underline-offset-4 hover:underline"
-          href={isSignup ? "/login" : "/signup"}
+          href={
+            `${isSignup ? "/login" : "/signup"}${returnPath ? `?next=${encodeURIComponent(returnPath)}` : ""}` as Route
+          }
         >
           {isSignup ? "Sign in" : "Create an account"}
         </Link>

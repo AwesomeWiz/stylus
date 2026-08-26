@@ -109,6 +109,32 @@ Marketing must not retrieve Agency memory.
 - `board-images` is private; path-derived organization policies protect reads,
   writes and removal, and rendering uses expiring signed URLs
 - storage service-role credentials are not used or exposed
+- board comments inherit board/organization scope through composite foreign keys;
+  browser roles receive SELECT only and use permission-checking RPCs for writes
+- mentions store validated member UUIDs rather than trusting display text, and
+  notification recipients are derived inside the same database transaction
+- private Presence topics require current board membership; displayed identity
+  and role are resolved from the member directory, not client metadata
+- Realtime Postgres Changes remain protected by table RLS and board filters;
+  cleanup prevents subscriptions surviving navigation to another board
+
+---
+
+# Team Invitations
+
+- links contain 256-bit random URL-safe tokens; PostgreSQL stores only SHA-256
+  hashes and never exposes them through team/list RPCs
+- anonymous users cannot query invitation rows; a strong token permits only a
+  minimal organization/role preview
+- acceptance accepts no organization, role or invitee identifier; the locked
+  invitation and authenticated Supabase email determine them
+- OWNER/ADMIN RPCs repeat authorization; MEMBER and VIEWER receive no direct
+  invitation or membership mutation grants
+- invites grant only MEMBER or VIEWER; OWNER cannot be removed or changed, and
+  ADMIN cannot manage another ADMIN
+- revoked, expired, wrong-email and cross-organization attempts fail atomically
+- removed memberships retain provenance but are excluded by authorization/RLS
+  helpers and collaboration directories
 
 ---
 

@@ -9,6 +9,20 @@ const migration = readFileSync(
   ),
   "utf8",
 );
+const collaborationMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825000710_whiteboard_collaboration.sql",
+  ),
+  "utf8",
+);
+const collaborationEnums = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825000700_extend_collaboration_enums.sql",
+  ),
+  "utf8",
+);
 
 describe("whiteboard migration contract", () => {
   it("stores boards and independently addressable elements with safe geometry", () => {
@@ -47,6 +61,61 @@ describe("whiteboard migration contract", () => {
     );
     expect(migration).not.toMatch(
       /grant update \([^)]*(organization_id|board_id|created_by)/,
+    );
+  });
+});
+
+describe("whiteboard collaboration migration contract", () => {
+  it("extends notification and activity enums in a separate committed migration", () => {
+    expect(collaborationEnums).toMatch(/notification_type[\s\S]*BOARD_MENTION/);
+    expect(collaborationEnums).toMatch(/notification_entity_type[\s\S]*BOARD/);
+    expect(collaborationEnums).toMatch(
+      /activity_event_type[\s\S]*BOARD_COMMENTED/,
+    );
+  });
+
+  it("stores scoped comments, shallow replies, and structural mentions", () => {
+    expect(collaborationMigration).toMatch(
+      /create table public\.board_comments/,
+    );
+    expect(collaborationMigration).toMatch(
+      /create table public\.board_comment_mentions/,
+    );
+    expect(collaborationMigration).toMatch(
+      /Replies may have only one thread level/,
+    );
+    expect(collaborationMigration).toMatch(
+      /Mentioned user must belong to organization/,
+    );
+  });
+
+  it("keeps writes behind permission-checking RPCs", () => {
+    expect(collaborationMigration).toMatch(
+      /security definer[\s\S]*set search_path = ''/,
+    );
+    expect(collaborationMigration).toMatch(
+      /Board collaboration permission required/,
+    );
+    expect(collaborationMigration).toMatch(
+      /Comment removal permission required/,
+    );
+    expect(collaborationMigration).not.toMatch(
+      /grant (insert|update|delete) on table public\.board_comments/,
+    );
+  });
+
+  it("publishes scoped board rows and restricts private presence", () => {
+    expect(collaborationMigration).toMatch(
+      /alter publication supabase_realtime add table public\.board_elements/,
+    );
+    expect(collaborationMigration).toMatch(
+      /alter publication supabase_realtime add table public\.board_comments/,
+    );
+    expect(collaborationMigration).toMatch(
+      /realtime\.messages\.extension = 'presence'/,
+    );
+    expect(collaborationMigration).toMatch(
+      /'board:' \|\| board_record\.id::text/,
     );
   });
 });

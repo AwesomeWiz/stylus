@@ -60,6 +60,18 @@ describe("authentication actions", () => {
     });
   });
 
+  it("returns to a validated invitation after sign in", async () => {
+    mocks.signInWithPassword.mockResolvedValue({ error: null });
+    const token = "A".repeat(43);
+    const formData = new FormData();
+    formData.set("email", "founder@example.com");
+    formData.set("password", "correct-horse");
+    formData.set("next", `/invite/${token}`);
+    await expect(loginAction(initialAuthActionState, formData)).rejects.toThrow(
+      `redirect:/invite/${token}`,
+    );
+  });
+
   it("returns a non-enumerating login error", async () => {
     mocks.signInWithPassword.mockResolvedValue({
       error: { code: "invalid_credentials" },

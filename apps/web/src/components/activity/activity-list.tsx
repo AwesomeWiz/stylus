@@ -17,6 +17,7 @@ import type {
 } from "@/lib/supabase/database.types";
 
 const icons: Record<ActivityEventType, LucideIcon> = {
+  BOARD_COMMENTED: MessageSquare,
   TASK_ASSIGNED: UserRoundCheck,
   TASK_CANCELLED: XCircle,
   TASK_COMMENTED: MessageSquare,
@@ -46,6 +47,7 @@ export function activityDescription(
   const actor = memberName(members, event.actor_id);
   const title = metadataText(event, "title") ?? "a task";
   const descriptions: Record<ActivityEventType, string> = {
+    BOARD_COMMENTED: `${actor} commented on board “${title}”`,
     TASK_ASSIGNED: `${actor} assigned “${title}” to ${memberName(members, metadataText(event, "to_assignee_id"))}`,
     TASK_CANCELLED: `${actor} cancelled “${title}”`,
     TASK_COMMENTED: `${actor} commented on “${title}”`,
@@ -94,7 +96,11 @@ export function ActivityList({
             <span className="min-w-0 flex-1">
               <Link
                 className="hover:underline"
-                href={`/tasks?view=all&task=${encodeURIComponent(event.entity_id)}`}
+                href={
+                  event.entity_type === "BOARD"
+                    ? `/whiteboards/${encodeURIComponent(event.entity_id)}`
+                    : `/tasks?view=all&task=${encodeURIComponent(event.entity_id)}`
+                }
               >
                 <span className="text-sm">
                   {activityDescription(event, members)}

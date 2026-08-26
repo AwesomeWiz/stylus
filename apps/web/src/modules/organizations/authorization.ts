@@ -39,7 +39,11 @@ export async function authorizeOrganizationMembership(input: {
     userId: input.userId,
   });
 
-  if (!membership || membership.user_id !== input.userId) {
+  if (
+    !membership ||
+    membership.user_id !== input.userId ||
+    membership.removed_at !== null
+  ) {
     throw new OrganizationAccessDeniedError();
   }
 

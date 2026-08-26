@@ -1,12 +1,16 @@
 import type { BoardElementRow } from "@/lib/supabase/database.types";
 
 export const WHITEBOARD_HISTORY_LIMIT = 75;
-
 export type WhiteboardSnapshot = BoardElementRow[];
-
+export type WhiteboardElementChange = {
+  after: BoardElementRow | null;
+  before: BoardElementRow | null;
+  elementId: string;
+};
+export type WhiteboardOperation = { changes: WhiteboardElementChange[] };
 export type WhiteboardHistory = {
-  future: WhiteboardSnapshot[];
-  past: WhiteboardSnapshot[];
+  future: WhiteboardOperation[];
+  past: WhiteboardOperation[];
   present: WhiteboardSnapshot;
 };
 
@@ -21,31 +25,48 @@ export function recordWhiteboardHistory(
   present: WhiteboardSnapshot,
   limit = WHITEBOARD_HISTORY_LIMIT,
 ): WhiteboardHistory {
-  if (sameSnapshot(history.present, present)) return history;
+  const operation = operationBetween(history.present, present);
+  if (!operation.changes.length) return history;
   return {
     future: [],
-    past: [...history.past, history.present].slice(-limit),
+    past: [...history.past, operation].slice(-limit),
     present,
   };
 }
 
 export function undoWhiteboardHistory(history: WhiteboardHistory) {
-  const previous = history.past.at(-1);
-  if (!previous) return history;
+  const operation = history.past.at(-1);
+  if (!operation) return history;
   return {
-    future: [history.present, ...history.future],
+    future: [operation, ...history.future],
     past: history.past.slice(0, -1),
-    present: previous,
+    present: applyOperation(history.present, operation, "before"),
   };
 }
 
 export function redoWhiteboardHistory(history: WhiteboardHistory) {
-  const next = history.future[0];
-  if (!next) return history;
+  const operation = history.future[0];
+  if (!operation) return history;
   return {
     future: history.future.slice(1),
-    past: [...history.past, history.present].slice(-WHITEBOARD_HISTORY_LIMIT),
-    present: next,
+    past: [...history.past, operation].slice(-WHITEBOARD_HISTORY_LIMIT),
+    present: applyOperation(history.present, operation, "after"),
+  };
+}
+
+export function reconcileRemoteElement(
+  history: WhiteboardHistory,
+  element: BoardElementRow,
+  { preserveHistory = false }: { preserveHistory?: boolean } = {},
+): WhiteboardHistory {
+  const present = upsertActiveElement(history.present, element);
+  if (preserveHistory) return { ...history, present };
+  const touchesElement = (operation: WhiteboardOperation) =>
+    operation.changes.some((change) => change.elementId === element.id);
+  return {
+    future: history.future.filter((operation) => !touchesElement(operation)),
+    past: history.past.filter((operation) => !touchesElement(operation)),
+    present,
   };
 }
 
@@ -53,31 +74,71 @@ export function diffWhiteboardSnapshots(
   from: WhiteboardSnapshot,
   to: WhiteboardSnapshot,
 ) {
-  const fromById = new Map(from.map((element) => [element.id, element]));
-  const toById = new Map(to.map((element) => [element.id, element]));
+  const operation = operationBetween(from, to);
   return {
-    archiveIds: from
-      .filter((element) => !toById.has(element.id))
-      .map((element) => element.id),
-    restore: to.filter((element) => !fromById.has(element.id)),
-    update: to.filter((element) => {
-      const current = fromById.get(element.id);
-      return current ? !sameElement(current, element) : false;
+    archiveIds: operation.changes
+      .filter((change) => change.before && !change.after)
+      .map((change) => change.elementId),
+    restore: operation.changes.flatMap((change) =>
+      !change.before && change.after ? [change.after] : [],
+    ),
+    update: operation.changes.flatMap((change) =>
+      change.before && change.after ? [change.after] : [],
+    ),
+  };
+}
+
+function operationBetween(
+  before: WhiteboardSnapshot,
+  after: WhiteboardSnapshot,
+): WhiteboardOperation {
+  const beforeById = new Map(before.map((element) => [element.id, element]));
+  const afterById = new Map(after.map((element) => [element.id, element]));
+  const ids = new Set([...beforeById.keys(), ...afterById.keys()]);
+  return {
+    changes: [...ids].flatMap((elementId) => {
+      const previous = beforeById.get(elementId) ?? null;
+      const next = afterById.get(elementId) ?? null;
+      return sameElement(previous, next)
+        ? []
+        : [{ after: next, before: previous, elementId }];
     }),
   };
 }
 
-function sameSnapshot(left: WhiteboardSnapshot, right: WhiteboardSnapshot) {
-  return (
-    left.length === right.length &&
-    left.every((element, index) => {
-      const candidate = right[index];
-      return candidate ? sameElement(element, candidate) : false;
-    })
+function applyOperation(
+  snapshot: WhiteboardSnapshot,
+  operation: WhiteboardOperation,
+  version: "before" | "after",
+) {
+  let result = snapshot;
+  for (const change of operation.changes) {
+    const element = change[version];
+    result = element
+      ? upsertActiveElement(result, element)
+      : result.filter((candidate) => candidate.id !== change.elementId);
+  }
+  return result;
+}
+
+function upsertActiveElement(
+  snapshot: WhiteboardSnapshot,
+  element: BoardElementRow,
+) {
+  if (element.archived_at)
+    return snapshot.filter((candidate) => candidate.id !== element.id);
+  if (!snapshot.some((candidate) => candidate.id === element.id))
+    return [...snapshot, element];
+  return snapshot.map((candidate) =>
+    candidate.id === element.id ? element : candidate,
   );
 }
 
-function sameElement(left: BoardElementRow, right: BoardElementRow) {
+function sameElement(
+  left: BoardElementRow | null,
+  right: BoardElementRow | null,
+) {
+  if (!left || !right) return left === right;
   return (
     left.id === right.id &&
     left.x === right.x &&
@@ -86,6 +147,7 @@ function sameElement(left: BoardElementRow, right: BoardElementRow) {
     left.height === right.height &&
     left.rotation === right.rotation &&
     left.z_index === right.z_index &&
+    left.archived_at === right.archived_at &&
     JSON.stringify(left.content) === JSON.stringify(right.content) &&
     JSON.stringify(left.style) === JSON.stringify(right.style) &&
     JSON.stringify(left.metadata) === JSON.stringify(right.metadata)

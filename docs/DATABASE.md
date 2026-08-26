@@ -27,6 +27,18 @@ Phase 1 introduces:
 - `role` uses `OWNER`, `ADMIN`, `MEMBER` or `VIEWER`
 - `created_at`
 - primary key: `(organization_id, user_id)`
+- nullable `removed_at`; removed members retain provenance but have no active access
+
+TASK-007 prerequisite migration
+`20260825000720_organization_team_invitations.sql` introduces
+`organization_invitations` with normalized email, MEMBER/VIEWER role, unique
+SHA-256 token hash, inviter, status, expiry and acceptance/revocation timestamps.
+A partial unique index prevents duplicate pending email invitations per tenant.
+
+Invitation lists never return token hashes. Manager functions create, regenerate
+and revoke invitations; acceptance takes only the raw token, locks the row,
+verifies status/expiry/authenticated email and atomically creates or reactivates
+membership. Removal softly revokes access to preserve historical provenance.
 
 Initial organization creation uses the authenticated-only
 `create_organization` database function. Organization insertion and the
@@ -165,6 +177,23 @@ Supabase Storage bucket `board-images` is private, limited to 10 MB PNG, JPEG an
 WebP objects, and protected by organization-path membership/role policies.
 Archiving an image element retains its private object so non-destructive recovery
 remains possible; a future permanent purge workflow may remove archived assets.
+
+TASK-007 adds migrations `20260825000700_extend_collaboration_enums.sql` and
+`20260825000710_whiteboard_collaboration.sql`.
+
+`board_comments` stores organization/board scope, optional element context,
+optional one-level parent, authenticated author, bounded body and soft removal.
+Composite foreign keys prevent cross-board and cross-organization links.
+`board_comment_mentions` stores structural recipient UUIDs; duplicate recipients
+are constrained and every recipient must be a current organization member.
+
+Comment creation is atomic through `create_board_comment`: it validates the board,
+active element, collaborator role and mentioned memberships before committing the
+comment, mention relations, `BOARD_MENTION` notifications and `BOARD_COMMENTED`
+activity. Direct browser comment writes and hard deletes are not granted.
+
+`board_elements` and `board_comments` are added to `supabase_realtime`; RLS still
+applies to Postgres Changes. Presence is ephemeral and has no application table.
 
 ---
 

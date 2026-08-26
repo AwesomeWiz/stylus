@@ -33,6 +33,16 @@ Users may include:
 
 # Core Product Areas
 
+## Team
+
+Owners and administrators can invite teammates as MEMBER or VIEWER, share a
+secure expiring link, revoke or regenerate pending invitations, change non-owner
+roles and remove non-owner access. Acceptance joins the authenticated email to
+the organization used by tasks, mentions, whiteboards and Presence.
+
+Initial delivery is manual link sharing. Stylus does not claim invitation email
+delivery until a transactional-email provider is configured.
+
 ## Home
 
 Provides a concise operational overview:

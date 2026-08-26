@@ -94,6 +94,16 @@ PostgreSQL grants and RLS provide defense in depth. Organization creation is an
 authenticated atomic database function that creates both the organization and
 its creator's `OWNER` membership.
 
+Team invitations use server-generated 256-bit random tokens. Only SHA-256 hashes
+are stored; the plaintext token is returned once for manual sharing. Atomic
+database functions derive organization and role, verify the authenticated email,
+create/reactivate membership and mark acceptance. A validated HTTP-only
+organization-selection cookie selects the accepted tenant without becoming an
+authorization source.
+
+Member removal is soft so provenance foreign keys and business history remain
+intact. Authorization helpers and directories exclude removed rows.
+
 Company onboarding never accepts an organization boundary from browser form
 data. Server Actions derive the current organization from the authenticated
 membership context, explicitly require `OWNER` or `ADMIN`, map accepted fields,
@@ -187,8 +197,16 @@ with the validated organization and board IDs; membership/role storage policies
 control object access, and the editor receives one-hour signed URLs. No service
 role credential or public bucket is used.
 
-TASK-006 is intentionally single-session: comments, mentions, realtime element
-synchronization and presence are deferred to TASK-007.
+TASK-007 subscribes only while a board is open, using a private board topic for
+filtered element/comment Postgres Changes and Presence. Presence carries a user
+ID; display names and roles come from the authorized server-loaded directory.
+Connectivity failure is surfaced without disabling local editing.
+
+Editor history is now a bounded list of local element patches. Realtime rows
+never become undo entries, same-element remote changes invalidate stale local
+history, and remote changes received during an active local edit wait for the
+server response. Database timestamps determine the winner without CRDT
+infrastructure.
 
 ---
 

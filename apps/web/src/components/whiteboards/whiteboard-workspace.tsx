@@ -17,8 +17,14 @@ import {
   useState,
   useTransition,
 } from "react";
+import { Users, WifiOff } from "lucide-react";
 
-import type { BoardElementRow, BoardRow } from "@/lib/supabase/database.types";
+import type {
+  BoardCommentRow,
+  BoardElementRow,
+  BoardRow,
+  TaskMember,
+} from "@/lib/supabase/database.types";
 import {
   archiveBoardElementAction,
   createBoardElementAction,
@@ -37,9 +43,19 @@ import {
   createWhiteboardHistory,
   diffWhiteboardSnapshots,
   recordWhiteboardHistory,
+  reconcileRemoteElement,
   redoWhiteboardHistory,
   undoWhiteboardHistory,
 } from "@/modules/whiteboards/history";
+import {
+  chooseCommittedElement,
+  reconcileBoardComment,
+  type BoardPresence,
+} from "@/modules/whiteboards/collaboration";
+import {
+  subscribeToBoardCollaboration,
+  type CollaborationConnectionState,
+} from "@/modules/whiteboards/realtime";
 import { boardImageFileSchema } from "@/modules/whiteboards/schemas";
 
 import { WhiteboardNode, type WhiteboardFlowNode } from "./whiteboard-node";
@@ -50,6 +66,7 @@ import {
 } from "./whiteboard-chrome";
 import { WhiteboardToolbar, type WhiteboardTool } from "./whiteboard-toolbar";
 import { WhiteboardInspector } from "./whiteboard-inspector";
+import { WhiteboardCommentsPanel } from "./whiteboard-comments-panel";
 
 const nodeTypes = { whiteboard: WhiteboardNode };
 
@@ -60,8 +77,11 @@ function flowNode(
   return {
     data: {
       canMutate: false,
+      commentCount: 0,
       element,
       imageUrl,
+      onInteractionCancel: () => undefined,
+      onInteractionStart: () => undefined,
       onContentCommit: () => undefined,
       onResizeCommit: () => undefined,
     },
@@ -80,13 +100,19 @@ function flowNode(
 export function WhiteboardWorkspace({
   board,
   canMutate,
+  comments: initialComments = [],
+  currentUser = { displayName: "Current user", id: "" },
   elements,
   imageUrls,
+  members = [],
 }: {
   board: BoardRow;
   canMutate: boolean;
+  comments?: BoardCommentRow[];
+  currentUser?: { displayName: string; id: string };
   elements: BoardElementRow[];
   imageUrls: Record<string, string>;
+  members?: TaskMember[];
 }) {
   const [nodes, setNodes] = useState<WhiteboardFlowNode[]>(() =>
     elements.map((element) => flowNode(element, imageUrls[element.id])),
@@ -103,6 +129,10 @@ export function WhiteboardWorkspace({
   );
   const [title, setTitle] = useState(board.title);
   const [renaming, setRenaming] = useState(false);
+  const [comments, setComments] = useState(initialComments);
+  const [presence, setPresence] = useState<BoardPresence[]>([]);
+  const [connection, setConnection] =
+    useState<CollaborationConnectionState>("CONNECTING");
   const [pending, startTransition] = useTransition();
   const flowRef = useRef<ReactFlowInstance<WhiteboardFlowNode> | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -110,6 +140,13 @@ export function WhiteboardWorkspace({
   const historyRef = useRef(history);
   const imageUrlsRef = useRef(imageUrls);
   const mutationLockRef = useRef(false);
+  const activeElementsRef = useRef(new Set<string>());
+  const queuedRemoteRef = useRef(new Map<string, BoardElementRow>());
+  const expectedEchoRef = useRef(new Map<string, string>());
+  const selectedIdRef = useRef(selectedId);
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
 
   const syncNodes = useCallback((snapshot: BoardElementRow[]) => {
     setNodes((current) => {
@@ -136,6 +173,94 @@ export function WhiteboardWorkspace({
     },
     [syncNodes],
   );
+
+  const recordCreatedElement = useCallback(
+    (element: BoardElementRow) => {
+      const base = historyRef.current.present.filter(
+        (candidate) => candidate.id !== element.id,
+      );
+      const next = recordWhiteboardHistory(
+        { ...historyRef.current, present: base },
+        [...base, element],
+      );
+      historyRef.current = next;
+      setHistory(next);
+      syncNodes(next.present);
+      expectedEchoRef.current.set(element.id, element.updated_at);
+    },
+    [syncNodes],
+  );
+
+  const applyRemoteElement = useCallback(
+    (element: BoardElementRow, preserveHistory = false) => {
+      const next = reconcileRemoteElement(historyRef.current, element, {
+        preserveHistory,
+      });
+      historyRef.current = next;
+      setHistory(next);
+      syncNodes(next.present);
+      if (element.archived_at && selectedIdRef.current === element.id)
+        setSelectedId(null);
+    },
+    [syncNodes],
+  );
+
+  const receiveRemoteElement = useCallback(
+    (element: BoardElementRow) => {
+      if (expectedEchoRef.current.get(element.id) === element.updated_at) {
+        expectedEchoRef.current.delete(element.id);
+        applyRemoteElement(element, true);
+        return;
+      }
+      if (activeElementsRef.current.has(element.id)) {
+        const queued = queuedRemoteRef.current.get(element.id) ?? null;
+        queuedRemoteRef.current.set(
+          element.id,
+          chooseCommittedElement(queued, element),
+        );
+        return;
+      }
+      applyRemoteElement(element);
+    },
+    [applyRemoteElement],
+  );
+
+  const finishElementMutation = useCallback(
+    (elementId: string, persisted: BoardElementRow | null) => {
+      activeElementsRef.current.delete(elementId);
+      const queued = queuedRemoteRef.current.get(elementId);
+      queuedRemoteRef.current.delete(elementId);
+      if (queued) {
+        const winner = chooseCommittedElement(persisted, queued);
+        if (winner === persisted && persisted)
+          expectedEchoRef.current.set(elementId, persisted.updated_at);
+        applyRemoteElement(winner, winner === persisted);
+      } else if (persisted) {
+        expectedEchoRef.current.set(elementId, persisted.updated_at);
+        applyRemoteElement(persisted, true);
+      }
+    },
+    [applyRemoteElement],
+  );
+
+  const cancelElementInteraction = useCallback(
+    (elementId: string) => finishElementMutation(elementId, null),
+    [finishElementMutation],
+  );
+
+  useEffect(() => {
+    if (!currentUser.id) return;
+    return subscribeToBoardCollaboration({
+      boardId: board.id,
+      currentUser,
+      members,
+      onComment: (comment) =>
+        setComments((current) => reconcileBoardComment(current, comment)),
+      onConnection: setConnection,
+      onElement: receiveRemoteElement,
+      onPresence: setPresence,
+    });
+  }, [board.id, currentUser, members, receiveRemoteElement]);
 
   const runMutation = useCallback((operation: () => Promise<void>) => {
     if (mutationLockRef.current) return;
@@ -185,21 +310,34 @@ export function WhiteboardWorkspace({
       elementId: string,
       changes: Parameters<typeof updateBoardElementAction>[0],
     ) => {
+      activeElementsRef.current.add(elementId);
       runMutation(async () => {
-        const result = await updateBoardElementAction({
-          ...changes,
-          elementId,
-        });
-        if (result.status === "error") throw new Error(result.message);
-        replaceElement(result.data);
+        let persisted: BoardElementRow | null = null;
+        try {
+          const result = await updateBoardElementAction({
+            ...changes,
+            elementId,
+          });
+          if (result.status === "error") throw new Error(result.message);
+          persisted = result.data;
+          replaceElement(result.data);
+        } finally {
+          finishElementMutation(elementId, persisted);
+        }
       });
     },
-    [replaceElement, runMutation],
+    [finishElementMutation, replaceElement, runMutation],
   );
 
   const persistHistoryTransition = useCallback(
     async (from: BoardElementRow[], to: BoardElementRow[]) => {
       const diff = diffWhiteboardSnapshots(from, to);
+      const elementIds = [
+        ...diff.archiveIds,
+        ...diff.restore.map((element) => element.id),
+        ...diff.update.map((element) => element.id),
+      ];
+      elementIds.forEach((id) => activeElementsRef.current.add(id));
       const results = await Promise.all([
         ...diff.archiveIds.map((id) => archiveBoardElementAction(id)),
         ...diff.restore.map((element) => restoreBoardElementAction(element.id)),
@@ -218,10 +356,16 @@ export function WhiteboardWorkspace({
           }),
         ),
       ]);
+      results.forEach((result, index) =>
+        finishElementMutation(
+          elementIds[index]!,
+          result.status === "success" ? result.data : null,
+        ),
+      );
       const failed = results.find((result) => result.status === "error");
       if (failed?.status === "error") throw new Error(failed.message);
     },
-    [],
+    [finishElementMutation],
   );
 
   const navigateHistory = useCallback(
@@ -294,15 +438,38 @@ export function WhiteboardWorkspace({
     [persistUpdate, recordSnapshot],
   );
 
-  const renderedNodes = useMemo(
-    () =>
-      nodes.map((node) => ({
-        ...node,
-        data: { ...node.data, canMutate, onContentCommit, onResizeCommit },
-        draggable: canMutate && activeTool === "SELECT",
-      })),
-    [activeTool, canMutate, nodes, onContentCommit, onResizeCommit],
-  );
+  const renderedNodes = useMemo(() => {
+    const commentCounts = comments.reduce((counts, comment) => {
+      if (!comment.archived_at && comment.element_id)
+        counts.set(
+          comment.element_id,
+          (counts.get(comment.element_id) ?? 0) + 1,
+        );
+      return counts;
+    }, new Map<string, number>());
+    return nodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        canMutate,
+        commentCount: commentCounts.get(node.id) ?? 0,
+        onContentCommit,
+        onInteractionCancel: cancelElementInteraction,
+        onInteractionStart: (elementId: string) =>
+          activeElementsRef.current.add(elementId),
+        onResizeCommit,
+      },
+      draggable: canMutate && activeTool === "SELECT",
+    }));
+  }, [
+    activeTool,
+    canMutate,
+    cancelElementInteraction,
+    comments,
+    nodes,
+    onContentCommit,
+    onResizeCommit,
+  ]);
   const selectedElement = nodes.find((node) => node.id === selectedId)?.data
     .element;
 
@@ -316,11 +483,25 @@ export function WhiteboardWorkspace({
       historyRef.current.present.filter((element) => element.id !== selectedId),
     );
     setSelectedId(null);
+    activeElementsRef.current.add(selectedId);
     runMutation(async () => {
-      const result = await archiveBoardElementAction(selectedId);
-      if (result.status === "error") throw new Error(result.message);
+      let persisted: BoardElementRow | null = null;
+      try {
+        const result = await archiveBoardElementAction(selectedId);
+        if (result.status === "error") throw new Error(result.message);
+        persisted = result.data;
+      } finally {
+        finishElementMutation(selectedId, persisted);
+      }
     });
-  }, [canMutate, pending, recordSnapshot, runMutation, selectedId]);
+  }, [
+    canMutate,
+    finishElementMutation,
+    pending,
+    recordSnapshot,
+    runMutation,
+    selectedId,
+  ]);
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
@@ -378,7 +559,7 @@ export function WhiteboardWorkspace({
         zIndex: nextZIndex(elementRows),
       });
       if (result.status === "error") throw new Error(result.message);
-      recordSnapshot([...historyRef.current.present, result.data]);
+      recordCreatedElement(result.data);
       setSelectedId(result.data.id);
       setActiveTool("SELECT");
     });
@@ -441,7 +622,7 @@ export function WhiteboardWorkspace({
         ...imageUrlsRef.current,
         [result.data.element.id]: result.data.signedUrl,
       };
-      recordSnapshot([...historyRef.current.present, result.data.element]);
+      recordCreatedElement(result.data.element);
       setSelectedId(result.data.element.id);
       setActiveTool("SELECT");
     });
@@ -458,6 +639,7 @@ export function WhiteboardWorkspace({
     );
     if (changed.length === 0) return;
     recordSnapshot(reordered);
+    changed.forEach((element) => activeElementsRef.current.add(element.id));
     runMutation(async () => {
       const results = await Promise.all(
         changed.map((element) =>
@@ -465,6 +647,12 @@ export function WhiteboardWorkspace({
             elementId: element.id,
             zIndex: element.z_index,
           }),
+        ),
+      );
+      results.forEach((result, index) =>
+        finishElementMutation(
+          changed[index]!.id,
+          result.status === "success" ? result.data : null,
         ),
       );
       const failed = results.find((result) => result.status === "error");
@@ -485,6 +673,39 @@ export function WhiteboardWorkspace({
   return (
     <section className="bg-muted/30 flex h-[calc(100dvh-4rem)] min-h-[34rem] flex-col overflow-hidden border-y lg:h-screen">
       <WhiteboardHeader
+        actions={
+          <div className="ml-auto flex items-center gap-2">
+            <div
+              className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex"
+              title={presence.map((person) => person.displayName).join(", ")}
+            >
+              {connection === "DEGRADED" ? (
+                <WifiOff
+                  aria-hidden="true"
+                  className="text-destructive size-4"
+                />
+              ) : (
+                <Users aria-hidden="true" className="size-4" />
+              )}
+              {connection === "DEGRADED"
+                ? "Offline collaboration"
+                : `${presence.length || 1} here`}
+            </div>
+            <WhiteboardCommentsPanel
+              boardId={board.id}
+              canMutate={canMutate}
+              comments={comments}
+              currentUserId={currentUser.id}
+              members={members}
+              onComment={(comment) =>
+                setComments((current) =>
+                  reconcileBoardComment(current, comment),
+                )
+              }
+              selectedElementId={selectedId}
+            />
+          </div>
+        }
         canMutate={canMutate}
         onRename={saveTitle}
         onRenamingChange={setRenaming}
@@ -530,6 +751,9 @@ export function WhiteboardWorkspace({
               y: node.position.y,
             });
           }}
+          onNodeDragStart={(_event, node) =>
+            activeElementsRef.current.add(node.id)
+          }
           onNodesChange={(changes: NodeChange<WhiteboardFlowNode>[]) =>
             setNodes((current) => applyNodeChanges(changes, current))
           }

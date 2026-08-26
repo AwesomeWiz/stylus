@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(32);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -113,6 +113,67 @@ select throws_ok(
   '42501',
   'new row violates row-level security policy for table "board_elements"',
   'a VIEWER cannot create elements'
+);
+
+select throws_ok(
+  $$ select public.create_board_comment((select id from public.boards where title = 'Alpha brand board'), null, null, 'Viewer comment', '{}'::uuid[]) $$,
+  '42501',
+  'Board collaboration permission required',
+  'a VIEWER cannot create board comments'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000062', true);
+select lives_ok(
+  $$ select public.create_board_comment((select id from public.boards where title = 'Alpha brand board'), null, null, 'Please review @viewer', array['00000000-0000-0000-0000-000000000063'::uuid, '00000000-0000-0000-0000-000000000063'::uuid]) $$,
+  'a MEMBER can create a board comment with a structural mention'
+);
+select results_eq(
+  $$ select count(*)::integer from public.board_comment_mentions where mentioned_user_id = '00000000-0000-0000-0000-000000000063' $$,
+  array[1]::integer[],
+  'duplicate mention identifiers create one mention relation'
+);
+select results_eq(
+  $$ select count(*)::integer from public.notifications where recipient_id = '00000000-0000-0000-0000-000000000063' and type = 'BOARD_MENTION' $$,
+  array[1]::integer[],
+  'a valid mention creates exactly one recipient notification'
+);
+select results_eq(
+  $$ select count(*)::integer from public.activity_events where event_type = 'BOARD_COMMENTED' and entity_type = 'BOARD' $$,
+  array[1]::integer[],
+  'comment creation records organization-scoped activity'
+);
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000063', true);
+select results_eq(
+  $$ select body from public.board_comments where body = 'Please review @viewer' $$,
+  array['Please review @viewer']::text[],
+  'a VIEWER can read comments in the current organization'
+);
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000064', true);
+select is_empty(
+  $$ select id from public.board_comments where organization_id = '10000000-0000-0000-0000-000000000061' $$,
+  'another organization cannot read board comments'
+);
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000062', true);
+select throws_ok(
+  $$ select public.create_board_comment((select id from public.boards where title = 'Alpha brand board'), null, null, 'Invalid mention', array['00000000-0000-0000-0000-000000000064'::uuid]) $$,
+  '23503',
+  'Mentioned user must belong to organization',
+  'cross-organization recipients cannot be forged'
+);
+select results_eq(
+  $$ select count(*)::integer from public.board_comments where body = 'Invalid mention' $$,
+  array[0]::integer[],
+  'an invalid mention rolls back the comment atomically'
+);
+select lives_ok(
+  $$ select public.create_board_comment((select id from public.boards where title = 'Alpha brand board'), null, (select id from public.board_comments where body = 'Please review @viewer'), 'A shallow reply', '{}'::uuid[]) $$,
+  'one reply level is accepted'
+);
+select throws_ok(
+  $$ select public.create_board_comment((select id from public.boards where title = 'Alpha brand board'), null, (select id from public.board_comments where body = 'A shallow reply'), 'Nested reply', '{}'::uuid[]) $$,
+  '23514',
+  'Replies may have only one thread level',
+  'nested replies are rejected'
 );
 
 select * from finish();

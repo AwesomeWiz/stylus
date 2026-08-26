@@ -6,5 +6,8 @@ export function notificationDestination(
   if (notification.entity_type === "TASK" && notification.entity_id) {
     return `/tasks?view=all&task=${encodeURIComponent(notification.entity_id)}`;
   }
+  if (notification.entity_type === "BOARD" && notification.entity_id) {
+    return `/whiteboards/${encodeURIComponent(notification.entity_id)}`;
+  }
   return null;
 }

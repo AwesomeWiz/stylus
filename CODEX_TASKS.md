@@ -2,7 +2,7 @@
 
 # Current
 
-## TASK-006 — Whiteboard Foundation
+## TASK-007 — Whiteboard Collaboration
 
 Status: COMPLETE / READY FOR MANUAL QA
 
@@ -10,38 +10,37 @@ Phase: 5
 
 Implemented scope:
 
-- organization-scoped board list, creation, rename and archival
-- React Flow canvas with pan, zoom, selection and keyboard movement
-- persistent text, sticky, image, rectangle/ellipse, and arrow elements
-- bounded persistence on create, drag end, resize end and text commit
-- deterministic layering and safe element archival
-- private organization-scoped Supabase Storage images with signed URLs
-- OWNER/ADMIN/MEMBER collaboration and VIEWER read-only behavior
-- RLS, storage-policy, action, schema, interaction and pgTAP coverage
-- manual-QA completion pass with contextual text/sticky/shape/arrow formatting,
-  bounded persisted undo/redo, keyboard shortcuts and horizontal default arrows
-- immediate image-picker activation, duplicate-mutation protection and memoized
-  element rendering during pointer-frequency canvas updates
+- board-scoped Realtime element updates with cleanup and degraded state
+- private presence resolved from the authorized organization member directory
+- board/element comment threads, shallow replies and soft removal
+- structural organization-validated mentions, notifications and activity
+- operation-based local undo/redo with conflict deferral and database timestamps
+- member/viewer, organization-isolation, Realtime, history and pgTAP coverage
+- manual-QA prerequisite: Team page, hashed invitations, atomic acceptance,
+  role management and soft membership access removal
+- transient invitation-copy confirmation and live comment-count badges on
+  commented whiteboard elements
 
-The manual-QA usability defects are resolved without a schema migration. The
-linked database is current. Authenticated role/storage, pointer and responsive
-manual QA should be repeated; Docker is unavailable locally, so the 22-assertion
-pgTAP suite remains to be executed in a database-capable environment.
+The TASK-007 Realtime migrations are hosted. The linked dry run reports only the
+forward-only team invitation prerequisite migration. Docker is unavailable
+locally, so whiteboard and invitation pgTAP suites remain to be executed in a
+database-capable environment. Invitation-driven authenticated two-user,
+reconnect, role and responsive manual QA is required.
 
 ---
 
 # Next
 
-## TASK-007 — Whiteboard Collaboration
+## TASK-008 — Plugin Framework
 
 Status: READY
 
-Phase: 5
+Phase: 6
 
-Planned scope: comments, element comments, @mentions, realtime element updates,
-presence, board activity and collaboration permissions.
+Planned scope: plugin manifest, registry, capabilities, permissions, navigation
+contributions, events, isolation and an example plugin.
 
-Do not begin until TASK-006 has completed manual QA and is merged through the
+Do not begin until TASK-007 has completed manual QA and is merged through the
 normal workflow.
 
 ---

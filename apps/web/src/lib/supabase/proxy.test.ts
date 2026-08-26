@@ -17,6 +17,9 @@ describe("session route decisions", () => {
     expect(getSessionRouteDecision("/login", false)).toBeNull();
     expect(getSessionRouteDecision("/signup", false)).toBeNull();
     expect(getSessionRouteDecision("/auth/confirm", false)).toBeNull();
+    expect(
+      getSessionRouteDecision(`/invite/${"A".repeat(43)}`, false),
+    ).toBeNull();
   });
 
   it("keeps authenticated users out of entry routes", () => {

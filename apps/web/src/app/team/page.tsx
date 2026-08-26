@@ -1,21 +1,20 @@
 import type { Route } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { WhiteboardWorkspace } from "@/components/whiteboards/whiteboard-workspace";
+import { TeamManagement } from "@/components/organizations/team-management";
+import { PageHeader } from "@/components/ui/page-header";
 import { logoutAction } from "@/modules/auth/actions";
 import { getNotificationSummary } from "@/modules/notifications/server/data";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
+import { getOrganizationTeamData } from "@/modules/organizations/server/team-data";
 import { getOnboardingData } from "@/modules/onboarding/server/data";
 import { getWorkspaceRouteDecision } from "@/modules/onboarding/routing";
-import { canMutateWhiteboards } from "@/modules/whiteboards/authorization";
-import { boardIdSchema } from "@/modules/whiteboards/schemas";
-import { getBoardEditorData } from "@/modules/whiteboards/server/data";
 
-export default async function WhiteboardEditorPage({
-  params,
+export default async function TeamPage({
+  searchParams,
 }: {
-  params: Promise<{ boardId: string }>;
+  searchParams: Promise<{ accepted?: string }>;
 }) {
   const context = await getCurrentOrganizationContext();
   if (!context) redirect("/organization/new");
@@ -26,35 +25,40 @@ export default async function WhiteboardEditorPage({
     role: context.membership.role,
   });
   if (decision) redirect(decision as Route);
-  const parsedId = boardIdSchema.safeParse((await params).boardId);
-  if (!parsedId.success) notFound();
-  const [workspace, notifications] = await Promise.all([
-    getBoardEditorData(context.organization.id, parsedId.data),
+  const [team, notifications] = await Promise.all([
+    getOrganizationTeamData(context.organization.id),
     getNotificationSummary(context.organization.id, context.user.id),
   ]);
-  if (!workspace) notFound();
+  const query = await searchParams;
   return (
     <AppShell
-      activePath="/whiteboards"
+      activePath="/team"
       identity={{
         displayName: context.user.displayName,
         email: context.user.email,
       }}
       logoutAction={logoutAction}
-      mainClassName="max-w-none p-0 sm:p-0 lg:p-0"
       notifications={notifications}
       organization={{
         name: context.organization.name,
         role: context.membership.role,
       }}
     >
-      <WhiteboardWorkspace
-        {...workspace}
-        canMutate={canMutateWhiteboards(context.membership.role)}
-        currentUser={{
-          displayName: context.user.displayName,
-          id: context.user.id,
-        }}
+      <PageHeader
+        description="Manage access to your shared Stylus organization."
+        title="Team"
+      />
+      {query.accepted === "1" ? (
+        <p className="border-success/30 bg-success/10 mb-6 rounded-md border px-4 py-3 text-sm">
+          Invitation accepted. You are now a member of{" "}
+          {context.organization.name}.
+        </p>
+      ) : null}
+      <TeamManagement
+        currentRole={context.membership.role}
+        currentUserId={context.user.id}
+        invitations={team.invitations}
+        members={team.members}
       />
     </AppShell>
   );
