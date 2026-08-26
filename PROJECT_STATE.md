@@ -468,9 +468,11 @@ Verified on 2026-08-26:
 - `npm run format:check`: passed
 - `npm run lint`: passed with 0 warnings
 - `npm run typecheck`: passed
-- full web suite: passed; 58 files and 240 tests
+- full web suite: passed; 58 files and 241 tests
 - `npm run build`: passed; `/apps` and guarded `/apps/example` compiled
 - focused registry, event, enablement, UI, route and architecture tests passed
+- Team member and invitation dates now use an explicit locale and UTC timezone,
+  preventing server/client hydration differences during manual QA
 - local pgTAP execution unavailable because Docker/Podman is not installed
 - linked migration dry run: passed; only
   `20260825000800_plugin_framework.sql` is pending and no remote change was made

@@ -47,7 +47,8 @@ Status: COMPLETE
 
 Implemented scope includes board-scoped Realtime, private Presence, comments,
 mentions, activity, bounded collaborative history, team invitations and the
-final comment/copy usability refinements.
+final comment/copy usability refinements. Team dates render with an explicit
+locale and timezone so server and browser hydration remains deterministic.
 
 ---
 

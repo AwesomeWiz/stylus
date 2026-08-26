@@ -15,7 +15,11 @@ vi.mock("@/modules/organizations/team-actions", () => ({
   updateMemberRoleAction: vi.fn(),
 }));
 
-import { InvitationCopyButton, TeamManagement } from "./team-management";
+import {
+  formatTeamDate,
+  InvitationCopyButton,
+  TeamManagement,
+} from "./team-management";
 
 afterEach(() => {
   cleanup();
@@ -40,6 +44,10 @@ const members = [
 ];
 
 describe("TeamManagement", () => {
+  it("formats team dates deterministically for server and client rendering", () => {
+    expect(formatTeamDate("2026-08-25T23:30:00-07:00")).toBe("Aug 26, 2026");
+  });
+
   it("shows invite and member controls to an OWNER but protects OWNER role", () => {
     render(
       <TeamManagement
