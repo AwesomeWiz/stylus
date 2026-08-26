@@ -77,4 +77,24 @@ describe("AI architecture boundary", () => {
     expect(combined).not.toMatch(/\beval\s*\(|new Function\s*\(/);
     expect(combined).not.toMatch(/console\.(?:log|debug|info)\s*\(/);
   });
+
+  it("keeps runtime values out of AI use-server modules", () => {
+    const useServerFiles = sourceFiles.filter((file) => {
+      const contents = source(file);
+      return (
+        !file.includes(".test.") &&
+        (file.startsWith("core/ai/") || file.startsWith("modules/ai/")) &&
+        /^\s*["']use server["'];/.test(contents)
+      );
+    });
+    expect(useServerFiles).toEqual(["modules/ai/actions.ts"]);
+    useServerFiles.forEach((file) => {
+      const contents = source(file);
+      expect(contents).not.toMatch(/^export\s+(?:const|let|var|class|enum)\s/m);
+      expect(contents).toMatch(/^export\s+async\s+function\s+/m);
+    });
+    expect(source("modules/ai/schemas.ts")).toContain(
+      "export const initialAIPolicyActionState",
+    );
+  });
 });

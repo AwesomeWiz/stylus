@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+export interface AIPolicyActionState {
+  message?: string;
+  status: "idle" | "error" | "success";
+}
+
+export const initialAIPolicyActionState: AIPolicyActionState = {
+  status: "idle",
+};
+
 export const aiPolicySchema = z.object({
   allowedProviderIds: z
     .array(z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/))

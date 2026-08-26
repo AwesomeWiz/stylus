@@ -19,6 +19,7 @@ vi.mock("./server/configured", () => ({
 }));
 
 import { updateOrganizationAIPolicyAction } from "./actions";
+import { initialAIPolicyActionState } from "./schemas";
 
 function form(providerId = "ollama") {
   const data = new FormData();
@@ -43,7 +44,7 @@ describe("organization AI policy action", () => {
         organization: { id: "10000000-0000-4000-8000-000000000001" },
       });
       await expect(
-        updateOrganizationAIPolicyAction({ status: "idle" }, form()),
+        updateOrganizationAIPolicyAction(initialAIPolicyActionState, form()),
       ).resolves.toEqual({ message: "AI policy saved.", status: "success" });
       expect(mocks.rpc).toHaveBeenCalledWith("set_organization_ai_policy", {
         p_allowed_provider_ids: ["ollama"],
@@ -74,5 +75,15 @@ describe("organization AI policy action", () => {
       ),
     ).toMatchObject({ status: "error" });
     expect(mocks.context).not.toHaveBeenCalled();
+  });
+
+  it("does not persist schema-invalid policy input", async () => {
+    const data = form();
+    data.set("executionMode", "UNRESTRICTED");
+    expect(
+      await updateOrganizationAIPolicyAction(initialAIPolicyActionState, data),
+    ).toMatchObject({ status: "error" });
+    expect(mocks.context).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 });

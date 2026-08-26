@@ -10,10 +10,8 @@ import type {
   OrganizationAIPolicyRow,
   OrganizationRole,
 } from "@/lib/supabase/database.types";
-import {
-  initialAIPolicyActionState,
-  updateOrganizationAIPolicyAction,
-} from "@/modules/ai/actions";
+import { updateOrganizationAIPolicyAction } from "@/modules/ai/actions";
+import { initialAIPolicyActionState } from "@/modules/ai/schemas";
 
 function formatRunTime(value: string) {
   return new Intl.DateTimeFormat("en-US", {

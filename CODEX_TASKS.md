@@ -4,7 +4,7 @@
 
 ## TASK-009 — AI Foundation
 
-Status: COMPLETE / READY FOR MANUAL QA
+Status: COMPLETE / READY FOR MANUAL QA AGAIN
 
 Phase: 7
 
@@ -20,9 +20,12 @@ Implemented scope:
 - organization/plugin/capability/memory-declaration authorization boundaries
 - role-aware `/ai` policy and safe run-diagnostics interface
 - RLS, application, provider, routing, lifecycle, UI and architecture coverage
+- repaired Next.js Server Action export boundary with permanent regression
+  coverage for policy loading, disabled defaults, safe errors and mutations
 
-Apply the TASK-009 migration and run the AI pgTAP suite in a database-capable
-environment before hosted policy/isolation and optional local-provider QA.
+The TASK-009 migration is applied on the linked project. Run the AI pgTAP suite
+in a database-capable environment before repeating hosted policy/isolation,
+policy-save and optional local-provider QA.
 
 ---
 

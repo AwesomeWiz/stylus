@@ -2,7 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/modules/ai/actions", () => ({
-  initialAIPolicyActionState: { status: "idle" },
   updateOrganizationAIPolicyAction: vi.fn(),
 }));
 
@@ -89,6 +88,21 @@ describe("AIManagement", () => {
       ).not.toBeInTheDocument();
     },
   );
+
+  it("renders a missing persisted policy as the disabled default", () => {
+    render(
+      <AIManagement
+        configuredProviderIds={[]}
+        currentRole="OWNER"
+        policy={null}
+        runs={[]}
+      />,
+    );
+    expect(
+      screen.getByRole("combobox", { name: "Execution mode" }),
+    ).toHaveValue("DISABLED");
+    expect(screen.getByRole("button", { name: "Save policy" })).toBeEnabled();
+  });
 
   it("does not render prompt or response content from trace metadata", () => {
     render(

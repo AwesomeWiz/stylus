@@ -4,7 +4,7 @@ Last Updated: 2026-08-26
 
 ## Overall Status
 
-TASK-009 AI FOUNDATION / READY FOR MANUAL QA
+TASK-009 AI FOUNDATION / READY FOR MANUAL QA AGAIN
 
 Stylus now has a provider-independent, server-only AI execution foundation with
 configured OpenAI-compatible/local adapters, deterministic model routing,
@@ -17,16 +17,16 @@ tool boundaries. Agents, memory retrieval and Marketing are not implemented.
 
 Phase 7 — AI Platform
 
-Status: TASK-009 READY FOR MANUAL QA
+Status: TASK-009 READY FOR MANUAL QA AGAIN
 
 ---
 
 ## Current Objective
 
-TASK-009 remains current on `codex/task-009-ai-foundation`. Apply the pending AI
-migration, run pgTAP in a database-capable environment, then perform role,
-organization-isolation, policy, diagnostics and optional local-provider QA. Do
-not start TASK-010.
+TASK-009 remains current on `codex/task-009-ai-foundation`. The linked AI
+migration is applied. Run pgTAP in a database-capable environment, then repeat
+role, organization-isolation, policy-save, diagnostics and optional
+local-provider QA. Do not start TASK-010.
 
 ---
 
@@ -529,10 +529,9 @@ Verified on 2026-08-26:
 - formatting passed
 - lint passed with zero warnings
 - type checking passed
-- 70 test files passed with 300 tests
+- 73 test files passed with 308 tests
 - production build passed, including the `/ai` route
-- linked Supabase migration dry-run passed and detected only
-  `20260825000900_ai_foundation.sql` as pending
+- linked Supabase migration dry-run passed with the remote database up to date
 - dependency audit passed with zero production vulnerabilities
 - migration and application security reviews passed
 
@@ -540,6 +539,15 @@ Local pgTAP execution was unavailable because Docker/Podman is not installed.
 Interactive browser QA was unavailable because no in-app browser surface was
 connected. The pgTAP suite and hosted/local provider behavior remain explicit
 manual-QA steps.
+
+Manual QA then exposed a Next.js runtime boundary defect: the AI `"use server"`
+module exported its ordinary initial action-state object. The state now lives in
+the shared AI schema module, the action module exports only an async Server
+Action, and permanent boundary/page/data/UI tests cover the runtime convention,
+disabled default policy, safe failure UI and policy mutation paths. The linked
+migration was confirmed applied; the generic settings fallback was caused by
+the same module-loader failure rather than a demonstrated database connection
+failure.
 
 ---
 
@@ -658,7 +666,7 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-009 is ready for manual QA on `codex/task-009-ai-foundation`.
+TASK-009 is ready for manual QA again on `codex/task-009-ai-foundation`.
 TASK-010 has not started.
 
 ---
@@ -675,9 +683,9 @@ organization-specific secret storage, Marketing and Web Agency remain deferred.
 
 # Next Recommended Action
 
-Apply the pending AI migration, execute pgTAP in a database-capable environment,
-and complete role, organization-isolation, policy, diagnostics and optional
-local-provider QA. Do not begin TASK-010.
+Execute pgTAP in a database-capable environment and repeat role,
+organization-isolation, policy-save, diagnostics and optional local-provider QA.
+Do not begin TASK-010.
 
 ---
 
@@ -691,8 +699,8 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-009 is ready for manual QA on `codex/task-009-ai-foundation`.
+TASK-009 is ready for manual QA again on `codex/task-009-ai-foundation`.
 
-Apply the pending AI migration, run pgTAP, then verify policy roles, run metadata,
+Run pgTAP, then verify policy roles, policy persistence, run metadata,
 organization isolation, local-only enforcement and optional local provider
 behavior. TASK-010 must not begin until TASK-009 is accepted and merged.

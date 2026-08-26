@@ -6,17 +6,12 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { canManageOrganization } from "@/modules/organizations/authorization";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
 
-import { aiPolicySchema } from "./schemas";
+import {
+  aiPolicySchema,
+  initialAIPolicyActionState,
+  type AIPolicyActionState,
+} from "./schemas";
 import { getConfiguredAIProviderIds } from "./server/configured";
-
-export interface AIPolicyActionState {
-  message?: string;
-  status: "idle" | "error" | "success";
-}
-
-export const initialAIPolicyActionState: AIPolicyActionState = {
-  status: "idle",
-};
 
 export async function updateOrganizationAIPolicyAction(
   _state: AIPolicyActionState = initialAIPolicyActionState,
