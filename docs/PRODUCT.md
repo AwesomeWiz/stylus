@@ -186,6 +186,18 @@ between steps, resume later and update the profile after completion. Optional
 fields support pre-product companies without websites, customers, revenue or a
 finished brand.
 
+Company Memory is distinct from Company Knowledge. It contains only explicitly
+approved durable facts, decisions, insights, preferences and notes with source
+and creator provenance. OWNER, ADMIN and MEMBER may manage ordinary company
+memory; VIEWER is read-only. Working tasks, comments, boards, uploads and AI
+drafts are never promoted automatically.
+
+The Memory workspace searches and filters active or archived company-domain
+memory. Structured Company Knowledge is composed live from Company Profile, so
+profile edits are immediately reflected without duplicate synchronization.
+Initial retrieval is deterministic and bounded; semantic search, embeddings,
+document ingestion and web research are not part of this phase.
+
 ---
 
 # Apps and Business Plugins

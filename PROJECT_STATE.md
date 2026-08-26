@@ -4,29 +4,29 @@ Last Updated: 2026-08-26
 
 ## Overall Status
 
-TASK-009 AI FOUNDATION / READY FOR MANUAL QA AGAIN
+TASK-010 COMPANY KNOWLEDGE AND MEMORY / READY FOR MANUAL QA
 
-Stylus now has a provider-independent, server-only AI execution foundation with
-configured OpenAI-compatible/local adapters, deterministic model routing,
-structured output, organization policy, safe run metadata and future trusted
-tool boundaries. Agents, memory retrieval and Marketing are not implemented.
+Stylus now has canonical Company Knowledge composition and an explicit,
+organization/domain-scoped durable-memory foundation with provenance, bounded
+retrieval, lifecycle controls and a trusted AI context boundary. Embeddings,
+semantic RAG, agents and Marketing are not implemented.
 
 ---
 
 ## Current Phase
 
-Phase 7 — AI Platform
+Phase 8 — Company Knowledge & Memory
 
-Status: TASK-009 READY FOR MANUAL QA AGAIN
+Status: TASK-010 READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-009 remains current on `codex/task-009-ai-foundation`. Apply the pending
-forward trace-constraint correction, run pgTAP in a database-capable environment,
-then repeat role, organization-isolation, policy-save, diagnostics and local-
-provider QA. Do not start TASK-010.
+TASK-010 is current on `codex/task-010-company-knowledge-memory`. Apply the one
+pending migration, run pgTAP in a database-capable environment, then perform
+hosted role, organization, provenance, lifecycle and domain-isolation QA. Do not
+start TASK-011.
 
 ---
 
@@ -574,6 +574,66 @@ dry run reports only the corrective migration as pending.
 
 ---
 
+# Phase 8 Implementation
+
+- typed Company Knowledge composition over canonical company, audience, brand,
+  marketing and competitor rows, including incomplete-profile handling
+- explicit `knowledge_memories` records with organization, controlled domain,
+  kind, provenance, source, actor timestamps and archive lifecycle
+- OWNER/ADMIN/MEMBER human company-memory create, update, archive and restore;
+  VIEWER remains read-only
+- simple indexed text search plus kind, provenance and active/archive filters
+- stable bounded retrieval: 50 general results and 20 AI-context results
+- `/memory` Core workspace with canonical-profile status and no plugin-private
+  domain disclosure
+- server-only AI context builder requiring explicit domains and independently
+  enforcing active membership, Core/plugin origin, static registration,
+  enablement, exact capability and declared domains
+- meaningful memory lifecycle activity without read/search noise or content copy
+- no automatic promotion from tasks, comments, boards, uploads or AI drafts
+- no embeddings, pgvector, semantic search, ingestion, RAG or provider calls
+
+---
+
+# Phase 8 Database and Security
+
+Migrations:
+
+- `supabase/migrations/20260825001000_company_knowledge_memory.sql`
+- `supabase/migrations/20260825001010_company_memory_lifecycle.sql`
+
+The table is SELECT-only to authenticated browser roles. RLS exposes only the
+current organization's company domain. Narrow SECURITY DEFINER functions use an
+empty search path, derive `auth.uid()`, force human/company provenance and deny
+VIEWER/removed/cross-organization mutations. No generic plugin-provenance write
+function or hard-delete grant exists.
+
+The 23-assertion pgTAP suite is at
+`supabase/tests/database/company_knowledge_memory_rls.test.sql`.
+
+---
+
+# Phase 8 Verification
+
+Verified on 2026-08-26:
+
+- focused memory/activity suite passed: 11 files, 33 tests
+- formatting passed
+- lint passed with zero warnings
+- type checking passed
+- full suite passed: 84 files, 347 tests
+- production build passed, including `/memory`
+- linked Supabase dry-run passed and reported only the two ordered TASK-010
+  migrations as pending
+- migration, application-boundary and secrets/security reviews passed
+- no dependency was added or changed
+
+Docker and Podman are unavailable, so the 23-assertion pgTAP suite could not run
+locally. No hosted migration was applied. Hosted pgTAP and role/isolation/manual
+responsive QA remain required.
+
+---
+
 # Product Direction
 
 Stylus is a collaborative startup operating system.
@@ -649,7 +709,7 @@ Realtime:
 - Supabase Realtime where useful
 
 Vector search:
-- pgvector
+- deferred; pgvector is not installed by TASK-010
 
 File storage:
 - Supabase Storage initially
@@ -689,26 +749,24 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-009 is ready for manual QA again on `codex/task-009-ai-foundation`.
-TASK-010 has not started.
+TASK-010 is ready for manual QA on
+`codex/task-010-company-knowledge-memory`. TASK-011 has not started.
 
 ---
 
 # Known Issues
 
-Docker/Podman is unavailable, so the AI pgTAP suite has not run locally. The
-forward trace-constraint correction is pending on linked Supabase. Hosted
-OWNER/ADMIN/MEMBER/VIEWER policy, two-organization isolation and local connection
-diagnostic QA remain required. Agent/workflow orchestration, memory/RAG,
-organization-specific secret storage, Marketing and Web Agency remain deferred.
+Docker/Podman is unavailable, so database pgTAP cannot run locally. The TASK-010
+migration remains unapplied pending linked dry-run and hosted QA. Embeddings,
+pgvector, semantic RAG, document ingestion, autonomous memory writes,
+agent/workflow orchestration, Marketing and Web Agency remain deferred.
 
 ---
 
 # Next Recommended Action
 
-Apply `20260825000910_fix_ai_trace_metadata_constraint.sql`, execute pgTAP in a
-database-capable environment and repeat role, organization-isolation,
-policy-save and local diagnostic QA. Do not begin TASK-010.
+Apply the pending TASK-010 migration, run pgTAP and complete hosted manual QA.
+Do not begin TASK-011.
 
 ---
 
@@ -722,9 +780,10 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-009 is ready for manual QA again on `codex/task-009-ai-foundation`.
+TASK-010 is current on `codex/task-010-company-knowledge-memory`.
 
-Apply the corrective migration and run pgTAP, then verify policy roles, policy
-persistence, run metadata, organization isolation, local-only enforcement and
-local provider behavior. TASK-010 must not begin until TASK-009 is accepted and
-merged.
+Apply only `20260825001000_company_knowledge_memory.sql` and
+`20260825001010_company_memory_lifecycle.sql`, run the pgTAP suite, then verify
+company profile composition, role behavior, lifecycle/search, organization
+isolation, removed-member denial and plugin-domain boundaries. TASK-011 must not
+begin until TASK-010 is accepted and merged.

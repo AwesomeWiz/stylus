@@ -264,36 +264,50 @@ or administrators. RLS uses the Phase 1 organization helpers. Database triggers
 prevent organization, original creator or onboarding-starter reassignment and
 require authenticated updater provenance.
 
-Future Company Knowledge tables:
-
-company_knowledge
-decisions
-experiments
-
-Exact decomposition may evolve during implementation.
+TASK-010 migrations `20260825001000_company_knowledge_memory.sql` and
+`20260825001010_company_memory_lifecycle.sql` do not duplicate any of these
+rows. The second migration deliberately follows the first so newly extended
+activity enum values commit before lifecycle functions use them. A server-only
+composer reads the canonical tables into normalized identity, problem, product,
+audience, positioning, brand, marketing and competitor sections. Missing
+onboarding sections remain explicit null/empty values.
 
 ---
 
-# AI Memory
+# Durable Memory
 
-ai_memories
+`knowledge_memories` stores only explicitly approved durable context:
 
-Required scoping:
+- organization and controlled `company`, `marketing` or `agency` domain
+- controlled fact, decision, insight, preference or note kind
+- bounded title/content and structured metadata
+- controlled human, plugin, imported or system provenance
+- optional safe source reference, plugin owner and effective timestamp
+- creator/updater and archive provenance
+- soft archival rather than browser deletion
 
-- organization_id
-- workspace_id where applicable
-- domain_id
+Database constraints bind human memory to the company domain with no plugin
+identity and require plugin provenance to name an owning plugin. Browser roles
+have no direct INSERT/UPDATE/DELETE grants. Narrow company-memory functions
+derive `auth.uid()`, require OWNER/ADMIN/MEMBER, and always write `HUMAN` /
+`company` provenance. VIEWER is read-only.
 
-Additional conceptual fields:
+Member SELECT RLS exposes only company-domain memory for the active
+organization. This prevents generic Core/browser queries from disclosing
+plugin-private Marketing or Agency memory. Plugin-owned persistence is not
+available through a forgeable generic authenticated function; a future plugin
+must add a trusted, plugin-specific persistence boundary.
 
-- memory_type
-- content
-- embedding
-- metadata
-- source_type
-- source_id
-- created_by
-- created_at
+`search_company_memories` supports active/archived state, kind, provenance and
+indexed simple full-text filtering. Input is limited to 100 characters, output
+to 50 rows, and ordering is stable by `updated_at desc, id desc`. AI context is
+further capped at 20 rows in application code.
+
+The migration extends activity enums for create, update, archive and restore.
+Activity metadata contains the title/kind only, never full memory content.
+
+No embedding column, vector index, pgvector extension, chunk table or ingestion
+pipeline is introduced.
 
 ---
 

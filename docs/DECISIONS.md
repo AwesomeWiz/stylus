@@ -333,3 +333,29 @@ resolve through a future authorization-aware trusted tool executor.
 
 This decision excludes agents, memory/RAG, embeddings, autonomous tool loops,
 long-running workflows, custom secret vaults and remote laptop networking.
+
+---
+
+## ADR-023 — Canonical Company Knowledge and Explicit Relational Memory
+
+Status: ACCEPTED
+
+Company Knowledge is a typed server-side view of the existing company,
+audience, brand, marketing and competitor tables. Those canonical profile rows
+are not duplicated into memory merely to simplify AI consumption.
+
+Durable memory uses provenance-aware relational rows scoped by organization and
+the controlled company, marketing or agency domain. Human browser operations
+can create only company-domain memory through narrow actor-deriving functions;
+ordinary deletion and privileged provenance forgery are unavailable. Working
+tasks, comments, boards, uploads and AI drafts require a future explicit
+promotion workflow and never become memory automatically.
+
+Retrieval is deterministic, indexed and hard-bounded. Core AI may explicitly
+request company context only. Plugin requests independently require static
+registration, organization enablement, an exact declared capability and a
+requested-domain subset of the manifest. Generic Core/browser access cannot
+read plugin-private domains.
+
+This decision deliberately defers embeddings, pgvector, chunking, semantic RAG,
+document ingestion, web research and autonomous memory writes.

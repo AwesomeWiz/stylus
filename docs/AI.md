@@ -132,11 +132,18 @@ Every plugin-originated request requires:
 - an exactly declared plugin capability; and
 - a server-generated run ID.
 
-Memory domains are copied from the validated plugin manifest into run metadata.
-They are audit context only. They do not query memory and do not authorize future
-retrieval. A future memory service must independently enforce organization,
-workspace and domain scope. Marketing remains limited to `company` and
+Memory domains are copied from the validated plugin manifest into run metadata,
+but trace metadata alone grants nothing. TASK-010's separate server-only context
+builder rechecks active membership, static registration, organization
+enablement, exact capability and requested domains. Core capabilities may
+explicitly request only `company`; Marketing remains limited to `company` and
 `marketing`; Web Agency remains limited to `agency` by default.
+
+The builder composes canonical Company Profile data and bounded active memory
+only when requested. It caps AI memory at 20 stably ordered rows and never calls
+a provider itself. No memory is automatically injected into every request, and
+the caller remains responsible for deliberately constructing ModelGateway
+messages from the authorized result.
 
 ## Structured Output
 
@@ -264,6 +271,6 @@ architecture may safely use the optional laptop for heavy work.
 
 ## Deferred Work
 
-TASK-010 will add Company Knowledge and memory with explicit promotion and domain
-isolation. Later tasks add jobs/workers, agents, workflows and Marketing. None of
-those systems are implemented by TASK-009.
+TASK-010 adds relational Company Knowledge/memory retrieval without embeddings
+or RAG. Later tasks add semantic retrieval, jobs/workers, agents, workflows and
+Marketing. No current system performs autonomous memory writes or tool loops.

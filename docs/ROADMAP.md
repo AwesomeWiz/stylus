@@ -156,13 +156,21 @@ does not implement agents, orchestration, memory retrieval or long-running jobs.
 
 ## Phase 8 — Company Knowledge & Memory
 
-- [ ] structured knowledge
-- [ ] explicit knowledge promotion
+- [x] structured knowledge
+- [x] explicit human-created durable memory
 - [ ] embeddings
 - [ ] pgvector
-- [ ] retrieval
-- [ ] domain isolation
-- [ ] memory authorization tests
+- [x] bounded deterministic retrieval
+- [x] domain isolation
+- [x] memory authorization tests
+
+Status: READY FOR MANUAL QA
+
+TASK-010 composes canonical Company Knowledge from existing profile tables and
+adds explicit provenance-aware relational memory, indexed text filtering, soft
+archival and a trusted AI context boundary. Embeddings, pgvector, semantic RAG,
+document ingestion and automatic promotion remain deferred to a dedicated later
+task.
 
 ---
 

@@ -192,6 +192,23 @@ prompts, responses and credentials in database/browser-visible data.
 
 ---
 
+# Company Knowledge and Memory
+
+Apply `20260825001000_company_knowledge_memory.sql` followed by
+`20260825001010_company_memory_lifecycle.sql` before opening `/memory`. No
+extension, provider, worker, pgvector installation, model download or new secret
+is required.
+
+Run `supabase/tests/database/company_knowledge_memory_rls.test.sql` in a
+database-capable environment. Hosted QA requires two organizations plus
+OWNER/ADMIN/MEMBER/VIEWER accounts. Verify human company-memory lifecycle,
+search/filtering, archived state, profile-derived Company Knowledge,
+cross-organization and removed-member denial, and the absence of prompt/response
+copies. Plugin-private domains are intentionally not exposed in the generic
+Core UI or through generic browser mutation RPCs.
+
+---
+
 # Deployment Philosophy
 
 Optimize initially for:
