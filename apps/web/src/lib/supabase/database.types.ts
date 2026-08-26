@@ -11,6 +11,21 @@ export type OrganizationPluginRow = {
   updated_at: string;
   updated_by: string;
 };
+export type AIExecutionMode = "DISABLED" | "LOCAL_ONLY" | "REMOTE_ALLOWED";
+export type AILogicalTierRecord = "FAST" | "BALANCED" | "REASONING";
+export type AIRunStatus =
+  "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "TIMED_OUT";
+export type AIErrorCategoryRecord =
+  | "provider_unavailable"
+  | "authentication_failed"
+  | "rate_limited"
+  | "timeout"
+  | "invalid_response"
+  | "context_limit"
+  | "budget_exceeded"
+  | "policy_denied"
+  | "cancelled"
+  | "unknown";
 export type CompanyStage =
   | "IDEA"
   | "VALIDATION"
@@ -130,6 +145,42 @@ export type MembershipRow = {
   role: OrganizationRole;
   removed_at: string | null;
   user_id: string;
+};
+
+export type OrganizationAIPolicyRow = {
+  allowed_provider_ids: string[];
+  created_at: string;
+  default_tier: AILogicalTierRecord;
+  execution_mode: AIExecutionMode;
+  monthly_remote_cost_limit_usd: number | null;
+  organization_id: string;
+  updated_at: string;
+  updated_by: string;
+};
+
+export type AIRunRow = {
+  actor_id: string;
+  capability: string;
+  completed_at: string | null;
+  duration_ms: number | null;
+  error_category: AIErrorCategoryRecord | null;
+  estimated_cost_usd: number | null;
+  id: string;
+  input_tokens: number | null;
+  is_remote: boolean | null;
+  memory_domains: string[];
+  operation: string;
+  organization_id: string;
+  output_tokens: number | null;
+  parent_run_id: string | null;
+  plugin_id: string | null;
+  provider_id: string | null;
+  requested_tier: AILogicalTierRecord;
+  selected_model_id: string | null;
+  started_at: string;
+  status: AIRunStatus;
+  total_tokens: number | null;
+  trace_metadata: Record<string, unknown>;
 };
 
 export type OrganizationInvitationRow = {
@@ -365,6 +416,12 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      ai_runs: {
+        Row: AIRunRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       audience_profiles: {
         Row: AudienceProfileRow;
         Insert: AuditedInsert &
@@ -515,6 +572,12 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      organization_ai_policies: {
+        Row: OrganizationAIPolicyRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       organization_plugins: {
         Row: OrganizationPluginRow;
         Insert: never;
@@ -648,6 +711,24 @@ export type Database = {
         Args: { p_name: string };
         Returns: OrganizationRow;
       };
+      complete_ai_run: {
+        Args: {
+          p_duration_ms: number;
+          p_error_category: AIErrorCategoryRecord | null;
+          p_estimated_cost_usd: number | null;
+          p_id: string;
+          p_input_tokens: number | null;
+          p_is_remote: boolean | null;
+          p_organization_id: string;
+          p_output_tokens: number | null;
+          p_provider_id: string | null;
+          p_selected_model_id: string | null;
+          p_status: AIRunStatus;
+          p_total_tokens: number | null;
+          p_trace_metadata: Record<string, unknown>;
+        };
+        Returns: AIRunRow;
+      };
       create_board_comment: {
         Args: {
           p_board_id: string;
@@ -665,6 +746,10 @@ export type Database = {
       list_organization_invitations: {
         Args: { p_organization_id: string };
         Returns: OrganizationInvitationSummary[];
+      };
+      get_organization_ai_remote_spend: {
+        Args: { p_organization_id: string; p_since: string };
+        Returns: number;
       };
       list_organization_team: {
         Args: { p_organization_id: string };
@@ -707,6 +792,30 @@ export type Database = {
         };
         Returns: OrganizationPluginRow;
       };
+      set_organization_ai_policy: {
+        Args: {
+          p_allowed_provider_ids: string[];
+          p_default_tier: AILogicalTierRecord;
+          p_execution_mode: AIExecutionMode;
+          p_monthly_remote_cost_limit_usd: number | null;
+          p_organization_id: string;
+        };
+        Returns: OrganizationAIPolicyRow;
+      };
+      start_ai_run: {
+        Args: {
+          p_capability: string;
+          p_id: string;
+          p_memory_domains: string[];
+          p_operation: string;
+          p_organization_id: string;
+          p_parent_run_id: string | null;
+          p_plugin_id: string | null;
+          p_requested_tier: AILogicalTierRecord;
+          p_trace_metadata: Record<string, unknown>;
+        };
+        Returns: AIRunRow;
+      };
       revoke_organization_invitation: {
         Args: { p_invitation_id: string; p_organization_id: string };
         Returns: string;
@@ -722,6 +831,10 @@ export type Database = {
     };
     Enums: {
       activity_event_type: ActivityEventType;
+      ai_error_category: AIErrorCategoryRecord;
+      ai_execution_mode: AIExecutionMode;
+      ai_logical_tier: AILogicalTierRecord;
+      ai_run_status: AIRunStatus;
       board_element_type: BoardElementType;
       brand_status: BrandStatus;
       company_stage: CompanyStage;

@@ -301,20 +301,50 @@ online.
 
 # AI Boundary
 
-All AI access passes through:
+All synchronous inference passes through the server-only `ModelGateway`:
 
-ModelGateway
+```text
+Core or enabled business plugin
+  -> normalized Stylus AI request
+  -> trusted organization/actor/plugin context resolution
+  -> policy and budget-aware ModelRouter
+  -> configured provider adapter
+  -> model
+```
 
-Logical capabilities:
+The public contract contains normalized messages, logical tiers, structured
+schemas and normalized results. It never exposes provider clients, credentials,
+base URLs or raw responses. Provider modules and environment configuration are
+marked server-only; architecture tests prevent client imports and direct plugin
+adapter imports.
 
-- fast
-- general
-- reasoning
-- vision
-- embedding
-- transcription
+The initial logical tiers are `fast`, `balanced` and `reasoning`. A typed model
+registry maps them deterministically to configured models and records explicit
+structured-output/tool, local/remote and optional pricing metadata. Disabled
+models are excluded. Local-only policy filters remote candidates before any
+provider invocation; remote fallback is possible only under remote-allowed
+policy and the configured allowlist/budget.
 
-Providers are implementation details.
+OpenAI-compatible HTTP is the normalized transport for both configured hosted
+providers and the optional local Ollama endpoint. Provider availability is
+checked only at explicit health/execution boundaries, never during application
+startup or ordinary page rendering.
+
+Every provider request has a bounded timeout and cancellation signal. Only
+transient provider-unavailable/rate-limit/unknown failures receive one retry;
+authentication, policy, budget, invalid structured output and cancellation are
+not retried. Candidate fallback preserves every policy filter.
+
+AI runs persist metadata-only traces through authenticated, organization-scoped
+database functions. The application derives organization and actor, and plugin
+requests additionally require static registration, current enablement and a
+declared capability. Manifest memory domains are copied into trace context but
+do not retrieve or authorize memory.
+
+The tool registry is an explicit trusted server registry with Zod input/output
+schemas, owning plugin, required capability and side-effect classification.
+Model-produced names are untrusted and do not execute code. Autonomous tool
+loops, agents, workflows and persisted jobs are later concerns.
 
 ---
 

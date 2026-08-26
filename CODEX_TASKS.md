@@ -2,44 +2,57 @@
 
 # Current
 
-## TASK-008 — Plugin Framework
+## TASK-009 — AI Foundation
 
 Status: COMPLETE / READY FOR MANUAL QA
 
-Phase: 6
+Phase: 7
 
 Implemented scope:
 
-- Zod-validated trusted built-in plugin manifest and static registry
-- deterministic capability, permission, navigation, event and tool metadata
-- organization-scoped persisted enable/disable state with manager-only mutation
-- enabled-only navigation, capability lookup, event dispatch and route guarding
-- compact Apps management UI and a guarded development example plugin
-- safe Lucide icon registry and Core/plugin import-boundary enforcement
-- RLS, application, registry, UI, route, event and architecture coverage
+- provider-independent, server-only ModelGateway and normalized contracts
+- configured OpenAI-compatible and Ollama/local HTTP adapters plus fake adapter
+- deterministic model registry, logical tiers, policy-aware routing and fallback
+- Zod-validated structured output and metadata-only run lifecycle tracing
+- usage, optional estimated cost and monthly remote-cost budget foundations
+- bounded timeout, cancellation and conservative transient retries
+- trusted future AI tool registry with side-effect metadata and no tool loop
+- organization/plugin/capability/memory-declaration authorization boundaries
+- role-aware `/ai` policy and safe run-diagnostics interface
+- RLS, application, provider, routing, lifecycle, UI and architecture coverage
 
-Apply the TASK-008 migration and run the plugin pgTAP suite in a database-capable
-environment before hosted role/isolation and route/navigation manual QA.
+Apply the TASK-009 migration and run the AI pgTAP suite in a database-capable
+environment before hosted policy/isolation and optional local-provider QA.
 
 ---
 
 # Next
 
-## TASK-009 — AI Foundation
+## TASK-010 — Company Knowledge and Memory
 
 Status: READY
 
-Phase: 7
+Phase: 8
 
-Planned scope: ModelGateway, providers, logical model profiles, agent/tool/workflow
-interfaces, structured outputs and a fake provider.
+Planned scope: structured knowledge, explicit promotion, embeddings, retrieval,
+pgvector and organization/domain isolation.
 
-Do not begin until TASK-008 has completed manual QA and is merged through the
+Do not begin until TASK-009 has completed manual QA and is merged through the
 normal workflow.
 
 ---
 
 # Completed
+
+## TASK-008 — Plugin Framework
+
+Status: COMPLETE
+
+Implemented scope includes trusted static plugin registration, organization
+enablement, capabilities, navigation, events, route guards, safe metadata-only
+AI extension declarations and the development example plugin.
+
+---
 
 ## TASK-007 — Whiteboard Collaboration
 
@@ -279,15 +292,15 @@ Planned scope:
 Planned scope:
 
 - ModelGateway
-- ModelProvider
+- provider adapters
 - logical model profiles
-- agent interface
-- tool interface
-- workflow interface
+- deterministic policy/budget routing
+- normalized text and structured generation
+- trusted tool registry foundation
+- AI policy and metadata-only run lifecycle
 - fake provider for testing
-- provider abstraction
 
-No real marketing agents yet.
+No agents, workflows, memory retrieval or Marketing execution yet.
 
 ---
 

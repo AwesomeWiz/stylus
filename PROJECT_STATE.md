@@ -4,29 +4,29 @@ Last Updated: 2026-08-26
 
 ## Overall Status
 
-TASK-008 PLUGIN FRAMEWORK / READY FOR MANUAL QA
+TASK-009 AI FOUNDATION / READY FOR MANUAL QA
 
-Stylus now has a trusted static business-plugin framework with validated
-manifests, deterministic capabilities and events, organization-scoped enablement,
-enabled-only navigation and route guards, an internal Apps screen and a minimal
-development example plugin. Marketing and AI execution are not implemented.
+Stylus now has a provider-independent, server-only AI execution foundation with
+configured OpenAI-compatible/local adapters, deterministic model routing,
+structured output, organization policy, safe run metadata and future trusted
+tool boundaries. Agents, memory retrieval and Marketing are not implemented.
 
 ---
 
 ## Current Phase
 
-Phase 6 — Plugin Platform
+Phase 7 — AI Platform
 
-Status: TASK-008 READY FOR MANUAL QA
+Status: TASK-009 READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-008 remains current on `codex/task-008-plugin-framework`. Apply the pending
-plugin migration, run pgTAP in a database-capable environment, then perform
-two-organization role, enablement, navigation and direct-route manual QA. Do not
-start TASK-009.
+TASK-009 remains current on `codex/task-009-ai-foundation`. Apply the pending AI
+migration, run pgTAP in a database-capable environment, then perform role,
+organization-isolation, policy, diagnostics and optional local-provider QA. Do
+not start TASK-010.
 
 ---
 
@@ -479,6 +479,70 @@ Verified on 2026-08-26:
 
 ---
 
+# Phase 7 Implementation
+
+- server-only normalized AI messages, text/structured results and execution context
+- provider-neutral `ModelGateway` with no raw provider clients in its public API
+- OpenAI-compatible HTTP adapter usable with configured hosted endpoints
+- Ollama through its local OpenAI-compatible endpoint without startup probing
+- deterministic fake provider covering success, failure, timeout and usage paths
+- typed model registry with logical fast, balanced and reasoning tiers
+- capability, location, allowlist, budget and organization-policy-aware routing
+- controlled local-to-remote fallback only when `REMOTE_ALLOWED` explicitly permits it
+- Zod validation of provider JSON before typed structured results are returned
+- explicit trusted tool registry with schemas, capability ownership and read/write/
+  external-side-effect metadata; no autonomous tool execution loop
+- bounded timeouts, cancellation signals and one conservative transient retry
+- optional pricing metadata, normalized usage and estimated-cost accounting
+- `/ai` organization policy and metadata-only run diagnostics UI
+
+---
+
+# Phase 7 Database and Security
+
+Migration: `supabase/migrations/20260825000900_ai_foundation.sql`
+
+Introduced:
+
+- controlled AI execution mode, logical tier, run status and error enums
+- `organization_ai_policies` with default-deny behavior, provider allowlist and
+  optional monthly estimated remote-cost ceiling
+- `ai_runs` with server-derived actor, organization/plugin context, lifecycle,
+  timing, usage, estimated cost and bounded safe trace metadata
+- no API keys, complete prompts or model responses in either table
+- organization-member SELECT RLS and no direct browser table writes
+- OWNER/ADMIN policy mutation and OWNER/ADMIN/MEMBER lifecycle functions with
+  pinned search paths, active membership and enabled-plugin checks
+- 32-assertion pgTAP suite at
+  `supabase/tests/database/ai_foundation_rls.test.sql`
+
+VIEWER cannot execute AI. Plugin execution additionally requires static
+registration, current organization enablement and a declared capability. Memory
+domains are copied from the manifest for audit context only and grant no retrieval.
+
+---
+
+# Phase 7 Verification
+
+Verified on 2026-08-26:
+
+- formatting passed
+- lint passed with zero warnings
+- type checking passed
+- 70 test files passed with 300 tests
+- production build passed, including the `/ai` route
+- linked Supabase migration dry-run passed and detected only
+  `20260825000900_ai_foundation.sql` as pending
+- dependency audit passed with zero production vulnerabilities
+- migration and application security reviews passed
+
+Local pgTAP execution was unavailable because Docker/Podman is not installed.
+Interactive browser QA was unavailable because no in-app browser surface was
+connected. The pgTAP suite and hosted/local provider behavior remain explicit
+manual-QA steps.
+
+---
+
 # Product Direction
 
 Stylus is a collaborative startup operating system.
@@ -594,27 +658,26 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-008 is ready for manual QA on `codex/task-008-plugin-framework`.
-TASK-009 has not started.
+TASK-009 is ready for manual QA on `codex/task-009-ai-foundation`.
+TASK-010 has not started.
 
 ---
 
 # Known Issues
 
-Docker/Podman is unavailable, so the plugin pgTAP suite has not run locally.
-No in-app browser surface was available for live visual QA.
-Hosted OWNER/ADMIN/MEMBER/VIEWER, two-organization enablement, navigation and
-route-guard QA remain required. Plugin events are synchronous and caller-driven;
-custom permission mapping, typed settings/secrets, AI execution, remote plugins,
-Marketing and Web Agency integration are deliberately deferred.
+Docker/Podman is unavailable, so the AI pgTAP suite has not run locally. Hosted
+OWNER/ADMIN/MEMBER/VIEWER policy and two-organization isolation QA remain
+required. Local provider execution is optional and requires a separately
+installed/configured model server. Agent/workflow orchestration, memory/RAG,
+organization-specific secret storage, Marketing and Web Agency remain deferred.
 
 ---
 
 # Next Recommended Action
 
-Apply the pending plugin migration, execute pgTAP in a database-capable
-environment, and complete two-organization manager/member enablement,
-navigation/capability and guarded-route QA. Do not begin TASK-009.
+Apply the pending AI migration, execute pgTAP in a database-capable environment,
+and complete role, organization-isolation, policy, diagnostics and optional
+local-provider QA. Do not begin TASK-010.
 
 ---
 
@@ -628,8 +691,8 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-008 is ready for manual QA on `codex/task-008-plugin-framework`.
+TASK-009 is ready for manual QA on `codex/task-009-ai-foundation`.
 
-Apply the pending plugin migration, run pgTAP, then verify Apps state and the
-example navigation/route with OWNER, ADMIN, MEMBER and VIEWER users across two
-organizations. TASK-009 must not begin until TASK-008 is accepted and merged.
+Apply the pending AI migration, run pgTAP, then verify policy roles, run metadata,
+organization isolation, local-only enforcement and optional local provider
+behavior. TASK-010 must not begin until TASK-009 is accepted and merged.

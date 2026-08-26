@@ -36,7 +36,7 @@ export const coreNavigationGroups: NavigationGroup[] = [
   {
     label: "Platform",
     items: [
-      { label: "AI", icon: BrainCircuit, href: "#ai" },
+      { label: "AI", icon: BrainCircuit, href: "/ai" },
       { label: "Apps", icon: Blocks, href: "/apps" },
     ],
   },

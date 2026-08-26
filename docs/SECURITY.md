@@ -159,6 +159,37 @@ Marketing must not retrieve Agency memory.
 
 ---
 
+# AI Platform
+
+- provider adapters, configured base URLs and credentials are server-only; no
+  provider secret or URL is accepted by browser execution requests
+- plugins use the normalized Stylus AI boundary and cannot import provider
+  implementations; raw provider clients/responses are never public contracts
+- organization and actor IDs plus run IDs are derived server-side; inactive
+  memberships and VIEWER execution are denied before provider setup
+- plugin-originated execution requires static registration, current organization
+  enablement and an exactly declared capability
+- manifest memory domains are copied into safe trace context only; they grant no
+  memory retrieval and cannot cross the Marketing/Agency policy
+- `LOCAL_ONLY` routing removes every remote candidate before invocation and may
+  never fall back remotely
+- provider allowlists contain validated registered IDs, not arbitrary URLs;
+  configured endpoints reject credentials, non-HTTP schemes, queries and fragments
+- paid remote routing is denied before invocation when the configured estimated
+  monthly ceiling is reached; free/local models remain eligible under policy
+- every request has a bounded timeout/cancellation signal and at most one retry
+  for narrowly transient categories, limiting retry-driven cost amplification
+- Zod validates structured output; malformed JSON/schema output is a failed run
+  and never reaches application logic as typed data
+- model tool names and arguments are untrusted; only explicit registered tools,
+  capabilities, plugin enablement and validated schemas can become executable
+- run tables store safe metadata, token counts and estimated costs, not provider
+  keys, complete prompts, responses or chain-of-thought
+- OWNER/ADMIN manage policy, MEMBER may use future authorized operations, VIEWER
+  is read-only, and database RLS isolates policy/run reads by active membership
+
+---
+
 # Secrets
 
 Never expose:

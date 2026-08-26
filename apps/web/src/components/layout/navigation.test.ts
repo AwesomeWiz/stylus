@@ -28,6 +28,7 @@ describe("application navigation", () => {
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ href: "/tasks", label: "Tasks" }),
+        expect.objectContaining({ href: "/ai", label: "AI" }),
         expect.objectContaining({ href: "/apps", label: "Apps" }),
       ]),
     );
