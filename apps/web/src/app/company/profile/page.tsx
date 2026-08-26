@@ -31,6 +31,7 @@ export default async function CompanyProfilePage() {
       logoutAction={logoutAction}
       notifications={notifications}
       organization={{
+        id: data.context.organization.id,
         name: data.context.organization.name,
         role: data.context.membership.role,
       }}

@@ -26,6 +26,13 @@ import {
   updateMemberRoleAction,
 } from "@/modules/organizations/team-actions";
 
+export function formatTeamDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date(value));
+}
+
 export function TeamManagement({
   currentRole,
   currentUserId,
@@ -75,7 +82,7 @@ export function TeamManagement({
                     {member.email}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
-                    Joined {new Date(member.created_at).toLocaleDateString()}
+                    Joined {formatTeamDate(member.created_at)}
                   </p>
                 </div>
                 {editable ? (
@@ -153,9 +160,8 @@ export function TeamManagement({
                     <p className="text-muted-foreground text-xs">
                       {invitation.role.toLowerCase()} · invited by{" "}
                       {invitation.inviter_name} on{" "}
-                      {new Date(invitation.created_at).toLocaleDateString()} ·
-                      expires{" "}
-                      {new Date(invitation.expires_at).toLocaleDateString()}
+                      {formatTeamDate(invitation.created_at)} · expires{" "}
+                      {formatTeamDate(invitation.expires_at)}
                     </p>
                   </div>
                   <span className="text-muted-foreground text-xs">

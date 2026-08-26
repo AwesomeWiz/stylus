@@ -138,6 +138,27 @@ Marketing must not retrieve Agency memory.
 
 ---
 
+# Plugin Platform
+
+- only statically imported repository modules execute; remote code, dynamic URLs,
+  uploaded JavaScript and `eval` are unsupported
+- manifests validate stable IDs, owned permissions/tools, routes, memory-domain
+  names and controlled Lucide icon identifiers at module load
+- the application registry rejects duplicate IDs and exclusive capabilities
+- organization plugin rows are RLS isolated; direct writes are revoked
+- OWNER/ADMIN mutation repeats authorization in PostgreSQL and derives actor
+  provenance; MEMBER/VIEWER cannot escalate enablement
+- application actions accept only registered IDs and derive organization scope;
+  unknown well-formed database rows remain inert
+- disabled plugins have no navigation, available capabilities, event dispatch or
+  guarded route access, but disablement does not delete data or history
+- memory domains and AI tools are metadata only and create no retrieval,
+  credential or execution authority
+- the import-boundary test prevents Core from importing plugin private internals
+  and limits plugin implementations to the documented public Core contract
+
+---
+
 # Secrets
 
 Never expose:

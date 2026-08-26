@@ -1,5 +1,16 @@
 export type OrganizationRole = "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
 export type OrganizationInvitationStatus = "PENDING" | "ACCEPTED" | "REVOKED";
+export type OrganizationPluginRow = {
+  created_at: string;
+  disabled_at: string | null;
+  enabled: boolean;
+  enabled_at: string | null;
+  enabled_by: string | null;
+  organization_id: string;
+  plugin_id: string;
+  updated_at: string;
+  updated_by: string;
+};
 export type CompanyStage =
   | "IDEA"
   | "VALIDATION"
@@ -504,6 +515,12 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      organization_plugins: {
+        Row: OrganizationPluginRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       notifications: {
         Row: NotificationRow;
         Insert: never;
@@ -681,6 +698,14 @@ export type Database = {
       remove_organization_member: {
         Args: { p_organization_id: string; p_user_id: string };
         Returns: boolean;
+      };
+      set_organization_plugin_enabled: {
+        Args: {
+          p_enabled: boolean;
+          p_organization_id: string;
+          p_plugin_id: string;
+        };
+        Returns: OrganizationPluginRow;
       };
       revoke_organization_invitation: {
         Args: { p_invitation_id: string; p_organization_id: string };

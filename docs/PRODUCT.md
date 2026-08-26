@@ -188,6 +188,20 @@ finished brand.
 
 ---
 
+# Apps and Business Plugins
+
+Stylus organizations have an internal Apps page listing trusted business modules
+compiled with the application. OWNER and ADMIN may enable or disable a registered
+module; MEMBER and VIEWER may inspect state but cannot change it.
+
+Enabled plugins may contribute validated navigation and capabilities. Disabled
+plugins disappear from normal navigation and their guarded routes reject direct
+access, while their persistent state, data and historical activity remain intact.
+This is module management, not a marketplace, remote-code loader or credential
+store.
+
+---
+
 # Marketing
 
 Marketing is the first major Stylus plugin.

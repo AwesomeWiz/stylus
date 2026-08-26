@@ -1,19 +1,22 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/modules/plugins/server/data", () => ({
+  getEnabledOrganizationPluginIds: vi.fn().mockResolvedValue([]),
+}));
 
 import { AppShell } from "./app-shell";
 
 describe("AppShell", () => {
-  it("exposes global controls and opens accessible mobile navigation", () => {
+  it("exposes global controls and opens accessible mobile navigation", async () => {
     render(
-      <AppShell
-        activePath="/"
-        identity={{ displayName: "Alex Morgan", email: "alex@example.test" }}
-        logoutAction={async () => undefined}
-        organization={{ name: "Acme", role: "OWNER" }}
-      >
-        <p>Page content</p>
-      </AppShell>,
+      await AppShell({
+        activePath: "/",
+        children: <p>Page content</p>,
+        identity: { displayName: "Alex Morgan", email: "alex@example.test" },
+        logoutAction: async () => undefined,
+        organization: { id: "organization", name: "Acme", role: "OWNER" },
+      }),
     );
 
     expect(

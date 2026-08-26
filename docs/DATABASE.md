@@ -53,6 +53,25 @@ Granular roles and permissions remain future work.
 
 ---
 
+# Organization Plugins
+
+TASK-008 migration `20260825000800_plugin_framework.sql` introduces
+`organization_plugins`:
+
+- composite `(organization_id, plugin_id)` identity
+- stable validated machine-safe plugin ID
+- enabled state and enable/disable timestamps
+- database-derived enabling/updating membership provenance
+- creation/update timestamps and active-state index
+
+Rows are never deleted by disablement. Members may read only their organization's
+state through RLS. OWNER/ADMIN use a pinned-search-path function that derives the
+actor and repeats role checks; browser roles receive no direct insert, update or
+delete grants. Registered manifest values remain application authority rather
+than a brittle PostgreSQL enum, so unknown well-formed rows are inert.
+
+---
+
 # Tasks
 
 Phase 3 introduces migration `20260825000400_task_management.sql`.

@@ -285,3 +285,24 @@ Acceptance is atomic and takes only the token. PostgreSQL locks the invitation
 and derives organization, role and expected normalized email. Invitations grant
 only MEMBER or VIEWER. Membership removal softly revokes access because existing
 business records retain membership provenance foreign keys.
+
+---
+
+## ADR-021 — Trusted Static Plugin Composition
+
+Status: ACCEPTED
+
+Stylus plugins are trusted repository modules registered explicitly at build
+time. A validated manifest declares metadata, capabilities, permissions,
+navigation, event subscriptions, memory domains and future tool metadata. The
+registry rejects duplicate identities and exclusive capability ownership.
+
+Organization enablement is persistent, RLS-isolated availability state rather
+than installation of executable code. Disabling hides navigation and denies
+guarded workflows without deleting plugin data or history. Plugin handlers run
+synchronously in process with structured failure isolation. Core exposes a
+public plugin contract and never imports business-plugin private internals.
+
+This decision deliberately excludes marketplaces, runtime filesystem discovery,
+remote packages, `eval`, MCP, AI execution, secrets configuration and Marketing
+or Web Agency implementation.

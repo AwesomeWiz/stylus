@@ -116,14 +116,20 @@ remain deliberately outside this milestone.
 
 ## Phase 6 — Plugin Platform
 
-- [ ] plugin manifest
-- [ ] registry
-- [ ] capabilities
-- [ ] permissions
-- [ ] navigation contributions
-- [ ] events
-- [ ] plugin isolation
-- [ ] example plugin
+Status: READY FOR MANUAL QA
+
+- [x] plugin manifest
+- [x] registry
+- [x] capabilities
+- [x] permissions
+- [x] navigation contributions
+- [x] events
+- [x] plugin isolation
+- [x] example plugin
+
+TASK-008 provides trusted static discovery, organization enablement, guarded
+routes and metadata-only AI tool/memory extension points. Marketing and Web
+Agency implementations remain future tasks.
 
 ---
 

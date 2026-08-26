@@ -85,6 +85,7 @@ export default async function TasksPage({
       logoutAction={logoutAction}
       notifications={notifications}
       organization={{
+        id: context.organization.id,
         name: context.organization.name,
         role: context.membership.role,
       }}
