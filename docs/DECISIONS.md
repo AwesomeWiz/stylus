@@ -381,3 +381,21 @@ production application server.
 
 Jobs do not replace AI runs or memory. Future job handlers use existing trusted
 AI/memory APIs, preserving their independent authorization and audit boundaries.
+
+---
+
+## ADR-025 — Brokered, Credential-Scoped Optional Workers
+
+Status: ACCEPTED
+
+Windows workers connect outbound through a narrow hosted Next.js broker. The
+worker holds one organization/worker-scoped random credential whose SHA-256
+digest is stored; it never receives Supabase service-role or human credentials.
+The broker keeps the service key server-only and delegates authorization,
+atomic claims and lifecycle transitions to pinned-search-path PostgreSQL RPCs.
+
+This is preferred over anonymous direct RPC access because it centralizes body
+limits, rate controls, error normalization and future audit policy without
+granting worker functions to public database roles. TASK-011 remains the state
+machine. Static handlers prevent remote-shell behavior, and offline workers
+leave external jobs durably queued while DATABASE Cron remains independent.

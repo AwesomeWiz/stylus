@@ -286,6 +286,15 @@ cancellation cannot forge terminal success. Service-role credentials remain in
 trusted hosted infrastructure and must never be shipped to a browser or future
 Windows worker; TASK-012 must add a narrow authenticated worker adapter.
 
+TASK-012 workers call bounded hosted broker routes. The Supabase service-role
+credential exists only in the Next.js server environment and is never returned
+to the worker. Worker and pairing bearer values are 256-bit random tokens stored
+only as SHA-256 digests. Every service-only RPC revalidates active registration,
+organization, authorized capability and claim ownership. Revocation immediately
+denies new calls and lets any running lease expire for stale recovery. Broker
+requests are size-limited, rate-limited and normalized; CORS/User-Agent is not
+authentication. No arbitrary executable, shell or dynamic job handler exists.
+
 ---
 
 # AI Tools

@@ -14,6 +14,10 @@ function isPublicPath(pathname: string) {
   return publicPaths.has(pathname) || pathname.startsWith("/invite/");
 }
 
+export function isWorkerBrokerPath(pathname: string) {
+  return pathname.startsWith("/api/worker/");
+}
+
 export function getSessionRouteDecision(
   pathname: string,
   isAuthenticated: boolean,
@@ -30,6 +34,10 @@ export function getSessionRouteDecision(
 }
 
 export async function updateSession(request: NextRequest) {
+  if (isWorkerBrokerPath(request.nextUrl.pathname)) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

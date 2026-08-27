@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   cancelJobAction,
   enqueueExampleJobAction,
+  enqueueWorkerExampleJobAction,
   retryJobAction,
 } from "@/modules/jobs/actions";
 import { initialJobActionState } from "@/modules/jobs/schemas";
@@ -31,27 +32,43 @@ export function EnqueueExampleControls({ disabled }: { disabled: boolean }) {
     enqueueExampleJobAction,
     initialJobActionState,
   );
+  const [workerState, workerAction, workerPending] = useActionState(
+    enqueueWorkerExampleJobAction,
+    initialJobActionState,
+  );
   return (
-    <form action={action} className="flex flex-wrap items-center gap-2">
-      <Button
-        disabled={disabled || pending}
-        name="schedule"
-        type="submit"
-        value="now"
-      >
-        <Play aria-hidden="true" className="size-4" /> Queue test
-      </Button>
-      <Button
-        disabled={disabled || pending}
-        name="schedule"
-        type="submit"
-        value="later"
-        variant="secondary"
-      >
-        <Clock3 aria-hidden="true" className="size-4" /> Schedule in 5 min
-      </Button>
-      <Feedback state={state} />
-    </form>
+    <div className="flex flex-wrap items-center gap-2">
+      <form action={action} className="flex flex-wrap items-center gap-2">
+        <Button
+          disabled={disabled || pending}
+          name="schedule"
+          type="submit"
+          value="now"
+        >
+          <Play aria-hidden="true" className="size-4" /> Queue test
+        </Button>
+        <Button
+          disabled={disabled || pending}
+          name="schedule"
+          type="submit"
+          value="later"
+          variant="secondary"
+        >
+          <Clock3 aria-hidden="true" className="size-4" /> Schedule in 5 min
+        </Button>
+        <Feedback state={state} />
+      </form>
+      <form action={workerAction}>
+        <Button
+          disabled={disabled || workerPending}
+          type="submit"
+          variant="secondary"
+        >
+          <Play aria-hidden="true" className="size-4" /> Queue worker test
+        </Button>
+      </form>
+      <Feedback state={workerState} />
+    </div>
   );
 }
 

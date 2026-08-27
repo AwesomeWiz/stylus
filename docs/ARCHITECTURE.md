@@ -242,6 +242,21 @@ Agency is restricted to agency by default.
 
 ---
 
+# Windows Worker Boundary
+
+TASK-012 uses an outbound Windows Node.js process through a narrow Next.js
+broker. Pairing and durable credentials are random 256-bit values stored only as
+SHA-256 hashes in PostgreSQL. The broker owns the hosted service credential;
+workers receive no database superuser or human identity. Credential-validating
+RPCs constrain every heartbeat, capability-filtered atomic claim and lease-owned
+lifecycle mutation to one active worker and organization.
+
+The worker registry is static and starts with only `core.test.worker-echo`.
+Offline workers leave EXTERNAL_WORKER jobs queued; hosted DATABASE execution is
+unchanged. See `WINDOWS_WORKER.md` and ADR-025.
+
+---
+
 # Event Architecture
 
 Important state changes emit domain events.

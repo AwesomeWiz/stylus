@@ -136,6 +136,10 @@ capability must be declared by its manifest, and current organization enablement
 is checked again at enqueue and manual retry. Disabling a plugin blocks new jobs
 but does not erase queued or terminal history.
 
+TASK-012 adds an external worker adapter but no new plugin authority. Future
+plugin-owned worker handlers must still be statically registered, capability-
+declared, organization-enabled and routed through the same trusted job boundary.
+
 ## AI Tools and Memory Domains
 
 TASK-008 manifest tool entries remain discovery metadata: ID, name and
