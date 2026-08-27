@@ -25,6 +25,10 @@ const icons: Record<ActivityEventType, LucideIcon> = {
   MEMORY_CREATED: FilePlus2,
   MEMORY_RESTORED: RotateCcw,
   MEMORY_UPDATED: Pencil,
+  MARKETING_RECORD_ARCHIVED: Archive,
+  MARKETING_RECORD_CREATED: FilePlus2,
+  MARKETING_RECORD_RESTORED: RotateCcw,
+  MARKETING_RECORD_UPDATED: Pencil,
   TASK_ASSIGNED: UserRoundCheck,
   TASK_CANCELLED: XCircle,
   TASK_COMMENTED: MessageSquare,
@@ -54,6 +58,10 @@ export function activityDescription(
   const actor = memberName(members, event.actor_id);
   const title = metadataText(event, "title") ?? "a task";
   const descriptions: Record<ActivityEventType, string> = {
+    MARKETING_RECORD_ARCHIVED: `${actor} archived Marketing ${metadataText(event, "record_type") ?? "record"} “${title}”`,
+    MARKETING_RECORD_CREATED: `${actor} created Marketing ${metadataText(event, "record_type") ?? "record"} “${title}”`,
+    MARKETING_RECORD_RESTORED: `${actor} restored Marketing ${metadataText(event, "record_type") ?? "record"} “${title}”`,
+    MARKETING_RECORD_UPDATED: `${actor} updated Marketing ${metadataText(event, "record_type") ?? "record"} “${title}”`,
     BOARD_COMMENTED: `${actor} commented on board “${title}”`,
     MEMORY_ARCHIVED: `${actor} archived company memory “${title}”`,
     MEMORY_CREATED: `${actor} added company memory “${title}”`,
@@ -108,11 +116,13 @@ export function ActivityList({
               <Link
                 className="hover:underline"
                 href={
-                  (event.entity_type === "KNOWLEDGE"
-                    ? "/memory"
-                    : event.entity_type === "BOARD"
-                      ? `/whiteboards/${encodeURIComponent(event.entity_id)}`
-                      : `/tasks?view=all&task=${encodeURIComponent(event.entity_id)}`) as Route
+                  (event.entity_type === "MARKETING"
+                    ? `/apps/marketing/${marketingPath(metadataText(event, "record_type"))}`
+                    : event.entity_type === "KNOWLEDGE"
+                      ? "/memory"
+                      : event.entity_type === "BOARD"
+                        ? `/whiteboards/${encodeURIComponent(event.entity_id)}`
+                        : `/tasks?view=all&task=${encodeURIComponent(event.entity_id)}`) as Route
                 }
               >
                 <span className="text-sm">
@@ -130,5 +140,19 @@ export function ActivityList({
         );
       })}
     </ol>
+  );
+}
+
+function marketingPath(recordType: string | null) {
+  return (
+    (
+      {
+        campaign: "campaigns",
+        competitor: "competitors",
+        "creative brief": "creative-briefs",
+        "reel idea": "reel-ideas",
+        "research note": "research",
+      } as Record<string, string>
+    )[recordType ?? ""] ?? ""
   );
 }

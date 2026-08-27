@@ -399,3 +399,21 @@ limits, rate controls, error normalization and future audit policy without
 granting worker functions to public database roles. TASK-011 remains the state
 machine. Static handlers prevent remote-shell behavior, and offline workers
 leave external jobs durably queued while DATABASE Cron remains independent.
+
+---
+
+## ADR-026 — Marketing Begins as Manual Plugin-Owned Canonical Data
+
+Status: ACCEPTED
+
+TASK-013 introduces five organization-scoped Marketing tables rather than
+reusing the Core onboarding competitor table or prematurely creating media,
+analysis, agent, or performance schemas. A Marketing competitor may reference a
+same-organization Core competitor, but remains a distinct plugin workspace.
+
+All major records use soft archival. Campaign relationships are nullable and
+preserve historical references when a campaign is archived. Plugin enablement
+gates navigation, routes, reads, and writes without destroying data. CRUD emits
+bounded lifecycle activity but never automatically creates memory, AI runs, or
+jobs. This provides stable inputs for later tasks without implementing their
+automation early.

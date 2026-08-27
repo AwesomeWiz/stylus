@@ -192,6 +192,13 @@ It exists only to verify the framework and contains no Marketing functionality.
 6. Add capability, event, enablement, route and isolation tests.
 7. Document any public Core API genuinely required by the plugin.
 
-Marketing can follow this process without moving its business logic into Core.
+TASK-013 follows this process: `marketing` is statically registered with six
+guarded navigation contributions and only the read/write capabilities required
+by its manual foundation. Its declared memory domains remain `company` and
+`marketing`, but ordinary Marketing CRUD performs no memory retrieval or write.
+Disabling the plugin hides navigation and blocks route/data access without
+deleting plugin records; re-enabling restores access.
+
+Marketing remains outside Core.
 Web Agency can later use the same public contracts while retaining its separate
 system and agency-only memory boundary.

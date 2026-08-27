@@ -7,14 +7,11 @@ import { canManageOrganization } from "@/modules/organizations/authorization";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
 import { builtInPluginRegistry } from "@/plugins";
 
-import { pluginEnablementSchema } from "./schemas";
-
-export interface PluginActionState {
-  message?: string;
-  status: "idle" | "error" | "success";
-}
-
-export const initialPluginActionState: PluginActionState = { status: "idle" };
+import {
+  initialPluginActionState,
+  type PluginActionState,
+  pluginEnablementSchema,
+} from "./schemas";
 
 export async function setPluginEnabledAction(
   _state: PluginActionState = initialPluginActionState,

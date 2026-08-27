@@ -7,10 +7,8 @@ import { Button } from "@/components/ui/button";
 import { PluginIcon } from "@/core/plugins/icons";
 import type { PluginManifest } from "@/core/plugins/public";
 import type { OrganizationRole } from "@/lib/supabase/database.types";
-import {
-  initialPluginActionState,
-  setPluginEnabledAction,
-} from "@/modules/plugins/actions";
+import { setPluginEnabledAction } from "@/modules/plugins/actions";
+import { initialPluginActionState } from "@/modules/plugins/schemas";
 
 export interface OrganizationPluginView {
   enabled: boolean;

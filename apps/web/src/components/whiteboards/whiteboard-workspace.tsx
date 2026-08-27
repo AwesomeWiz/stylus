@@ -370,7 +370,7 @@ export function WhiteboardWorkspace({
 
   const navigateHistory = useCallback(
     (direction: "UNDO" | "REDO") => {
-      if (!canMutate || pending || mutationLockRef.current) return;
+      if (!canMutate || mutationLockRef.current) return;
       const current = historyRef.current;
       const next =
         direction === "UNDO"
@@ -386,14 +386,7 @@ export function WhiteboardWorkspace({
         persistHistoryTransition(current.present, next.present),
       );
     },
-    [
-      canMutate,
-      pending,
-      persistHistoryTransition,
-      runMutation,
-      selectedId,
-      syncNodes,
-    ],
+    [canMutate, persistHistoryTransition, runMutation, selectedId, syncNodes],
   );
 
   const onContentCommit = useCallback(

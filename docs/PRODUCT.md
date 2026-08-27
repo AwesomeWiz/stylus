@@ -263,6 +263,12 @@ service-role credential.
 
 Marketing is the first major Stylus plugin.
 
+TASK-013 establishes its manual operating foundation: Overview, Competitors,
+Reel Ideas, Campaigns, Research, and Creative Briefs. These are collaborative
+planning records, not claims of automated collection or AI-generated strategy.
+Reasoning History and Creative Studio are deferred to later agent and creative
+generation work.
+
 Initial focus:
 
 Pre-product Instagram Reel marketing.
