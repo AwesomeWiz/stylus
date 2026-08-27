@@ -398,16 +398,22 @@ or comments are part of TASK-013.
 
 ## TASK-014 — Competitor Reel Analysis
 
-Planned scope:
+Implemented on `codex/task-014-competitor-reel-analysis`:
 
-- manual Reel/video ingestion
-- media job
-- audio extraction
-- transcription
-- scene detection
-- representative frames
-- OCR where appropriate
-- structured creative analysis
+- manual MP4 upload with optional metadata-only source URL
+- private organization-scoped `marketing-reel-media` Storage
+- distinct competitor Reel, bounded transcript, and versioned analysis records
+- durable `marketing.competitor-reel.extract` EXTERNAL_WORKER job
+- fixed FFmpeg/ffprobe metadata, audio, and bounded scene-cut extraction
+- fixed Python/faster-whisper local transcription with CPU fallback
+- narrow claimed-job signed-download and result-persistence broker operations
+- text-only structured ModelGateway interpretation and ordinary `ai_runs` trace
+- archive/restore, cancellation, re-analysis, activity, role, plugin, and RLS boundaries
+- no Instagram download/scraping, OCR, semantic vision, or automatic memory write
+
+Pending: apply `20260825001400_competitor_reel_analysis.sql`, run the new pgTAP
+suite in a database-capable environment, and complete hosted two-organization
+manual QA. Do not begin TASK-015 until TASK-014 manual QA is accepted.
 
 ---
 

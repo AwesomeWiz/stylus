@@ -88,3 +88,18 @@ The `/api/worker/*` namespace bypasses human browser-session redirects only;
 pairing-code or durable-worker authentication remains mandatory in the broker.
 Every broker result is JSON. The worker validates the response content type and
 discards unexpected HTML without printing it.
+
+## TASK-014 Media Capability
+
+Install FFmpeg/ffprobe on PATH and Python 3.11+ with `faster-whisper` in the
+worker account. `STYLUS_WORKER_WHISPER_MODEL=base` is the CPU-friendly
+development default. Optional fixed executable overrides are
+`STYLUS_WORKER_FFMPEG`, `STYLUS_WORKER_FFPROBE`, and `STYLUS_WORKER_PYTHON`;
+they are operator-local and never job input. Models remain outside Git and are
+not downloaded during application startup, build, or tests.
+
+The worker advertises `marketing.competitor-reels.analyze` only when ffmpeg,
+ffprobe, Python, and faster-whisper checks pass. Re-pair after the TASK-014
+migration so the credential is authorized for that capability. The fixed Node
+handler uses `shell: false`, an isolated OS temp directory, and the repository's
+fixed `scripts/transcribe.py`; it removes temporary MP4/WAV files in `finally`.

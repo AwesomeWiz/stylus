@@ -230,3 +230,26 @@ Research
 
 The system should eventually learn from the startup's own performance
 rather than relying primarily on competitors.
+
+## TASK-014 V1 Implementation
+
+From a Marketing competitor detail, OWNER/ADMIN/MEMBER can upload one manual
+MP4 (100 MiB maximum), optionally attach a credential-free HTTP(S) source URL as
+metadata, and request analysis. Stylus never fetches that URL. VIEWER is
+read-only. A different source file requires a new competitor Reel record.
+
+Each request creates a versioned analysis and one durable external-worker job.
+The worker verifies the real container and 180-second limit with ffprobe,
+extracts mono 16 kHz temporary audio, detects at most 20 scene timestamps with
+a fixed 0.4 threshold, and transcribes locally through faster-whisper. It
+persists no WAV or frame gallery. Strategic interpretation receives only a
+bounded transcript, competitor identity, and deterministic media metrics through
+ModelGateway. Results explicitly separate source/extraction from interpretation.
+
+Re-analysis preserves prior versions. V1's explicit “Re-extract & analyze”
+control requests a fresh deterministic extraction and transcription; it never
+silently replaces the source or prior results.
+Archival is soft and retains source media, transcript, analyses, AI/job history,
+and Storage consumption. Controlled hard cleanup is deferred. OCR, semantic
+vision/branding, automatic Instagram acquisition, Creative Council generation,
+and automatic Company Memory promotion are outside V1.

@@ -268,3 +268,18 @@ Optimize initially for:
 - simple operations
 
 Do not optimize for hypothetical massive scale.
+
+## TASK-014 Hosted and Worker Setup
+
+1. Apply `20260825001400_competitor_reel_analysis.sql` after TASK-013. It
+   creates private Storage, Marketing media tables, job registration, RLS, and
+   narrow service-role broker functions.
+2. Keep `SUPABASE_SERVICE_ROLE_KEY` only in the hosted Next.js environment.
+3. On the optional Windows worker, install FFmpeg/ffprobe, Python 3.11+, and
+   faster-whisper; configure `STYLUS_WORKER_WHISPER_MODEL` (recommended `base`).
+4. Re-pair the worker after migration, then start it outbound-only.
+
+No Instagram credentials, browser automation, paid transcription provider,
+public bucket, inbound laptop port, VPS, or new queue is required. Offline
+worker jobs remain queued while the hosted app stays available. Archived media
+continues consuming Storage until a future controlled cleanup feature exists.

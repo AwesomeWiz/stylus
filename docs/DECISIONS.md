@@ -417,3 +417,22 @@ gates navigation, routes, reads, and writes without destroying data. CRUD emits
 bounded lifecycle activity but never automatically creates memory, AI runs, or
 jobs. This provides stable inputs for later tasks without implementing their
 automation early.
+
+## 2026-08-27 — Competitor Reel Analysis V1 uses bounded local extraction
+
+Competitor Reels are plugin-owned observations under existing Marketing
+competitors and never reuse `marketing_reel_ideas`. V1 accepts manual MP4 upload
+only; an optional source/Instagram URL is non-fetching metadata. Private media,
+transcripts, and analyses are retained through soft archival, while re-analysis
+creates immutable historical versions.
+
+One registered EXTERNAL_WORKER job performs deterministic ffprobe/FFmpeg and
+local faster-whisper work. The credential-free worker obtains only a short-lived
+signed URL and persists a bounded schema through claimed-job broker RPCs. Native
+commands and the Python helper are fixed repository code with no shell or
+job-selected executable/script.
+
+AI interpretation remains text-only and goes through ModelGateway after fresh
+plugin, membership, and organization-policy checks. OCR, semantic vision,
+Instagram acquisition, automatic memory promotion, and Creative Council
+generation remain deferred, preserving the TASK-015 boundary.

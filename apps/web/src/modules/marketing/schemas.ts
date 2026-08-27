@@ -23,6 +23,10 @@ export interface MarketingActionState {
   message?: string;
   status: "idle" | "error" | "success";
 }
+export interface MarketingReelActionState extends MarketingActionState {
+  reelId?: string;
+  storagePath?: string;
+}
 export const initialMarketingActionState: MarketingActionState = {
   status: "idle",
 };
@@ -95,3 +99,17 @@ export const lifecycleSchema = z.object({
   recordId: id,
   archived: z.enum(["true", "false"]).transform((v) => v === "true"),
 });
+
+export const competitorReelUploadSchema = z.object({
+  competitorId: id,
+  fileName: z.string().trim().min(1).max(255),
+  fileSize: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100 * 1024 * 1024),
+  mimeType: z.literal("video/mp4"),
+  sourceUrl: optionalUrl,
+});
+
+export const competitorReelIdSchema = z.object({ reelId: id });

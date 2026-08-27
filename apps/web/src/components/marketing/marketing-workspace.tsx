@@ -200,7 +200,18 @@ export function MarketingWorkspace({
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <h2 className="font-medium">
-                    {text(record.title ?? record.name)}
+                    {area === "competitors" ? (
+                      <Link
+                        className="hover:underline"
+                        href={
+                          `/apps/marketing/competitors/${record.id}` as Route
+                        }
+                      >
+                        {text(record.name)}
+                      </Link>
+                    ) : (
+                      text(record.title ?? record.name)
+                    )}
                   </h2>
                   <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
                     {text(

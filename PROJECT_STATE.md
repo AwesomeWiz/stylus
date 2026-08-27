@@ -946,8 +946,19 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-013 is current on `codex/task-013`. Apply
-`20260825001300_extend_marketing_activity_enums.sql` followed by
-`20260825001310_marketing_plugin_foundation.sql`, run
-`marketing_plugin_rls.test.sql`, and execute the TASK-013 manual QA checklist.
-TASK-014 remains deferred.
+TASK-014 is implemented on `codex/task-014-competitor-reel-analysis` and awaits
+hosted migration plus manual QA. The forward migration is
+`20260825001400_competitor_reel_analysis.sql`; a linked dry run reports it as
+the only pending migration and applied nothing.
+
+V1 accepts manually uploaded MP4 files only (100 MiB maximum, 180 seconds
+maximum analyzed duration). A source/Instagram URL is bounded metadata and is
+never fetched. Private organization-scoped Storage holds source media;
+archiving preserves media and history until a future controlled cleanup tool.
+
+The optional outbound Windows worker performs fixed FFmpeg/ffprobe extraction
+and local faster-whisper transcription, then the hosted application performs
+text-only structured interpretation through ModelGateway. OCR, semantic vision,
+Instagram acquisition, automatic memory promotion, and TASK-015 Creative
+Council work remain deferred. Local database lint/pgTAP are pending because the
+current machine has no Docker/Podman PostgreSQL stack.

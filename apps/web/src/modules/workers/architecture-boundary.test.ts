@@ -28,6 +28,7 @@ const workerSources = [
   "config.ts",
   "registry.ts",
   "runtime.ts",
+  "media.ts",
 ]
   .map((file) =>
     readFileSync(resolve(process.cwd(), `../worker/src/${file}`), "utf8"),
@@ -50,14 +51,23 @@ describe("worker architecture boundary", () => {
   });
   it("has no arbitrary command or dynamic code surface", () => {
     expect(workerSources).not.toMatch(
-      /child_process|exec\(|spawn\(|powershell|cmd\.exe|eval\(|new Function|dynamic import/i,
+      /exec\(|powershell|cmd\.exe|eval\(|new Function|dynamic import/i,
     );
     expect(workerSources).not.toContain("run_command");
+    expect(workerSources).toContain("spawn(executable, args, {");
+    expect(workerSources).toContain("shell: false");
+    expect(workerSources).toContain('"../scripts/transcribe.py"');
   });
   it("bounds broker requests and accepts only fixed operations", () => {
-    expect(route).toContain("length > 8192");
+    expect(route).toContain(
+      'operation === "persist-extraction" ? 524288 : 8192',
+    );
+    expect(route).toContain("length > maximumBody");
     expect(route).toContain("rateLimited");
-    expect(route).toContain('z.enum(["core.worker.echo"])');
+    expect(route).toContain('"core.worker.echo"');
+    expect(route).toContain('"marketing.competitor-reels.analyze"');
+    expect(route).toContain('"media-authorization"');
+    expect(route).toContain('"persist-extraction"');
   });
   it("exports only async actions from the worker use-server boundary", () => {
     for (const source of [workerActions, jobActions]) {

@@ -431,3 +431,23 @@ The initial architecture prioritizes:
 - low idle cost
 - portability
 - future migration without application redesign
+
+## TASK-014 Media Flow
+
+```text
+authenticated Marketing collaborator
+  -> private organization/Reel Storage path
+  -> persisted EXTERNAL_WORKER job
+  -> paired outbound worker
+  -> claimed-job broker validation
+  -> 60-second signed source download
+  -> fixed ffprobe/FFmpeg + fixed faster-whisper helper
+  -> bounded broker result persistence
+  -> plugin/policy re-check
+  -> text-only ModelGateway structured interpretation
+  -> versioned Marketing analysis + ai_runs trace
+```
+
+The worker never receives Supabase credentials, a user session, arbitrary
+Storage paths, commands, or scripts. Temporary source/audio files are isolated
+per job and removed after success, failure, cancellation, or timeout handling.

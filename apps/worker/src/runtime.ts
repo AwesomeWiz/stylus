@@ -1,4 +1,8 @@
-import { WorkerUnauthorizedError, type WorkerApi } from "./api.js";
+import {
+  WorkerCancelledError,
+  WorkerUnauthorizedError,
+  type WorkerApi,
+} from "./api.js";
 import { handlerForClaim, type WorkerHandlerRegistry } from "./registry.js";
 
 export class WorkerRuntime {
@@ -61,14 +65,23 @@ export class WorkerRuntime {
       if (controller.signal.aborted)
         throw new Error(String(controller.signal.reason));
       await this.api.operation("complete", job.id, { result });
-    } catch {
+    } catch (error) {
       const reason = String(controller.signal.reason ?? "");
-      if (reason === "cancelled") await this.api.operation("cancel", job.id);
-      else
+      if (reason === "cancelled" || error instanceof WorkerCancelledError)
+        await this.api.operation("cancel", job.id);
+      else {
+        const message = error instanceof Error ? error.message : "";
+        const permanent = /^(invalid_|media_duration_exceeded)/.test(message);
         await this.api.operation("fail", job.id, {
-          category: reason === "timeout" ? "timeout" : "internal_error",
-          retryable: reason !== "shutdown",
+          category:
+            reason === "timeout"
+              ? "timeout"
+              : permanent
+                ? "permanent_failure"
+                : "internal_error",
+          retryable: reason !== "shutdown" && !permanent,
         });
+      }
     } finally {
       clearInterval(leaseTimer);
       clearTimeout(timeout);

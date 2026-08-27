@@ -428,3 +428,22 @@ organization boundary.
 AI memory additionally requires domain isolation.
 
 Use RLS where appropriate.
+
+## Competitor Reel Intelligence
+
+TASK-014 adds `marketing_competitor_reels` as a child of the existing
+same-organization `marketing_competitors`; it is deliberately unrelated to
+`marketing_reel_ideas`. Source metadata and bounded deterministic metrics live
+on the Reel. Full bounded text and timestamped segments live in
+`marketing_competitor_reel_transcripts`, never job metadata.
+
+`marketing_competitor_reel_analyses` preserves monotonically numbered versions,
+job provenance, extraction/schema versions, optional `ai_runs` linkage, status,
+and a bounded structured result. One active version is created atomically with
+one registered EXTERNAL_WORKER job. Old versions are never overwritten.
+
+The private `marketing-reel-media` bucket accepts `video/mp4` objects up to
+104857600 bytes at `<organization>/<reel>/source.mp4`. RLS derives organization
+from the path. Browser roles cannot write transcripts or analyses; narrow
+service-role broker functions validate worker credential, organization, job,
+claim, lease, Reel, and analysis relationships before signed access or writes.

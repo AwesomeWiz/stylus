@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   WorkerApi,
+  WorkerCancelledError,
   WorkerUnauthorizedError,
   WorkerUnexpectedResponseError,
 } from "./api.js";
@@ -87,5 +88,21 @@ describe("worker API", () => {
     await expect(result).rejects.toEqual(
       new WorkerUnexpectedResponseError(500),
     );
+  });
+
+  it("normalizes broker cancellation for cooperative acknowledgement", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: "cancelled" }), {
+        headers: { "content-type": "application/json" },
+        status: 409,
+      }),
+    );
+    await expect(
+      new WorkerApi(
+        "https://stylus.example",
+        "a".repeat(64),
+        fetcher,
+      ).persistExtraction("job", {}),
+    ).rejects.toBeInstanceOf(WorkerCancelledError);
   });
 });

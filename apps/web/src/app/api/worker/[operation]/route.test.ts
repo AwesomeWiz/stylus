@@ -2,11 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createServiceClient: vi.fn(),
+  createSignedUrl: vi.fn(),
+  interpret: vi.fn(),
   rpc: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/service", () => ({
   createServiceSupabaseClient: mocks.createServiceClient,
+}));
+vi.mock("@/modules/marketing/server/reel-interpretation", () => ({
+  interpretCompetitorReel: mocks.interpret,
 }));
 
 import { POST } from "./route";
@@ -34,7 +39,11 @@ async function expectJson(response: Response, status: number, value: unknown) {
 describe("worker broker route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.createServiceClient.mockReturnValue({ rpc: mocks.rpc });
+    mocks.createServiceClient.mockReturnValue({
+      rpc: mocks.rpc,
+      storage: { from: () => ({ createSignedUrl: mocks.createSignedUrl }) },
+    });
+    mocks.interpret.mockResolvedValue({ runId: "run" });
   });
 
   it("reaches the broker and returns JSON for empty and malformed pairing input", async () => {
@@ -115,5 +124,126 @@ describe("worker broker route", () => {
       500,
       { error: "broker_failure" },
     );
+  });
+
+  it("issues short-lived media access only after the owned-job RPC authorizes it", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: {
+        analysisId: "30000000-0000-4000-8000-000000000001",
+        reelId: "20000000-0000-4000-8000-000000000001",
+        sourceSizeBytes: 100,
+        storagePath:
+          "10000000-0000-4000-8000-000000000001/20000000-0000-4000-8000-000000000001/source.mp4",
+      },
+      error: null,
+    });
+    mocks.createSignedUrl.mockResolvedValueOnce({
+      data: { signedUrl: "https://storage.example/signed" },
+      error: null,
+    });
+    const response = await brokerRequest(
+      "media-authorization",
+      { jobId: "40000000-0000-4000-8000-000000000001", payload: {} },
+      "f".repeat(64),
+    );
+    expect(response.status).toBe(200);
+    expect(mocks.createSignedUrl).toHaveBeenCalledWith(
+      expect.stringContaining("/source.mp4"),
+      60,
+    );
+    expect(await response.json()).toMatchObject({
+      downloadUrl: "https://storage.example/signed",
+      sourceSizeBytes: 100,
+    });
+  });
+
+  it("validates bounded extraction before persistence and trusted interpretation", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: {
+        actorId: "50000000-0000-4000-8000-000000000001",
+        analysisId: "30000000-0000-4000-8000-000000000001",
+        interpretationAllowed: true,
+        organizationId: "10000000-0000-4000-8000-000000000001",
+        reelId: "20000000-0000-4000-8000-000000000001",
+      },
+      error: null,
+    });
+    const payload = {
+      analysisId: "30000000-0000-4000-8000-000000000001",
+      averageSceneDuration: 2,
+      cutsPerMinute: 30,
+      durationSeconds: 10,
+      extractionVersion: "ffmpeg-whisper-v1",
+      frameRate: 30,
+      height: 1920,
+      reelId: "20000000-0000-4000-8000-000000000001",
+      sceneCount: 5,
+      sceneTimestamps: [2],
+      transcript: {
+        durationSeconds: 10,
+        engine: "faster-whisper",
+        language: "en",
+        model: "base",
+        segments: [{ end: 1, start: 0, text: "Hook" }],
+        text: "Hook",
+      },
+      width: 1080,
+    };
+    const response = await brokerRequest(
+      "persist-extraction",
+      { jobId: "40000000-0000-4000-8000-000000000001", payload },
+      "e".repeat(64),
+    );
+    expect(response.status).toBe(200);
+    expect(mocks.interpret).toHaveBeenCalledWith(
+      expect.objectContaining({
+        analysisId: payload.analysisId,
+        reelId: payload.reelId,
+      }),
+    );
+  });
+
+  it("persists extraction but starts no AI continuation after Marketing is disabled", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: {
+        actorId: "50000000-0000-4000-8000-000000000001",
+        analysisId: "30000000-0000-4000-8000-000000000001",
+        interpretationAllowed: false,
+        organizationId: "10000000-0000-4000-8000-000000000001",
+        reelId: "20000000-0000-4000-8000-000000000001",
+      },
+      error: null,
+    });
+    const payload = {
+      analysisId: "30000000-0000-4000-8000-000000000001",
+      averageSceneDuration: 2,
+      cutsPerMinute: 30,
+      durationSeconds: 10,
+      extractionVersion: "ffmpeg-whisper-v1",
+      frameRate: 30,
+      height: 1920,
+      reelId: "20000000-0000-4000-8000-000000000001",
+      sceneCount: 5,
+      sceneTimestamps: [2],
+      transcript: {
+        durationSeconds: 10,
+        engine: "faster-whisper",
+        language: "en",
+        model: "base",
+        segments: [{ end: 1, start: 0, text: "Hook" }],
+        text: "Hook",
+      },
+      width: 1080,
+    };
+    const response = await brokerRequest(
+      "persist-extraction",
+      {
+        jobId: "40000000-0000-4000-8000-000000000001",
+        payload,
+      },
+      "1".repeat(64),
+    );
+    expect(response.status).toBe(200);
+    expect(mocks.interpret).not.toHaveBeenCalled();
   });
 });

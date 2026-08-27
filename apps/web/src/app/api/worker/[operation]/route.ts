@@ -3,8 +3,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
+import { interpretCompetitorReel } from "@/modules/marketing/server/reel-interpretation";
+import { reelExtractionResultSchema } from "@/modules/marketing/reel-analysis";
 
-const capability = z.enum(["core.worker.echo"]);
+const capability = z.enum([
+  "core.worker.echo",
+  "marketing.competitor-reels.analyze",
+]);
 const base = z
   .object({
     version: z.string().min(1).max(40),
@@ -29,6 +34,8 @@ const allowed = new Set([
   "complete",
   "fail",
   "cancel",
+  "media-authorization",
+  "persist-extraction",
 ]);
 const requestWindows = new Map<string, { count: number; resetAt: number }>();
 
@@ -77,7 +84,8 @@ async function handleWorkerRequest(
   if (!allowed.has(operation))
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   const length = Number(request.headers.get("content-length") ?? 0);
-  if (length > 8192)
+  const maximumBody = operation === "persist-extraction" ? 524288 : 8192;
+  if (length > maximumBody)
     return NextResponse.json({ error: "invalid_request" }, { status: 413 });
   let raw = "";
   try {
@@ -85,7 +93,7 @@ async function handleWorkerRequest(
   } catch {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
-  if (raw.length > 8192)
+  if (raw.length > maximumBody)
     return NextResponse.json({ error: "invalid_request" }, { status: 413 });
   let body: unknown;
   try {
@@ -139,6 +147,92 @@ async function handleWorkerRequest(
   if (!parsed.success)
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   const supabase = createServiceSupabaseClient();
+  if (operation === "media-authorization") {
+    const { data, error } = await supabase.rpc("worker_authorize_reel_media", {
+      p_credential: credential,
+      p_job_id: parsed.data.jobId,
+    });
+    if (error || !data)
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    const value = data as Record<string, unknown>;
+    const storagePath =
+      typeof value.storagePath === "string" ? value.storagePath : "";
+    const { data: signed, error: signedError } = await supabase.storage
+      .from("marketing-reel-media")
+      .createSignedUrl(storagePath, 60);
+    if (signedError || !signed)
+      return NextResponse.json({ error: "operation_failed" }, { status: 409 });
+    return NextResponse.json({
+      analysisId: value.analysisId,
+      downloadUrl: signed.signedUrl,
+      reelId: value.reelId,
+      sourceSizeBytes: value.sourceSizeBytes,
+    });
+  }
+  if (operation === "persist-extraction") {
+    const extractionPayload = reelExtractionResultSchema
+      .extend({ analysisId: z.uuid(), reelId: z.uuid() })
+      .strict()
+      .safeParse(parsed.data.payload);
+    if (!extractionPayload.success)
+      return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    const { data, error } = await supabase.rpc(
+      "worker_persist_reel_extraction",
+      {
+        p_credential: credential,
+        p_job_id: parsed.data.jobId,
+        p_payload: extractionPayload.data,
+      },
+    );
+    if (error || !data)
+      return NextResponse.json(
+        { error: "operation_failed" },
+        { status: error?.code === "42501" ? 401 : 409 },
+      );
+    const trusted = data as Record<string, unknown>;
+    if (trusted.interpretationAllowed === true) {
+      const extraction = reelExtractionResultSchema
+        .strip()
+        .parse(extractionPayload.data);
+      try {
+        await interpretCompetitorReel({
+          actorId: String(trusted.actorId),
+          analysisId: String(trusted.analysisId),
+          extraction,
+          jobId: parsed.data.jobId,
+          organizationId: String(trusted.organizationId),
+          reelId: String(trusted.reelId),
+        });
+      } catch {
+        const { data: jobState } = await supabase
+          .from("jobs")
+          .select("status")
+          .eq("id", parsed.data.jobId)
+          .maybeSingle();
+        if (jobState?.status === "CANCEL_REQUESTED")
+          return NextResponse.json({ error: "cancelled" }, { status: 409 });
+        await supabase
+          .from("marketing_competitor_reel_analyses")
+          .update({
+            completed_at: new Date().toISOString(),
+            error_category: "ai_interpretation_failed",
+            status: "FAILED",
+          })
+          .eq("organization_id", String(trusted.organizationId))
+          .eq("id", String(trusted.analysisId));
+        await supabase
+          .from("marketing_competitor_reels")
+          .update({ processing_status: "FAILED" })
+          .eq("organization_id", String(trusted.organizationId))
+          .eq("id", String(trusted.reelId));
+        return NextResponse.json(
+          { error: "interpretation_failed" },
+          { status: 409 },
+        );
+      }
+    }
+    return NextResponse.json({ persisted: true });
+  }
   const { data, error } = await supabase.rpc("worker_job_operation", {
     p_credential: credential,
     p_job_id: parsed.data.jobId,
