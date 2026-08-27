@@ -33,12 +33,18 @@ export function EnqueueExampleControls({ disabled }: { disabled: boolean }) {
   );
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
-      <Button disabled={disabled || pending} name="schedule" value="now">
+      <Button
+        disabled={disabled || pending}
+        name="schedule"
+        type="submit"
+        value="now"
+      >
         <Play aria-hidden="true" className="size-4" /> Queue test
       </Button>
       <Button
         disabled={disabled || pending}
         name="schedule"
+        type="submit"
         value="later"
         variant="secondary"
       >
@@ -76,6 +82,7 @@ export function JobLifecycleControls({
               disabled={cancelPending}
               size="icon"
               title="Cancel job"
+              type="submit"
               variant="ghost"
             >
               <Ban aria-hidden="true" className="size-4" />
@@ -90,6 +97,7 @@ export function JobLifecycleControls({
               disabled={retryPending}
               size="icon"
               title="Retry job"
+              type="submit"
               variant="ghost"
             >
               <RotateCcw aria-hidden="true" className="size-4" />

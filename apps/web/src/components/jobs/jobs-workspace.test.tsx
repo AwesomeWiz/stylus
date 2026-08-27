@@ -80,6 +80,24 @@ describe("JobsWorkspace", () => {
     ).toBeDisabled();
   });
 
+  it("submits both enqueue actions through their containing form", () => {
+    render(
+      <JobsWorkspace
+        currentRole="OWNER"
+        currentUserId={job.created_by}
+        jobs={[]}
+        memberNames={{}}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Queue test" })).toHaveAttribute(
+      "type",
+      "submit",
+    );
+    expect(
+      screen.getByRole("button", { name: "Schedule in 5 min" }),
+    ).toHaveAttribute("type", "submit");
+  });
+
   it("offers manager retry only for retryable terminal jobs", () => {
     render(
       <JobsWorkspace
@@ -96,9 +114,10 @@ describe("JobsWorkspace", () => {
         memberNames={{}}
       />,
     );
-    expect(
-      screen.getByRole("button", { name: "Retry job" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry job" })).toHaveAttribute(
+      "type",
+      "submit",
+    );
     expect(
       screen.queryByRole("button", { name: "Cancel job" }),
     ).not.toBeInTheDocument();
@@ -120,9 +139,10 @@ describe("JobsWorkspace", () => {
         memberNames={{}}
       />,
     );
-    expect(
-      screen.getByRole("button", { name: "Cancel job" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel job" })).toHaveAttribute(
+      "type",
+      "submit",
+    );
     rerender(
       <JobsWorkspace
         currentRole="MEMBER"

@@ -23,6 +23,11 @@ Implemented scope:
 - organization RLS, worker-only lifecycle grants and pgTAP coverage
 - no domain workloads, Edge Function, Redis, VPS or Windows worker
 
+Manual-QA hardening:
+
+- job queue, schedule, cancellation and retry buttons explicitly submit their
+  Server Action forms; regression coverage protects the form boundary
+
 ---
 
 # Next

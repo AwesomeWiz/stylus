@@ -702,6 +702,20 @@ Docker and Podman are unavailable, so the 54-assertion pgTAP suite could not run
 locally. No hosted migration or Cron change was applied. Hosted pgTAP,
 role/isolation/concurrency QA and responsive browser QA remain required.
 
+## Manual-QA Job Control Fix
+
+Resolved on 2026-08-27:
+
+- Queue, schedule, cancel and retry controls now explicitly submit their Server
+  Action forms instead of inheriting the shared design-system button's safe
+  `type="button"` default
+- component regression coverage protects the submit semantics for all four job
+  lifecycle controls
+- no job authorization, RLS, worker lifecycle or migration behavior changed
+- focused component coverage passed: 1 file, 5 tests
+- formatting, lint and type checking passed; the full suite passed with 93 files
+  and 408 tests; the production build passed with `/jobs`
+
 ---
 
 # Product Direction
