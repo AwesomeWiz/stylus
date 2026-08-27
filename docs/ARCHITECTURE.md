@@ -325,6 +325,19 @@ never runs in a long PostgreSQL transaction. See `docs/JOBS.md`.
 
 ---
 
+# Marketing Plugin Boundary
+
+TASK-013 keeps Marketing inside the modular monolith as a statically registered
+business plugin. Pages use the Core plugin enablement guard; typed server-side
+services derive the current organization and actor. Five plugin-owned tables
+use RLS plus provenance triggers. The plugin may depend on public Core contracts,
+while Core does not import Marketing business logic.
+
+Ordinary Marketing CRUD is synchronous relational work. It does not invoke AI,
+memory, jobs, workers, scraping, ingestion, or external network adapters.
+
+---
+
 # AI Boundary
 
 All synchronous inference passes through the server-only `ModelGateway`:

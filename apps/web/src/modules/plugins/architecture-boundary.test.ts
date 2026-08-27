@@ -18,7 +18,7 @@ function sourceFiles(directory: string): string[] {
 describe("plugin architecture boundary", () => {
   it("keeps plugin implementations dependent on the public Core contract", () => {
     const implementationFiles = sourceFiles(join(sourceRoot, "plugins")).filter(
-      (path) => /plugins[\\/]example[\\/]/.test(path),
+      (path) => /plugins[\\/](example|marketing)[\\/]/.test(path),
     );
     for (const file of implementationFiles) {
       const imports = [
@@ -58,6 +58,26 @@ describe("plugin architecture boundary", () => {
     expect(registrySource).toContain(
       'import { examplePlugin } from "./example"',
     );
+    expect(registrySource).toContain(
+      'import { marketingPlugin } from "./marketing"',
+    );
     expect(registrySource).not.toMatch(/readdir|glob|https?:\/\/|eval\(/);
+  });
+
+  it("exports only async functions from the plugin Server Action module", () => {
+    const action = readFileSync(
+      join(sourceRoot, "modules", "plugins", "actions.ts"),
+      "utf8",
+    );
+    const schemas = readFileSync(
+      join(sourceRoot, "modules", "plugins", "schemas.ts"),
+      "utf8",
+    );
+    expect(action).toMatch(/^\s*["']use server["'];/);
+    expect(action).not.toMatch(
+      /^export\s+(?:const|let|var|class|enum|interface|type)\s/m,
+    );
+    expect(action).toMatch(/^export\s+async\s+function\s+/m);
+    expect(schemas).toContain("export const initialPluginActionState");
   });
 });

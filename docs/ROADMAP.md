@@ -187,7 +187,7 @@ task.
 - [ ] FFmpeg detection
 - [ ] transcription detection
 
-Status: TASK-012 READY FOR MANUAL QA
+Status: TASK-012 COMPLETE
 
 TASK-011 provides the durable PostgreSQL queue, trusted registry/executor,
 database-native verification job, hosted Cron boundary, leases, cancellation,
@@ -199,13 +199,17 @@ handlers and optional binary/model detection remain deferred.
 
 ## Phase 10 — Marketing Foundation
 
-- [ ] Marketing plugin
-- [ ] overview
-- [ ] competitors
-- [ ] Reels
-- [ ] campaigns
-- [ ] research
-- [ ] creative briefs
+- [x] statically registered, organization-enableable Marketing plugin
+- [x] operational overview
+- [x] manual competitors
+- [x] manual Reel Ideas
+- [x] manual campaigns
+- [x] manual research notes
+- [x] manual creative briefs
+
+TASK-013 intentionally excludes Reasoning History and Creative Studio.
+Competitor Reel analysis begins in TASK-014, external research automation in
+TASK-017, and AI creative generation in the later Creative Council phases.
 
 ---
 

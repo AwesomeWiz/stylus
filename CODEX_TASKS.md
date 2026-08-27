@@ -374,17 +374,25 @@ Planned scope:
 
 ## TASK-013 — Marketing Plugin Foundation
 
+Status: READY FOR MANUAL QA
+
 Planned scope:
 
 - Marketing plugin
 - navigation
 - competitors
-- Reels
+- manual Reel Ideas
 - campaigns
 - research
 - creative briefs
 
 No full agent council yet.
+
+Implemented as five plugin-owned, organization-scoped tables with soft
+archival, same-organization optional campaign/Core-competitor relationships,
+meaningful bounded activity events, guarded routes, and OWNER/ADMIN/MEMBER
+write plus VIEWER read policy. No AI, memory writes, jobs, scraping, ingestion,
+or comments are part of TASK-013.
 
 ---
 

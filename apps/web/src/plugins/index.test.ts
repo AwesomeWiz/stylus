@@ -17,3 +17,26 @@ describe("example plugin", () => {
     ).resolves.toEqual({ failures: [], handledBy: ["example"] });
   });
 });
+
+describe("Marketing plugin", () => {
+  it("is statically registered with the TASK-013 routes and bounded domains", () => {
+    const manifest = builtInPluginRegistry.get("marketing")?.manifest;
+    expect(manifest?.memoryDomains).toEqual(["company", "marketing"]);
+    expect(manifest?.navigation.map((item) => item.route)).toEqual([
+      "/apps/marketing",
+      "/apps/marketing/competitors",
+      "/apps/marketing/reel-ideas",
+      "/apps/marketing/campaigns",
+      "/apps/marketing/research",
+      "/apps/marketing/creative-briefs",
+    ]);
+    expect(builtInPluginRegistry.getNavigation([])).not.toContainEqual(
+      expect.objectContaining({ pluginId: "marketing" }),
+    );
+    expect(
+      builtInPluginRegistry
+        .getNavigation(["marketing"])
+        .filter((item) => item.pluginId === "marketing"),
+    ).toHaveLength(6);
+  });
+});

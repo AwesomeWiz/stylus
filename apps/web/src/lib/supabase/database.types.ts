@@ -89,7 +89,8 @@ export type TaskStatus = "TODO" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 export type NotificationType =
   "TASK_DUE_24H" | "TASK_DUE_1H" | "TASK_DEADLINE" | "BOARD_MENTION";
-export type NotificationEntityType = "TASK" | "BOARD" | "KNOWLEDGE";
+export type NotificationEntityType =
+  "TASK" | "BOARD" | "KNOWLEDGE" | "MARKETING";
 export type NotificationChannel = "IN_APP";
 export type TaskReminderKind = "DUE_24H" | "DUE_1H" | "DEADLINE";
 export type ActivityEventType =
@@ -104,7 +105,73 @@ export type ActivityEventType =
   | "MEMORY_CREATED"
   | "MEMORY_UPDATED"
   | "MEMORY_ARCHIVED"
-  | "MEMORY_RESTORED";
+  | "MEMORY_RESTORED"
+  | "MARKETING_RECORD_CREATED"
+  | "MARKETING_RECORD_UPDATED"
+  | "MARKETING_RECORD_ARCHIVED"
+  | "MARKETING_RECORD_RESTORED";
+
+export type MarketingReelIdeaStatus = "IDEA" | "DRAFT" | "READY";
+export type MarketingCampaignStatus =
+  "PLANNING" | "ACTIVE" | "PAUSED" | "COMPLETED";
+export type MarketingResearchCategory =
+  "CUSTOMER" | "COMPETITOR" | "TREND" | "CONTENT" | "OTHER";
+export type MarketingBriefStatus = "DRAFT" | "READY" | "APPROVED";
+
+type MarketingAuditRow = {
+  archived_at: string | null;
+  created_at: string;
+  created_by: string;
+  id: string;
+  organization_id: string;
+  updated_at: string;
+  updated_by: string;
+};
+export type MarketingCompetitorRow = MarketingAuditRow & {
+  core_competitor_id: string | null;
+  instagram_handle: string | null;
+  instagram_profile_url: string | null;
+  name: string;
+  notes: string | null;
+  website_url: string | null;
+};
+export type MarketingCampaignRow = MarketingAuditRow & {
+  ends_on: string | null;
+  name: string;
+  notes: string | null;
+  objective: string;
+  starts_on: string | null;
+  status: MarketingCampaignStatus;
+};
+export type MarketingReelIdeaRow = MarketingAuditRow & {
+  call_to_action: string | null;
+  campaign_id: string | null;
+  concept: string | null;
+  content_angle: string | null;
+  hook: string | null;
+  notes: string | null;
+  status: MarketingReelIdeaStatus;
+  title: string;
+};
+export type MarketingResearchRow = MarketingAuditRow & {
+  category: MarketingResearchCategory;
+  content: string;
+  source_label: string | null;
+  source_url: string | null;
+  title: string;
+};
+export type MarketingCreativeBriefRow = MarketingAuditRow & {
+  call_to_action: string | null;
+  campaign_id: string | null;
+  core_message: string | null;
+  notes: string | null;
+  objective: string;
+  status: MarketingBriefStatus;
+  target_audience: string | null;
+  title: string;
+  tone_direction: string | null;
+  visual_direction: string | null;
+};
 export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
 
 export type BoardRow = {
@@ -504,6 +571,15 @@ type AuditedInsert = {
   updated_by: string;
 };
 
+type MarketingInsert<T extends MarketingAuditRow> = Omit<
+  T,
+  "archived_at" | "created_at" | "id" | "updated_at"
+> &
+  Partial<Pick<T, "archived_at" | "id">>;
+type MarketingUpdate<T extends MarketingAuditRow> = Partial<
+  Omit<T, "created_at" | "created_by" | "id" | "organization_id">
+>;
+
 export type Database = {
   public: {
     Tables: {
@@ -679,6 +755,36 @@ export type Database = {
           role?: OrganizationRole;
           removed_at?: string | null;
         };
+        Relationships: [];
+      };
+      marketing_competitors: {
+        Row: MarketingCompetitorRow;
+        Insert: MarketingInsert<MarketingCompetitorRow>;
+        Update: MarketingUpdate<MarketingCompetitorRow>;
+        Relationships: [];
+      };
+      marketing_campaigns: {
+        Row: MarketingCampaignRow;
+        Insert: MarketingInsert<MarketingCampaignRow>;
+        Update: MarketingUpdate<MarketingCampaignRow>;
+        Relationships: [];
+      };
+      marketing_reel_ideas: {
+        Row: MarketingReelIdeaRow;
+        Insert: MarketingInsert<MarketingReelIdeaRow>;
+        Update: MarketingUpdate<MarketingReelIdeaRow>;
+        Relationships: [];
+      };
+      marketing_research: {
+        Row: MarketingResearchRow;
+        Insert: MarketingInsert<MarketingResearchRow>;
+        Update: MarketingUpdate<MarketingResearchRow>;
+        Relationships: [];
+      };
+      marketing_creative_briefs: {
+        Row: MarketingCreativeBriefRow;
+        Insert: MarketingInsert<MarketingCreativeBriefRow>;
+        Update: MarketingUpdate<MarketingCreativeBriefRow>;
         Relationships: [];
       };
       organization_invitations: {
@@ -1079,6 +1185,10 @@ export type Database = {
       competitor_type: CompetitorType;
       marketing_objective: MarketingObjective;
       marketing_stage: MarketingStage;
+      marketing_brief_status: MarketingBriefStatus;
+      marketing_campaign_status: MarketingCampaignStatus;
+      marketing_reel_idea_status: MarketingReelIdeaStatus;
+      marketing_research_category: MarketingResearchCategory;
       job_error_category: JobErrorCategory;
       job_execution_class: JobExecutionClass;
       job_status: JobStatus;

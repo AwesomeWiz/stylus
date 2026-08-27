@@ -297,6 +297,21 @@ authentication. No arbitrary executable, shell or dynamic job handler exists.
 
 ---
 
+# Marketing Data Security
+
+Marketing table reads require an active organization membership and enabled
+`marketing` plugin. Writes additionally require OWNER, ADMIN, or MEMBER; VIEWER
+is read-only. Server actions derive organization and actor, RLS independently
+rechecks both, and database triggers overwrite actor provenance and reject
+immutable ownership changes. Composite foreign keys reject cross-organization
+campaign and Core competitor references. Authenticated clients receive no hard
+delete grant, and plugin disablement retains data while denying access.
+
+Activity metadata contains only record type and a bounded title. Marketing CRUD
+does not expose the service-role credential or create AI runs, jobs, or memory.
+
+---
+
 # AI Tools
 
 AI agents operate with least privilege.

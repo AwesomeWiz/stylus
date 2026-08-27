@@ -1,5 +1,38 @@
 # Stylus Marketing — Product & AI Specification
 
+## TASK-013 Manual Foundation
+
+The current implementation is intentionally manual and organization-scoped:
+
+- Overview
+- Competitors
+- Reel Ideas
+- Campaigns
+- Research notes
+- Creative Briefs
+
+OWNER, ADMIN, and MEMBER can create, edit, archive, and restore records. VIEWER
+is read-only. Disabling Marketing removes navigation and blocks direct access;
+records return unchanged when it is re-enabled. No page scrapes or fetches a
+source URL, invokes AI, promotes records to memory, or enqueues a job.
+
+### Manual QA
+
+1. Enable Marketing in `/apps` and confirm all six navigation entries appear.
+2. Open Overview; add one competitor and one campaign.
+3. Add three Reel Ideas and assign at least one to the campaign.
+4. Add one Research note with an HTTPS source and one campaign-linked Creative Brief.
+5. Edit each kind, refresh, and confirm persistence.
+6. Archive and restore one of each kind; verify Overview excludes archived records.
+7. Confirm meaningful lifecycle events appear in Activity without record content.
+8. Disable Marketing; confirm navigation disappears and direct routes are denied.
+9. Re-enable it and confirm all records return unchanged.
+10. Verify MEMBER can mutate, VIEWER has no mutation controls, a removed member is denied, and another organization cannot read or mutate the records.
+11. Confirm ordinary CRUD creates no `ai_runs`, `jobs`, or `knowledge_memories` rows.
+
+Competitor Reel analysis is TASK-014. External research automation is TASK-017.
+Creative Council, Reasoning History, and Creative Studio remain later work.
+
 ## Stage
 
 Initial marketing stage:

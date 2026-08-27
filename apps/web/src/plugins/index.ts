@@ -6,8 +6,12 @@ import {
 } from "@/components/layout/navigation";
 
 import { examplePlugin } from "./example";
+import { marketingPlugin } from "./marketing";
 
-export const builtInPluginRegistry = createPluginRegistry([examplePlugin]);
+export const builtInPluginRegistry = createPluginRegistry([
+  examplePlugin,
+  marketingPlugin,
+]);
 
 export function getApplicationNavigation(
   enabledPluginIds: Iterable<string>,

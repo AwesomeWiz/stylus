@@ -4,29 +4,27 @@ Last Updated: 2026-08-27
 
 ## Overall Status
 
-TASK-012 WINDOWS WORKER / READY FOR MANUAL QA
+TASK-013 MARKETING PLUGIN FOUNDATION / READY FOR MANUAL QA
 
-Stylus now has an optional authenticated outbound Windows worker, brokered
-pairing/credentials, capability-scoped atomic external claims, lease-aware local
-execution and a harmless end-to-end diagnostic. Core remains independent of the
-PC and domain workloads remain deferred.
+Stylus now has its first organization-enableable business plugin. Marketing
+provides guarded manual workspaces for competitors, campaigns, Reel ideas,
+research, and creative briefs, plus a compact operational overview.
 
 ---
 
 ## Current Phase
 
-Phase 9 — Jobs & Local Worker
+Phase 10 — Marketing Foundation
 
-Status: TASK-012 READY FOR MANUAL QA
+Status: TASK-013 READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-012 is current on `codex/task-012-windows-worker`. Apply the worker
-migration, configure the hosted broker secret, run pgTAP, pair a Windows worker
-and verify online/offline, lifecycle, revocation and two-worker behavior. Do not
-start TASK-013.
+TASK-013 is current on `codex/task-013`. Apply the forward Marketing migrations,
+run the Marketing RLS pgTAP suite, and complete the documented role, enablement,
+archival, activity, and cross-organization manual QA. Do not start TASK-014.
 
 ---
 
@@ -916,29 +914,25 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-012 is ready for manual QA on `codex/task-012-windows-worker`. TASK-013 has
-not started.
+TASK-012 is complete. TASK-013 is ready for manual QA on `codex/task-013` and
+remains the current task until manual QA is accepted.
 
 ---
 
 # Known Issues
 
-Database pgTAP requires Docker/Podman or hosted execution. The TASK-012 migration
-and broker secret remain unapplied/unconfigured pending hosted QA. SERVERLESS has
-no hosted adapter; the external worker implements only its harmless diagnostic.
-Broker rate limiting is a bounded, per-Next.js-instance safeguard rather than a
-distributed limiter; the 256-bit one-time and durable credentials remain the
-primary brute-force defense.
-FFmpeg, browser, transcription, Ollama, domain workloads, embeddings, agents,
-Marketing and Web Agency remain deferred.
+Database pgTAP requires Docker/Podman or hosted execution when a local database
+is unavailable. TASK-013 migrations must not be applied by Codex; hosted QA must
+apply them and run the 27-assertion Marketing RLS suite. Automated scraping,
+media analysis, external research, AI generation, agents, embeddings, and
+Marketing worker handlers remain deferred.
 
 ---
 
 # Next Recommended Action
 
-Apply the TASK-012 migration, configure the hosted broker, run pgTAP and complete
-Windows pairing, lifecycle, offline, cancellation, revocation, isolation and
-two-worker QA. Do not begin TASK-013.
+Apply the two TASK-013 migrations in order, run Marketing pgTAP, and complete
+the documented role and organization-isolation manual QA. Do not begin TASK-014.
 
 ---
 
@@ -952,8 +946,8 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-012 is current on `codex/task-012-windows-worker`.
-
-Apply `20260825001200_windows_workers.sql`, configure the hosted service key,
-run the 22-assertion worker pgTAP suite and follow `docs/WINDOWS_WORKER.md` for
-the complete end-to-end QA. TASK-013 must not begin until TASK-012 is accepted.
+TASK-013 is current on `codex/task-013`. Apply
+`20260825001300_extend_marketing_activity_enums.sql` followed by
+`20260825001310_marketing_plugin_foundation.sql`, run
+`marketing_plugin_rls.test.sql`, and execute the TASK-013 manual QA checklist.
+TASK-014 remains deferred.

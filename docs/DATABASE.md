@@ -403,19 +403,20 @@ also registers the fixed `core.test.worker-echo` definition.
 
 # Marketing
 
-competitors
-social_accounts
-reels
-reel_transcripts
-reel_scenes
-reel_analysis
-campaigns
-creative_briefs
-content_performance
-research_items
-research_clusters
+TASK-013 introduces exactly five plugin-owned canonical record tables:
 
-Exact tables should be introduced incrementally.
+- `marketing_competitors`, with an optional same-organization reference to the
+  Core onboarding `competitors` row
+- `marketing_campaigns`
+- `marketing_reel_ideas`, with an optional campaign reference
+- `marketing_research`, for manually entered notes only
+- `marketing_creative_briefs`, with an optional campaign reference
+
+Every table is organization-scoped, provenance-audited, RLS-protected, and
+soft-archived. Composite foreign keys prevent cross-organization references;
+archiving campaigns preserves related history. Reel media, transcripts,
+analysis, performance, automated research, embeddings, and reasoning tables
+remain deferred.
 
 ---
 
