@@ -159,3 +159,10 @@ failure, cancellation, or timeout. Models and native binaries must never be
 committed and are never downloaded during install, startup, build, tests, or web
 requests. Transcription stays local; structured interpretation remains a hosted
 ModelGateway operation.
+
+The extraction-result broker call allows enough time for ModelGateway's bounded
+provider attempts. If hosted interpretation fails, the broker returns only a
+normalized job category and retryability flag. The worker preserves that safe
+category in its dedicated failure report; it never logs the transcript, media,
+pairing token, durable credential, provider response, or returned HTML. Safe
+broker diagnostics distinguish request validation from claim/RPC failure.

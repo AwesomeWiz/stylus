@@ -246,6 +246,10 @@ whisper.cpp CLI and model. It
 persists no WAV or frame gallery. Strategic interpretation receives only a
 bounded transcript, competitor identity, and deterministic media metrics through
 ModelGateway. Results explicitly separate source/extraction from interpretation.
+If interpretation fails, extraction remains persisted for audit, but the job
+lifecycle controls retry and terminal failure state. A scheduled retry does not
+prematurely mark the Reel or analysis failed. V1 retries the complete bounded
+extraction/transcription pipeline rather than resuming at interpretation.
 
 Re-analysis preserves prior versions. V1's explicit “Re-extract & analyze”
 control requests a fresh deterministic extraction and transcription; it never

@@ -1,4 +1,5 @@
 import {
+  WorkerApiError,
   WorkerCancelledError,
   WorkerUnauthorizedError,
   type WorkerApi,
@@ -33,10 +34,7 @@ export class WorkerRuntime {
     if (!job) return;
     const handler = handlerForClaim(this.registry, job);
     if (!handler) {
-      await this.api.operation("fail", job.id, {
-        category: "permanent_failure",
-        retryable: false,
-      });
+      await this.api.reportFailure(job.id, "permanent_failure", false);
       return;
     }
     const controller = new AbortController();
@@ -72,15 +70,18 @@ export class WorkerRuntime {
       else {
         const message = error instanceof Error ? error.message : "";
         const permanent = /^(invalid_|media_duration_exceeded)/.test(message);
-        await this.api.operation("fail", job.id, {
-          category:
-            reason === "timeout"
+        const brokerFailure =
+          error instanceof WorkerApiError ? error.jobFailure : undefined;
+        await this.api.reportFailure(
+          job.id,
+          brokerFailure?.category ??
+            (reason === "timeout"
               ? "timeout"
               : permanent
                 ? "permanent_failure"
-                : "internal_error",
-          retryable: reason !== "shutdown" && !permanent,
-        });
+                : "internal_error"),
+          brokerFailure?.retryable ?? (reason !== "shutdown" && !permanent),
+        );
       }
     } finally {
       clearInterval(leaseTimer);

@@ -1,10 +1,10 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-27
+Last Updated: 2026-08-28
 
 ## Overall Status
 
-TASK-014 COMPETITOR REEL ANALYSIS / READY FOR MANUAL QA
+TASK-014 COMPETITOR REEL ANALYSIS / CORRECTIVE VERIFICATION
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces for competitors, campaigns, Reel ideas,
@@ -16,15 +16,17 @@ research, and creative briefs, plus a compact operational overview.
 
 Phase 11 — Competitor Reel Analysis
 
-Status: TASK-014 READY FOR MANUAL QA
+Status: TASK-014 MANUAL-QA CORRECTIVE WORK
 
 ---
 
 ## Current Objective
 
-TASK-014 remains current on `codex/task-014-competitor-reel-analysis`. Repeat
-hosted Windows-worker manual QA with the whisper.cpp runtime and Windows
-application control enabled. Do not start TASK-015.
+TASK-014 remains current on `codex/task-014-competitor-reel-analysis`. Manual QA
+proved upload, claim, signed media, FFmpeg/ffprobe, whisper.cpp, parsing, and
+transcript persistence. Correct the subsequent provider-unavailable
+interpretation/failure-report lifecycle, then repeat hosted QA. Do not start
+TASK-015.
 
 ---
 
@@ -931,9 +933,9 @@ Marketing worker handlers remain deferred.
 
 # Next Recommended Action
 
-Complete TASK-014 whisper.cpp corrective verification, create the separate fix
-commit, then repeat hosted Windows-worker manual QA with Smart App Control
-enabled. Do not begin TASK-015.
+Complete TASK-014 interpretation/failure-lifecycle corrective verification,
+create the separate fix commit, then repeat hosted Windows-worker manual QA with
+Smart App Control enabled and Ollama reachable. Do not begin TASK-015.
 
 ---
 
@@ -947,10 +949,12 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-014 is implemented on `codex/task-014-competitor-reel-analysis` and awaits
-hosted migration plus manual QA. The forward migration is
-`20260825001400_competitor_reel_analysis.sql`; a linked dry run reports it as
-the only pending migration and applied nothing.
+TASK-014 is implemented on `codex/task-014-competitor-reel-analysis`; its hosted
+migration is applied. Real Windows QA completed extraction and transcript
+persistence, then ModelGateway recorded a LOCAL_ONLY Ollama
+`provider_unavailable` failure before structured interpretation could persist.
+The affected job exhausted its bounded retries and is now `DEAD_LETTER`; it must
+not be executed again.
 
 V1 accepts manually uploaded MP4 files only (100 MiB maximum, 180 seconds
 maximum analyzed duration). A source/Instagram URL is bounded metadata and is
@@ -972,3 +976,12 @@ model is readable, and the required structured-output contract is available.
 Corrective verification passed formatting, lint, both typechecks, 30 worker
 tests, 468 web tests (498 total), and both production builds. No dependency or
 database migration changed.
+
+The current interpretation correction preserves the safe ModelGateway route and
+lets the existing terminal-job trigger own Reel/analysis failure state instead
+of marking domain records failed while a retry is scheduled. The broker returns
+a normalized retry category to the worker, the worker preserves it in the
+dedicated failure report, and safe server diagnostics identify request-schema
+versus RPC/claim failures without logging media, transcripts, tokens, or
+credentials. A retry currently repeats deterministic extraction and local
+transcription before interpretation; resumable interpretation is deferred.

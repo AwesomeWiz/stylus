@@ -24,6 +24,7 @@ describe("worker runtime", () => {
         if (operation === "complete") shutdown.abort("done");
         return Promise.resolve({});
       }),
+      reportFailure: vi.fn().mockResolvedValue({}),
     };
     const registry = new WorkerHandlerRegistry([
       {
@@ -59,15 +60,62 @@ describe("worker runtime", () => {
         shutdown.abort("done");
         return Promise.resolve({});
       }),
+      reportFailure: vi.fn().mockImplementation(() => {
+        shutdown.abort("done");
+        return Promise.resolve({});
+      }),
     };
     await new WorkerRuntime(
       api as unknown as WorkerApi,
       new WorkerHandlerRegistry(),
       1,
     ).run(shutdown.signal);
-    expect(api.operation).toHaveBeenCalledWith("fail", "job", {
-      category: "permanent_failure",
-      retryable: false,
-    });
+    expect(api.reportFailure).toHaveBeenCalledWith(
+      "job",
+      "permanent_failure",
+      false,
+    );
+  });
+
+  it("preserves a safe broker failure category for the durable job", async () => {
+    const shutdown = new AbortController();
+    const api = {
+      claim: vi.fn().mockResolvedValueOnce({
+        attempt_count: 1,
+        id: "job",
+        input_metadata: {},
+        job_type: "marketing.test",
+        organization_id: "org",
+        status: "RUNNING",
+      }),
+      heartbeat: vi.fn().mockResolvedValue({}),
+      operation: vi.fn(),
+      reportFailure: vi.fn().mockImplementation(() => {
+        shutdown.abort("done");
+        return Promise.resolve({});
+      }),
+    };
+    const registry = new WorkerHandlerRegistry([
+      {
+        capability: "marketing.competitor-reels.analyze",
+        executionClass: "EXTERNAL_WORKER",
+        jobType: "marketing.test",
+        timeoutMs: 30_000,
+        run: vi.fn().mockRejectedValue(
+          new (await import("./api.js")).WorkerApiError("failed", {
+            category: "provider_unavailable",
+            retryable: true,
+          }),
+        ),
+      },
+    ]);
+    await new WorkerRuntime(api as unknown as WorkerApi, registry, 1).run(
+      shutdown.signal,
+    );
+    expect(api.reportFailure).toHaveBeenCalledWith(
+      "job",
+      "provider_unavailable",
+      true,
+    );
   });
 });

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
+import { AIError, normalizeAIError } from "@/modules/ai/errors";
 import { interpretCompetitorReel } from "@/modules/marketing/server/reel-interpretation";
 import { reelExtractionResultSchema } from "@/modules/marketing/reel-analysis";
 
@@ -24,6 +25,19 @@ const operationBody = z
     jobId: z.uuid(),
     payload: z.record(z.string(), z.unknown()).optional(),
   })
+  .strict();
+const jobErrorCategory = z.enum([
+  "internal_error",
+  "permanent_failure",
+  "policy_denied",
+  "provider_unavailable",
+  "rate_limited",
+  "timeout",
+  "transient_failure",
+  "validation_failed",
+]);
+const failurePayload = z
+  .object({ category: jobErrorCategory, retryable: z.boolean() })
   .strict();
 const allowed = new Set([
   "pair",
@@ -63,6 +77,42 @@ function rateLimited(
 function bearer(request: Request) {
   const value = request.headers.get("authorization") ?? "";
   return /^Bearer [0-9a-f]{64}$/.test(value) ? value.slice(7) : null;
+}
+
+function brokerDiagnostic(input: {
+  category?: string;
+  operation: string;
+  sqlstate?: string;
+  stage: string;
+  status: number;
+}) {
+  console.error("Stylus worker broker operation failed.", input);
+}
+
+function sqlstate(value: unknown) {
+  return typeof value === "string" && /^[0-9A-Z]{5}$/.test(value)
+    ? value
+    : undefined;
+}
+
+function jobFailureForAI(error: AIError) {
+  if (
+    error.category === "provider_unavailable" ||
+    error.category === "rate_limited" ||
+    error.category === "timeout"
+  )
+    return { category: error.category, retryable: true } as const;
+  if (
+    error.category === "policy_denied" ||
+    error.category === "budget_exceeded"
+  )
+    return { category: "policy_denied", retryable: false } as const;
+  if (
+    error.category === "invalid_response" ||
+    error.category === "context_limit"
+  )
+    return { category: "validation_failed", retryable: false } as const;
+  return { category: "internal_error", retryable: true } as const;
 }
 
 export async function POST(
@@ -203,7 +253,7 @@ async function handleWorkerRequest(
           organizationId: String(trusted.organizationId),
           reelId: String(trusted.reelId),
         });
-      } catch {
+      } catch (rawError) {
         const { data: jobState } = await supabase
           .from("jobs")
           .select("status")
@@ -211,27 +261,31 @@ async function handleWorkerRequest(
           .maybeSingle();
         if (jobState?.status === "CANCEL_REQUESTED")
           return NextResponse.json({ error: "cancelled" }, { status: 409 });
-        await supabase
-          .from("marketing_competitor_reel_analyses")
-          .update({
-            completed_at: new Date().toISOString(),
-            error_category: "ai_interpretation_failed",
-            status: "FAILED",
-          })
-          .eq("organization_id", String(trusted.organizationId))
-          .eq("id", String(trusted.analysisId));
-        await supabase
-          .from("marketing_competitor_reels")
-          .update({ processing_status: "FAILED" })
-          .eq("organization_id", String(trusted.organizationId))
-          .eq("id", String(trusted.reelId));
+        const failure = jobFailureForAI(normalizeAIError(rawError));
+        brokerDiagnostic({
+          category: failure.category,
+          operation,
+          stage: "trusted_interpretation",
+          status: 409,
+        });
         return NextResponse.json(
-          { error: "interpretation_failed" },
+          { error: "interpretation_failed", ...failure },
           { status: 409 },
         );
       }
     }
     return NextResponse.json({ persisted: true });
+  }
+  if (operation === "fail") {
+    const failure = failurePayload.safeParse(parsed.data.payload);
+    if (!failure.success) {
+      brokerDiagnostic({
+        operation,
+        stage: "request_schema",
+        status: 400,
+      });
+      return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    }
   }
   const { data, error } = await supabase.rpc("worker_job_operation", {
     p_credential: credential,
@@ -239,10 +293,18 @@ async function handleWorkerRequest(
     p_operation: operation,
     p_payload: parsed.data.payload ?? {},
   });
-  return error
-    ? NextResponse.json(
-        { error: error.code === "42501" ? "unauthorized" : "operation_failed" },
-        { status: error.code === "42501" ? 401 : 409 },
-      )
-    : NextResponse.json(data);
+  if (error) {
+    const status = error.code === "42501" ? 401 : 409;
+    brokerDiagnostic({
+      operation,
+      sqlstate: sqlstate(error.code),
+      stage: "job_operation_rpc",
+      status,
+    });
+    return NextResponse.json(
+      { error: error.code === "42501" ? "unauthorized" : "operation_failed" },
+      { status },
+    );
+  }
+  return NextResponse.json(data);
 }

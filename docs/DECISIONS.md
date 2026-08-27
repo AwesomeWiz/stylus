@@ -452,3 +452,13 @@ incompatible, or blocked CLI leaves Marketing media jobs queued while Core
 worker diagnostics continue. Native binaries/models remain explicit operator
 installations outside Git; the repository controls arguments, temp paths,
 timeouts, cancellation, output bounds, parsing, and cleanup.
+
+## 2026-08-28 — Reel domain failure follows terminal job state
+
+TASK-014 interpretation continues through the trusted ModelGateway after the
+worker persists bounded extraction. Provider failures are normalized and
+reported through the existing worker/job lifecycle. Reel and analysis records
+are not marked failed while a retry is scheduled; the existing database trigger
+owns synchronization when the job becomes terminal. This keeps retry state and
+domain state consistent without a schema change. V1 retries the complete native
+pipeline, and resumable interpretation is intentionally deferred.

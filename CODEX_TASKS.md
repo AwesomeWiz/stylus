@@ -411,9 +411,13 @@ Implemented on `codex/task-014-competitor-reel-analysis`:
 - archive/restore, cancellation, re-analysis, activity, role, plugin, and RLS boundaries
 - no Instagram download/scraping, OCR, semantic vision, or automatic memory write
 
-Pending: apply `20260825001400_competitor_reel_analysis.sql`, run the new pgTAP
-suite in a database-capable environment, and complete hosted two-organization
-manual QA. Do not begin TASK-015 until TASK-014 manual QA is accepted.
+The hosted migration is applied. Manual QA proved the native extraction and
+transcript path, then exposed a LOCAL_ONLY Ollama `provider_unavailable` failure
+after ModelGateway run initialization. Corrective work preserves the normalized
+AI category through the worker failure report and leaves domain failure state to
+the terminal-job synchronization trigger. The exhausted QA job is DEAD_LETTER;
+use a new analysis version for retest. Do not begin TASK-015 until TASK-014
+manual QA is accepted.
 
 Manual-QA corrective hardening replaces Python/faster-whisper/PyAV after Windows
 Smart App Control blocked PyAV 18.1.0. The worker now requires explicitly
@@ -425,7 +429,8 @@ does not disable or weaken Windows application-control policy.
 Corrective verification: formatting, lint, worker/web typechecks, 30 worker
 tests, 468 web tests (498 total), and worker/web production builds passed. No
 dependency or migration change was required. Hosted whisper.cpp manual QA
-remains pending.
+reached transcript persistence successfully. Interpretation/failure-lifecycle
+manual retest remains pending; no additional migration is required.
 
 ---
 

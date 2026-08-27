@@ -197,3 +197,10 @@ configured model, or permission to execute the native CLI means the
 worker does not advertise the capability, so work stays queued while Stylus
 remains available. Cancellation uses the existing lease/AbortSignal lifecycle
 and terminal job changes synchronize Reel/analysis status.
+
+Extraction persistence invokes the trusted hosted interpretation while the job
+lease remains active. A normalized interpretation failure is returned to the
+worker and reported through the ordinary failure operation; domain records are
+not prematurely marked failed while TASK-011 schedules a retry. Only terminal
+job state synchronizes the Reel/analysis failure state. Each retry currently
+repeats the bounded extraction/transcription pipeline before interpretation.
