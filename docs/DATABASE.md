@@ -392,6 +392,13 @@ persists the definition values rather than the request values.
 The database-native `core.test.echo` handler proves hosted Cron execution without
 turning PostgreSQL into a media/network worker. See `docs/JOBS.md`.
 
+TASK-012 migration `20260825001200_windows_workers.sql` adds protected worker
+registrations and expiring one-time pairing rows. Raw pairing and durable
+credentials are never stored. Human management functions derive `auth.uid()`;
+service-only broker functions validate the credential digest before scoped
+heartbeat, atomic EXTERNAL_WORKER claim or lease-owned lifecycle mutation. It
+also registers the fixed `core.test.worker-echo` definition.
+
 ---
 
 # Marketing

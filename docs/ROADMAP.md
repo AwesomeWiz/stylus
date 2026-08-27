@@ -182,17 +182,18 @@ task.
 - [x] retries
 - [x] heartbeat
 - [x] stale recovery
-- [ ] Windows worker
+- [x] Windows worker
 - [ ] Ollama detection
 - [ ] FFmpeg detection
 - [ ] transcription detection
 
-Status: TASK-011 READY FOR MANUAL QA
+Status: TASK-012 READY FOR MANUAL QA
 
 TASK-011 provides the durable PostgreSQL queue, trusted registry/executor,
 database-native verification job, hosted Cron boundary, leases, cancellation,
-timeouts and `/jobs`. TASK-012 remains responsible for authenticated outbound
-Windows execution and local capability detection.
+timeouts and `/jobs`. TASK-012 adds brokered pairing, scoped worker credentials,
+the Windows CLI/runtime, `/workers`, and a harmless external diagnostic. Domain
+handlers and optional binary/model detection remain deferred.
 
 ---
 

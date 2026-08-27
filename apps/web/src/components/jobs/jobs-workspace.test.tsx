@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/modules/jobs/actions", () => ({
   cancelJobAction: vi.fn(),
   enqueueExampleJobAction: vi.fn(),
+  enqueueWorkerExampleJobAction: vi.fn(),
   retryJobAction: vi.fn(),
 }));
 
@@ -95,6 +96,9 @@ describe("JobsWorkspace", () => {
     );
     expect(
       screen.getByRole("button", { name: "Schedule in 5 min" }),
+    ).toHaveAttribute("type", "submit");
+    expect(
+      screen.getByRole("button", { name: "Queue worker test" }),
     ).toHaveAttribute("type", "submit");
   });
 

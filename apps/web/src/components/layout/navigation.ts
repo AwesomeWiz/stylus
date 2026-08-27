@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Library,
   ListChecks,
+  Laptop,
   Settings,
   Users,
   type LucideIcon,
@@ -41,6 +42,7 @@ export const coreNavigationGroups: NavigationGroup[] = [
     items: [
       { label: "AI", icon: BrainCircuit, href: "/ai" },
       { label: "Jobs", icon: ListChecks, href: "/jobs" },
+      { label: "Workers", icon: Laptop, href: "/workers" },
       { label: "Apps", icon: Blocks, href: "/apps" },
     ],
   },

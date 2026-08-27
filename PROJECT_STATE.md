@@ -4,12 +4,12 @@ Last Updated: 2026-08-27
 
 ## Overall Status
 
-TASK-011 HEAVY JOB INFRASTRUCTURE / READY FOR MANUAL QA
+TASK-012 WINDOWS WORKER / READY FOR MANUAL QA
 
-Stylus now has an organization-scoped durable job queue with a trusted registry,
-atomic claims, leases, bounded retries, stale recovery, cooperative cancellation,
-execution classes, a database-native hosted verification path and a protected
-Jobs workspace. Domain workloads and the Windows worker are not implemented.
+Stylus now has an optional authenticated outbound Windows worker, brokered
+pairing/credentials, capability-scoped atomic external claims, lease-aware local
+execution and a harmless end-to-end diagnostic. Core remains independent of the
+PC and domain workloads remain deferred.
 
 ---
 
@@ -17,16 +17,16 @@ Jobs workspace. Domain workloads and the Windows worker are not implemented.
 
 Phase 9 — Jobs & Local Worker
 
-Status: TASK-011 READY FOR MANUAL QA
+Status: TASK-012 READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-011 is current on `codex/task-011-heavy-job-infrastructure`. Apply the one
-pending migration, configure the optional database-job Cron schedule, run pgTAP
-in a database-capable environment, then perform hosted lifecycle, concurrency,
-role and organization-isolation QA. Do not start TASK-012.
+TASK-012 is current on `codex/task-012-windows-worker`. Apply the worker
+migration, configure the hosted broker secret, run pgTAP, pair a Windows worker
+and verify online/offline, lifecycle, revocation and two-worker behavior. Do not
+start TASK-013.
 
 ---
 
@@ -754,6 +754,34 @@ Resolved on 2026-08-27:
 
 ---
 
+# Phase 9 TASK-012 Implementation
+
+- forward migration `20260825001200_windows_workers.sql`
+- protected worker registrations and one-time pairing requests with digest-only
+  secrets, 15-minute expiry, single consumption and revocation
+- brokered worker API using a hosted-only Supabase service credential; the
+  Windows machine receives no database or human credential
+- atomic organization/capability-scoped EXTERNAL_WORKER claims reusing TASK-011
+  job states, leases, cancellation, retry and completion transitions
+- static Windows handler registry and `core.test.worker-echo` diagnostic only
+- conservative single-job polling, bounded backoff, lease heartbeat,
+  cancellation/timeout AbortSignal and graceful shutdown
+- `/workers` safe status UI with OWNER/ADMIN pairing/revocation and member reads
+- local config under the current Windows user's application-data directory
+- no arbitrary command execution, native binary, Ollama, media or domain work
+- 22-assertion pgTAP worker suite plus application and worker regression tests
+
+Hosted migration, broker configuration, pgTAP and end-to-end Windows manual QA
+remain required. Final verification on 2026-08-27 passed formatting, lint,
+worker/web type checking, 100 test files with 428 tests, both production builds,
+the linked hosted-schema lint and a production dependency audit with zero known
+vulnerabilities. The linked dry run detected only
+`20260825001200_windows_workers.sql`. Docker and Podman are unavailable in this
+environment, so the 22-assertion pgTAP suite remains a hosted QA step. The dry
+run did not apply the migration.
+
+---
+
 # Product Direction
 
 Stylus is a collaborative startup operating system.
@@ -869,26 +897,29 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-011 is ready for manual QA on
-`codex/task-011-heavy-job-infrastructure`. TASK-012 has not started.
+TASK-012 is ready for manual QA on `codex/task-012-windows-worker`. TASK-013 has
+not started.
 
 ---
 
 # Known Issues
 
-Docker/Podman is unavailable, so database pgTAP cannot run locally. The TASK-011
-migration remains unapplied pending hosted QA. SERVERLESS has a typed executor
-contract but no hosted adapter, and EXTERNAL_WORKER has no worker authentication
-or runtime until TASK-012. Heavy jobs therefore remain queued. Domain workloads,
-embeddings, agents, Marketing and Web Agency remain deferred.
+Database pgTAP requires Docker/Podman or hosted execution. The TASK-012 migration
+and broker secret remain unapplied/unconfigured pending hosted QA. SERVERLESS has
+no hosted adapter; the external worker implements only its harmless diagnostic.
+Broker rate limiting is a bounded, per-Next.js-instance safeguard rather than a
+distributed limiter; the 256-bit one-time and durable credentials remain the
+primary brute-force defense.
+FFmpeg, browser, transcription, Ollama, domain workloads, embeddings, agents,
+Marketing and Web Agency remain deferred.
 
 ---
 
 # Next Recommended Action
 
-Apply the pending TASK-011 migration, run pgTAP, configure the optional database
-Cron processor and complete hosted role/concurrency/lifecycle QA. Do not begin
-TASK-012.
+Apply the TASK-012 migration, configure the hosted broker, run pgTAP and complete
+Windows pairing, lifecycle, offline, cancellation, revocation, isolation and
+two-worker QA. Do not begin TASK-013.
 
 ---
 
@@ -902,10 +933,8 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-011 is current on `codex/task-011-heavy-job-infrastructure`.
+TASK-012 is current on `codex/task-012-windows-worker`.
 
-Apply only `20260825001100_heavy_job_infrastructure.sql`, run the 54-assertion
-pgTAP suite, configure `stylus-database-jobs`, then verify enqueue, idempotency,
-schedule eligibility, claim concurrency, lease recovery, retry/dead-letter,
-cancellation, roles, plugin disablement and organization isolation. TASK-012 must
-not begin until TASK-011 is accepted and merged.
+Apply `20260825001200_windows_workers.sql`, configure the hosted service key,
+run the 22-assertion worker pgTAP suite and follow `docs/WINDOWS_WORKER.md` for
+the complete end-to-end QA. TASK-013 must not begin until TASK-012 is accepted.

@@ -244,6 +244,19 @@ real operational limitations.
 
 ---
 
+# Hosted Windows Worker Broker
+
+Apply `20260825001200_windows_workers.sql` and configure
+`SUPABASE_SERVICE_ROLE_KEY` in the hosted Next.js server only. Redeploy the web
+application so `/api/worker/*` can broker bounded requests. Do not put this key
+in `NEXT_PUBLIC_*`, the Windows config, source control or browser code.
+
+No Edge Function, pg_net, additional Cron job, public laptop port, firewall
+change or worker-side Supabase key is required. Existing DATABASE Cron continues
+unchanged. Follow `WINDOWS_WORKER.md` for pairing and offline/revocation QA.
+
+---
+
 # Deployment Philosophy
 
 Optimize initially for:

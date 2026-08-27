@@ -252,6 +252,11 @@ the developer laptop being online.
 Job rows do not expose raw inputs or sensitive results in the normal UI, do not
 replace AI run traces, and never automatically create Company Memory.
 
+Owners and administrators can pair and revoke optional Windows workers from the
+Workers workspace. External diagnostics wait safely while workers are offline;
+the laptop never becomes the production server and receives no Supabase
+service-role credential.
+
 ---
 
 # Marketing

@@ -12,7 +12,10 @@ vi.mock("@/modules/organizations/server/context", () => ({
   getCurrentOrganizationContext: mocks.getContext,
 }));
 
-import { enqueueExampleJobAction } from "./actions";
+import {
+  enqueueExampleJobAction,
+  enqueueWorkerExampleJobAction,
+} from "./actions";
 
 describe("job actions", () => {
   beforeEach(() => {
@@ -55,5 +58,16 @@ describe("job actions", () => {
       message: "The example job could not be queued.",
       status: "error",
     });
+  });
+
+  it("queues only the fixed external worker diagnostic", async () => {
+    const result = await enqueueWorkerExampleJobAction({ status: "idle" });
+    expect(result.status).toBe("success");
+    expect(mocks.enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: { message: "Stylus worker check" },
+        jobType: "core.test.worker-echo",
+      }),
+    );
   });
 });

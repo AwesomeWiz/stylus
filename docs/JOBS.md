@@ -100,8 +100,9 @@ message and should be written only at meaningful boundaries.
   only `core.test.echo` and `process_database_jobs()` for this class.
 - `SERVERLESS`: bounded network/CPU work through the typed executor contract.
   No hosted generic adapter is deployed in TASK-011.
-- `EXTERNAL_WORKER`: heavy or machine-specific work. TASK-012 will add the
-  authenticated outbound Windows adapter.
+- `EXTERNAL_WORKER`: heavy or machine-specific work. TASK-012 provides the
+  authenticated outbound Windows adapter and harmless `core.test.worker-echo`;
+  domain workloads remain deferred.
 
 The generic TypeScript `JobExecutor` resolves only static handlers, revalidates
 persisted input/output, provides cooperative cancellation and heartbeat, bounds

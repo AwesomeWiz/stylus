@@ -41,6 +41,24 @@ export async function enqueueExampleJobAction(
   }
 }
 
+export async function enqueueWorkerExampleJobAction(
+  _state: JobActionState,
+): Promise<JobActionState> {
+  void _state;
+  try {
+    const bucket = Math.floor(Date.now() / 300_000);
+    const job = await enqueueRegisteredJob({
+      idempotencyKey: `worker-diagnostic-${bucket}`,
+      input: { message: "Stylus worker check" },
+      jobType: "core.test.worker-echo",
+    });
+    revalidatePath("/jobs");
+    return { jobId: job.id, message: "Worker test queued.", status: "success" };
+  } catch {
+    return failure("The worker test could not be queued.");
+  }
+}
+
 export async function cancelJobAction(
   _state: JobActionState,
   formData: FormData,

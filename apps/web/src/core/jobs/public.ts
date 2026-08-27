@@ -135,7 +135,7 @@ export function defineJob<TInput, TOutput>(
       `Job capability "${definition.capability}" is not owned by "${owner}".`,
     );
   if (
-    definition.executionClass !== "DATABASE" &&
+    definition.executionClass === "SERVERLESS" &&
     typeof definition.handler !== "function"
   )
     throw new Error(

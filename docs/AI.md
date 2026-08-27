@@ -5,6 +5,10 @@
 AI is an optional Core platform capability. Business modules and plugins never
 call provider SDKs, Ollama, provider endpoints or credentials directly.
 
+TASK-012 does not move ModelGateway or implement Ollama jobs. Future local-model
+worker handlers must remain static job definitions and call the trusted AI
+boundary rather than creating a parallel provider route.
+
 ```text
 Core or enabled plugin
   -> Stylus AI public contract

@@ -826,6 +826,62 @@ export type Database = {
         Args: { p_name: string };
         Returns: OrganizationRow;
       };
+      create_worker_pairing: {
+        Args: {
+          p_name: string;
+          p_organization_id: string;
+          p_token_hash_hex: string;
+        };
+        Returns: string;
+      };
+      list_organization_workers: {
+        Args: { p_organization_id: string };
+        Returns: Array<{
+          advertised_capabilities: string[];
+          authorized_capabilities: string[];
+          created_at: string;
+          id: string;
+          last_seen_at: string | null;
+          name: string;
+          platform: string;
+          revoked_at: string | null;
+          version: string | null;
+        }>;
+      };
+      pair_windows_worker: {
+        Args: {
+          p_capabilities: string[];
+          p_platform: string;
+          p_token: string;
+          p_version: string;
+        };
+        Returns: Record<string, unknown>;
+      };
+      revoke_worker: {
+        Args: { p_organization_id: string; p_worker_id: string };
+        Returns: undefined;
+      };
+      worker_claim_job: {
+        Args: { p_capabilities: string[]; p_credential: string };
+        Returns: JobRow | null;
+      };
+      worker_heartbeat: {
+        Args: {
+          p_capabilities: string[];
+          p_credential: string;
+          p_version: string;
+        };
+        Returns: Record<string, unknown>;
+      };
+      worker_job_operation: {
+        Args: {
+          p_credential: string;
+          p_job_id: string;
+          p_operation: string;
+          p_payload?: Record<string, unknown>;
+        };
+        Returns: JobRow;
+      };
       enqueue_job: {
         Args: {
           p_capability: string;

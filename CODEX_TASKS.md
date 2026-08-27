@@ -2,11 +2,37 @@
 
 # Current
 
-## TASK-011 — Heavy Job Infrastructure
+## TASK-012 — Windows Worker
 
 Status: COMPLETE / READY FOR MANUAL QA
 
 Phase: 9
+
+Implemented scope:
+
+- optional Node.js/TypeScript Windows worker in `apps/worker`
+- OWNER/ADMIN one-time 15-minute pairing and revocation on `/workers`
+- SHA-256-only pairing and durable credential persistence
+- bounded Next.js broker with server-only service credential, size/rate limits
+- organization/capability-scoped atomic EXTERNAL_WORKER claims
+- lease renewal, progress, cancellation, timeout, failure/retry and completion
+- conservative single-job polling with transient backoff and graceful shutdown
+- static handler registry and harmless `core.test.worker-echo`
+- user-local Windows config with no service-role or human credential
+- 22-assertion database security/lifecycle suite plus application/worker tests
+- no FFmpeg, browser, transcription, Ollama or domain workload
+- final verification: formatting, lint, both typechecks, 100 files/428 tests,
+  both production builds, linked schema lint and zero production audit findings
+- linked dry run: only `20260825001200_windows_workers.sql` pending; unapplied
+- local Docker/Podman unavailable, so hosted pgTAP/manual QA remain required
+
+---
+
+# Completed
+
+## TASK-011 — Heavy Job Infrastructure
+
+Status: COMPLETE
 
 Implemented scope:
 
@@ -35,21 +61,6 @@ Manual-QA hardening:
   QA remains required
 
 ---
-
-# Next
-
-## TASK-012 — Windows Worker
-
-Status: READY
-
-Phase: 9
-
-Do not begin until TASK-011 has completed manual QA and is merged through the
-normal workflow.
-
----
-
-# Completed
 
 ## TASK-010 — Company Knowledge and Memory
 
