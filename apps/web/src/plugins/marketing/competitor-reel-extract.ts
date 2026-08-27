@@ -16,7 +16,7 @@ export const competitorReelExtractJob = defineJob({
     .object({
       analysisId: z.uuid(),
       durationSeconds: z.number().positive().max(180),
-      extractionVersion: z.literal("ffmpeg-whisper-v1"),
+      extractionVersion: z.literal("ffmpeg-whisper-cpp-v1"),
       reelId: z.uuid(),
     })
     .strict(),

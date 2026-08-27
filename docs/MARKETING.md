@@ -241,7 +241,8 @@ read-only. A different source file requires a new competitor Reel record.
 Each request creates a versioned analysis and one durable external-worker job.
 The worker verifies the real container and 180-second limit with ffprobe,
 extracts mono 16 kHz temporary audio, detects at most 20 scene timestamps with
-a fixed 0.4 threshold, and transcribes locally through faster-whisper. It
+a fixed 0.4 threshold, and transcribes locally through an operator-configured
+whisper.cpp CLI and model. It
 persists no WAV or frame gallery. Strategic interpretation receives only a
 bounded transcript, competitor identity, and deterministic media metrics through
 ModelGateway. Results explicitly separate source/extraction from interpretation.
@@ -253,3 +254,11 @@ Archival is soft and retains source media, transcript, analyses, AI/job history,
 and Storage consumption. Controlled hard cleanup is deferred. OCR, semantic
 vision/branding, automatic Instagram acquisition, Creative Council generation,
 and automatic Company Memory promotion are outside V1.
+
+The worker accepts whisper.cpp's machine-readable JSON sidecar only from its
+controlled temporary directory. It bounds and validates UTF-8 text, language,
+segment count, deterministic order, and millisecond offsets against the probed
+media duration before broker persistence. Python/faster-whisper/PyAV are not
+used. If FFmpeg, ffprobe, whisper.cpp, its model, or native execution permission
+is unavailable, the worker does not advertise this Marketing capability and the
+job remains queued; unrelated worker diagnostics continue to function.

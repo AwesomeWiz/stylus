@@ -91,15 +91,71 @@ discards unexpected HTML without printing it.
 
 ## TASK-014 Media Capability
 
-Install FFmpeg/ffprobe on PATH and Python 3.11+ with `faster-whisper` in the
-worker account. `STYLUS_WORKER_WHISPER_MODEL=base` is the CPU-friendly
-development default. Optional fixed executable overrides are
-`STYLUS_WORKER_FFMPEG`, `STYLUS_WORKER_FFPROBE`, and `STYLUS_WORKER_PYTHON`;
-they are operator-local and never job input. Models remain outside Git and are
-not downloaded during application startup, build, or tests.
+TASK-014 uses FFmpeg/ffprobe plus the official `whisper.cpp` `whisper-cli`
+executable. Python, faster-whisper, PyAV, and CTranslate2 are not TASK-014
+runtime prerequisites. PyAV 18.1.0 was removed after Windows Smart App Control
+blocked its unsigned `av/video/frame.pyd` on the manual-QA machine. Stylus does
+not require or recommend disabling or weakening Smart App Control, Code
+Integrity, or another application-control policy.
 
-The worker advertises `marketing.competitor-reels.analyze` only when ffmpeg,
-ffprobe, Python, and faster-whisper checks pass. Re-pair after the TASK-014
-migration so the credential is authorized for that capability. The fixed Node
-handler uses `shell: false`, an isolated OS temp directory, and the repository's
-fixed `scripts/transcribe.py`; it removes temporary MP4/WAV files in `finally`.
+Install FFmpeg/ffprobe on PATH. Download a Windows x64 release from the official
+`https://github.com/ggml-org/whisper.cpp/releases` page, extract the complete
+release (including adjacent runtime DLLs) under an operator-owned tools folder,
+and download the multilingual base model from the official model repository:
+
+```powershell
+$whisperRoot = 'C:\Tools\Stylus\whisper.cpp'
+$modelRoot = Join-Path $whisperRoot 'models'
+New-Item -ItemType Directory -Force -Path $whisperRoot, $modelRoot
+Expand-Archive -LiteralPath "$env:USERPROFILE\Downloads\whisper-bin-x64.zip" -DestinationPath $whisperRoot -Force
+Start-BitsTransfer -Source 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin' -Destination (Join-Path $modelRoot 'ggml-base.bin')
+```
+
+Find the extracted `whisper-cli.exe`, keeping its release DLLs beside it, then
+verify the exact executable is permitted by the machine's existing policy:
+
+```powershell
+$whisperCli = (Get-ChildItem -LiteralPath $whisperRoot -Filter whisper-cli.exe -Recurse | Select-Object -First 1).FullName
+& $whisperCli --help
+ffmpeg -version
+ffprobe -version
+ffmpeg -i .\short-sample.mp4 -vn -ac 1 -ar 16000 -c:a pcm_s16le -y .\short-sample.wav
+& $whisperCli --model "$modelRoot\ggml-base.bin" --file .\short-sample.wav --language auto --output-json --output-file .\short-sample --no-prints
+Get-Content .\short-sample.json
+```
+
+Only use media that is safe to expose during this local operator check. Delete
+the test WAV/JSON afterward. If Windows blocks `whisper-cli.exe`, retain the
+security policy and use an organization-approved signed/build artifact; do not
+allowlist it ad hoc. Until it runs successfully, the Marketing capability stays
+unavailable and its jobs remain queued.
+
+Configure the worker process (or equivalent persistent user environment) with
+fixed operator-owned paths:
+
+```powershell
+$env:STYLUS_WORKER_WHISPER_CPP_PATH = $whisperCli
+$env:STYLUS_WORKER_WHISPER_MODEL_PATH = "$modelRoot\ggml-base.bin"
+# Optional only when FFmpeg tools are not already on PATH:
+# $env:STYLUS_WORKER_FFMPEG = 'C:\Tools\ffmpeg\bin\ffmpeg.exe'
+# $env:STYLUS_WORKER_FFPROBE = 'C:\Tools\ffmpeg\bin\ffprobe.exe'
+npm.cmd run worker:pair
+npm.cmd run worker:start
+```
+
+The worker advertises `marketing.competitor-reels.analyze` only after ffmpeg and
+ffprobe execute, the configured model is a readable non-empty file, and the
+configured whisper CLI executes an inexpensive help probe exposing the required
+model, file, JSON, and output-file options. A missing, incompatible, or
+application-control-blocked runtime disables only this capability; the worker
+echo diagnostic remains available. Re-pair whenever the advertised capability
+set changes.
+
+The repository-owned handler passes only its generated mono 16 kHz WAV and
+operator configuration to `spawn` with `shell: false`. JSON is written inside
+the isolated OS temp directory, size/schema/timestamps/language are validated,
+and source MP4, WAV, and JSON artifacts are removed in `finally` after success,
+failure, cancellation, or timeout. Models and native binaries must never be
+committed and are never downloaded during install, startup, build, tests, or web
+requests. Transcription stays local; structured interpretation remains a hosted
+ModelGateway operation.

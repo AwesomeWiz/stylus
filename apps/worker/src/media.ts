@@ -1,38 +1,69 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import {
+  access,
+  mkdtemp,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { basename, join } from "node:path";
 
 import type { WorkerApi } from "./api.js";
 
 const MAX_BYTES = 100 * 1024 * 1024;
 const MAX_DURATION = 180;
-const HELPER = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "../scripts/transcribe.py",
-);
+const MAX_NATIVE_OUTPUT_BYTES = 1024 * 1024;
+const TRANSCRIPT_TIMEOUT_MS = 600_000;
 
 export interface MediaDependencies {
   ffmpeg: string;
   ffprobe: string;
-  python: string;
-  whisperModel: string;
+  whisperCpp: string;
+  whisperModelPath: string;
+}
+
+interface DependencyDetectionServices {
+  access: typeof access;
+  run: typeof runFixed;
+  stat: typeof stat;
 }
 
 export async function detectMediaDependencies(
   environment = process.env,
+  services: DependencyDetectionServices = { access, run: runFixed, stat },
 ): Promise<MediaDependencies | null> {
+  const whisperCpp = environment.STYLUS_WORKER_WHISPER_CPP_PATH?.trim();
+  const whisperModelPath = environment.STYLUS_WORKER_WHISPER_MODEL_PATH?.trim();
+  if (!whisperCpp || !whisperModelPath) return null;
   const dependency = {
     ffmpeg: environment.STYLUS_WORKER_FFMPEG ?? "ffmpeg",
     ffprobe: environment.STYLUS_WORKER_FFPROBE ?? "ffprobe",
-    python: environment.STYLUS_WORKER_PYTHON ?? "python",
-    whisperModel: environment.STYLUS_WORKER_WHISPER_MODEL ?? "base",
+    whisperCpp,
+    whisperModelPath,
   };
   try {
-    await runFixed(dependency.ffprobe, ["-version"], 10_000);
-    await runFixed(dependency.ffmpeg, ["-version"], 10_000);
-    await runFixed(dependency.python, [HELPER, "--check"], 15_000);
+    await services.run(dependency.ffprobe, ["-version"], 10_000);
+    await services.run(dependency.ffmpeg, ["-version"], 10_000);
+    await services.access(dependency.whisperModelPath, constants.R_OK);
+    const model = await services.stat(dependency.whisperModelPath);
+    if (!model.isFile() || model.size < 1) return null;
+    const help = await services.run(
+      dependency.whisperCpp,
+      ["--help"],
+      15_000,
+      undefined,
+      true,
+    );
+    if (
+      !help.includes("--output-json") ||
+      !help.includes("--output-file") ||
+      !help.includes("--model") ||
+      !help.includes("--file")
+    )
+      return null;
     return dependency;
   } catch {
     return null;
@@ -45,6 +76,7 @@ export async function extractCompetitorReel(
     api: WorkerApi;
     dependencies: MediaDependencies;
     jobId: string;
+    run?: typeof runFixed;
     signal: AbortSignal;
   },
 ) {
@@ -56,6 +88,8 @@ export async function extractCompetitorReel(
   const directory = await mkdtemp(join(tmpdir(), "stylus-reel-"));
   const source = join(directory, "source.mp4");
   const audio = join(directory, "audio.wav");
+  const transcriptOutput = join(directory, "transcript");
+  const run = context.run ?? runFixed;
   try {
     await context.api.operation("progress", context.jobId, {
       message: "Authorizing source media.",
@@ -78,7 +112,7 @@ export async function extractCompetitorReel(
       progress: 20,
     });
     const probe = parseProbe(
-      await runFixed(
+      await run(
         context.dependencies.ffprobe,
         [
           "-v",
@@ -95,7 +129,7 @@ export async function extractCompetitorReel(
     );
     if (probe.durationSeconds > MAX_DURATION)
       throw new Error("media_duration_exceeded");
-    await runFixed(
+    await run(
       context.dependencies.ffmpeg,
       [
         "-nostdin",
@@ -118,7 +152,7 @@ export async function extractCompetitorReel(
       message: "Detecting bounded scene changes.",
       progress: 45,
     });
-    const sceneOutput = await runFixed(
+    const sceneOutput = await run(
       context.dependencies.ffmpeg,
       [
         "-nostdin",
@@ -143,15 +177,13 @@ export async function extractCompetitorReel(
       message: "Transcribing audio locally.",
       progress: 65,
     });
-    const transcriptRaw = await runFixed(
-      context.dependencies.python,
-      [HELPER, "--input", audio, "--model", context.dependencies.whisperModel],
-      600_000,
+    const transcript = await transcribeWithWhisperCpp(
+      audio,
+      transcriptOutput,
+      probe.durationSeconds,
+      context.dependencies,
       context.signal,
-    );
-    const transcript = parseTranscript(
-      transcriptRaw,
-      context.dependencies.whisperModel,
+      { readFile, run, stat },
     );
     const sceneCount = sceneTimestamps.length;
     const result = {
@@ -159,7 +191,7 @@ export async function extractCompetitorReel(
       averageSceneDuration: probe.durationSeconds / Math.max(1, sceneCount + 1),
       cutsPerMinute: sceneCount / (probe.durationSeconds / 60),
       durationSeconds: probe.durationSeconds,
-      extractionVersion: "ffmpeg-whisper-v1" as const,
+      extractionVersion: "ffmpeg-whisper-cpp-v1" as const,
       frameRate: probe.frameRate,
       height: probe.height,
       reelId,
@@ -234,44 +266,114 @@ export function parseProbe(raw: string) {
   };
 }
 
-export function parseTranscript(raw: string, model: string) {
-  const value = JSON.parse(raw) as {
-    duration?: unknown;
-    language?: unknown;
-    segments?: unknown;
-    text?: unknown;
-  };
+export async function transcribeWithWhisperCpp(
+  audioPath: string,
+  outputBasePath: string,
+  mediaDurationSeconds: number,
+  dependencies: MediaDependencies,
+  signal: AbortSignal,
+  services: Pick<DependencyDetectionServices, "run" | "stat"> & {
+    readFile: typeof readFile;
+  } = { readFile, run: runFixed, stat },
+) {
+  await services.run(
+    dependencies.whisperCpp,
+    [
+      "--model",
+      dependencies.whisperModelPath,
+      "--file",
+      audioPath,
+      "--language",
+      "auto",
+      "--output-json",
+      "--output-file",
+      outputBasePath,
+      "--no-prints",
+    ],
+    TRANSCRIPT_TIMEOUT_MS,
+    signal,
+  );
+  const outputPath = `${outputBasePath}.json`;
+  const output = await services.stat(outputPath);
   if (
-    typeof value.text !== "string" ||
-    !value.text.trim() ||
-    value.text.length > 100_000 ||
-    !Array.isArray(value.segments) ||
-    value.segments.length > 500
+    !output.isFile() ||
+    output.size < 2 ||
+    output.size > MAX_NATIVE_OUTPUT_BYTES
   )
     throw new Error("invalid_transcript");
-  const segments = value.segments.map((segment) => {
-    const item = segment as { end?: unknown; start?: unknown; text?: unknown };
+  return parseTranscript(
+    await services.readFile(outputPath, "utf8"),
+    basename(dependencies.whisperModelPath),
+    mediaDurationSeconds,
+  );
+}
+
+export function parseTranscript(
+  raw: string,
+  model: string,
+  mediaDurationSeconds: number,
+) {
+  if (raw.includes("\uFFFD")) throw new Error("invalid_transcript");
+  let value: {
+    result?: { language?: unknown };
+    transcription?: unknown;
+  };
+  try {
+    value = JSON.parse(raw) as typeof value;
+  } catch {
+    throw new Error("invalid_transcript");
+  }
+  if (!Array.isArray(value.transcription) || value.transcription.length > 500)
+    throw new Error("invalid_transcript");
+  let previousStart = -1;
+  const segments = value.transcription.map((segment) => {
+    const item = segment as {
+      offsets?: { from?: unknown; to?: unknown };
+      text?: unknown;
+    };
+    const startMs = item.offsets?.from;
+    const endMs = item.offsets?.to;
     if (
-      typeof item.start !== "number" ||
-      typeof item.end !== "number" ||
+      typeof startMs !== "number" ||
+      typeof endMs !== "number" ||
+      !Number.isFinite(startMs) ||
+      !Number.isFinite(endMs) ||
+      !Number.isInteger(startMs) ||
+      !Number.isInteger(endMs) ||
+      startMs < 0 ||
+      endMs < startMs ||
+      startMs < previousStart ||
+      endMs / 1000 > mediaDurationSeconds ||
       typeof item.text !== "string" ||
+      item.text.includes("\uFFFD") ||
+      !item.text.trim() ||
       item.text.length > 1000
     )
       throw new Error("invalid_transcript");
-    return { end: item.end, start: item.start, text: item.text.trim() };
+    previousStart = startMs;
+    return {
+      end: endMs / 1000,
+      start: startMs / 1000,
+      text: item.text.trim(),
+    };
   });
+  const text = segments.map((segment) => segment.text).join(" ");
+  if (!text || text.length > 100_000) throw new Error("invalid_transcript");
+  const language = value.result?.language;
   return {
-    durationSeconds: Number(value.duration),
-    engine: "faster-whisper" as const,
+    durationSeconds: mediaDurationSeconds,
+    engine: "whisper.cpp" as const,
     language:
-      typeof value.language === "string" ? value.language.slice(0, 20) : null,
-    model,
+      typeof language === "string" && /^[a-z][a-z0-9-]{1,19}$/i.test(language)
+        ? language
+        : null,
+    model: model.slice(0, 100),
     segments,
-    text: value.text.trim(),
+    text,
   };
 }
 
-async function runFixed(
+export async function runFixed(
   executable: string,
   args: string[],
   timeoutMs: number,
@@ -279,29 +381,66 @@ async function runFixed(
   includeStderr = false,
 ) {
   return new Promise<string>((resolvePromise, reject) => {
+    if (signal?.aborted) {
+      reject(new Error("native_dependency_cancelled"));
+      return;
+    }
     const child = spawn(executable, args, {
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
     let stderr = "";
-    const cap = 1024 * 1024;
+    let settled = false;
+    let stopReason: "cancelled" | "output" | "timeout" | null = null;
+    const settle = (error?: Error, output?: string) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", abort);
+      if (error) reject(error);
+      else resolvePromise(output ?? "");
+    };
+    const append = (target: "stdout" | "stderr", chunk: unknown) => {
+      const next = String(chunk);
+      const current = target === "stdout" ? stdout : stderr;
+      if (
+        Buffer.byteLength(current) + Buffer.byteLength(next) >
+        MAX_NATIVE_OUTPUT_BYTES
+      ) {
+        stopReason = "output";
+        child.kill();
+        return;
+      }
+      if (target === "stdout") stdout += next;
+      else stderr += next;
+    };
     child.stdout.on("data", (chunk) => {
-      if (stdout.length < cap) stdout += String(chunk);
+      append("stdout", chunk);
     });
     child.stderr.on("data", (chunk) => {
-      if (stderr.length < cap) stderr += String(chunk);
+      append("stderr", chunk);
     });
-    const stop = () => child.kill();
-    signal?.addEventListener("abort", stop, { once: true });
-    const timer = setTimeout(stop, timeoutMs);
-    child.once("error", reject);
+    const abort = () => {
+      stopReason = "cancelled";
+      child.kill();
+    };
+    signal?.addEventListener("abort", abort, { once: true });
+    const timer = setTimeout(() => {
+      stopReason = "timeout";
+      child.kill();
+    }, timeoutMs);
+    child.once("error", () => settle(new Error("native_dependency_failed")));
     child.once("close", (code) => {
-      clearTimeout(timer);
-      signal?.removeEventListener("abort", stop);
-      if (code === 0)
-        resolvePromise(includeStderr ? `${stdout}\n${stderr}` : stdout);
-      else reject(new Error("native_dependency_failed"));
+      if (stopReason === "cancelled")
+        settle(new Error("native_dependency_cancelled"));
+      else if (stopReason === "timeout")
+        settle(new Error("native_dependency_timeout"));
+      else if (stopReason === "output")
+        settle(new Error("native_output_exceeded"));
+      else if (code === 0)
+        settle(undefined, includeStderr ? `${stdout}\n${stderr}` : stdout);
+      else settle(new Error("native_dependency_failed"));
     });
   });
 }

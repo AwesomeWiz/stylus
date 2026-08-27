@@ -4,7 +4,7 @@ Last Updated: 2026-08-27
 
 ## Overall Status
 
-TASK-013 MARKETING PLUGIN FOUNDATION / READY FOR MANUAL QA
+TASK-014 COMPETITOR REEL ANALYSIS / READY FOR MANUAL QA
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces for competitors, campaigns, Reel ideas,
@@ -14,17 +14,17 @@ research, and creative briefs, plus a compact operational overview.
 
 ## Current Phase
 
-Phase 10 — Marketing Foundation
+Phase 11 — Competitor Reel Analysis
 
-Status: TASK-013 READY FOR MANUAL QA
+Status: TASK-014 READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-013 is current on `codex/task-013`. Apply the forward Marketing migrations,
-run the Marketing RLS pgTAP suite, and complete the documented role, enablement,
-archival, activity, and cross-organization manual QA. Do not start TASK-014.
+TASK-014 remains current on `codex/task-014-competitor-reel-analysis`. Repeat
+hosted Windows-worker manual QA with the whisper.cpp runtime and Windows
+application control enabled. Do not start TASK-015.
 
 ---
 
@@ -895,7 +895,7 @@ Media:
 - OpenCV
 
 Transcription:
-- faster-whisper or equivalent local implementation
+- local whisper.cpp CLI with operator-installed model
 
 ---
 
@@ -931,8 +931,9 @@ Marketing worker handlers remain deferred.
 
 # Next Recommended Action
 
-Apply the two TASK-013 migrations in order, run Marketing pgTAP, and complete
-the documented role and organization-isolation manual QA. Do not begin TASK-014.
+Complete TASK-014 whisper.cpp corrective verification, create the separate fix
+commit, then repeat hosted Windows-worker manual QA with Smart App Control
+enabled. Do not begin TASK-015.
 
 ---
 
@@ -957,8 +958,17 @@ never fetched. Private organization-scoped Storage holds source media;
 archiving preserves media and history until a future controlled cleanup tool.
 
 The optional outbound Windows worker performs fixed FFmpeg/ffprobe extraction
-and local faster-whisper transcription, then the hosted application performs
+and local whisper.cpp transcription, then the hosted application performs
 text-only structured interpretation through ModelGateway. OCR, semantic vision,
 Instagram acquisition, automatic memory promotion, and TASK-015 Creative
 Council work remain deferred. Local database lint/pgTAP are pending because the
 current machine has no Docker/Podman PostgreSQL stack.
+
+TASK-014 corrective hardening removes the Python/faster-whisper/PyAV/CTranslate2
+runtime because Windows Smart App Control blocked PyAV 18.1.0 during manual QA.
+Stylus does not weaken Windows security. The worker now advertises Marketing
+analysis only when its configured whisper.cpp CLI executes successfully, its
+model is readable, and the required structured-output contract is available.
+Corrective verification passed formatting, lint, both typechecks, 30 worker
+tests, 468 web tests (498 total), and both production builds. No dependency or
+database migration changed.

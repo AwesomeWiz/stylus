@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const MAX_REEL_BYTES = 100 * 1024 * 1024;
 export const MAX_REEL_DURATION_SECONDS = 180;
-export const REEL_EXTRACTION_VERSION = "ffmpeg-whisper-v1";
+export const REEL_EXTRACTION_VERSION = "ffmpeg-whisper-cpp-v1";
 
 export const transcriptSegmentSchema = z
   .object({
@@ -16,7 +16,7 @@ export const transcriptSegmentSchema = z
 export const transcriptSchema = z
   .object({
     durationSeconds: z.number().min(0).max(MAX_REEL_DURATION_SECONDS),
-    engine: z.literal("faster-whisper"),
+    engine: z.literal("whisper.cpp"),
     language: z.string().min(2).max(20).nullable(),
     model: z.string().min(1).max(100),
     segments: z.array(transcriptSegmentSchema).max(500),

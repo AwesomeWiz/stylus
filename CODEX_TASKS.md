@@ -405,7 +405,7 @@ Implemented on `codex/task-014-competitor-reel-analysis`:
 - distinct competitor Reel, bounded transcript, and versioned analysis records
 - durable `marketing.competitor-reel.extract` EXTERNAL_WORKER job
 - fixed FFmpeg/ffprobe metadata, audio, and bounded scene-cut extraction
-- fixed Python/faster-whisper local transcription with CPU fallback
+- fixed shell-free whisper.cpp local transcription with bounded JSON parsing
 - narrow claimed-job signed-download and result-persistence broker operations
 - text-only structured ModelGateway interpretation and ordinary `ai_runs` trace
 - archive/restore, cancellation, re-analysis, activity, role, plugin, and RLS boundaries
@@ -414,6 +414,18 @@ Implemented on `codex/task-014-competitor-reel-analysis`:
 Pending: apply `20260825001400_competitor_reel_analysis.sql`, run the new pgTAP
 suite in a database-capable environment, and complete hosted two-organization
 manual QA. Do not begin TASK-015 until TASK-014 manual QA is accepted.
+
+Manual-QA corrective hardening replaces Python/faster-whisper/PyAV after Windows
+Smart App Control blocked PyAV 18.1.0. The worker now requires explicitly
+configured whisper.cpp executable/model paths, validates the complete native
+runtime before advertising the Marketing capability, and preserves the existing
+bounded transcript and broker contract without a database migration. Stylus
+does not disable or weaken Windows application-control policy.
+
+Corrective verification: formatting, lint, worker/web typechecks, 30 worker
+tests, 468 web tests (498 total), and worker/web production builds passed. No
+dependency or migration change was required. Hosted whisper.cpp manual QA
+remains pending.
 
 ---
 

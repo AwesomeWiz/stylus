@@ -55,8 +55,8 @@ describe("worker handler registry", () => {
     const handler = createWorkerRegistry({
       ffmpeg: "ffmpeg",
       ffprobe: "ffprobe",
-      python: "python",
-      whisperModel: "base",
+      whisperCpp: "whisper-cli.exe",
+      whisperModelPath: "ggml-base.bin",
     }).get("marketing.competitor-reel.extract");
     expect(handler?.capability).toBe("marketing.competitor-reels.analyze");
     expect(handler?.executionClass).toBe("EXTERNAL_WORKER");

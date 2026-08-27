@@ -441,7 +441,7 @@ authenticated Marketing collaborator
   -> paired outbound worker
   -> claimed-job broker validation
   -> 60-second signed source download
-  -> fixed ffprobe/FFmpeg + fixed faster-whisper helper
+  -> fixed ffprobe/FFmpeg + configured/probed whisper.cpp CLI
   -> bounded broker result persistence
   -> plugin/policy re-check
   -> text-only ModelGateway structured interpretation
@@ -450,4 +450,7 @@ authenticated Marketing collaborator
 
 The worker never receives Supabase credentials, a user session, arbitrary
 Storage paths, commands, or scripts. Temporary source/audio files are isolated
-per job and removed after success, failure, cancellation, or timeout handling.
+with the whisper.cpp JSON sidecar in one controlled OS temp directory and
+removed on every exit path. Executable/model paths come only from worker-local
+operator configuration, never jobs or browser input. The CLI is spawned without
+a shell; native output and parsed transcript data are bounded before persistence.

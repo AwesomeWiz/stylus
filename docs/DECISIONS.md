@@ -427,12 +427,28 @@ transcripts, and analyses are retained through soft archival, while re-analysis
 creates immutable historical versions.
 
 One registered EXTERNAL_WORKER job performs deterministic ffprobe/FFmpeg and
-local faster-whisper work. The credential-free worker obtains only a short-lived
+local whisper.cpp work. The credential-free worker obtains only a short-lived
 signed URL and persists a bounded schema through claimed-job broker RPCs. Native
-commands and the Python helper are fixed repository code with no shell or
-job-selected executable/script.
+commands are fixed repository code with no shell or job-selected
+executable/model. Operator-owned executable/model paths are configured locally,
+probed before capability advertisement, and never accepted from a job.
 
 AI interpretation remains text-only and goes through ModelGateway after fresh
 plugin, membership, and organization-policy checks. OCR, semantic vision,
 Instagram acquisition, automatic memory promotion, and Creative Council
 generation remain deferred, preserving the TASK-015 boundary.
+
+## 2026-08-27 — TASK-014 transcription respects Windows application control
+
+Manual QA confirmed Windows Smart App Control/Code Integrity blocked PyAV
+18.1.0's `av/video/frame.pyd`, preventing faster-whisper from loading. This was
+not a download-zone issue. TASK-014 therefore uses one documented local backend:
+the official whisper.cpp CLI with machine-readable JSON output. The Python
+adapter and Python/faster-whisper/PyAV/CTranslate2 prerequisites were removed.
+
+Stylus never weakens application control. The worker probes the configured CLI
+and readable model before advertising the Marketing capability. A missing,
+incompatible, or blocked CLI leaves Marketing media jobs queued while Core
+worker diagnostics continue. Native binaries/models remain explicit operator
+installations outside Git; the repository controls arguments, temp paths,
+timeouts, cancellation, output bounds, parsing, and cleanup.

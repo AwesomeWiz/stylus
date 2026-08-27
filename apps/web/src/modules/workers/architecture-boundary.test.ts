@@ -56,7 +56,10 @@ describe("worker architecture boundary", () => {
     expect(workerSources).not.toContain("run_command");
     expect(workerSources).toContain("spawn(executable, args, {");
     expect(workerSources).toContain("shell: false");
-    expect(workerSources).toContain('"../scripts/transcribe.py"');
+    expect(workerSources).toContain("STYLUS_WORKER_WHISPER_CPP_PATH");
+    expect(workerSources).toContain("STYLUS_WORKER_WHISPER_MODEL_PATH");
+    expect(workerSources).not.toContain("transcribe.py");
+    expect(workerSources).not.toMatch(/STYLUS_WORKER_PYTHON|faster_whisper/);
   });
   it("bounds broker requests and accepts only fixed operations", () => {
     expect(route).toContain(

@@ -192,7 +192,8 @@ active versions. Job metadata contains only Reel/analysis UUIDs; transcripts,
 media, prompts, and structured results remain in domain tables/Storage.
 
 Transient network/runtime failures may retry through TASK-011. Invalid or
-over-duration media is permanent. Missing FFmpeg or faster-whisper means the
+over-duration media is permanent. Missing FFmpeg, ffprobe, whisper.cpp, its
+configured model, or permission to execute the native CLI means the
 worker does not advertise the capability, so work stays queued while Stylus
 remains available. Cancellation uses the existing lease/AbortSignal lifecycle
 and terminal job changes synchronize Reel/analysis status.
