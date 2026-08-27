@@ -316,6 +316,28 @@ describe("worker broker route", () => {
       p_operation: "fail",
       p_payload: { category: "provider_unavailable", retryable: true },
     });
+    mocks.rpc.mockResolvedValueOnce({
+      data: { status: "FAILED" },
+      error: null,
+    });
+    await expectJson(
+      await brokerRequest(
+        "fail",
+        {
+          jobId: "40000000-0000-4000-8000-000000000002",
+          payload: { category: "validation_failed", retryable: false },
+        },
+        "4".repeat(64),
+      ),
+      200,
+      { status: "FAILED" },
+    );
+    expect(mocks.rpc).toHaveBeenLastCalledWith("worker_job_operation", {
+      p_credential: "4".repeat(64),
+      p_job_id: "40000000-0000-4000-8000-000000000002",
+      p_operation: "fail",
+      p_payload: { category: "validation_failed", retryable: false },
+    });
     await expectJson(
       await brokerRequest(
         "fail",
@@ -323,14 +345,46 @@ describe("worker broker route", () => {
           jobId: "40000000-0000-4000-8000-000000000001",
           payload: { category: "unknown", retryable: true },
         },
-        "4".repeat(64),
+        "6".repeat(64),
       ),
       400,
       { error: "invalid_request" },
     );
     expect(consoleError).toHaveBeenCalledWith(
       "Stylus worker broker operation failed.",
-      expect.objectContaining({ stage: "request_schema", status: 400 }),
+      expect.objectContaining({
+        stage: "failure_payload_schema",
+        status: 400,
+      }),
+    );
+  });
+
+  it("distinguishes a malformed failure envelope without logging its body", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    await expectJson(
+      await brokerRequest(
+        "fail",
+        {
+          jobId: "not-a-job-id",
+          payload: { category: "validation_failed", retryable: false },
+        },
+        "7".repeat(64),
+      ),
+      400,
+      { error: "invalid_request" },
+    );
+    expect(consoleError).toHaveBeenCalledWith(
+      "Stylus worker broker operation failed.",
+      {
+        operation: "fail",
+        stage: "failure_envelope_schema",
+        status: 400,
+      },
+    );
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain(
+      "not-a-job-id",
     );
   });
 

@@ -204,3 +204,8 @@ worker and reported through the ordinary failure operation; domain records are
 not prematurely marked failed while TASK-011 schedules a retry. Only terminal
 job state synchronizes the Reel/analysis failure state. Each retry currently
 repeats the bounded extraction/transcription pipeline before interpretation.
+An AI `invalid_response` becomes non-retryable `validation_failed`, so FAILED on
+attempt 1/3 is intentional: the remaining attempts are a ceiling, not a promise
+to retry permanent validation defects. The worker serializes that exact category
+and `retryable: false`; broker diagnostics distinguish malformed envelopes,
+malformed payloads, and RPC/claim failures without logging request bodies.

@@ -22,11 +22,11 @@ Status: TASK-014 MANUAL-QA CORRECTIVE WORK
 
 ## Current Objective
 
-TASK-014 remains current on `codex/task-014-competitor-reel-analysis`. Manual QA
-proved upload, claim, signed media, FFmpeg/ffprobe, whisper.cpp, parsing, and
-transcript persistence. Correct the subsequent provider-unavailable
-interpretation/failure-report lifecycle, then repeat hosted QA. Do not start
-TASK-015.
+TASK-014 remains current on `codex/task-014-competitor-reel-analysis`. A second
+real Windows run proved the complete native and Ollama connectivity path, then
+reproduced an Ollama grammar failure from the Reel schema's 2,000-character
+summary bound. Corrective verification and another new analysis version are
+required. Do not start TASK-015.
 
 ---
 
@@ -977,7 +977,7 @@ Corrective verification passed formatting, lint, both typechecks, 30 worker
 tests, 468 web tests (498 total), and both production builds. No dependency or
 database migration changed.
 
-The current interpretation correction preserves the safe ModelGateway route and
+The interpretation correction preserves the safe ModelGateway route and
 lets the existing terminal-job trigger own Reel/analysis failure state instead
 of marking domain records failed while a retry is scheduled. The broker returns
 a normalized retry category to the worker, the worker preserves it in the
@@ -985,3 +985,22 @@ dedicated failure report, and safe server diagnostics identify request-schema
 versus RPC/claim failures without logging media, transcripts, tokens, or
 credentials. A retry currently repeats deterministic extraction and local
 transcription before interpretation; resumable interpretation is deferred.
+
+Second Windows QA reached Ollama with `qwen3:1.7b`. The exact strategic schema
+contains `summary.maxLength: 2000`; llama.cpp's grammar parser rejects a single
+repetition count at its 2,000 sanity threshold. Synthetic requests reproduce 400
+at 2,000 and succeed at 1,999. The Ollama adapter now omits only string bounds it
+cannot represent, while the unchanged Zod schema remains the authoritative
+post-response validator. Structured HTTP 400 is normalized as
+`invalid_response`, which maps to non-retryable `validation_failed`.
+
+Hosted metadata shows the QA job is `FAILED` at attempt 1/3 with
+`validation_failed`. That terminal row proves its authenticated failure report
+reached the database RPC; the separately observed `/fail` 400 was not the
+accepted report's response. Exact `validation_failed`/`false` serializer and
+broker coverage is now permanent, and safe diagnostics distinguish malformed
+failure envelopes from malformed payloads without logging either body.
+Earlier provider tests used small synthetic schemas and mocked HTTP, so they
+never exercised llama.cpp's grammar threshold. Earlier failure tests covered
+`provider_unavailable`/`true`, not the exact `validation_failed`/`false` pair or
+the persisted hosted transition.

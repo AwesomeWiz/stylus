@@ -419,6 +419,15 @@ the terminal-job synchronization trigger. The exhausted QA job is DEAD_LETTER;
 use a new analysis version for retest. Do not begin TASK-015 until TASK-014
 manual QA is accepted.
 
+Second QA proved Ollama connectivity and isolated its grammar rejection to the
+generated `summary.maxLength: 2000`, equal to llama.cpp's rejected repetition
+threshold. The Ollama adapter removes only unrepresentable large string bounds;
+the original Zod schema still validates every returned object. Structured HTTP
+400 maps to terminal `validation_failed`. Hosted state confirms the legitimate
+failure report reached the RPC and produced FAILED attempt 1/3; added exact
+serializer/broker tests and split safe envelope/payload diagnostics cover the
+separately observed 400 without loosening the contract.
+
 Manual-QA corrective hardening replaces Python/faster-whisper/PyAV after Windows
 Smart App Control blocked PyAV 18.1.0. The worker now requires explicitly
 configured whisper.cpp executable/model paths, validates the complete native

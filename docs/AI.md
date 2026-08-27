@@ -159,6 +159,13 @@ provider claims, returned text is parsed as JSON and validated again with Zod.
 Malformed JSON or a schema mismatch becomes `invalid_response`, records a failed
 run and never reaches application code as typed data.
 
+Ollama compiles JSON Schema into llama.cpp grammar. llama.cpp rejects a literal
+string repetition of 2,000 or more, even though that is valid JSON Schema. The
+Ollama adapter therefore omits only `maxLength` values at that incompatible
+threshold before provider invocation. The original Zod schema is unchanged and
+still validates the parsed response, so this compatibility projection does not
+weaken Stylus's trusted structured-result boundary or affect remote adapters.
+
 Plain text generation returns only normalized text, stable model/provider IDs,
 usage, estimated cost, finish reason and run ID. Raw provider response objects
 are not returned.

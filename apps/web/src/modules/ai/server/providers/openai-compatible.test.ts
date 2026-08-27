@@ -1,4 +1,7 @@
+import { z } from "zod";
 import { describe, expect, it, vi } from "vitest";
+
+import { competitorReelAnalysisSchema } from "@/modules/marketing/reel-analysis";
 
 import {
   normalizeProviderBaseUrl,
@@ -58,6 +61,89 @@ describe("OpenAICompatibleProvider", () => {
     await expect(provider.generate(request)).rejects.toMatchObject({
       category,
     });
+  });
+
+  it("removes only grammar-incompatible large string bounds for Ollama structured output", async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "{}" } }] }),
+        ),
+      );
+    const provider = new OpenAICompatibleProvider("ollama", {
+      baseUrl: "http://127.0.0.1:11434",
+      fetch,
+    });
+    const jsonSchema = z.toJSONSchema(
+      competitorReelAnalysisSchema.omit({ visual_metrics: true }),
+    );
+    const summarySchema = (
+      jsonSchema as unknown as {
+        properties: { summary: { maxLength: number } };
+      }
+    ).properties.summary;
+    expect(summarySchema.maxLength).toBe(2_000);
+
+    await provider.generate({
+      ...request,
+      structuredOutput: {
+        jsonSchema,
+        name: "marketing_competitor_reel_analysis_v1",
+      },
+    });
+
+    const body = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body));
+    const sentSchema = body.response_format.json_schema.schema;
+    expect(sentSchema.properties.summary).not.toHaveProperty("maxLength");
+    expect(sentSchema.properties.hook_explanation.maxLength).toBe(1_500);
+    expect(summarySchema.maxLength).toBe(2_000);
+  });
+
+  it("leaves remote compatible-provider schemas unchanged", async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "{}" } }] }),
+        ),
+      );
+    const provider = new OpenAICompatibleProvider("openai-compatible", {
+      baseUrl: "https://models.example.test",
+      fetch,
+    });
+    await provider.generate({
+      ...request,
+      structuredOutput: {
+        jsonSchema: {
+          properties: { summary: { maxLength: 2_000, type: "string" } },
+          type: "object",
+        },
+        name: "structured_test",
+      },
+    });
+    const body = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body));
+    expect(
+      body.response_format.json_schema.schema.properties.summary.maxLength,
+    ).toBe(2_000);
+  });
+
+  it("categorizes an Ollama structured-request HTTP 400 as invalid response", async () => {
+    const provider = new OpenAICompatibleProvider("ollama", {
+      baseUrl: "http://127.0.0.1:11434",
+      fetch: vi
+        .fn<typeof globalThis.fetch>()
+        .mockResolvedValue(new Response("provider details", { status: 400 })),
+    });
+    await expect(
+      provider.generate({
+        ...request,
+        structuredOutput: {
+          jsonSchema: { type: "object" },
+          name: "structured_test",
+        },
+      }),
+    ).rejects.toMatchObject({ category: "invalid_response" });
   });
 
   it("accepts only fixed server configuration URL shapes", () => {

@@ -194,8 +194,15 @@ async function handleWorkerRequest(
       : NextResponse.json(result.data);
   }
   const parsed = operationBody.safeParse(body);
-  if (!parsed.success)
+  if (!parsed.success) {
+    if (operation === "fail")
+      brokerDiagnostic({
+        operation,
+        stage: "failure_envelope_schema",
+        status: 400,
+      });
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
   const supabase = createServiceSupabaseClient();
   if (operation === "media-authorization") {
     const { data, error } = await supabase.rpc("worker_authorize_reel_media", {
@@ -281,7 +288,7 @@ async function handleWorkerRequest(
     if (!failure.success) {
       brokerDiagnostic({
         operation,
-        stage: "request_schema",
+        stage: "failure_payload_schema",
         status: 400,
       });
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });

@@ -166,3 +166,7 @@ normalized job category and retryability flag. The worker preserves that safe
 category in its dedicated failure report; it never logs the transcript, media,
 pairing token, durable credential, provider response, or returned HTML. Safe
 broker diagnostics distinguish request validation from claim/RPC failure.
+`validation_failed` is an allowed bounded failure category and is intentionally
+non-retryable. A 400 at the failure boundary is diagnosed as either envelope or
+payload validation without logging the job ID, category body, credential, or
+other request data.

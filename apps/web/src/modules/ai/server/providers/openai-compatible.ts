@@ -52,12 +52,30 @@ function endpoint(baseUrl: string, path: string) {
   return base.toString();
 }
 
-function httpError(status: number) {
+const OLLAMA_GRAMMAR_MAX_REPETITION = 2_000;
+
+export function ollamaCompatibleJsonSchema(schema: unknown): unknown {
+  if (Array.isArray(schema)) return schema.map(ollamaCompatibleJsonSchema);
+  if (!schema || typeof schema !== "object") return schema;
+  return Object.fromEntries(
+    Object.entries(schema).flatMap(([key, value]) =>
+      key === "maxLength" &&
+      typeof value === "number" &&
+      value >= OLLAMA_GRAMMAR_MAX_REPETITION
+        ? []
+        : [[key, ollamaCompatibleJsonSchema(value)]],
+    ),
+  );
+}
+
+function httpError(status: number, structuredOutput: boolean) {
   if (status === 401 || status === 403)
     return new AIError("authentication_failed");
   if (status === 429) return new AIError("rate_limited");
   if (status === 408 || status >= 500)
     return new AIError("provider_unavailable");
+  if (status === 400 && structuredOutput)
+    return new AIError("invalid_response");
   if (status === 400 || status === 413) return new AIError("context_limit");
   return new AIError("unknown");
 }
@@ -87,6 +105,15 @@ export class OpenAICompatibleProvider implements AIProviderAdapter {
   async generate(
     request: ProviderGenerationRequest,
   ): Promise<ProviderGenerationResult> {
+    const structuredOutput =
+      request.structuredOutput && this.id === "ollama"
+        ? {
+            ...request.structuredOutput,
+            jsonSchema: ollamaCompatibleJsonSchema(
+              request.structuredOutput.jsonSchema,
+            ),
+          }
+        : request.structuredOutput;
     let response: Response;
     try {
       response = await this.fetchImplementation(
@@ -96,12 +123,12 @@ export class OpenAICompatibleProvider implements AIProviderAdapter {
             max_tokens: request.maxOutputTokens,
             messages: request.messages,
             model: request.model,
-            ...(request.structuredOutput
+            ...(structuredOutput
               ? {
                   response_format: {
                     json_schema: {
-                      name: request.structuredOutput.name,
-                      schema: request.structuredOutput.jsonSchema,
+                      name: structuredOutput.name,
+                      schema: structuredOutput.jsonSchema,
                       strict: true,
                     },
                     type: "json_schema",
@@ -124,7 +151,8 @@ export class OpenAICompatibleProvider implements AIProviderAdapter {
       if (request.signal.aborted) throw error;
       throw new AIError("provider_unavailable", { cause: error });
     }
-    if (!response.ok) throw httpError(response.status);
+    if (!response.ok)
+      throw httpError(response.status, Boolean(structuredOutput));
     const raw = await response.text();
     if (raw.length > 1_000_000) throw new AIError("invalid_response");
     let parsedJson: unknown;

@@ -462,3 +462,12 @@ are not marked failed while a retry is scheduled; the existing database trigger
 owns synchronization when the job becomes terminal. This keeps retry state and
 domain state consistent without a schema change. V1 retries the complete native
 pipeline, and resumable interpretation is intentionally deferred.
+
+## 2026-08-28 — Ollama receives a compatible projection of structured schemas
+
+llama.cpp rejects JSON Schema string repetitions at 2,000 even though Stylus's
+Reel summary bound is valid JSON Schema. Only the Ollama adapter removes
+`maxLength` values at that grammar threshold before provider invocation. The
+application's original Zod schema remains unchanged and validates the returned
+JSON, remote compatible providers receive the original schema, and every call
+still uses ModelGateway policy, routing, budget, and run tracing.

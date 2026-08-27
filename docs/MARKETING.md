@@ -250,6 +250,9 @@ If interpretation fails, extraction remains persisted for audit, but the job
 lifecycle controls retry and terminal failure state. A scheduled retry does not
 prematurely mark the Reel or analysis failed. V1 retries the complete bounded
 extraction/transcription pipeline rather than resuming at interpretation.
+The strategic result retains its 2,000-character Zod summary limit. For Ollama,
+the provider-facing JSON Schema omits that exact grammar-incompatible repetition
+bound and Stylus validates the returned JSON against the full schema afterward.
 
 Re-analysis preserves prior versions. V1's explicit “Re-extract & analyze”
 control requests a fresh deterministic extraction and transcription; it never

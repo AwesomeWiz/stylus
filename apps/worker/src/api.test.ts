@@ -115,6 +115,11 @@ describe("worker API", () => {
         }),
       )
       .mockResolvedValueOnce(
+        new Response(JSON.stringify({ status: "FAILED" }), {
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
             category: "provider_unavailable",
@@ -140,6 +145,15 @@ describe("worker API", () => {
     expect(JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body))).toEqual({
       jobId: "40000000-0000-4000-8000-000000000001",
       payload: { category: "provider_unavailable", retryable: true },
+    });
+    await api.reportFailure(
+      "40000000-0000-4000-8000-000000000002",
+      "validation_failed",
+      false,
+    );
+    expect(JSON.parse(String(fetcher.mock.calls[1]?.[1]?.body))).toEqual({
+      jobId: "40000000-0000-4000-8000-000000000002",
+      payload: { category: "validation_failed", retryable: false },
     });
     await expect(api.persistExtraction("job", {})).rejects.toMatchObject({
       jobFailure: {
