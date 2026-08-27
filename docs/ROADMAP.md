@@ -176,16 +176,23 @@ task.
 
 ## Phase 9 — Jobs & Local Worker
 
-- [ ] persisted jobs
-- [ ] claiming
-- [ ] progress
-- [ ] retries
-- [ ] heartbeat
-- [ ] stale recovery
+- [x] persisted jobs
+- [x] claiming
+- [x] progress
+- [x] retries
+- [x] heartbeat
+- [x] stale recovery
 - [ ] Windows worker
 - [ ] Ollama detection
 - [ ] FFmpeg detection
 - [ ] transcription detection
+
+Status: TASK-011 READY FOR MANUAL QA
+
+TASK-011 provides the durable PostgreSQL queue, trusted registry/executor,
+database-native verification job, hosted Cron boundary, leases, cancellation,
+timeouts and `/jobs`. TASK-012 remains responsible for authenticated outbound
+Windows execution and local capability detection.
 
 ---
 

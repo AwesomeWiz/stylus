@@ -268,6 +268,19 @@ Worker claims must be scoped and auditable.
 
 Never expose local Ollama directly to the internet.
 
+TASK-011 grants authenticated browser roles no job table mutation and no worker
+lifecycle function execution. Enqueue derives actor and organization, requires a
+registered server-side definition, validates input, rejects VIEWER, and repeats
+enabled-plugin checks. The database constrains Core/plugin namespace provenance,
+metadata size and recursively forbidden secret/raw-content keys.
+
+Claims use row locks, skip-locked semantics, leases and a concurrency-group
+transaction lock. Every worker transition requires the current claimant and an
+unexpired lease. Stale leases are recoverable, retries are bounded, and queued
+cancellation cannot forge terminal success. Service-role credentials remain in
+trusted hosted infrastructure and must never be shipped to a browser or future
+Windows worker; TASK-012 must add a narrow authenticated worker adapter.
+
 ---
 
 # AI Tools

@@ -359,3 +359,25 @@ read plugin-private domains.
 
 This decision deliberately defers embeddings, pgvector, chunking, semantic RAG,
 document ingestion, web research and autonomous memory writes.
+
+---
+
+## ADR-024 — PostgreSQL-Leased Durable Jobs with Replaceable Executors
+
+Status: ACCEPTED
+
+Stylus uses one organization-scoped PostgreSQL job state machine rather than
+Redis or an always-on queue service. Atomic `SKIP LOCKED` claims, leases,
+heartbeats, bounded retries, stale recovery, cancellation and narrow lifecycle
+functions protect invariants under concurrent executors. A trusted static
+TypeScript registry owns executable job types, schemas, provenance and placement.
+
+Short deterministic DATABASE work may run through hosted Supabase Cron; TASK-011
+implements only a harmless verification handler. SERVERLESS and EXTERNAL_WORKER
+remain replaceable execution classes. Heavy media must not run in PostgreSQL or
+be falsely treated as solved by a constrained Edge runtime. TASK-012 will add a
+narrow authenticated outbound Windows worker without making the laptop the
+production application server.
+
+Jobs do not replace AI runs or memory. Future job handlers use existing trusted
+AI/memory APIs, preserving their independent authorization and audit boundaries.

@@ -358,26 +358,30 @@ application.
 
 # Jobs
 
-jobs
+TASK-011 migration `20260825001100_heavy_job_infrastructure.sql` introduces the
+organization-scoped `jobs` table and controlled job status, execution class and
+error-category enums.
 
-Conceptual fields:
+The row records trusted Core/plugin provenance, capability, schedule, priority,
+attempts, timeout, progress, bounded input/result metadata, cancellation,
+idempotency, parent retry, claimant, lease and lifecycle timestamps. Partial
+indexes cover the claimable queue and stale leases; organization/status, creator,
+parent and optional idempotency access paths are indexed.
 
-- organization_id
-- domain_id
-- type
-- payload
-- status
-- priority
-- claimed_by
-- claimed_at
-- heartbeat_at
-- progress
-- retry_count
-- max_retries
-- result
-- error
-- created_at
-- completed_at
+Authenticated users receive RLS-protected SELECT only. Narrow enqueue,
+cancellation and manager retry functions derive the actor and repeat role/plugin
+checks. Claim, heartbeat, progress, terminal transition and reconciliation
+functions are service/database execution only. `claim_next_job` uses
+`FOR UPDATE SKIP LOCKED`; transaction advisory locks protect idempotency, queue
+limits and concurrency groups.
+
+`job_definitions` is a browser-inaccessible database allowlist matching the
+trusted TypeScript registry. Enqueue rejects unknown types or any caller-supplied
+provenance/execution settings that differ from the registered definition, then
+persists the definition values rather than the request values.
+
+The database-native `core.test.echo` handler proves hosted Cron execution without
+turning PostgreSQL into a media/network worker. See `docs/JOBS.md`.
 
 ---
 

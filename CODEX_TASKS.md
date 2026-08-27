@@ -2,42 +2,52 @@
 
 # Current
 
-## TASK-010 — Company Knowledge and Memory
+## TASK-011 — Heavy Job Infrastructure
 
 Status: COMPLETE / READY FOR MANUAL QA
 
-Phase: 8
+Phase: 9
 
 Implemented scope:
 
-- canonical typed Company Knowledge composition from existing onboarding tables
-- explicit provenance-aware `knowledge_memories` with soft archival
-- narrow human/company lifecycle RPCs and meaningful activity events
-- deterministic indexed retrieval with a 50-row general hard limit
-- explicit AI context construction with a 20-row hard limit and no provider call
-- static plugin registration, enablement, capability and domain enforcement
-- company-only Core `/memory` UI with search, filters and VIEWER read-only behavior
-- organization/member RLS, anti-forgery constraints and pgTAP coverage
-- ordered schema and lifecycle migrations so activity enum additions commit
-  before lifecycle functions use them
-- no embeddings, pgvector, RAG, ingestion, web research or automatic promotion
+- organization-scoped durable PostgreSQL jobs with controlled lifecycle
+- trusted static Core/plugin registry with Zod input/output contracts
+- server-derived enqueue context, plugin enablement and queue/idempotency limits
+- atomic `SKIP LOCKED` claims, leases, heartbeats and concurrency-group locks
+- deterministic bounded retry/backoff, stale recovery and dead-letter retention
+- cooperative cancellation, timeouts, bounded progress/results and safe errors
+- replaceable DATABASE/SERVERLESS/EXTERNAL_WORKER execution classes
+- real database-native `core.test.echo` handler for hosted Supabase Cron
+- generic server-only executor contract and deterministic test adapter
+- protected `/jobs` operational UI with role-aware cancel/retry controls
+- organization RLS, worker-only lifecycle grants and pgTAP coverage
+- no domain workloads, Edge Function, Redis, VPS or Windows worker
 
 ---
 
 # Next
 
-## TASK-011 — Heavy Job Infrastructure
+## TASK-012 — Windows Worker
 
 Status: READY
 
 Phase: 9
 
-Do not begin until TASK-010 has completed manual QA and is merged through the
+Do not begin until TASK-011 has completed manual QA and is merged through the
 normal workflow.
 
 ---
 
 # Completed
+
+## TASK-010 — Company Knowledge and Memory
+
+Status: COMPLETE
+
+Implemented scope includes canonical Company Knowledge composition, explicit
+provenance-aware durable memory, bounded deterministic retrieval, lifecycle
+controls, a trusted AI context boundary, organization/domain isolation and the
+company-only `/memory` workspace.
 
 ## TASK-008 — Plugin Framework
 

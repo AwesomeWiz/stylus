@@ -236,6 +236,24 @@ Marketing generation, memory retrieval, embeddings or autonomous tools.
 
 ---
 
+## Background Jobs
+
+Stylus provides an organization-scoped durable queue for work that should not
+hold a browser request open. Members can inspect safe lifecycle metadata on
+`/jobs`; OWNER, ADMIN and MEMBER may enqueue registered ordinary work, VIEWER is
+read-only, and cancellation/retry follow explicit role and ownership rules.
+
+Job types come only from trusted static Core/plugin definitions with schemas,
+timeouts, retry policy and an execution class. The initial harmless Core test can
+run through hosted Supabase Cron. Future heavy media jobs remain queued until an
+authenticated compatible worker is available; the product does not depend on
+the developer laptop being online.
+
+Job rows do not expose raw inputs or sensitive results in the normal UI, do not
+replace AI run traces, and never automatically create Company Memory.
+
+---
+
 # Marketing
 
 Marketing is the first major Stylus plugin.

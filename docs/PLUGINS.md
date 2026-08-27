@@ -129,6 +129,13 @@ observer so callers can surface or log them; errors are never silently discarded
 No background jobs are introduced for plugin events. Long-running reactions must
 later use the persisted job infrastructure.
 
+TASK-011 supplies that infrastructure without making event dispatch implicitly
+asynchronous. A plugin may statically register typed job definitions through the
+public Core jobs contract. Job type and capability must belong to the plugin, the
+capability must be declared by its manifest, and current organization enablement
+is checked again at enqueue and manual retry. Disabling a plugin blocks new jobs
+but does not erase queued or terminal history.
+
 ## AI Tools and Memory Domains
 
 TASK-008 manifest tool entries remain discovery metadata: ID, name and
