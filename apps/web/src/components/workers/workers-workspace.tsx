@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
-import { Laptop, Link2, ShieldX } from "lucide-react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { Check, Clipboard, Laptop, Link2, ShieldX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -64,17 +64,7 @@ export function WorkersWorkspace({
             </Button>
           </form>
           {pairState.pairingToken ? (
-            <div className="bg-muted mt-3 max-w-xl rounded-md p-3">
-              <p className="text-xs font-medium">
-                Shown once · expires in 15 minutes
-              </p>
-              <code
-                className="mt-2 block text-xs break-all"
-                data-testid="pairing-token"
-              >
-                {pairState.pairingToken}
-              </code>
-            </div>
+            <PairingCodePanel token={pairState.pairingToken} />
           ) : null}
           {pairState.message ? (
             <p
@@ -116,6 +106,63 @@ export function WorkersWorkspace({
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+export function PairingCodePanel({ token }: { token: string }) {
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
+  const resetTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(
+    () => () => {
+      if (resetTimer.current) clearTimeout(resetTimer.current);
+    },
+    [],
+  );
+
+  const label =
+    copyState === "copied"
+      ? "Copied"
+      : copyState === "failed"
+        ? "Copy failed"
+        : "Copy";
+
+  return (
+    <div className="bg-muted mt-3 max-w-xl rounded-md p-3">
+      <p className="text-xs font-medium">Shown once · expires in 15 minutes</p>
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <code
+          className="min-w-0 flex-1 text-xs break-all"
+          data-testid="pairing-token"
+        >
+          {token}
+        </code>
+        <Button
+          aria-label={`${label} pairing code`}
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(token);
+              setCopyState("copied");
+            } catch {
+              setCopyState("failed");
+            }
+            if (resetTimer.current) clearTimeout(resetTimer.current);
+            resetTimer.current = setTimeout(() => setCopyState("idle"), 1500);
+          }}
+          type="button"
+          variant="secondary"
+        >
+          {copyState === "copied" ? (
+            <Check aria-hidden="true" className="size-4" />
+          ) : (
+            <Clipboard aria-hidden="true" className="size-4" />
+          )}
+          <span aria-live="polite">{label}</span>
+        </Button>
+      </div>
     </div>
   );
 }

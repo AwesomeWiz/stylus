@@ -778,6 +778,18 @@ regression coverage for the boundary, pairing, revocation and role checks.
 Formatting and lint passed, both typechecks passed, 101 test files with 434
 tests passed, and both production builds passed. No migration changed.
 
+Further manual-QA hardening keeps `/api/worker/*` outside human-session proxy
+redirects while retaining the broker's pairing/credential authentication. The
+broker now normalizes thrown failures as JSON, the worker rejects unexpected
+non-JSON responses without reading or printing their bodies, and the CLI exits
+safely. The one-time pairing display includes an explicit transient-feedback
+copy control without persisting or retransmitting the raw code. No migration
+changed. Final corrective verification passed formatting, lint, both typechecks,
+102 test files with 444 tests, and both production builds. One pre-existing
+whiteboard async-history test failed once under the full-suite load, then passed
+all 12 tests in isolation and passed in the subsequent complete suite without
+code changes.
+
 Hosted migration, broker configuration, pgTAP and end-to-end Windows manual QA
 remain required. Final verification on 2026-08-27 passed formatting, lint,
 worker/web type checking, 100 test files with 428 tests, both production builds,

@@ -17,6 +17,10 @@ request and is consumed atomically. Pairing returns one 256-bit durable bearer
 credential once; PostgreSQL stores only its digest. Revocation invalidates it
 immediately. Re-pair after revocation to rotate credentials.
 
+The one-time display provides an explicit Copy control with short-lived success
+or failure feedback. Copying is user initiated; the raw code is not placed in
+browser storage and cannot be recovered by refreshing or revisiting the page.
+
 The local config is `%LOCALAPPDATA%\Stylus\worker.json` (falling back to
 `%APPDATA%` or the current user's `.stylus` directory). It contains the Stylus
 URL, scoped worker/organization IDs, display name and credential—never service
@@ -80,3 +84,7 @@ or authorization headers.
 The broker includes bounded request bodies and a basic per-server-instance rate
 limit. Deployments that need distributed abuse controls should add them at the
 trusted ingress without changing the worker credential or PostgreSQL boundaries.
+The `/api/worker/*` namespace bypasses human browser-session redirects only;
+pairing-code or durable-worker authentication remains mandatory in the broker.
+Every broker result is JSON. The worker validates the response content type and
+discards unexpected HTML without printing it.

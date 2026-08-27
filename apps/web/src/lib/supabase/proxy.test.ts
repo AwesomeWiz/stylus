@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getSessionRouteDecision } from "./proxy";
+import { getSessionRouteDecision, isWorkerBrokerPath } from "./proxy";
 
 describe("session route decisions", () => {
   it("redirects unauthenticated application requests to login", () => {
@@ -26,5 +26,15 @@ describe("session route decisions", () => {
     expect(getSessionRouteDecision("/login", true)).toBe("/");
     expect(getSessionRouteDecision("/signup", true)).toBe("/");
     expect(getSessionRouteDecision("/", true)).toBeNull();
+  });
+
+  it("bypasses human sessions only for the worker broker", () => {
+    expect(isWorkerBrokerPath("/api/worker/pair")).toBe(true);
+    expect(isWorkerBrokerPath("/api/worker/claim")).toBe(true);
+    expect(isWorkerBrokerPath("/api/workers")).toBe(false);
+    expect(isWorkerBrokerPath("/api/private")).toBe(false);
+    expect(isWorkerBrokerPath("/workers")).toBe(false);
+    expect(getSessionRouteDecision("/api/private", false)).toBe("/login");
+    expect(getSessionRouteDecision("/workers", false)).toBe("/login");
   });
 });

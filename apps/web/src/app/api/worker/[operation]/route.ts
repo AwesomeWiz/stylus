@@ -62,6 +62,17 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ operation: string }> },
 ) {
+  try {
+    return await handleWorkerRequest(request, context);
+  } catch {
+    return NextResponse.json({ error: "broker_failure" }, { status: 500 });
+  }
+}
+
+async function handleWorkerRequest(
+  request: Request,
+  context: { params: Promise<{ operation: string }> },
+) {
   const { operation } = await context.params;
   if (!allowed.has(operation))
     return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -82,13 +93,13 @@ export async function POST(
   } catch {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
-  const supabase = createServiceSupabaseClient();
   if (operation === "pair") {
     if (rateLimited(request, null, true))
       return NextResponse.json({ error: "rate_limited" }, { status: 429 });
     const parsed = pair.safeParse(body);
     if (!parsed.success)
       return NextResponse.json({ error: "pairing_failed" }, { status: 400 });
+    const supabase = createServiceSupabaseClient();
     const { data, error } = await supabase.rpc("pair_windows_worker", {
       p_token: parsed.data.token,
       p_platform: "windows",
@@ -108,6 +119,7 @@ export async function POST(
     const parsed = base.safeParse(body);
     if (!parsed.success)
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    const supabase = createServiceSupabaseClient();
     const result =
       operation === "heartbeat"
         ? await supabase.rpc("worker_heartbeat", {
@@ -126,6 +138,7 @@ export async function POST(
   const parsed = operationBody.safeParse(body);
   if (!parsed.success)
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  const supabase = createServiceSupabaseClient();
   const { data, error } = await supabase.rpc("worker_job_operation", {
     p_credential: credential,
     p_job_id: parsed.data.jobId,

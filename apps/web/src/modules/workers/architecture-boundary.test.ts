@@ -78,5 +78,6 @@ describe("worker architecture boundary", () => {
     expect(workerSchemas).not.toContain('"use server"');
     expect(workerSchemas).toContain("export const initialWorkerActionState");
     expect(workerWorkspace).toContain('from "@/modules/workers/schemas"');
+    expect(workerWorkspace).not.toMatch(/localStorage|sessionStorage/);
   });
 });

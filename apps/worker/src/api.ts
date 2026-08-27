@@ -11,7 +11,13 @@ export interface ClaimedJob {
 const capabilities = ["core.worker.echo"] as const;
 export const WORKER_VERSION = "0.1.0";
 
-export class WorkerUnauthorizedError extends Error {}
+export class WorkerApiError extends Error {}
+export class WorkerUnauthorizedError extends WorkerApiError {}
+export class WorkerUnexpectedResponseError extends WorkerApiError {
+  constructor(status: number) {
+    super(`Stylus worker API returned an unexpected response (${status}).`);
+  }
+}
 
 export class WorkerApi {
   constructor(
@@ -38,13 +44,30 @@ export class WorkerApi {
         signal: AbortSignal.timeout(15_000),
       },
     );
-    if (response.status === 401)
+    const contentType = response.headers.get("content-type")?.toLowerCase();
+    if (!contentType?.includes("application/json")) {
+      try {
+        await response.body?.cancel();
+      } catch {
+        // The response is intentionally discarded without reading its body.
+      }
+      throw new WorkerUnexpectedResponseError(response.status);
+    }
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new WorkerUnexpectedResponseError(response.status);
+    }
+    if (authenticated && response.status === 401)
       throw new WorkerUnauthorizedError(
         "Worker credential is invalid or revoked",
       );
     if (!response.ok)
-      throw new Error(`Worker API operation failed (${response.status})`);
-    return response.json() as Promise<unknown>;
+      throw new WorkerApiError(
+        `Worker API operation failed (${response.status})`,
+      );
+    return payload;
   }
   pair(token: string) {
     return this.request(

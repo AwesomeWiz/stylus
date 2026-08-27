@@ -32,6 +32,11 @@ Manual-QA hardening:
   can load `/workers`; boundary and action behavior regressions added
 - corrective verification: formatting, lint, both typechecks, 101 files/434
   tests and both production builds passed; no migration required
+- pairing broker manual-QA fix: narrowly bypass human-session redirects for
+  `/api/worker/*`, enforce JSON failures, harden non-JSON client handling and add
+  an explicit transient-feedback pairing-code copy control
+- pairing corrective verification: formatting, lint, both typechecks, 102
+  files/444 tests and both production builds passed; no migration required
 
 ---
 
