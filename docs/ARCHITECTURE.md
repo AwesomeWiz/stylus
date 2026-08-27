@@ -296,6 +296,18 @@ Request
 The web application must not depend on a worker being continuously
 online.
 
+TASK-011 implements this flow as a PostgreSQL-backed state machine plus a trusted
+static TypeScript registry/executor contract. Claims use `FOR UPDATE SKIP LOCKED`,
+leases, heartbeats and transaction locks for optional concurrency groups.
+Worker-only lifecycle RPCs own progress, completion, retry, timeout and stale
+recovery; browser roles receive SELECT-only organization-scoped access.
+
+Execution classes keep placement explicit. Short deterministic DATABASE work may
+run through Supabase Cron; bounded SERVERLESS and future EXTERNAL_WORKER handlers
+share the public contract. TASK-011 implements only the harmless database-native
+`core.test.echo`. Heavy media remains queued for TASK-012's outbound worker and
+never runs in a long PostgreSQL transaction. See `docs/JOBS.md`.
+
 ---
 
 # AI Boundary

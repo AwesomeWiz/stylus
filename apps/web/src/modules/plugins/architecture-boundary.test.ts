@@ -28,6 +28,7 @@ describe("plugin architecture boundary", () => {
         imports.filter(
           (specifier) =>
             specifier === "@/core/plugins/public" ||
+            specifier === "@/core/jobs/public" ||
             specifier === "@/core/ai/public" ||
             specifier === "@/core/ai/server" ||
             specifier === "@/core/memory/public" ||

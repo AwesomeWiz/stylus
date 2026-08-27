@@ -45,8 +45,10 @@ server-only modules and non-`NEXT_PUBLIC` environment variables.
 7. estimates cost only when model pricing and token usage are known; and
 8. records one terminal run transition.
 
-It does not implement agents, memory retrieval, autonomous tools, streaming,
-multi-agent orchestration or persisted background jobs.
+It does not implement agents, memory retrieval, autonomous tools, streaming or
+multi-agent orchestration. TASK-011 jobs remain a separate durable workflow
+concept: a future job may call this gateway and create one or more `ai_runs`, but
+jobs never bypass AI policy, routing, tracing, timeout or authorization.
 
 ## Provider Adapters
 

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { JobDefinition } from "@/core/jobs/public";
+
 export const pluginIdSchema = z
   .string()
   .min(2)
@@ -147,15 +149,18 @@ export type PluginEventHandler = (
 
 export interface PluginDefinition {
   eventHandlers: Readonly<Partial<Record<PluginEventId, PluginEventHandler>>>;
+  jobDefinitions: readonly Readonly<JobDefinition>[];
   manifest: Readonly<PluginManifest>;
 }
 
 export function definePlugin(input: {
   eventHandlers?: Partial<Record<PluginEventId, PluginEventHandler>>;
+  jobDefinitions?: readonly JobDefinition[];
   manifest: z.input<typeof pluginManifestSchema>;
 }): PluginDefinition {
   const manifest = pluginManifestSchema.parse(input.manifest);
   const handlers = input.eventHandlers ?? {};
+  const jobDefinitions = input.jobDefinitions ?? [];
   const handlerEvents = Object.keys(handlers) as PluginEventId[];
   if (
     handlerEvents.some(
@@ -166,8 +171,19 @@ export function definePlugin(input: {
     throw new Error(
       `Plugin "${manifest.id}" event subscriptions and handlers must match.`,
     );
+  jobDefinitions.forEach((job) => {
+    if (job.origin.kind !== "plugin" || job.origin.pluginId !== manifest.id)
+      throw new Error(
+        `Plugin "${manifest.id}" cannot register job "${job.id}".`,
+      );
+    if (!manifest.capabilities.includes(job.capability))
+      throw new Error(
+        `Plugin job "${job.id}" requires undeclared capability "${job.capability}".`,
+      );
+  });
   return Object.freeze({
     eventHandlers: Object.freeze({ ...handlers }),
+    jobDefinitions: Object.freeze([...jobDefinitions]),
     manifest: Object.freeze(manifest),
   });
 }

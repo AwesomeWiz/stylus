@@ -209,6 +209,41 @@ Core UI or through generic browser mutation RPCs.
 
 ---
 
+# Hosted Durable Jobs
+
+Apply `20260825001100_heavy_job_infrastructure.sql` and forward correction
+`20260825001110_fix_job_enqueue.sql`, then run
+`supabase/tests/database/heavy_jobs_rls.test.sql` in a database-capable
+environment. The migration adds no extension and requires no Redis, Edge
+Function, pg_net, long-running Node process, or VPS.
+
+The corrective migration is required when `01100` has already been applied. It
+repairs the initial job-status enum cast and the database processor's progress
+argument type without changing Cron configuration or function privileges.
+
+For browser-independent lightweight DATABASE jobs:
+
+1. In Supabase Dashboard, enable/open the Cron Postgres Module.
+2. Create the case-sensitive job `stylus-database-jobs`.
+3. Use schedule `* * * * *`.
+4. Use SQL `select public.process_database_jobs(10);`.
+5. Activate it and monitor Job History for bounded execution time and failures.
+
+PostgreSQL owns durable state, atomic claims, leases, retry scheduling, stale
+recovery and the harmless `core.test.echo` handler. Next.js owns authenticated
+enqueue/cancel/retry actions, the trusted registry, and `/jobs`. No generic Edge
+Function is deployed because TASK-011 has no real bounded network workload that
+justifies one.
+
+SERVERLESS and EXTERNAL_WORKER classes are routing contracts, not a claim that
+heavy workloads run today. Video, FFmpeg, transcription and large AI work remain
+queued until TASK-012 supplies an authenticated outbound worker. Do not place a
+Supabase service-role key on the Windows worker or expose Ollama. Supabase project
+pausing, Cron cadence, statement limits and future serverless/worker costs remain
+real operational limitations.
+
+---
+
 # Deployment Philosophy
 
 Optimize initially for:

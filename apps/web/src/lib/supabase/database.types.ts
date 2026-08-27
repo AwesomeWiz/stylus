@@ -26,6 +26,27 @@ export type AIErrorCategoryRecord =
   | "policy_denied"
   | "cancelled"
   | "unknown";
+export type JobStatus =
+  | "QUEUED"
+  | "SCHEDULED"
+  | "RUNNING"
+  | "SUCCEEDED"
+  | "FAILED"
+  | "CANCEL_REQUESTED"
+  | "CANCELLED"
+  | "TIMED_OUT"
+  | "DEAD_LETTER";
+export type JobExecutionClass = "DATABASE" | "SERVERLESS" | "EXTERNAL_WORKER";
+export type JobErrorCategory =
+  | "validation_failed"
+  | "policy_denied"
+  | "provider_unavailable"
+  | "rate_limited"
+  | "timeout"
+  | "cancelled"
+  | "transient_failure"
+  | "permanent_failure"
+  | "internal_error";
 export type MemoryDomain = "company" | "marketing" | "agency";
 export type MemoryKind =
   "FACT" | "DECISION" | "INSIGHT" | "PREFERENCE" | "NOTE";
@@ -210,6 +231,53 @@ export type KnowledgeMemoryRow = {
   title: string;
   updated_at: string;
   updated_by: string | null;
+};
+
+export type JobRow = {
+  attempt_count: number;
+  cancellation_requested_at: string | null;
+  cancelled_at: string | null;
+  capability: string;
+  claimant_id: string | null;
+  completed_at: string | null;
+  concurrency_group: string | null;
+  created_at: string;
+  created_by: string;
+  duration_ms: number | null;
+  error_category: JobErrorCategory | null;
+  execution_class: JobExecutionClass;
+  heartbeat_at: string | null;
+  id: string;
+  idempotency_key: string | null;
+  input_metadata: Record<string, unknown>;
+  job_type: string;
+  lease_expires_at: string | null;
+  max_attempts: number;
+  next_attempt_at: string;
+  organization_id: string;
+  parent_job_id: string | null;
+  plugin_id: string | null;
+  priority: number;
+  progress: number;
+  progress_message: string | null;
+  progress_updated_at: string | null;
+  result_metadata: Record<string, unknown> | null;
+  scheduled_at: string;
+  started_at: string | null;
+  status: JobStatus;
+  timeout_seconds: number;
+};
+
+export type JobDefinitionRow = {
+  capability: string;
+  concurrency_group: string | null;
+  execution_class: JobExecutionClass;
+  idempotency_mode: "NONE" | "OPTIONAL" | "REQUIRED";
+  job_type: string;
+  max_attempts: number;
+  plugin_id: string | null;
+  priority: number;
+  timeout_seconds: number;
 };
 
 export type OrganizationInvitationRow = {
@@ -586,6 +654,18 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      jobs: {
+        Row: JobRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      job_definitions: {
+        Row: JobDefinitionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       memberships: {
         Row: MembershipRow;
         Insert: {
@@ -746,6 +826,23 @@ export type Database = {
         Args: { p_name: string };
         Returns: OrganizationRow;
       };
+      enqueue_job: {
+        Args: {
+          p_capability: string;
+          p_concurrency_group: string | null;
+          p_execution_class: JobExecutionClass;
+          p_idempotency_key: string | null;
+          p_input_metadata: Record<string, unknown>;
+          p_job_type: string;
+          p_max_attempts: number;
+          p_organization_id: string;
+          p_plugin_id: string | null;
+          p_priority: number;
+          p_scheduled_at: string | null;
+          p_timeout_seconds: number;
+        };
+        Returns: JobRow;
+      };
       complete_ai_run: {
         Args: {
           p_duration_ms: number;
@@ -861,6 +958,14 @@ export type Database = {
         Args: { p_organization_id: string; p_user_id: string };
         Returns: boolean;
       };
+      request_job_cancellation: {
+        Args: { p_job_id: string; p_organization_id: string };
+        Returns: JobRow;
+      };
+      retry_job: {
+        Args: { p_job_id: string; p_organization_id: string };
+        Returns: JobRow;
+      };
       set_organization_plugin_enabled: {
         Args: {
           p_enabled: boolean;
@@ -918,6 +1023,9 @@ export type Database = {
       competitor_type: CompetitorType;
       marketing_objective: MarketingObjective;
       marketing_stage: MarketingStage;
+      job_error_category: JobErrorCategory;
+      job_execution_class: JobExecutionClass;
+      job_status: JobStatus;
       memory_domain: MemoryDomain;
       memory_kind: MemoryKind;
       memory_provenance: MemoryProvenance;

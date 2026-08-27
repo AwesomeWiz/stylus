@@ -1,32 +1,32 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-26
+Last Updated: 2026-08-27
 
 ## Overall Status
 
-TASK-010 COMPANY KNOWLEDGE AND MEMORY / READY FOR MANUAL QA
+TASK-011 HEAVY JOB INFRASTRUCTURE / READY FOR MANUAL QA
 
-Stylus now has canonical Company Knowledge composition and an explicit,
-organization/domain-scoped durable-memory foundation with provenance, bounded
-retrieval, lifecycle controls and a trusted AI context boundary. Embeddings,
-semantic RAG, agents and Marketing are not implemented.
+Stylus now has an organization-scoped durable job queue with a trusted registry,
+atomic claims, leases, bounded retries, stale recovery, cooperative cancellation,
+execution classes, a database-native hosted verification path and a protected
+Jobs workspace. Domain workloads and the Windows worker are not implemented.
 
 ---
 
 ## Current Phase
 
-Phase 8 — Company Knowledge & Memory
+Phase 9 — Jobs & Local Worker
 
-Status: TASK-010 READY FOR MANUAL QA
+Status: TASK-011 READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-010 is current on `codex/task-010-company-knowledge-memory`. Apply the one
-pending migration, run pgTAP in a database-capable environment, then perform
-hosted role, organization, provenance, lifecycle and domain-isolation QA. Do not
-start TASK-011.
+TASK-011 is current on `codex/task-011-heavy-job-infrastructure`. Apply the one
+pending migration, configure the optional database-job Cron schedule, run pgTAP
+in a database-capable environment, then perform hosted lifecycle, concurrency,
+role and organization-isolation QA. Do not start TASK-012.
 
 ---
 
@@ -634,6 +634,126 @@ responsive QA remain required.
 
 ---
 
+# Phase 9 TASK-011 Implementation
+
+- trusted Zod-backed Core/plugin job definitions with duplicate and provenance
+  rejection, fixed schemas, timeout/retry/side-effect policy and execution class
+- authenticated server-derived enqueue boundary with no browser-provided tenant,
+  actor, provenance, capability, priority, retry, timeout or worker identity
+- explicit optional idempotency plus 100-active-organization and
+  25-active-creator queue protection
+- atomic one-at-a-time `FOR UPDATE SKIP LOCKED` claims, leases, heartbeats,
+  monotonic progress and concurrency-group transaction locks
+- bounded deterministic retries, eligibility times, dead-letter retention,
+  terminal timeouts and stale-lease recovery
+- immediate queued cancellation and cooperative running cancellation
+- generic server-only executor contract with AbortSignal, heartbeat,
+  cancellation, progress and bounded validated output
+- DATABASE, SERVERLESS and EXTERNAL_WORKER routing without implementing the
+  TASK-012 Windows adapter
+- harmless database-native `core.test.echo` plus documented one-minute Supabase
+  Cron schedule
+- protected `/jobs` operational workspace with safe metadata and role-aware
+  enqueue, cancellation and manager retry
+- no AI-run merger, memory write, domain workload, Redis, Edge Function, pg_net,
+  continuously running Node process or VPS
+
+---
+
+# Phase 9 TASK-011 Database and Security
+
+Migration: `supabase/migrations/20260825001100_heavy_job_infrastructure.sql`
+
+The `jobs` table is SELECT-only to authenticated organization members. Narrow
+enqueue/cancel/retry functions derive `auth.uid()` and enforce role, tenant and
+plugin state. Claim, heartbeat, progress, complete, failure and reconciliation
+functions are revoked from browser roles and granted only to trusted database/
+service execution. All SECURITY DEFINER functions pin an empty search path.
+
+Bounded JSON constraints reject secret and raw prompt/response key shapes.
+Claimant plus an unexpired lease is required for every worker transition. The
+54-assertion pgTAP suite is at
+`supabase/tests/database/heavy_jobs_rls.test.sql`.
+
+---
+
+# Phase 9 TASK-011 Verification
+
+Verified on 2026-08-27:
+
+- focused jobs/plugin boundary suite passed: 12 files, 78 tests
+- formatting passed
+- lint passed with zero warnings
+- type checking passed
+- full suite passed: 93 files, 407 tests
+- production build passed, including `/jobs`
+- linked Supabase dry run passed and reported only
+  `20260825001100_heavy_job_infrastructure.sql` as pending
+- migration, RLS/grant, concurrency/claim, AI/memory boundary and secrets reviews
+  passed
+- no dependency was added or changed
+
+One load-sensitive pre-existing whiteboard keyboard-history assertion failed in
+the first combined verification run, passed immediately in focused isolation,
+and the complete suite then passed unchanged. No whiteboard code or test
+was modified for TASK-011.
+
+Docker and Podman are unavailable, so the 54-assertion pgTAP suite could not run
+locally. No hosted migration or Cron change was applied. Hosted pgTAP,
+role/isolation/concurrency QA and responsive browser QA remain required.
+
+## Manual-QA Job Control Fix
+
+Resolved on 2026-08-27:
+
+- Queue, schedule, cancel and retry controls now explicitly submit their Server
+  Action forms instead of inheriting the shared design-system button's safe
+  `type="button"` default
+- component regression coverage protects the submit semantics for all four job
+  lifecycle controls
+- no job authorization, RLS, worker lifecycle or migration behavior changed
+- focused component coverage passed: 1 file, 5 tests
+- formatting, lint and type checking passed; the full suite passed with 93 files
+  and 408 tests; the production build passed with `/jobs`
+
+## Manual-QA Durable Enqueue Fix
+
+Resolved on 2026-08-27:
+
+- hosted QA proved the Server Action ran and the trusted `core.test.echo`
+  definition existed, but `public.jobs` remained empty
+- PostgreSQL resolved the original enqueue `CASE` lifecycle expression as
+  `text`; inserting it into the `public.job_status` enum failed with SQLSTATE
+  `42804` at the `insert into public.jobs` statement
+- execution reached the INSERT statement, but PostgreSQL rejected the typed
+  expression before creating a tuple; the failed RPC transaction rolled back
+  with no durable row, explaining the empty `public.jobs` result
+- forward-only migration
+  `20260825001110_fix_job_enqueue.sql` replaces the already-applied function and
+  explicitly casts both initial states to `public.job_status`
+- linked lint also found the hosted database processor passed integer progress
+  `50` to a `smallint` lifecycle RPC; the same forward migration replaces the
+  processor with an explicit `smallint` argument so Cron can complete Core echo
+- safe server diagnostics now retain only enqueue stage, SQLSTATE and normalized
+  category while the browser continues receiving a generic failure
+- pgTAP executes the real enqueue path and now verifies exactly one Core row,
+  initial state/type/scope, cross-organization denial, unknown-type denial,
+  roles, removal and idempotency
+- the 59-assertion database suite also executes the real processor path through
+  100% progress, one attempt, `SUCCEEDED` and bounded
+  `{"acknowledged": true}` result metadata
+- focused regression suite passed: 4 files, 28 tests
+- `npm run verify` passed: formatting, lint, typecheck, 93 files / 410 tests and
+  the production build including `/jobs`
+- linked lint independently reports only the two known hosted function errors,
+  SQLSTATE `42804` and `42883`, because the correction is intentionally pending
+- linked dry run applied nothing and reports exactly
+  `20260825001110_fix_job_enqueue.sql` pending
+- the corrective migration remains unapplied; hosted pgTAP and full lifecycle
+  retest are required after it is applied manually
+
+---
+
 # Product Direction
 
 Stylus is a collaborative startup operating system.
@@ -749,24 +869,26 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-010 is ready for manual QA on
-`codex/task-010-company-knowledge-memory`. TASK-011 has not started.
+TASK-011 is ready for manual QA on
+`codex/task-011-heavy-job-infrastructure`. TASK-012 has not started.
 
 ---
 
 # Known Issues
 
-Docker/Podman is unavailable, so database pgTAP cannot run locally. The TASK-010
-migration remains unapplied pending linked dry-run and hosted QA. Embeddings,
-pgvector, semantic RAG, document ingestion, autonomous memory writes,
-agent/workflow orchestration, Marketing and Web Agency remain deferred.
+Docker/Podman is unavailable, so database pgTAP cannot run locally. The TASK-011
+migration remains unapplied pending hosted QA. SERVERLESS has a typed executor
+contract but no hosted adapter, and EXTERNAL_WORKER has no worker authentication
+or runtime until TASK-012. Heavy jobs therefore remain queued. Domain workloads,
+embeddings, agents, Marketing and Web Agency remain deferred.
 
 ---
 
 # Next Recommended Action
 
-Apply the pending TASK-010 migration, run pgTAP and complete hosted manual QA.
-Do not begin TASK-011.
+Apply the pending TASK-011 migration, run pgTAP, configure the optional database
+Cron processor and complete hosted role/concurrency/lifecycle QA. Do not begin
+TASK-012.
 
 ---
 
@@ -780,10 +902,10 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-010 is current on `codex/task-010-company-knowledge-memory`.
+TASK-011 is current on `codex/task-011-heavy-job-infrastructure`.
 
-Apply only `20260825001000_company_knowledge_memory.sql` and
-`20260825001010_company_memory_lifecycle.sql`, run the pgTAP suite, then verify
-company profile composition, role behavior, lifecycle/search, organization
-isolation, removed-member denial and plugin-domain boundaries. TASK-011 must not
-begin until TASK-010 is accepted and merged.
+Apply only `20260825001100_heavy_job_infrastructure.sql`, run the 54-assertion
+pgTAP suite, configure `stylus-database-jobs`, then verify enqueue, idempotency,
+schedule eligibility, claim concurrency, lease recovery, retry/dead-letter,
+cancellation, roles, plugin disablement and organization isolation. TASK-012 must
+not begin until TASK-011 is accepted and merged.
