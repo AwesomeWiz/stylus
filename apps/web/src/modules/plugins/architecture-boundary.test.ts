@@ -30,6 +30,8 @@ describe("plugin architecture boundary", () => {
             specifier === "@/core/plugins/public" ||
             specifier === "@/core/ai/public" ||
             specifier === "@/core/ai/server" ||
+            specifier === "@/core/memory/public" ||
+            specifier === "@/core/memory/server" ||
             specifier.startsWith("."),
         ),
       );

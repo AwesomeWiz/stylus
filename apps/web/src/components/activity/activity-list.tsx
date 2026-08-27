@@ -1,6 +1,8 @@
 import {
+  Archive,
   CheckCircle2,
   CircleDot,
+  FilePlus2,
   MessageSquare,
   Pencil,
   RotateCcw,
@@ -9,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
 
 import type {
   ActivityEventRow,
@@ -18,6 +21,10 @@ import type {
 
 const icons: Record<ActivityEventType, LucideIcon> = {
   BOARD_COMMENTED: MessageSquare,
+  MEMORY_ARCHIVED: Archive,
+  MEMORY_CREATED: FilePlus2,
+  MEMORY_RESTORED: RotateCcw,
+  MEMORY_UPDATED: Pencil,
   TASK_ASSIGNED: UserRoundCheck,
   TASK_CANCELLED: XCircle,
   TASK_COMMENTED: MessageSquare,
@@ -48,6 +55,10 @@ export function activityDescription(
   const title = metadataText(event, "title") ?? "a task";
   const descriptions: Record<ActivityEventType, string> = {
     BOARD_COMMENTED: `${actor} commented on board “${title}”`,
+    MEMORY_ARCHIVED: `${actor} archived company memory “${title}”`,
+    MEMORY_CREATED: `${actor} added company memory “${title}”`,
+    MEMORY_RESTORED: `${actor} restored company memory “${title}”`,
+    MEMORY_UPDATED: `${actor} updated company memory “${title}”`,
     TASK_ASSIGNED: `${actor} assigned “${title}” to ${memberName(members, metadataText(event, "to_assignee_id"))}`,
     TASK_CANCELLED: `${actor} cancelled “${title}”`,
     TASK_COMMENTED: `${actor} commented on “${title}”`,
@@ -97,9 +108,11 @@ export function ActivityList({
               <Link
                 className="hover:underline"
                 href={
-                  event.entity_type === "BOARD"
-                    ? `/whiteboards/${encodeURIComponent(event.entity_id)}`
-                    : `/tasks?view=all&task=${encodeURIComponent(event.entity_id)}`
+                  (event.entity_type === "KNOWLEDGE"
+                    ? "/memory"
+                    : event.entity_type === "BOARD"
+                      ? `/whiteboards/${encodeURIComponent(event.entity_id)}`
+                      : `/tasks?view=all&task=${encodeURIComponent(event.entity_id)}`) as Route
                 }
               >
                 <span className="text-sm">

@@ -26,6 +26,10 @@ export type AIErrorCategoryRecord =
   | "policy_denied"
   | "cancelled"
   | "unknown";
+export type MemoryDomain = "company" | "marketing" | "agency";
+export type MemoryKind =
+  "FACT" | "DECISION" | "INSIGHT" | "PREFERENCE" | "NOTE";
+export type MemoryProvenance = "HUMAN" | "PLUGIN" | "IMPORTED" | "SYSTEM";
 export type CompanyStage =
   | "IDEA"
   | "VALIDATION"
@@ -64,7 +68,7 @@ export type TaskStatus = "TODO" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 export type NotificationType =
   "TASK_DUE_24H" | "TASK_DUE_1H" | "TASK_DEADLINE" | "BOARD_MENTION";
-export type NotificationEntityType = "TASK" | "BOARD";
+export type NotificationEntityType = "TASK" | "BOARD" | "KNOWLEDGE";
 export type NotificationChannel = "IN_APP";
 export type TaskReminderKind = "DUE_24H" | "DUE_1H" | "DEADLINE";
 export type ActivityEventType =
@@ -75,7 +79,11 @@ export type ActivityEventType =
   | "TASK_REOPENED"
   | "TASK_CANCELLED"
   | "TASK_COMMENTED"
-  | "BOARD_COMMENTED";
+  | "BOARD_COMMENTED"
+  | "MEMORY_CREATED"
+  | "MEMORY_UPDATED"
+  | "MEMORY_ARCHIVED"
+  | "MEMORY_RESTORED";
 export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
 
 export type BoardRow = {
@@ -181,6 +189,27 @@ export type AIRunRow = {
   status: AIRunStatus;
   total_tokens: number | null;
   trace_metadata: Record<string, unknown>;
+};
+
+export type KnowledgeMemoryRow = {
+  archived_at: string | null;
+  archived_by: string | null;
+  content: string;
+  created_at: string;
+  created_by: string | null;
+  domain: MemoryDomain;
+  effective_at: string | null;
+  id: string;
+  kind: MemoryKind;
+  metadata: Record<string, unknown>;
+  organization_id: string;
+  plugin_id: string | null;
+  provenance: MemoryProvenance;
+  search_vector: string;
+  source_reference: string | null;
+  title: string;
+  updated_at: string;
+  updated_by: string | null;
 };
 
 export type OrganizationInvitationRow = {
@@ -551,6 +580,12 @@ export type Database = {
         Update: Partial<CompetitorRow>;
         Relationships: [];
       };
+      knowledge_memories: {
+        Row: KnowledgeMemoryRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       memberships: {
         Row: MembershipRow;
         Insert: {
@@ -755,6 +790,48 @@ export type Database = {
         Args: { p_organization_id: string };
         Returns: OrganizationTeamMember[];
       };
+      create_company_memory: {
+        Args: {
+          p_content: string;
+          p_effective_at?: string | null;
+          p_kind: MemoryKind;
+          p_organization_id: string;
+          p_source_reference?: string | null;
+          p_title: string;
+        };
+        Returns: KnowledgeMemoryRow;
+      };
+      search_company_memories: {
+        Args: {
+          p_include_archived?: boolean;
+          p_kinds?: MemoryKind[] | null;
+          p_limit?: number;
+          p_organization_id: string;
+          p_provenance?: MemoryProvenance[] | null;
+          p_search?: string | null;
+        };
+        Returns: KnowledgeMemoryRow[];
+      };
+      set_company_memory_archived: {
+        Args: {
+          p_archived: boolean;
+          p_memory_id: string;
+          p_organization_id: string;
+        };
+        Returns: KnowledgeMemoryRow;
+      };
+      update_company_memory: {
+        Args: {
+          p_content: string;
+          p_effective_at?: string | null;
+          p_kind: MemoryKind;
+          p_memory_id: string;
+          p_organization_id: string;
+          p_source_reference?: string | null;
+          p_title: string;
+        };
+        Returns: KnowledgeMemoryRow;
+      };
       mark_all_notifications_read: {
         Args: { p_organization_id: string };
         Returns: number;
@@ -841,6 +918,9 @@ export type Database = {
       competitor_type: CompetitorType;
       marketing_objective: MarketingObjective;
       marketing_stage: MarketingStage;
+      memory_domain: MemoryDomain;
+      memory_kind: MemoryKind;
+      memory_provenance: MemoryProvenance;
       notification_entity_type: NotificationEntityType;
       notification_channel: NotificationChannel;
       notification_type: NotificationType;

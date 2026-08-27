@@ -44,4 +44,31 @@ describe("activity list", () => {
     render(<ActivityList events={[]} members={[]} />);
     expect(screen.getByText("No activity yet.")).toBeInTheDocument();
   });
+
+  it("routes memory lifecycle activity to the Core memory workspace", () => {
+    render(
+      <ActivityList
+        events={[
+          {
+            ...event,
+            entity_type: "KNOWLEDGE",
+            event_type: "MEMORY_ARCHIVED",
+            metadata: { title: "Approved positioning" },
+          },
+        ]}
+        members={[
+          {
+            display_name: "Alex",
+            member_user_id: event.actor_id,
+            role: "MEMBER",
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByRole("link", {
+        name: "Alex archived company memory “Approved positioning”",
+      }),
+    ).toHaveAttribute("href", "/memory");
+  });
 });

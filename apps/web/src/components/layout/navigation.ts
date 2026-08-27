@@ -6,6 +6,7 @@ import {
   Home,
   History,
   LayoutDashboard,
+  Library,
   Settings,
   Users,
   type LucideIcon,
@@ -31,6 +32,7 @@ export const coreNavigationGroups: NavigationGroup[] = [
       { label: "Activity", icon: History, href: "/activity" },
       { label: "Whiteboards", icon: LayoutDashboard, href: "/whiteboards" },
       { label: "Company Profile", icon: Building2, href: "/company/profile" },
+      { label: "Memory", icon: Library, href: "/memory" },
     ],
   },
   {

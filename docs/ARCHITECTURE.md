@@ -42,7 +42,6 @@ Stylus Web Application
   |       +-- PostgreSQL
   |       +-- Realtime
   |       +-- Storage
-  |       +-- pgvector
   |
   +------ Queue / Job Infrastructure
   |
@@ -338,8 +337,9 @@ not retried. Candidate fallback preserves every policy filter.
 AI runs persist metadata-only traces through authenticated, organization-scoped
 database functions. The application derives organization and actor, and plugin
 requests additionally require static registration, current enablement and a
-declared capability. Manifest memory domains are copied into trace context but
-do not retrieve or authorize memory.
+declared capability. Manifest memory domains are copied into trace context.
+TASK-010 independently rechecks active membership, static plugin registration,
+enablement, exact capability and each requested domain before retrieval.
 
 The tool registry is an explicit trusted server registry with Zod input/output
 schemas, owning plugin, required capability and side-effect classification.
@@ -357,6 +357,28 @@ Memory retrieval requires explicit:
 - optional workspace scope
 
 No unrestricted global semantic search is permitted.
+
+TASK-010 distinguishes two sources:
+
+- Company Knowledge is a typed, server-only composition of the canonical
+  company, audience, brand, marketing and competitor tables.
+- Company Memory is explicit durable context in `knowledge_memories`, scoped by
+  organization, domain, kind, provenance and lifecycle.
+
+The Core `/memory` UI and browser-readable RLS expose only `company` memory.
+Browser mutation uses narrow RPCs that derive the actor and force `HUMAN`
+provenance, `company` domain and no plugin identity. Plugin-private persistence
+is not available through a generic browser RPC.
+
+AI consumers must explicitly request domains through the server-only memory
+context builder. Core capabilities can request only `company`; plugin requests
+must match their static manifest, current organization enablement, exact
+capability and declared domains. General retrieval is capped at 50 rows and AI
+context retrieval at 20 rows with stable `updated_at, id` ordering. Retrieval
+does not invoke a provider and memory is never automatically injected.
+
+Embeddings, pgvector, chunking, semantic RAG, document ingestion and automatic
+promotion are intentionally deferred.
 
 ---
 

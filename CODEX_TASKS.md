@@ -2,50 +2,37 @@
 
 # Current
 
-## TASK-009 — AI Foundation
+## TASK-010 — Company Knowledge and Memory
 
-Status: COMPLETE / READY FOR MANUAL QA AGAIN
+Status: COMPLETE / READY FOR MANUAL QA
 
-Phase: 7
+Phase: 8
 
 Implemented scope:
 
-- provider-independent, server-only ModelGateway and normalized contracts
-- configured OpenAI-compatible and Ollama/local HTTP adapters plus fake adapter
-- deterministic model registry, logical tiers, policy-aware routing and fallback
-- Zod-validated structured output and metadata-only run lifecycle tracing
-- usage, optional estimated cost and monthly remote-cost budget foundations
-- bounded timeout, cancellation and conservative transient retries
-- trusted future AI tool registry with side-effect metadata and no tool loop
-- organization/plugin/capability/memory-declaration authorization boundaries
-- role-aware `/ai` policy, safe run diagnostics and fixed-input connection test
-- RLS, application, provider, routing, lifecycle, UI and architecture coverage
-- repaired Next.js Server Action export boundary with permanent regression
-  coverage for policy loading, disabled defaults, safe errors and mutations
-- added an authenticated `core.ai.connection-test` diagnostic that uses the
-  normal policy-gated gateway lifecycle without accepting browser routing input
-- repaired the applied recursive trace constraint that blocked valid `ai_runs`
-  initialization before routing or provider invocation
-
-Apply pending corrective migration
-`20260825000910_fix_ai_trace_metadata_constraint.sql`, then run the AI pgTAP
-suite in a database-capable environment before repeating hosted
-policy/isolation, policy-save and local-provider QA.
+- canonical typed Company Knowledge composition from existing onboarding tables
+- explicit provenance-aware `knowledge_memories` with soft archival
+- narrow human/company lifecycle RPCs and meaningful activity events
+- deterministic indexed retrieval with a 50-row general hard limit
+- explicit AI context construction with a 20-row hard limit and no provider call
+- static plugin registration, enablement, capability and domain enforcement
+- company-only Core `/memory` UI with search, filters and VIEWER read-only behavior
+- organization/member RLS, anti-forgery constraints and pgTAP coverage
+- ordered schema and lifecycle migrations so activity enum additions commit
+  before lifecycle functions use them
+- no embeddings, pgvector, RAG, ingestion, web research or automatic promotion
 
 ---
 
 # Next
 
-## TASK-010 — Company Knowledge and Memory
+## TASK-011 — Heavy Job Infrastructure
 
 Status: READY
 
-Phase: 8
+Phase: 9
 
-Planned scope: structured knowledge, explicit promotion, embeddings, retrieval,
-pgvector and organization/domain isolation.
-
-Do not begin until TASK-009 has completed manual QA and is merged through the
+Do not begin until TASK-010 has completed manual QA and is merged through the
 normal workflow.
 
 ---
@@ -309,20 +296,6 @@ Planned scope:
 - fake provider for testing
 
 No agents, workflows, memory retrieval or Marketing execution yet.
-
----
-
-## TASK-010 — Company Knowledge and Memory
-
-Planned scope:
-
-- company knowledge
-- explicit knowledge promotion
-- embeddings
-- retrieval
-- domain isolation
-- pgvector
-- marketing/agency isolation tests
 
 ---
 

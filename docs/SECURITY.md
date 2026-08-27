@@ -190,6 +190,33 @@ Marketing must not retrieve Agency memory.
 
 ---
 
+# Company Knowledge and Memory
+
+- canonical Company Knowledge is composed server-side from existing profile
+  tables and is never synchronized into opaque memory copies
+- every durable memory row carries organization, controlled domain/kind,
+  provenance, lifecycle and creator/system-origin fields
+- authenticated table access is SELECT-only and RLS exposes only company-domain
+  rows belonging to an active organization membership
+- browser lifecycle RPCs derive `auth.uid()`, require OWNER/ADMIN/MEMBER and
+  force human/company provenance; VIEWER and removed members cannot mutate
+- organization ownership, privileged provenance and plugin identity are not
+  accepted by Server Actions
+- Core AI capabilities can request only company context and receive nothing
+  unless they explicitly request it
+- plugin retrieval requires static registration, current enablement, an exact
+  declared capability and requested domains contained by the manifest
+- generic Core/browser paths cannot read Marketing or Agency-private domains,
+  and no generic browser-callable plugin write function exists
+- retrieval is deterministic, excludes archived rows by default and enforces
+  hard 50-row general and 20-row AI-context limits
+- memory retrieval never invokes an AI provider and `ai_runs` remains
+  metadata-only rather than acting as memory
+- ordinary deletion, automatic promotion, embeddings, pgvector and ingestion
+  are not enabled
+
+---
+
 # Secrets
 
 Never expose:
