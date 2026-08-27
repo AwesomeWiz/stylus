@@ -3,9 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/modules/workers/actions", () => ({
   createWorkerPairingAction: vi.fn(),
-  initialWorkerActionState: { status: "idle" },
   revokeWorkerAction: vi.fn(),
 }));
+
+import { initialWorkerActionState } from "@/modules/workers/schemas";
 
 import { WorkersWorkspace } from "./workers-workspace";
 
@@ -24,6 +25,9 @@ const worker = {
 };
 
 describe("WorkersWorkspace", () => {
+  it("uses the shared idle action state", () => {
+    expect(initialWorkerActionState).toEqual({ status: "idle" });
+  });
   it("allows managers to pair and revoke without rendering credentials", () => {
     render(<WorkersWorkspace role="OWNER" workers={[worker]} />);
     expect(

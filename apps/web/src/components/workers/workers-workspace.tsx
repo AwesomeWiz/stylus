@@ -8,9 +8,9 @@ import { PageHeader } from "@/components/ui/page-header";
 import type { OrganizationRole } from "@/lib/supabase/database.types";
 import {
   createWorkerPairingAction,
-  initialWorkerActionState,
   revokeWorkerAction,
 } from "@/modules/workers/actions";
+import { initialWorkerActionState } from "@/modules/workers/schemas";
 
 type Worker = Awaited<
   ReturnType<

@@ -771,6 +771,13 @@ Resolved on 2026-08-27:
 - no arbitrary command execution, native binary, Ollama, media or domain work
 - 22-assertion pgTAP worker suite plus application and worker regression tests
 
+Manual-QA hardening on 2026-08-27 moved the worker action state/type into a
+non-`use server` schema module. The worker Server Action boundary now exports
+only async actions, matching the Next.js 16/Turbopack runtime contract, with
+regression coverage for the boundary, pairing, revocation and role checks.
+Formatting and lint passed, both typechecks passed, 101 test files with 434
+tests passed, and both production builds passed. No migration changed.
+
 Hosted migration, broker configuration, pgTAP and end-to-end Windows manual QA
 remain required. Final verification on 2026-08-27 passed formatting, lint,
 worker/web type checking, 100 test files with 428 tests, both production builds,

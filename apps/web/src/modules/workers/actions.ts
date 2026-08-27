@@ -6,13 +6,7 @@ import { z } from "zod";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
-
-export type WorkerActionState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-  pairingToken?: string;
-};
-export const initialWorkerActionState: WorkerActionState = { status: "idle" };
+import type { WorkerActionState } from "@/modules/workers/schemas";
 
 export async function createWorkerPairingAction(
   _state: WorkerActionState,

@@ -26,6 +26,13 @@ Implemented scope:
 - linked dry run: only `20260825001200_windows_workers.sql` pending; unapplied
 - local Docker/Podman unavailable, so hosted pgTAP/manual QA remain required
 
+Manual-QA hardening:
+
+- worker action state/type moved out of the `use server` module so Next.js 16
+  can load `/workers`; boundary and action behavior regressions added
+- corrective verification: formatting, lint, both typechecks, 101 files/434
+  tests and both production builds passed; no migration required
+
 ---
 
 # Completed
