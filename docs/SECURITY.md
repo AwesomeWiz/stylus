@@ -274,6 +274,11 @@ registered server-side definition, validates input, rejects VIEWER, and repeats
 enabled-plugin checks. The database constrains Core/plugin namespace provenance,
 metadata size and recursively forbidden secret/raw-content keys.
 
+Enqueue persistence failures log only the operation stage, validated SQLSTATE
+and a normalized authorization/validation/constraint/database-contract category
+on the server. Job input, database messages/details, tokens and result payloads
+are not logged or returned to the browser.
+
 Claims use row locks, skip-locked semantics, leases and a concurrency-group
 transaction lock. Every worker transition requires the current claimant and an
 unexpired lease. Stale leases are recoverable, retries are bounded, and queued

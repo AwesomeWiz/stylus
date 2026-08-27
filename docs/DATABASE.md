@@ -362,6 +362,15 @@ TASK-011 migration `20260825001100_heavy_job_infrastructure.sql` introduces the
 organization-scoped `jobs` table and controlled job status, execution class and
 error-category enums.
 
+Corrective migration `20260825001110_fix_job_enqueue.sql` replaces only
+`public.enqueue_job`. It casts the function's initial QUEUED/SCHEDULED `CASE`
+branches to `public.job_status`; without those casts PostgreSQL resolved the
+expression as `text` and rejected the enum-column insert with SQLSTATE `42804`.
+The function signature, privileges and security boundary are unchanged.
+The same migration replaces `public.process_database_jobs` only to cast its 50%
+progress argument to the existing `smallint` RPC signature; its execution class,
+handler allowlist and grants remain unchanged.
+
 The row records trusted Core/plugin provenance, capability, schedule, priority,
 attempts, timeout, progress, bounded input/result metadata, cancellation,
 idempotency, parent retry, claimant, lease and lifecycle timestamps. Partial

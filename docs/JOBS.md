@@ -49,6 +49,16 @@ The browser does not provide organization ID, actor ID, plugin provenance,
 capability, execution class, priority, retry limits, timeout, or worker identity.
 The harmless `/jobs` diagnostic always enqueues `core.test.echo` with fixed input.
 
+Corrective migration `20260825001110_fix_job_enqueue.sql` explicitly types the
+initial QUEUED/SCHEDULED selection as `public.job_status`. The applied original
+function's uncast `CASE` resolved to `text` and PostgreSQL rejected its insert
+before any tuple was created; the failed RPC transaction then rolled back with
+no durable row. The replacement retains the original
+signature, authorization, allowlist, idempotency, limits, grants and pinned
+search path. The migration also casts the database processor's 50% progress
+literal to the lifecycle RPC's `smallint` contract, repairing the second runtime
+error identified by linked PostgreSQL lint.
+
 Optional idempotency is scoped by organization, job type, and explicit key. An
 organization transaction lock makes the lookup/insert atomic. The initial queue
 caps are 100 active jobs per organization and 25 active jobs per creator.

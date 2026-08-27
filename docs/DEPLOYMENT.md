@@ -211,10 +211,15 @@ Core UI or through generic browser mutation RPCs.
 
 # Hosted Durable Jobs
 
-Apply `20260825001100_heavy_job_infrastructure.sql`, then run
+Apply `20260825001100_heavy_job_infrastructure.sql` and forward correction
+`20260825001110_fix_job_enqueue.sql`, then run
 `supabase/tests/database/heavy_jobs_rls.test.sql` in a database-capable
 environment. The migration adds no extension and requires no Redis, Edge
 Function, pg_net, long-running Node process, or VPS.
+
+The corrective migration is required when `01100` has already been applied. It
+repairs the initial job-status enum cast and the database processor's progress
+argument type without changing Cron configuration or function privileges.
 
 For browser-independent lightweight DATABASE jobs:
 

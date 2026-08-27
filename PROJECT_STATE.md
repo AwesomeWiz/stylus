@@ -716,6 +716,42 @@ Resolved on 2026-08-27:
 - formatting, lint and type checking passed; the full suite passed with 93 files
   and 408 tests; the production build passed with `/jobs`
 
+## Manual-QA Durable Enqueue Fix
+
+Resolved on 2026-08-27:
+
+- hosted QA proved the Server Action ran and the trusted `core.test.echo`
+  definition existed, but `public.jobs` remained empty
+- PostgreSQL resolved the original enqueue `CASE` lifecycle expression as
+  `text`; inserting it into the `public.job_status` enum failed with SQLSTATE
+  `42804` at the `insert into public.jobs` statement
+- execution reached the INSERT statement, but PostgreSQL rejected the typed
+  expression before creating a tuple; the failed RPC transaction rolled back
+  with no durable row, explaining the empty `public.jobs` result
+- forward-only migration
+  `20260825001110_fix_job_enqueue.sql` replaces the already-applied function and
+  explicitly casts both initial states to `public.job_status`
+- linked lint also found the hosted database processor passed integer progress
+  `50` to a `smallint` lifecycle RPC; the same forward migration replaces the
+  processor with an explicit `smallint` argument so Cron can complete Core echo
+- safe server diagnostics now retain only enqueue stage, SQLSTATE and normalized
+  category while the browser continues receiving a generic failure
+- pgTAP executes the real enqueue path and now verifies exactly one Core row,
+  initial state/type/scope, cross-organization denial, unknown-type denial,
+  roles, removal and idempotency
+- the 59-assertion database suite also executes the real processor path through
+  100% progress, one attempt, `SUCCEEDED` and bounded
+  `{"acknowledged": true}` result metadata
+- focused regression suite passed: 4 files, 28 tests
+- `npm run verify` passed: formatting, lint, typecheck, 93 files / 410 tests and
+  the production build including `/jobs`
+- linked lint independently reports only the two known hosted function errors,
+  SQLSTATE `42804` and `42883`, because the correction is intentionally pending
+- linked dry run applied nothing and reports exactly
+  `20260825001110_fix_job_enqueue.sql` pending
+- the corrective migration remains unapplied; hosted pgTAP and full lifecycle
+  retest are required after it is applied manually
+
 ---
 
 # Product Direction

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  consoleError: vi.spyOn(console, "error").mockImplementation(() => undefined),
   getContext: vi.fn(),
   maybeSingle: vi.fn(),
   rpc: vi.fn(),
@@ -128,6 +129,31 @@ describe("enqueueRegisteredJob", () => {
     const source = enqueueRegisteredJob.toString();
     expect(source).not.toMatch(
       /input\.organizationId|input\.actorId|providerUrl|modelId/,
+    );
+  });
+
+  it("logs only safe persistence diagnostics while keeping database details internal", async () => {
+    mocks.rpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: "42804",
+        details: "private row detail",
+        message: "column status is of type job_status but expression is text",
+      },
+    });
+    await expect(
+      enqueueRegisteredJob({
+        input: { message: "hello" },
+        jobType: "core.test.echo",
+      }),
+    ).rejects.toThrow("Job could not be enqueued");
+    expect(mocks.consoleError).toHaveBeenCalledWith("Job persistence failed", {
+      category: "database_contract",
+      code: "42804",
+      stage: "enqueue_rpc",
+    });
+    expect(JSON.stringify(mocks.consoleError.mock.calls)).not.toContain(
+      "private row detail",
     );
   });
 });

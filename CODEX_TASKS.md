@@ -27,6 +27,12 @@ Manual-QA hardening:
 
 - job queue, schedule, cancellation and retry buttons explicitly submit their
   Server Action forms; regression coverage protects the form boundary
+- forward migration `20260825001110_fix_job_enqueue.sql` repairs PostgreSQL
+  enum typing in the durable enqueue insert; real-path pgTAP and safe
+  persistence diagnostics cover the hosted failure
+- the same migration repairs the database processor's `smallint` progress call;
+  linked dry run confirms it is the sole pending migration and hosted lifecycle
+  QA remains required
 
 ---
 

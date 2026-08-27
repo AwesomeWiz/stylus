@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(54);
+select plan(59);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -27,7 +27,7 @@ select set_config('request.jwt.claim.role','authenticated',true);
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000111',true);
 
 select lives_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"message":"first"}','first-key','core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"first"}','first-key','core.test.echo') $$,
   '1 owner can enqueue a registered Core-shaped job'
 );
 select results_eq(
@@ -36,23 +36,33 @@ select results_eq(
   '2 enqueue actor is database-derived'
 );
 select results_eq(
-  $$ select (public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"message":"ignored duplicate"}','first-key','core.test.echo')).id $$,
+  $$ select count(*)::integer from public.jobs where idempotency_key='first-key' $$,
+  array[1]::integer[],
+  'owner enqueue creates exactly one durable row'
+);
+select results_eq(
+  $$ select job_type, status, organization_id from public.jobs where idempotency_key='first-key' $$,
+  $$ values ('core.test.echo'::text, 'QUEUED'::public.job_status, '10000000-0000-0000-0000-000000000111'::uuid) $$,
+  'Core echo starts queued with registered type and requested authorized organization'
+);
+select results_eq(
+  $$ select (public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"ignored duplicate"}','first-key','core.test.echo')).id $$,
   $$ select id from public.jobs where idempotency_key='first-key' $$,
   '3 an explicit idempotency key returns the same durable job'
 );
 select lives_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now()+interval '1 hour',2,60,'{"message":"future"}','future-key','core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now()+interval '1 hour',2::smallint,60,'{"message":"future"}','future-key','core.test.echo') $$,
   '4 a future job can be scheduled'
 );
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000113',true);
 select throws_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"message":"viewer"}',null,'core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"viewer"}',null,'core.test.echo') $$,
   '42501','Organization job enqueue permission required','5 VIEWER cannot enqueue'
 );
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000114',true);
 select throws_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"message":"removed"}',null,'core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"removed"}',null,'core.test.echo') $$,
   '42501','Organization job enqueue permission required','6 removed member cannot enqueue'
 );
 
@@ -63,6 +73,14 @@ select results_eq(
   '7 cross-organization jobs are hidden'
 );
 select throws_ok(
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000112',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"cross-org"}',null,'core.test.echo') $$,
+  '42501','Organization job enqueue permission required','owner cannot enqueue into another organization'
+);
+select throws_ok(
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.unknown.job','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"unknown"}',null,'core.test.echo') $$,
+  '22023','Registered job definition required','unknown registered job types remain rejected'
+);
+select throws_ok(
   $$ insert into public.jobs (organization_id,job_type,capability,execution_class,created_by,timeout_seconds) values ('10000000-0000-0000-0000-000000000111','core.forged.job','core.jobs.test','DATABASE','00000000-0000-0000-0000-000000000111',60) $$,
   '42501',null,'8 browser cannot directly forge a job'
 );
@@ -71,7 +89,7 @@ select throws_ok(
   '42501',null,'9 browser cannot forge lifecycle fields'
 );
 select throws_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',99,now(),2,60,'{"message":"forged settings"}',null,'core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',99::smallint,now(),2::smallint,60,'{"message":"forged settings"}',null,'core.test.echo') $$,
   '22023','Registered job definition required','10 browser cannot forge registered execution settings'
 );
 select throws_ok(
@@ -79,7 +97,7 @@ select throws_ok(
   '42501',null,'11 ordinary authenticated users cannot claim work'
 );
 select throws_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111','example','example.test.greeting','example.hello','SERVERLESS',50,now(),1,10,'{"name":"Stylus"}',null,null) $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111','example','example.test.greeting','example.hello','SERVERLESS',50::smallint,now(),1::smallint,10,'{"name":"Stylus"}',null,null) $$,
   '42501','Enabled organization plugin required','12 disabled plugin cannot enqueue'
 );
 select lives_ok(
@@ -87,7 +105,7 @@ select lives_ok(
   '12 owner can enable the application plugin state'
 );
 select lives_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111','example','example.test.greeting','example.hello','SERVERLESS',50,now(),1,10,'{"name":"Stylus"}','plugin-key',null) $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111','example','example.test.greeting','example.hello','SERVERLESS',50::smallint,now(),1::smallint,10,'{"name":"Stylus"}','plugin-key',null) $$,
   '13 enabled plugin provenance can enqueue through the guarded RPC'
 );
 select lives_ok(
@@ -95,13 +113,13 @@ select lives_ok(
   '14 owner can disable the plugin without deleting historical jobs'
 );
 select throws_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111','example','example.test.greeting','example.hello','SERVERLESS',50,now(),1,10,'{"name":"Again"}','plugin-key-2',null) $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111','example','example.test.greeting','example.hello','SERVERLESS',50::smallint,now(),1::smallint,10,'{"name":"Again"}','plugin-key-2',null) $$,
   '42501','Enabled organization plugin required','15 disabled plugin cannot enqueue new work'
 );
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000112',true);
 select lives_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"message":"member"}','member-key','core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"member"}','member-key','core.test.echo') $$,
   '16 MEMBER can enqueue ordinary Core work'
 );
 select lives_ok(
@@ -141,7 +159,7 @@ select is(
   '23 another worker cannot claim the running or future job'
 );
 select lives_ok(
-  $$ select public.report_job_progress((select id from public.jobs where idempotency_key='first-key'),'worker/one',50,'Halfway') $$,
+  $$ select public.report_job_progress((select id from public.jobs where idempotency_key='first-key'),'worker/one',50::smallint,'Halfway') $$,
   '24 the active claimant can report bounded progress'
 );
 select results_eq(
@@ -172,7 +190,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.role','authenticated',true);
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000111',true);
 select lives_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"message":"retry"}','retry-key','core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"retry"}','retry-key','core.test.echo') $$,
   '30 retry test job enqueues'
 );
 set local role service_role;
@@ -198,7 +216,7 @@ select ok(
 set local role authenticated;
 select set_config('request.jwt.claim.role','authenticated',true);
 select lives_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"message":"permanent"}','permanent-key','core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"permanent"}','permanent-key','core.test.echo') $$,
   '35 permanent failure test job enqueues'
 );
 set local role service_role;
@@ -229,7 +247,7 @@ select results_eq(
   '40 manual retry preserves parent lineage'
 );
 select throws_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"api_key":"secret"}','secret-key','core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"api_key":"secret"}','secret-key','core.test.echo') $$,
   '23514',null,'41 secret-shaped metadata is rejected'
 );
 
@@ -243,7 +261,7 @@ set scheduled_at=now()+interval '1 hour',next_attempt_at=now()+interval '1 hour'
 where parent_job_id=(select id from public.jobs where idempotency_key='permanent-key');
 set local role authenticated;
 select lives_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"message":"exhaust"}','exhaust-key','core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"exhaust"}','exhaust-key','core.test.echo') $$,
   '42 exhausted retry test job enqueues'
 );
 set local role service_role;
@@ -293,7 +311,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.role','authenticated',true);
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000111',true);
 select lives_ok(
-  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50,now(),2,60,'{"message":"cron"}','cron-key','core.test.echo') $$,
+  $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"cron"}','cron-key','core.test.echo') $$,
   '50 database processor test job enqueues'
 );
 set local role service_role;
@@ -304,6 +322,10 @@ select lives_ok(
 select ok(
   (select status='SUCCEEDED' and result_metadata='{"acknowledged":true}'::jsonb from public.jobs where idempotency_key='cron-key'),
   '52 actual database handler produces bounded validated result metadata'
+);
+select ok(
+  (select progress=100 and attempt_count=1 from public.jobs where idempotency_key='cron-key'),
+  'database handler reaches 100 percent in one claimed attempt'
 );
 set local role anon;
 select set_config('request.jwt.claim.role','anon',true);

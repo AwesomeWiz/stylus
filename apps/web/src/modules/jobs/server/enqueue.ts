@@ -14,6 +14,30 @@ export interface EnqueueRegisteredJobInput {
   scheduledAt?: Date;
 }
 
+function logEnqueuePersistenceFailure(error: { code?: string }) {
+  const code =
+    typeof error.code === "string" && /^[A-Z0-9]{5,10}$/.test(error.code)
+      ? error.code
+      : "unavailable";
+  const category =
+    code === "42501"
+      ? "authorization"
+      : code === "42804" || code === "42702"
+        ? "database_contract"
+        : code.startsWith("23")
+          ? "constraint"
+          : code.startsWith("22")
+            ? "validation"
+            : code.startsWith("PGRST")
+              ? "database_contract"
+              : "database";
+  console.error("Job persistence failed", {
+    category,
+    code,
+    stage: "enqueue_rpc",
+  });
+}
+
 export async function enqueueRegisteredJob(input: EnqueueRegisteredJobInput) {
   const context = await getCurrentOrganizationContext();
   if (!context) throw new JobAuthorizationError();
@@ -63,6 +87,13 @@ export async function enqueueRegisteredJob(input: EnqueueRegisteredJobInput) {
     p_scheduled_at: input.scheduledAt?.toISOString() ?? null,
     p_timeout_seconds: Math.ceil(definition.timeoutMs / 1_000),
   });
-  if (error || !data) throw new Error("Job could not be enqueued");
+  if (error) {
+    logEnqueuePersistenceFailure(error);
+    throw new Error("Job could not be enqueued");
+  }
+  if (!data) {
+    logEnqueuePersistenceFailure({});
+    throw new Error("Job could not be enqueued");
+  }
   return data;
 }

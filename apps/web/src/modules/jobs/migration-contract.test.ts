@@ -10,6 +10,13 @@ const migration = readFileSync(
   ),
   "utf8",
 );
+const enqueueFixMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825001110_fix_job_enqueue.sql",
+  ),
+  "utf8",
+);
 
 describe("heavy job migration contract", () => {
   it("creates the controlled durable lifecycle and execution classes", () => {
@@ -94,5 +101,19 @@ describe("heavy job migration contract", () => {
     expect(migration).toContain("create function public.process_database_jobs");
     expect(migration).toContain("core.test.echo");
     expect(migration).not.toMatch(/pg_net|net\.http/i);
+  });
+
+  it("replaces enqueue forward-only with explicitly typed lifecycle states", () => {
+    expect(enqueueFixMigration).toContain(
+      "create or replace function public.enqueue_job",
+    );
+    expect(enqueueFixMigration).toContain("'SCHEDULED'::public.job_status");
+    expect(enqueueFixMigration).toContain("'QUEUED'::public.job_status");
+    expect(enqueueFixMigration).toContain(
+      "create or replace function public.process_database_jobs",
+    );
+    expect(enqueueFixMigration).toContain("50::smallint");
+    expect(enqueueFixMigration).toContain("security definer");
+    expect(enqueueFixMigration).toContain("set search_path = ''");
   });
 });
