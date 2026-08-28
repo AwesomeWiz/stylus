@@ -445,11 +445,29 @@ manual retest remains pending; no additional migration is required.
 
 ## TASK-015 — Creative Council V1
 
+Status: IMPLEMENTED / READY FOR MANUAL QA
+
 Initial agents:
 
 - Hook Strategist
 - Script Writer
 - Creative Critic
+
+Implemented as one deterministic synchronous Marketing workflow starting from
+one active Reel Idea. It performs exactly one structured ModelGateway call for
+each agent (`balanced`, `balanced`, `reasoning`), persists immutable run/stage
+history and versioned Reel Briefs, accepts zero-to-three explicitly selected
+completed TASK-014 analyses through an allowlisted projection, and retrieves no
+durable Marketing memory. `/apps/marketing/creative-studio` provides bounded
+context review, pending-safe execution, stage/history inspection, and VIEWER
+read-only access. Database/service idempotency prevents replayed or concurrent
+duplicate runs while a new intentional request creates the next version.
+
+Verification passed: 8 focused files/48 tests, lint, worker/web type checking,
+5 worker files/32 tests, 112 web files/513 tests, and both production builds.
+All TASK-015 files pass formatting. Linked dry-run reports only
+`20260825001500_creative_council_v1.sql` pending; it was not applied. Hosted
+pgTAP and end-to-end manual QA remain required before merge.
 
 ---
 

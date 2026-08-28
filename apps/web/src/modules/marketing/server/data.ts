@@ -7,7 +7,11 @@ import type {
   MarketingCompetitorReelAnalysisRow,
   MarketingCompetitorReelRow,
   MarketingCompetitorReelTranscriptRow,
+  MarketingCreativeCouncilEvidenceRow,
+  MarketingCreativeCouncilRunRow,
+  MarketingCreativeCouncilStageRow,
   MarketingCreativeBriefRow,
+  MarketingReelBriefVersionRow,
   MarketingReelIdeaRow,
   MarketingResearchRow,
 } from "@/lib/supabase/database.types";
@@ -204,4 +208,114 @@ export async function getMarketingOverview(organizationId: string) {
     recentBriefs: briefs.slice(0, 3),
     recentResearch: research.slice(0, 3),
   };
+}
+
+export async function getCreativeStudioData(organizationId: string) {
+  const db = await createServerSupabaseClient();
+  const [ideas, analyses, runs] = await Promise.all([
+    listMarketingReelIdeas(organizationId),
+    rows<MarketingCompetitorReelAnalysisRow>(
+      db
+        .from("marketing_competitor_reel_analyses")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .eq("status", "ANALYZED")
+        .not("completed_at", "is", null)
+        .order("completed_at", { ascending: false })
+        .limit(20),
+      "Creative evidence could not be loaded.",
+    ),
+    rows<MarketingCreativeCouncilRunRow>(
+      db
+        .from("marketing_creative_council_runs")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      "Creative Council history could not be loaded.",
+    ),
+  ]);
+
+  const reelIds = [
+    ...new Set(analyses.map((analysis) => analysis.competitor_reel_id)),
+  ];
+  const reels = reelIds.length
+    ? await rows<MarketingCompetitorReelRow>(
+        db
+          .from("marketing_competitor_reels")
+          .select("*")
+          .eq("organization_id", organizationId)
+          .is("archived_at", null)
+          .in("id", reelIds),
+        "Creative evidence Reels could not be loaded.",
+      )
+    : [];
+  const competitorIds = [
+    ...new Set(reels.map((reel) => reel.marketing_competitor_id)),
+  ];
+  const competitors = competitorIds.length
+    ? await rows<Pick<MarketingCompetitorRow, "id" | "name">>(
+        db
+          .from("marketing_competitors")
+          .select("id,name")
+          .eq("organization_id", organizationId)
+          .is("archived_at", null)
+          .in("id", competitorIds),
+        "Creative evidence competitors could not be loaded.",
+      )
+    : [];
+  const reelById = new Map(reels.map((reel) => [reel.id, reel]));
+  const competitorById = new Map(
+    competitors.map((competitor) => [competitor.id, competitor]),
+  );
+  const eligibleEvidence = analyses.flatMap((analysis) => {
+    const reel = reelById.get(analysis.competitor_reel_id);
+    const competitor = reel
+      ? competitorById.get(reel.marketing_competitor_id)
+      : null;
+    return reel && competitor
+      ? [
+          {
+            analysisId: analysis.id,
+            analysisVersion: analysis.analysis_version,
+            competitorName: competitor.name,
+          },
+        ]
+      : [];
+  });
+
+  const runIds = runs.map((run) => run.id);
+  const [stages, evidence, briefs] = runIds.length
+    ? await Promise.all([
+        rows<MarketingCreativeCouncilStageRow>(
+          db
+            .from("marketing_creative_council_stages")
+            .select("*")
+            .eq("organization_id", organizationId)
+            .in("council_run_id", runIds)
+            .order("created_at", { ascending: true }),
+          "Creative Council stages could not be loaded.",
+        ),
+        rows<MarketingCreativeCouncilEvidenceRow>(
+          db
+            .from("marketing_creative_council_evidence")
+            .select("*")
+            .eq("organization_id", organizationId)
+            .in("council_run_id", runIds)
+            .order("ordinal", { ascending: true }),
+          "Creative Council evidence history could not be loaded.",
+        ),
+        rows<MarketingReelBriefVersionRow>(
+          db
+            .from("marketing_reel_brief_versions")
+            .select("*")
+            .eq("organization_id", organizationId)
+            .in("council_run_id", runIds)
+            .order("created_at", { ascending: false }),
+          "Reel Brief versions could not be loaded.",
+        ),
+      ])
+    : [[], [], []];
+
+  return { briefs, eligibleEvidence, evidence, ideas, runs, stages };
 }

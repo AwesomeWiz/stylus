@@ -380,3 +380,23 @@ Maintain security tests for:
   paths.
 - Activity excludes source URLs, transcript, prompt, provider response, and
   full analysis. No automatic `knowledge_memories` write occurs.
+
+## Creative Council Security
+
+- The browser submits only one Reel Idea ID, up to three analysis IDs, and a
+  request idempotency UUID. Organization, actor, plugin, provider, model, and
+  memory authority are server-derived.
+- New workflow tables are read-only to authenticated clients through Marketing
+  RLS. Only service-role transition functions may mutate them. Start and
+  successful advancement revalidate active role, plugin enablement,
+  organization references, stage order, logical model tier, and AI-run
+  provenance. Failure finalization can only close the matching creator's active
+  stage, even if membership changes during provider execution.
+- The ModelGateway remains the only provider boundary. LOCAL_ONLY cannot fall
+  back remotely; DISABLED, allowlist, and budget denial stop the current stage.
+- Competitor evidence is explicit, same-organization, completed, bounded, and
+  allowlisted. It excludes media, transcript, URLs, Storage paths, raw JSON, and
+  wording selected for imitation.
+- Persisted history contains structured user-facing output and normalized
+  failure metadata only. It contains no prompt, hidden reasoning, provider raw
+  response, credential, or automatic memory promotion.

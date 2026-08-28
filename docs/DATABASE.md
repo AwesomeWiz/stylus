@@ -447,3 +447,29 @@ The private `marketing-reel-media` bucket accepts `video/mp4` objects up to
 from the path. Browser roles cannot write transcripts or analyses; narrow
 service-role broker functions validate worker credential, organization, job,
 claim, lease, Reel, and analysis relationships before signed access or writes.
+
+## Creative Council V1
+
+Migration `20260825001500_creative_council_v1.sql` adds:
+
+- `marketing_creative_council_runs` for source, actor, bounded context snapshot,
+  explicit status/current stage, normalized failure, workflow version, and
+  request idempotency;
+- `marketing_creative_council_evidence` for ordered same-organization TASK-014
+  analysis references and bounded allowlisted projections;
+- `marketing_creative_council_stages` for immutable Hook, Script, or Critique
+  success/failure records with optional same-organization `ai_runs` provenance;
+  and
+- `marketing_reel_brief_versions` for immutable user-facing script packages and
+  monotonically numbered versions per source Reel Idea.
+
+Authenticated clients receive RLS-protected SELECT only. Service-role-only,
+pinned-search-path functions start and advance runs after validating active
+OWNER/ADMIN/MEMBER membership, Marketing enablement, same-organization active
+source/evidence, legal stage order, logical tier, and AI-run provenance. The
+failure transition is service-only and may only terminalize the matching
+creator's current RUNNING stage, allowing safe cleanup if membership changes
+mid-call. Advisory locks plus a unique idempotency key and partial one-active-run
+index prevent duplicate execution. Only the completion function, after Hook and
+Script rows exist and Critic AI succeeded, inserts a Reel Brief. No hard-delete
+or update surface exists for history.
