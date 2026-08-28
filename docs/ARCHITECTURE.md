@@ -431,3 +431,26 @@ The initial architecture prioritizes:
 - low idle cost
 - portability
 - future migration without application redesign
+
+## TASK-014 Media Flow
+
+```text
+authenticated Marketing collaborator
+  -> private organization/Reel Storage path
+  -> persisted EXTERNAL_WORKER job
+  -> paired outbound worker
+  -> claimed-job broker validation
+  -> 60-second signed source download
+  -> fixed ffprobe/FFmpeg + configured/probed whisper.cpp CLI
+  -> bounded broker result persistence
+  -> plugin/policy re-check
+  -> text-only ModelGateway structured interpretation
+  -> versioned Marketing analysis + ai_runs trace
+```
+
+The worker never receives Supabase credentials, a user session, arbitrary
+Storage paths, commands, or scripts. Temporary source/audio files are isolated
+with the whisper.cpp JSON sidecar in one controlled OS temp directory and
+removed on every exit path. Executable/model paths come only from worker-local
+operator configuration, never jobs or browser input. The CLI is spawned without
+a shell; native output and parsed transcript data are bounded before persistence.

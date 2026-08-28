@@ -202,3 +202,12 @@ deleting plugin records; re-enabling restores access.
 Marketing remains outside Core.
 Web Agency can later use the same public contracts while retaining its separate
 system and agency-only memory boundary.
+
+## Marketing Competitor Reel Capability
+
+TASK-014 declares `marketing.competitor-reels.analyze` and the static
+`marketing.competitor-reel.extract` job through the Marketing plugin. Enqueue,
+routes, reads, uploads, and AI continuation all re-check organization plugin
+enablement. A worker already holding a lease may persist deterministic output
+after disablement, but the broker marks the analysis blocked and starts no AI
+run. Re-enabling preserves all history; no Core table depends on this plugin.

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   WorkerApi,
+  WorkerCancelledError,
   WorkerUnauthorizedError,
   WorkerUnexpectedResponseError,
 } from "./api.js";
@@ -87,5 +88,78 @@ describe("worker API", () => {
     await expect(result).rejects.toEqual(
       new WorkerUnexpectedResponseError(500),
     );
+  });
+
+  it("normalizes broker cancellation for cooperative acknowledgement", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: "cancelled" }), {
+        headers: { "content-type": "application/json" },
+        status: 409,
+      }),
+    );
+    await expect(
+      new WorkerApi(
+        "https://stylus.example",
+        "a".repeat(64),
+        fetcher,
+      ).persistExtraction("job", {}),
+    ).rejects.toBeInstanceOf(WorkerCancelledError);
+  });
+
+  it("sends an exact bounded failure report and preserves its safe category", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ scheduled: true }), {
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ status: "FAILED" }), {
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            category: "provider_unavailable",
+            error: "interpretation_failed",
+            retryable: true,
+          }),
+          {
+            headers: { "content-type": "application/json" },
+            status: 409,
+          },
+        ),
+      );
+    const api = new WorkerApi(
+      "https://stylus.example",
+      "a".repeat(64),
+      fetcher,
+    );
+    await api.reportFailure(
+      "40000000-0000-4000-8000-000000000001",
+      "provider_unavailable",
+      true,
+    );
+    expect(JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body))).toEqual({
+      jobId: "40000000-0000-4000-8000-000000000001",
+      payload: { category: "provider_unavailable", retryable: true },
+    });
+    await api.reportFailure(
+      "40000000-0000-4000-8000-000000000002",
+      "validation_failed",
+      false,
+    );
+    expect(JSON.parse(String(fetcher.mock.calls[1]?.[1]?.body))).toEqual({
+      jobId: "40000000-0000-4000-8000-000000000002",
+      payload: { category: "validation_failed", retryable: false },
+    });
+    await expect(api.persistExtraction("job", {})).rejects.toMatchObject({
+      jobFailure: {
+        category: "provider_unavailable",
+        retryable: true,
+      },
+    });
   });
 });

@@ -230,3 +230,42 @@ Research
 
 The system should eventually learn from the startup's own performance
 rather than relying primarily on competitors.
+
+## TASK-014 V1 Implementation
+
+From a Marketing competitor detail, OWNER/ADMIN/MEMBER can upload one manual
+MP4 (100 MiB maximum), optionally attach a credential-free HTTP(S) source URL as
+metadata, and request analysis. Stylus never fetches that URL. VIEWER is
+read-only. A different source file requires a new competitor Reel record.
+
+Each request creates a versioned analysis and one durable external-worker job.
+The worker verifies the real container and 180-second limit with ffprobe,
+extracts mono 16 kHz temporary audio, detects at most 20 scene timestamps with
+a fixed 0.4 threshold, and transcribes locally through an operator-configured
+whisper.cpp CLI and model. It
+persists no WAV or frame gallery. Strategic interpretation receives only a
+bounded transcript, competitor identity, and deterministic media metrics through
+ModelGateway. Results explicitly separate source/extraction from interpretation.
+If interpretation fails, extraction remains persisted for audit, but the job
+lifecycle controls retry and terminal failure state. A scheduled retry does not
+prematurely mark the Reel or analysis failed. V1 retries the complete bounded
+extraction/transcription pipeline rather than resuming at interpretation.
+The strategic result retains its 2,000-character Zod summary limit. For Ollama,
+the provider-facing JSON Schema omits that exact grammar-incompatible repetition
+bound and Stylus validates the returned JSON against the full schema afterward.
+
+Re-analysis preserves prior versions. V1's explicit “Re-extract & analyze”
+control requests a fresh deterministic extraction and transcription; it never
+silently replaces the source or prior results.
+Archival is soft and retains source media, transcript, analyses, AI/job history,
+and Storage consumption. Controlled hard cleanup is deferred. OCR, semantic
+vision/branding, automatic Instagram acquisition, Creative Council generation,
+and automatic Company Memory promotion are outside V1.
+
+The worker accepts whisper.cpp's machine-readable JSON sidecar only from its
+controlled temporary directory. It bounds and validates UTF-8 text, language,
+segment count, deterministic order, and millisecond offsets against the probed
+media duration before broker persistence. Python/faster-whisper/PyAV are not
+used. If FFmpeg, ffprobe, whisper.cpp, its model, or native execution permission
+is unavailable, the worker does not advertise this Marketing capability and the
+job remains queued; unrelated worker diagnostics continue to function.

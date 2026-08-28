@@ -4,6 +4,9 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   MarketingCampaignRow,
   MarketingCompetitorRow,
+  MarketingCompetitorReelAnalysisRow,
+  MarketingCompetitorReelRow,
+  MarketingCompetitorReelTranscriptRow,
   MarketingCreativeBriefRow,
   MarketingReelIdeaRow,
   MarketingResearchRow,
@@ -34,6 +37,53 @@ export async function listMarketingCompetitors(
     ).order("updated_at", { ascending: false }),
     "Marketing competitors could not be loaded.",
   );
+}
+
+export async function getMarketingCompetitorDetail(
+  organizationId: string,
+  competitorId: string,
+) {
+  const db = await createServerSupabaseClient();
+  const { data: competitor, error } = await db
+    .from("marketing_competitors")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("id", competitorId)
+    .maybeSingle();
+  if (error) throw new Error("Marketing competitor could not be loaded.");
+  if (!competitor) return null;
+  const reels = await rows<MarketingCompetitorReelRow>(
+    db
+      .from("marketing_competitor_reels")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .eq("marketing_competitor_id", competitorId)
+      .order("created_at", { ascending: false }),
+    "Competitor Reels could not be loaded.",
+  );
+  const reelIds = reels.map((reel) => reel.id);
+  if (!reelIds.length)
+    return { analyses: [], competitor, reels, transcripts: [] };
+  const [analyses, transcripts] = await Promise.all([
+    rows<MarketingCompetitorReelAnalysisRow>(
+      db
+        .from("marketing_competitor_reel_analyses")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .in("competitor_reel_id", reelIds)
+        .order("analysis_version", { ascending: false }),
+      "Reel analyses could not be loaded.",
+    ),
+    rows<MarketingCompetitorReelTranscriptRow>(
+      db
+        .from("marketing_competitor_reel_transcripts")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .in("competitor_reel_id", reelIds),
+      "Reel transcripts could not be loaded.",
+    ),
+  ]);
+  return { analyses, competitor, reels, transcripts };
 }
 export async function listMarketingCampaigns(
   organizationId: string,

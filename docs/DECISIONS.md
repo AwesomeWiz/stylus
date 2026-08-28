@@ -417,3 +417,57 @@ gates navigation, routes, reads, and writes without destroying data. CRUD emits
 bounded lifecycle activity but never automatically creates memory, AI runs, or
 jobs. This provides stable inputs for later tasks without implementing their
 automation early.
+
+## 2026-08-27 — Competitor Reel Analysis V1 uses bounded local extraction
+
+Competitor Reels are plugin-owned observations under existing Marketing
+competitors and never reuse `marketing_reel_ideas`. V1 accepts manual MP4 upload
+only; an optional source/Instagram URL is non-fetching metadata. Private media,
+transcripts, and analyses are retained through soft archival, while re-analysis
+creates immutable historical versions.
+
+One registered EXTERNAL_WORKER job performs deterministic ffprobe/FFmpeg and
+local whisper.cpp work. The credential-free worker obtains only a short-lived
+signed URL and persists a bounded schema through claimed-job broker RPCs. Native
+commands are fixed repository code with no shell or job-selected
+executable/model. Operator-owned executable/model paths are configured locally,
+probed before capability advertisement, and never accepted from a job.
+
+AI interpretation remains text-only and goes through ModelGateway after fresh
+plugin, membership, and organization-policy checks. OCR, semantic vision,
+Instagram acquisition, automatic memory promotion, and Creative Council
+generation remain deferred, preserving the TASK-015 boundary.
+
+## 2026-08-27 — TASK-014 transcription respects Windows application control
+
+Manual QA confirmed Windows Smart App Control/Code Integrity blocked PyAV
+18.1.0's `av/video/frame.pyd`, preventing faster-whisper from loading. This was
+not a download-zone issue. TASK-014 therefore uses one documented local backend:
+the official whisper.cpp CLI with machine-readable JSON output. The Python
+adapter and Python/faster-whisper/PyAV/CTranslate2 prerequisites were removed.
+
+Stylus never weakens application control. The worker probes the configured CLI
+and readable model before advertising the Marketing capability. A missing,
+incompatible, or blocked CLI leaves Marketing media jobs queued while Core
+worker diagnostics continue. Native binaries/models remain explicit operator
+installations outside Git; the repository controls arguments, temp paths,
+timeouts, cancellation, output bounds, parsing, and cleanup.
+
+## 2026-08-28 — Reel domain failure follows terminal job state
+
+TASK-014 interpretation continues through the trusted ModelGateway after the
+worker persists bounded extraction. Provider failures are normalized and
+reported through the existing worker/job lifecycle. Reel and analysis records
+are not marked failed while a retry is scheduled; the existing database trigger
+owns synchronization when the job becomes terminal. This keeps retry state and
+domain state consistent without a schema change. V1 retries the complete native
+pipeline, and resumable interpretation is intentionally deferred.
+
+## 2026-08-28 — Ollama receives a compatible projection of structured schemas
+
+llama.cpp rejects JSON Schema string repetitions at 2,000 even though Stylus's
+Reel summary bound is valid JSON Schema. Only the Ollama adapter removes
+`maxLength` values at that grammar threshold before provider invocation. The
+application's original Zod schema remains unchanged and validates the returned
+JSON, remote compatible providers receive the original schema, and every call
+still uses ModelGateway policy, routing, budget, and run tracing.

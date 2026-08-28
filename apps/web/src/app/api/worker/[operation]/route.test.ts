@@ -2,11 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createServiceClient: vi.fn(),
+  createSignedUrl: vi.fn(),
+  from: vi.fn(),
+  interpret: vi.fn(),
   rpc: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/service", () => ({
   createServiceSupabaseClient: mocks.createServiceClient,
+}));
+vi.mock("@/modules/marketing/server/reel-interpretation", () => ({
+  interpretCompetitorReel: mocks.interpret,
 }));
 
 import { POST } from "./route";
@@ -34,7 +40,20 @@ async function expectJson(response: Response, status: number, value: unknown) {
 describe("worker broker route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.createServiceClient.mockReturnValue({ rpc: mocks.rpc });
+    mocks.createServiceClient.mockReturnValue({
+      from: mocks.from,
+      rpc: mocks.rpc,
+      storage: { from: () => ({ createSignedUrl: mocks.createSignedUrl }) },
+    });
+    mocks.from.mockReturnValue({
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { status: "RUNNING" },
+        error: null,
+      }),
+      select: vi.fn().mockReturnThis(),
+    });
+    mocks.interpret.mockResolvedValue({ runId: "run" });
   });
 
   it("reaches the broker and returns JSON for empty and malformed pairing input", async () => {
@@ -116,4 +135,306 @@ describe("worker broker route", () => {
       { error: "broker_failure" },
     );
   });
+
+  it("issues short-lived media access only after the owned-job RPC authorizes it", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: {
+        analysisId: "30000000-0000-4000-8000-000000000001",
+        reelId: "20000000-0000-4000-8000-000000000001",
+        sourceSizeBytes: 100,
+        storagePath:
+          "10000000-0000-4000-8000-000000000001/20000000-0000-4000-8000-000000000001/source.mp4",
+      },
+      error: null,
+    });
+    mocks.createSignedUrl.mockResolvedValueOnce({
+      data: { signedUrl: "https://storage.example/signed" },
+      error: null,
+    });
+    const response = await brokerRequest(
+      "media-authorization",
+      { jobId: "40000000-0000-4000-8000-000000000001", payload: {} },
+      "f".repeat(64),
+    );
+    expect(response.status).toBe(200);
+    expect(mocks.createSignedUrl).toHaveBeenCalledWith(
+      expect.stringContaining("/source.mp4"),
+      60,
+    );
+    expect(await response.json()).toMatchObject({
+      downloadUrl: "https://storage.example/signed",
+      sourceSizeBytes: 100,
+    });
+  });
+
+  it("validates bounded extraction before persistence and trusted interpretation", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: {
+        actorId: "50000000-0000-4000-8000-000000000001",
+        analysisId: "30000000-0000-4000-8000-000000000001",
+        interpretationAllowed: true,
+        organizationId: "10000000-0000-4000-8000-000000000001",
+        reelId: "20000000-0000-4000-8000-000000000001",
+      },
+      error: null,
+    });
+    const payload = {
+      analysisId: "30000000-0000-4000-8000-000000000001",
+      averageSceneDuration: 2,
+      cutsPerMinute: 30,
+      durationSeconds: 10,
+      extractionVersion: "ffmpeg-whisper-cpp-v1",
+      frameRate: 30,
+      height: 1920,
+      reelId: "20000000-0000-4000-8000-000000000001",
+      sceneCount: 5,
+      sceneTimestamps: [2],
+      transcript: {
+        durationSeconds: 10,
+        engine: "whisper.cpp",
+        language: "en",
+        model: "base",
+        segments: [{ end: 1, start: 0, text: "Hook" }],
+        text: "Hook",
+      },
+      width: 1080,
+    };
+    const response = await brokerRequest(
+      "persist-extraction",
+      { jobId: "40000000-0000-4000-8000-000000000001", payload },
+      "e".repeat(64),
+    );
+    expect(response.status).toBe(200);
+    expect(mocks.interpret).toHaveBeenCalledWith(
+      expect.objectContaining({
+        analysisId: payload.analysisId,
+        reelId: payload.reelId,
+      }),
+    );
+  });
+
+  it("persists extraction but starts no AI continuation after Marketing is disabled", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: {
+        actorId: "50000000-0000-4000-8000-000000000001",
+        analysisId: "30000000-0000-4000-8000-000000000001",
+        interpretationAllowed: false,
+        organizationId: "10000000-0000-4000-8000-000000000001",
+        reelId: "20000000-0000-4000-8000-000000000001",
+      },
+      error: null,
+    });
+    const payload = {
+      analysisId: "30000000-0000-4000-8000-000000000001",
+      averageSceneDuration: 2,
+      cutsPerMinute: 30,
+      durationSeconds: 10,
+      extractionVersion: "ffmpeg-whisper-cpp-v1",
+      frameRate: 30,
+      height: 1920,
+      reelId: "20000000-0000-4000-8000-000000000001",
+      sceneCount: 5,
+      sceneTimestamps: [2],
+      transcript: {
+        durationSeconds: 10,
+        engine: "whisper.cpp",
+        language: "en",
+        model: "base",
+        segments: [{ end: 1, start: 0, text: "Hook" }],
+        text: "Hook",
+      },
+      width: 1080,
+    };
+    const response = await brokerRequest(
+      "persist-extraction",
+      {
+        jobId: "40000000-0000-4000-8000-000000000001",
+        payload,
+      },
+      "1".repeat(64),
+    );
+    expect(response.status).toBe(200);
+    expect(mocks.interpret).not.toHaveBeenCalled();
+  });
+
+  it("returns a safe retryable AI category without prematurely finalizing analysis state", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    mocks.rpc.mockResolvedValueOnce({
+      data: {
+        actorId: "50000000-0000-4000-8000-000000000001",
+        analysisId: "30000000-0000-4000-8000-000000000001",
+        interpretationAllowed: true,
+        organizationId: "10000000-0000-4000-8000-000000000001",
+        reelId: "20000000-0000-4000-8000-000000000001",
+      },
+      error: null,
+    });
+    mocks.interpret.mockRejectedValueOnce(
+      new (await import("@/modules/ai/errors")).AIError("provider_unavailable"),
+    );
+    const payload = validExtractionPayload();
+    const response = await brokerRequest(
+      "persist-extraction",
+      { jobId: "40000000-0000-4000-8000-000000000001", payload },
+      "2".repeat(64),
+    );
+    await expectJson(response, 409, {
+      category: "provider_unavailable",
+      error: "interpretation_failed",
+      retryable: true,
+    });
+    expect(mocks.from).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain("Hook");
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain("transcript");
+  });
+
+  it("accepts a legitimate failure report and rejects malformed reports", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    mocks.rpc.mockResolvedValueOnce({
+      data: { status: "SCHEDULED" },
+      error: null,
+    });
+    await expectJson(
+      await brokerRequest(
+        "fail",
+        {
+          jobId: "40000000-0000-4000-8000-000000000001",
+          payload: { category: "provider_unavailable", retryable: true },
+        },
+        "3".repeat(64),
+      ),
+      200,
+      { status: "SCHEDULED" },
+    );
+    expect(mocks.rpc).toHaveBeenCalledWith("worker_job_operation", {
+      p_credential: "3".repeat(64),
+      p_job_id: "40000000-0000-4000-8000-000000000001",
+      p_operation: "fail",
+      p_payload: { category: "provider_unavailable", retryable: true },
+    });
+    mocks.rpc.mockResolvedValueOnce({
+      data: { status: "FAILED" },
+      error: null,
+    });
+    await expectJson(
+      await brokerRequest(
+        "fail",
+        {
+          jobId: "40000000-0000-4000-8000-000000000002",
+          payload: { category: "validation_failed", retryable: false },
+        },
+        "4".repeat(64),
+      ),
+      200,
+      { status: "FAILED" },
+    );
+    expect(mocks.rpc).toHaveBeenLastCalledWith("worker_job_operation", {
+      p_credential: "4".repeat(64),
+      p_job_id: "40000000-0000-4000-8000-000000000002",
+      p_operation: "fail",
+      p_payload: { category: "validation_failed", retryable: false },
+    });
+    await expectJson(
+      await brokerRequest(
+        "fail",
+        {
+          jobId: "40000000-0000-4000-8000-000000000001",
+          payload: { category: "unknown", retryable: true },
+        },
+        "6".repeat(64),
+      ),
+      400,
+      { error: "invalid_request" },
+    );
+    expect(consoleError).toHaveBeenCalledWith(
+      "Stylus worker broker operation failed.",
+      expect.objectContaining({
+        stage: "failure_payload_schema",
+        status: 400,
+      }),
+    );
+  });
+
+  it("distinguishes a malformed failure envelope without logging its body", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    await expectJson(
+      await brokerRequest(
+        "fail",
+        {
+          jobId: "not-a-job-id",
+          payload: { category: "validation_failed", retryable: false },
+        },
+        "7".repeat(64),
+      ),
+      400,
+      { error: "invalid_request" },
+    );
+    expect(consoleError).toHaveBeenCalledWith(
+      "Stylus worker broker operation failed.",
+      {
+        operation: "fail",
+        stage: "failure_envelope_schema",
+        status: 400,
+      },
+    );
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain(
+      "not-a-job-id",
+    );
+  });
+
+  it("rejects a lost claim with safe SQLSTATE diagnostics", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { code: "42501" } });
+    await expectJson(
+      await brokerRequest(
+        "fail",
+        {
+          jobId: "40000000-0000-4000-8000-000000000001",
+          payload: { category: "internal_error", retryable: true },
+        },
+        "5".repeat(64),
+      ),
+      401,
+      { error: "unauthorized" },
+    );
+    expect(consoleError).toHaveBeenCalledWith(
+      "Stylus worker broker operation failed.",
+      expect.objectContaining({
+        sqlstate: "42501",
+        stage: "job_operation_rpc",
+      }),
+    );
+  });
 });
+
+function validExtractionPayload() {
+  return {
+    analysisId: "30000000-0000-4000-8000-000000000001",
+    averageSceneDuration: 2,
+    cutsPerMinute: 30,
+    durationSeconds: 10,
+    extractionVersion: "ffmpeg-whisper-cpp-v1",
+    frameRate: 30,
+    height: 1920,
+    reelId: "20000000-0000-4000-8000-000000000001",
+    sceneCount: 5,
+    sceneTimestamps: [2],
+    transcript: {
+      durationSeconds: 10,
+      engine: "whisper.cpp",
+      language: "en",
+      model: "base",
+      segments: [{ end: 1, start: 0, text: "Hook" }],
+      text: "Hook",
+    },
+    width: 1080,
+  };
+}

@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { WorkerHandlerRegistry, workerEchoHandler } from "./registry.js";
+import {
+  createWorkerRegistry,
+  WorkerHandlerRegistry,
+  workerEchoHandler,
+} from "./registry.js";
 
 describe("worker handler registry", () => {
   it("registers only the trusted external diagnostic", async () => {
@@ -43,5 +47,18 @@ describe("worker handler registry", () => {
         },
       ),
     ).rejects.toThrow("Invalid worker diagnostic input");
+  });
+  it("registers the Marketing handler only when fixed media dependencies are available", () => {
+    expect(
+      createWorkerRegistry(null).get("marketing.competitor-reel.extract"),
+    ).toBeUndefined();
+    const handler = createWorkerRegistry({
+      ffmpeg: "ffmpeg",
+      ffprobe: "ffprobe",
+      whisperCpp: "whisper-cli.exe",
+      whisperModelPath: "ggml-base.bin",
+    }).get("marketing.competitor-reel.extract");
+    expect(handler?.capability).toBe("marketing.competitor-reels.analyze");
+    expect(handler?.executionClass).toBe("EXTERNAL_WORKER");
   });
 });

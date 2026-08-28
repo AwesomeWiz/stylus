@@ -14,7 +14,8 @@ import {
   saveConfig,
   workerConfigPath,
 } from "./config.js";
-import { workerRegistry } from "./registry.js";
+import { createWorkerRegistry } from "./registry.js";
+import { detectMediaDependencies } from "./media.js";
 import { WorkerRuntime } from "./runtime.js";
 
 try {
@@ -24,21 +25,32 @@ try {
     const stylusUrl = (await io.question("Stylus URL: ")).trim();
     const token = (await io.question("One-time pairing code: ")).trim();
     io.close();
-    const paired = await new WorkerApi(stylusUrl).pair(token);
+    const media = await detectMediaDependencies();
+    const capabilities = media
+      ? (["core.worker.echo", "marketing.competitor-reels.analyze"] as const)
+      : (["core.worker.echo"] as const);
+    const paired = await new WorkerApi(stylusUrl, undefined, fetch, [
+      ...capabilities,
+    ]).pair(token);
     await saveConfig({ ...paired, stylusUrl });
     console.log(
       `Paired ${paired.name}. Credential stored at ${workerConfigPath()}.`,
     );
   } else if (command === "start") {
     const config = await loadConfig();
+    const media = await detectMediaDependencies();
+    const capabilities = media
+      ? (["core.worker.echo", "marketing.competitor-reels.analyze"] as const)
+      : (["core.worker.echo"] as const);
     const controller = new AbortController();
     process.once("SIGINT", () => controller.abort("shutdown"));
     process.once("SIGTERM", () => controller.abort("shutdown"));
     console.log(`Starting ${config.name} (${config.workerId.slice(0, 8)}).`);
     try {
-      await new WorkerRuntime(apiForConfig(config), workerRegistry).run(
-        controller.signal,
-      );
+      await new WorkerRuntime(
+        apiForConfig(config, undefined, [...capabilities]),
+        createWorkerRegistry(media),
+      ).run(controller.signal);
     } catch (error) {
       console.error(
         error instanceof WorkerUnauthorizedError
@@ -50,7 +62,11 @@ try {
   } else if (command === "status") {
     try {
       const config = await loadConfig();
-      await apiForConfig(config).heartbeat();
+      const media = await detectMediaDependencies();
+      const capabilities = media
+        ? (["core.worker.echo", "marketing.competitor-reels.analyze"] as const)
+        : (["core.worker.echo"] as const);
+      await apiForConfig(config, undefined, [...capabilities]).heartbeat();
       console.log(
         `${config.name} is configured and reachable (${config.workerId.slice(0, 8)}).`,
       );

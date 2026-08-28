@@ -268,3 +268,25 @@ Optimize initially for:
 - simple operations
 
 Do not optimize for hypothetical massive scale.
+
+## TASK-014 Hosted and Worker Setup
+
+1. Apply `20260825001400_competitor_reel_analysis.sql` after TASK-013. It
+   creates private Storage, Marketing media tables, job registration, RLS, and
+   narrow service-role broker functions.
+2. Keep `SUPABASE_SERVICE_ROLE_KEY` only in the hosted Next.js environment.
+3. On the optional Windows worker, install FFmpeg/ffprobe and an
+   organization-approved official whisper.cpp Windows release. Download a
+   multilingual base GGML model explicitly, then configure
+   `STYLUS_WORKER_WHISPER_CPP_PATH` and `STYLUS_WORKER_WHISPER_MODEL_PATH`.
+   Follow `docs/WINDOWS_WORKER.md`; no native binary or model is downloaded by
+   Stylus.
+4. Re-pair the worker after migration, then start it outbound-only.
+
+No Instagram credentials, browser automation, paid transcription provider,
+public bucket, inbound laptop port, VPS, or new queue is required. Offline
+worker jobs remain queued while the hosted app stays available. Archived media
+continues consuming Storage until a future controlled cleanup feature exists.
+Python, faster-whisper, PyAV, and CTranslate2 are no longer TASK-014 deployment
+dependencies. Keep Windows Smart App Control and Code Integrity enabled; a
+blocked whisper.cpp executable means the capability remains unavailable.

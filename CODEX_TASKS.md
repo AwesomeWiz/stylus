@@ -398,16 +398,48 @@ or comments are part of TASK-013.
 
 ## TASK-014 — Competitor Reel Analysis
 
-Planned scope:
+Implemented on `codex/task-014-competitor-reel-analysis`:
 
-- manual Reel/video ingestion
-- media job
-- audio extraction
-- transcription
-- scene detection
-- representative frames
-- OCR where appropriate
-- structured creative analysis
+- manual MP4 upload with optional metadata-only source URL
+- private organization-scoped `marketing-reel-media` Storage
+- distinct competitor Reel, bounded transcript, and versioned analysis records
+- durable `marketing.competitor-reel.extract` EXTERNAL_WORKER job
+- fixed FFmpeg/ffprobe metadata, audio, and bounded scene-cut extraction
+- fixed shell-free whisper.cpp local transcription with bounded JSON parsing
+- narrow claimed-job signed-download and result-persistence broker operations
+- text-only structured ModelGateway interpretation and ordinary `ai_runs` trace
+- archive/restore, cancellation, re-analysis, activity, role, plugin, and RLS boundaries
+- no Instagram download/scraping, OCR, semantic vision, or automatic memory write
+
+The hosted migration is applied. Manual QA proved the native extraction and
+transcript path, then exposed a LOCAL_ONLY Ollama `provider_unavailable` failure
+after ModelGateway run initialization. Corrective work preserves the normalized
+AI category through the worker failure report and leaves domain failure state to
+the terminal-job synchronization trigger. The exhausted QA job is DEAD_LETTER;
+use a new analysis version for retest. Do not begin TASK-015 until TASK-014
+manual QA is accepted.
+
+Second QA proved Ollama connectivity and isolated its grammar rejection to the
+generated `summary.maxLength: 2000`, equal to llama.cpp's rejected repetition
+threshold. The Ollama adapter removes only unrepresentable large string bounds;
+the original Zod schema still validates every returned object. Structured HTTP
+400 maps to terminal `validation_failed`. Hosted state confirms the legitimate
+failure report reached the RPC and produced FAILED attempt 1/3; added exact
+serializer/broker tests and split safe envelope/payload diagnostics cover the
+separately observed 400 without loosening the contract.
+
+Manual-QA corrective hardening replaces Python/faster-whisper/PyAV after Windows
+Smart App Control blocked PyAV 18.1.0. The worker now requires explicitly
+configured whisper.cpp executable/model paths, validates the complete native
+runtime before advertising the Marketing capability, and preserves the existing
+bounded transcript and broker contract without a database migration. Stylus
+does not disable or weaken Windows application-control policy.
+
+Corrective verification: formatting, lint, worker/web typechecks, 30 worker
+tests, 468 web tests (498 total), and worker/web production builds passed. No
+dependency or migration change was required. Hosted whisper.cpp manual QA
+reached transcript persistence successfully. Interpretation/failure-lifecycle
+manual retest remains pending; no additional migration is required.
 
 ---
 

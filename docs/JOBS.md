@@ -181,3 +181,31 @@ Use a non-production test organization and never expose a service-role key:
 
 Re-enable Cron after controlled failure/cancellation tests. Do not attempt to run
 SERVERLESS or EXTERNAL_WORKER work until a corresponding trusted adapter exists.
+
+## Marketing Competitor Reel Job
+
+TASK-014 registers `marketing.competitor-reel.extract` as a static
+`EXTERNAL_WORKER` definition with required idempotency, three bounded attempts,
+a 15-minute timeout, and a Marketing concurrency group. The atomic enqueue RPC
+creates the next analysis version and its job together, preventing duplicate
+active versions. Job metadata contains only Reel/analysis UUIDs; transcripts,
+media, prompts, and structured results remain in domain tables/Storage.
+
+Transient network/runtime failures may retry through TASK-011. Invalid or
+over-duration media is permanent. Missing FFmpeg, ffprobe, whisper.cpp, its
+configured model, or permission to execute the native CLI means the
+worker does not advertise the capability, so work stays queued while Stylus
+remains available. Cancellation uses the existing lease/AbortSignal lifecycle
+and terminal job changes synchronize Reel/analysis status.
+
+Extraction persistence invokes the trusted hosted interpretation while the job
+lease remains active. A normalized interpretation failure is returned to the
+worker and reported through the ordinary failure operation; domain records are
+not prematurely marked failed while TASK-011 schedules a retry. Only terminal
+job state synchronizes the Reel/analysis failure state. Each retry currently
+repeats the bounded extraction/transcription pipeline before interpretation.
+An AI `invalid_response` becomes non-retryable `validation_failed`, so FAILED on
+attempt 1/3 is intentional: the remaining attempts are a ceiling, not a promise
+to retry permanent validation defects. The worker serializes that exact category
+and `retryable: false`; broker diagnostics distinguish malformed envelopes,
+malformed payloads, and RPC/claim failures without logging request bodies.

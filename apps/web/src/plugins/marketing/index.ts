@@ -1,11 +1,14 @@
 import { definePlugin } from "@/core/plugins/public";
+import { competitorReelExtractJob } from "./competitor-reel-extract";
 
 export const marketingPlugin = definePlugin({
+  jobDefinitions: [competitorReelExtractJob],
   manifest: {
     capabilities: [
       "marketing.overview.read",
       "marketing.competitors.read",
       "marketing.competitors.write",
+      "marketing.competitor-reels.analyze",
       "marketing.reels.read",
       "marketing.reels.write",
       "marketing.campaigns.read",
@@ -65,6 +68,7 @@ export const marketingPlugin = definePlugin({
       "marketing.overview.read",
       "marketing.competitors.read",
       "marketing.competitors.write",
+      "marketing.competitor-reels.analyze",
       "marketing.reels.read",
       "marketing.reels.write",
       "marketing.campaigns.read",

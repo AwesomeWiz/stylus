@@ -117,6 +117,16 @@ export type MarketingCampaignStatus =
 export type MarketingResearchCategory =
   "CUSTOMER" | "COMPETITOR" | "TREND" | "CONTENT" | "OTHER";
 export type MarketingBriefStatus = "DRAFT" | "READY" | "APPROVED";
+export type MarketingReelProcessingStatus =
+  | "UPLOADING"
+  | "UPLOADED"
+  | "QUEUED"
+  | "PROCESSING"
+  | "ANALYZED"
+  | "FAILED"
+  | "CANCELLED";
+export type MarketingReelAnalysisStatus =
+  "QUEUED" | "PROCESSING" | "ANALYZED" | "FAILED" | "CANCELLED" | "BLOCKED";
 
 type MarketingAuditRow = {
   archived_at: string | null;
@@ -171,6 +181,51 @@ export type MarketingCreativeBriefRow = MarketingAuditRow & {
   title: string;
   tone_direction: string | null;
   visual_direction: string | null;
+};
+export type MarketingCompetitorReelRow = MarketingAuditRow & {
+  average_scene_duration: number | null;
+  cuts_per_minute: number | null;
+  duration_seconds: number | null;
+  extraction_version: string | null;
+  frame_rate: number | null;
+  height: number | null;
+  marketing_competitor_id: string;
+  original_filename: string | null;
+  processing_status: MarketingReelProcessingStatus;
+  scene_count: number | null;
+  scene_timestamps: unknown;
+  source_size_bytes: number;
+  source_url: string | null;
+  storage_path: string;
+  width: number | null;
+};
+export type MarketingCompetitorReelTranscriptRow = {
+  created_at: string;
+  competitor_reel_id: string;
+  duration_seconds: number;
+  engine: string;
+  id: string;
+  language: string | null;
+  model: string;
+  organization_id: string;
+  segments: unknown;
+  text: string;
+};
+export type MarketingCompetitorReelAnalysisRow = {
+  ai_run_id: string | null;
+  analysis_version: number;
+  competitor_reel_id: string;
+  completed_at: string | null;
+  created_at: string;
+  created_by: string;
+  error_category: string | null;
+  extraction_version: string;
+  id: string;
+  job_id: string | null;
+  organization_id: string;
+  schema_version: string;
+  status: MarketingReelAnalysisStatus;
+  structured_result: unknown;
 };
 export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
 
@@ -787,6 +842,24 @@ export type Database = {
         Update: MarketingUpdate<MarketingCreativeBriefRow>;
         Relationships: [];
       };
+      marketing_competitor_reels: {
+        Row: MarketingCompetitorReelRow;
+        Insert: MarketingInsert<MarketingCompetitorReelRow>;
+        Update: MarketingUpdate<MarketingCompetitorReelRow>;
+        Relationships: [];
+      };
+      marketing_competitor_reel_transcripts: {
+        Row: MarketingCompetitorReelTranscriptRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_competitor_reel_analyses: {
+        Row: MarketingCompetitorReelAnalysisRow;
+        Insert: never;
+        Update: Partial<MarketingCompetitorReelAnalysisRow>;
+        Relationships: [];
+      };
       organization_invitations: {
         Row: OrganizationInvitationRow;
         Insert: never;
@@ -903,6 +976,51 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      enqueue_competitor_reel_analysis: {
+        Args: { p_organization_id: string; p_reel_id: string };
+        Returns: MarketingCompetitorReelAnalysisRow;
+      };
+      worker_authorize_reel_media: {
+        Args: { p_credential: string; p_job_id: string };
+        Returns: Record<string, unknown>;
+      };
+      worker_persist_reel_extraction: {
+        Args: {
+          p_credential: string;
+          p_job_id: string;
+          p_payload: Record<string, unknown>;
+        };
+        Returns: Record<string, unknown>;
+      };
+      start_marketing_reel_ai_run: {
+        Args: {
+          p_capability: string;
+          p_id: string;
+          p_job_id: string;
+          p_operation: string;
+          p_requested_tier: AILogicalTierRecord;
+          p_trace_metadata: Record<string, unknown>;
+        };
+        Returns: AIRunRow;
+      };
+      complete_marketing_reel_ai_run: {
+        Args: {
+          p_duration_ms: number;
+          p_error_category: AIErrorCategoryRecord | null;
+          p_estimated_cost_usd: number | null;
+          p_id: string;
+          p_input_tokens: number | null;
+          p_is_remote: boolean | null;
+          p_job_id: string;
+          p_output_tokens: number | null;
+          p_provider_id: string | null;
+          p_selected_model_id: string | null;
+          p_status: AIRunStatus;
+          p_total_tokens: number | null;
+          p_trace_metadata: Record<string, unknown>;
+        };
+        Returns: AIRunRow;
+      };
       accept_organization_invitation: {
         Args: { p_token: string };
         Returns: string;

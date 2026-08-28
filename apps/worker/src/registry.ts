@@ -1,4 +1,5 @@
 import type { ClaimedJob, WorkerApi } from "./api.js";
+import { extractCompetitorReel, type MediaDependencies } from "./media.js";
 
 export interface HandlerContext {
   api: WorkerApi;
@@ -6,7 +7,7 @@ export interface HandlerContext {
   signal: AbortSignal;
 }
 export interface WorkerHandler {
-  capability: "core.worker.echo";
+  capability: "core.worker.echo" | "marketing.competitor-reels.analyze";
   executionClass: "EXTERNAL_WORKER";
   jobType: string;
   timeoutMs: number;
@@ -75,7 +76,25 @@ export const workerEchoHandler: WorkerHandler = {
   },
 };
 
-export const workerRegistry = new WorkerHandlerRegistry([workerEchoHandler]);
+export function createWorkerRegistry(dependencies: MediaDependencies | null) {
+  return new WorkerHandlerRegistry([
+    workerEchoHandler,
+    ...(dependencies
+      ? [
+          {
+            capability: "marketing.competitor-reels.analyze" as const,
+            executionClass: "EXTERNAL_WORKER" as const,
+            jobType: "marketing.competitor-reel.extract",
+            timeoutMs: 15 * 60 * 1000,
+            run: (input: unknown, context: HandlerContext) =>
+              extractCompetitorReel(input, { ...context, dependencies }),
+          },
+        ]
+      : []),
+  ]);
+}
+
+export const workerRegistry = createWorkerRegistry(null);
 export function handlerForClaim(
   registry: WorkerHandlerRegistry,
   job: ClaimedJob,

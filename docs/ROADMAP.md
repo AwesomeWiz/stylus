@@ -215,17 +215,20 @@ TASK-017, and AI creative generation in the later Creative Council phases.
 
 ## Phase 11 — Competitor Reel Intelligence
 
-- [ ] media ingestion
-- [ ] audio extraction
-- [ ] transcription
-- [ ] scene detection
-- [ ] representative frames
-- [ ] text-overlay extraction
-- [ ] visual analysis
-- [ ] hook analysis
-- [ ] script analysis
-- [ ] brand analysis
-- [ ] structured competitor intelligence
+- [x] manual MP4 media ingestion
+- [x] bounded audio extraction
+- [x] local transcription
+- [x] deterministic scene/cut detection
+- [ ] representative-frame persistence (deferred)
+- [ ] text-overlay extraction/OCR (deferred)
+- [x] deterministic media metrics
+- [x] transcript-based hook analysis
+- [x] transcript-based script analysis
+- [ ] semantic visual brand analysis (requires future vision foundation)
+- [x] versioned structured competitor intelligence
+
+TASK-014 V1 is implemented and awaits hosted migration/manual QA. TASK-015 must
+not begin until that QA is accepted.
 
 ---
 

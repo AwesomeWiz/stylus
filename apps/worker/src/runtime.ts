@@ -1,4 +1,9 @@
-import { WorkerUnauthorizedError, type WorkerApi } from "./api.js";
+import {
+  WorkerApiError,
+  WorkerCancelledError,
+  WorkerUnauthorizedError,
+  type WorkerApi,
+} from "./api.js";
 import { handlerForClaim, type WorkerHandlerRegistry } from "./registry.js";
 
 export class WorkerRuntime {
@@ -29,10 +34,7 @@ export class WorkerRuntime {
     if (!job) return;
     const handler = handlerForClaim(this.registry, job);
     if (!handler) {
-      await this.api.operation("fail", job.id, {
-        category: "permanent_failure",
-        retryable: false,
-      });
+      await this.api.reportFailure(job.id, "permanent_failure", false);
       return;
     }
     const controller = new AbortController();
@@ -61,14 +63,26 @@ export class WorkerRuntime {
       if (controller.signal.aborted)
         throw new Error(String(controller.signal.reason));
       await this.api.operation("complete", job.id, { result });
-    } catch {
+    } catch (error) {
       const reason = String(controller.signal.reason ?? "");
-      if (reason === "cancelled") await this.api.operation("cancel", job.id);
-      else
-        await this.api.operation("fail", job.id, {
-          category: reason === "timeout" ? "timeout" : "internal_error",
-          retryable: reason !== "shutdown",
-        });
+      if (reason === "cancelled" || error instanceof WorkerCancelledError)
+        await this.api.operation("cancel", job.id);
+      else {
+        const message = error instanceof Error ? error.message : "";
+        const permanent = /^(invalid_|media_duration_exceeded)/.test(message);
+        const brokerFailure =
+          error instanceof WorkerApiError ? error.jobFailure : undefined;
+        await this.api.reportFailure(
+          job.id,
+          brokerFailure?.category ??
+            (reason === "timeout"
+              ? "timeout"
+              : permanent
+                ? "permanent_failure"
+                : "internal_error"),
+          brokerFailure?.retryable ?? (reason !== "shutdown" && !permanent),
+        );
+      }
     } finally {
       clearInterval(leaseTimer);
       clearTimeout(timeout);

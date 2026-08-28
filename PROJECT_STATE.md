@@ -1,10 +1,10 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-27
+Last Updated: 2026-08-28
 
 ## Overall Status
 
-TASK-013 MARKETING PLUGIN FOUNDATION / READY FOR MANUAL QA
+TASK-014 COMPETITOR REEL ANALYSIS / CORRECTIVE VERIFICATION
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces for competitors, campaigns, Reel ideas,
@@ -14,17 +14,19 @@ research, and creative briefs, plus a compact operational overview.
 
 ## Current Phase
 
-Phase 10 — Marketing Foundation
+Phase 11 — Competitor Reel Analysis
 
-Status: TASK-013 READY FOR MANUAL QA
+Status: TASK-014 MANUAL-QA CORRECTIVE WORK
 
 ---
 
 ## Current Objective
 
-TASK-013 is current on `codex/task-013`. Apply the forward Marketing migrations,
-run the Marketing RLS pgTAP suite, and complete the documented role, enablement,
-archival, activity, and cross-organization manual QA. Do not start TASK-014.
+TASK-014 remains current on `codex/task-014-competitor-reel-analysis`. A second
+real Windows run proved the complete native and Ollama connectivity path, then
+reproduced an Ollama grammar failure from the Reel schema's 2,000-character
+summary bound. Corrective verification and another new analysis version are
+required. Do not start TASK-015.
 
 ---
 
@@ -895,7 +897,7 @@ Media:
 - OpenCV
 
 Transcription:
-- faster-whisper or equivalent local implementation
+- local whisper.cpp CLI with operator-installed model
 
 ---
 
@@ -931,8 +933,9 @@ Marketing worker handlers remain deferred.
 
 # Next Recommended Action
 
-Apply the two TASK-013 migrations in order, run Marketing pgTAP, and complete
-the documented role and organization-isolation manual QA. Do not begin TASK-014.
+Complete TASK-014 interpretation/failure-lifecycle corrective verification,
+create the separate fix commit, then repeat hosted Windows-worker manual QA with
+Smart App Control enabled and Ollama reachable. Do not begin TASK-015.
 
 ---
 
@@ -946,8 +949,58 @@ Read:
 4. docs/ROADMAP.md
 5. docs/DECISIONS.md
 
-TASK-013 is current on `codex/task-013`. Apply
-`20260825001300_extend_marketing_activity_enums.sql` followed by
-`20260825001310_marketing_plugin_foundation.sql`, run
-`marketing_plugin_rls.test.sql`, and execute the TASK-013 manual QA checklist.
-TASK-014 remains deferred.
+TASK-014 is implemented on `codex/task-014-competitor-reel-analysis`; its hosted
+migration is applied. Real Windows QA completed extraction and transcript
+persistence, then ModelGateway recorded a LOCAL_ONLY Ollama
+`provider_unavailable` failure before structured interpretation could persist.
+The affected job exhausted its bounded retries and is now `DEAD_LETTER`; it must
+not be executed again.
+
+V1 accepts manually uploaded MP4 files only (100 MiB maximum, 180 seconds
+maximum analyzed duration). A source/Instagram URL is bounded metadata and is
+never fetched. Private organization-scoped Storage holds source media;
+archiving preserves media and history until a future controlled cleanup tool.
+
+The optional outbound Windows worker performs fixed FFmpeg/ffprobe extraction
+and local whisper.cpp transcription, then the hosted application performs
+text-only structured interpretation through ModelGateway. OCR, semantic vision,
+Instagram acquisition, automatic memory promotion, and TASK-015 Creative
+Council work remain deferred. Local database lint/pgTAP are pending because the
+current machine has no Docker/Podman PostgreSQL stack.
+
+TASK-014 corrective hardening removes the Python/faster-whisper/PyAV/CTranslate2
+runtime because Windows Smart App Control blocked PyAV 18.1.0 during manual QA.
+Stylus does not weaken Windows security. The worker now advertises Marketing
+analysis only when its configured whisper.cpp CLI executes successfully, its
+model is readable, and the required structured-output contract is available.
+Corrective verification passed formatting, lint, both typechecks, 30 worker
+tests, 468 web tests (498 total), and both production builds. No dependency or
+database migration changed.
+
+The interpretation correction preserves the safe ModelGateway route and
+lets the existing terminal-job trigger own Reel/analysis failure state instead
+of marking domain records failed while a retry is scheduled. The broker returns
+a normalized retry category to the worker, the worker preserves it in the
+dedicated failure report, and safe server diagnostics identify request-schema
+versus RPC/claim failures without logging media, transcripts, tokens, or
+credentials. A retry currently repeats deterministic extraction and local
+transcription before interpretation; resumable interpretation is deferred.
+
+Second Windows QA reached Ollama with `qwen3:1.7b`. The exact strategic schema
+contains `summary.maxLength: 2000`; llama.cpp's grammar parser rejects a single
+repetition count at its 2,000 sanity threshold. Synthetic requests reproduce 400
+at 2,000 and succeed at 1,999. The Ollama adapter now omits only string bounds it
+cannot represent, while the unchanged Zod schema remains the authoritative
+post-response validator. Structured HTTP 400 is normalized as
+`invalid_response`, which maps to non-retryable `validation_failed`.
+
+Hosted metadata shows the QA job is `FAILED` at attempt 1/3 with
+`validation_failed`. That terminal row proves its authenticated failure report
+reached the database RPC; the separately observed `/fail` 400 was not the
+accepted report's response. Exact `validation_failed`/`false` serializer and
+broker coverage is now permanent, and safe diagnostics distinguish malformed
+failure envelopes from malformed payloads without logging either body.
+Earlier provider tests used small synthetic schemas and mocked HTTP, so they
+never exercised llama.cpp's grammar threshold. Earlier failure tests covered
+`provider_unavailable`/`true`, not the exact `validation_failed`/`false` pair or
+the persisted hosted transition.

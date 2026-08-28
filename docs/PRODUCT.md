@@ -421,3 +421,16 @@ Agency data and memory remain isolated by default.
 Stylus should remain useful even when AI functionality is unavailable.
 
 Core collaboration functionality must not depend on AI services.
+
+## Competitor Reel Analysis V1
+
+Marketing collaborators may attach a permitted MP4 to an existing Marketing
+competitor and review deterministic media metrics, a local transcript, and a
+versioned strategic interpretation. Files are limited to 100 MiB and analysis
+to 180 seconds. Optional Instagram/source URLs are metadata only: Stylus does
+not download, scrape, authenticate to, or automate Instagram.
+
+V1 supports transcript-derived hooks, script structure, content angle, CTA,
+pacing, reusable patterns, and deterministic resolution/frame-rate/cut metrics.
+It does not provide OCR or semantic visual/branding understanding and does not
+promote results to Company Memory. Creative generation belongs to TASK-015.

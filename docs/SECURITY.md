@@ -362,3 +362,21 @@ Maintain security tests for:
 - plugin permissions
 - file access
 - worker authentication
+
+## Competitor Reel Security
+
+- Upload preparation derives actor and organization from the authenticated
+  session; OWNER, ADMIN, and MEMBER may mutate while VIEWER is read-only.
+- Storage is private, organization-scoped, MIME/size bounded, and protected by
+  Marketing enablement plus membership RLS.
+- A source URL permits only bounded credential-free HTTP(S) metadata and is
+  never fetched by CRUD or the worker.
+- The service-role key remains hosted-server-only. The worker receives a
+  60-second signed URL only after credential, organization, active claim, lease,
+  job type, Reel, and storage path are derived and verified by PostgreSQL.
+- Worker results are schema/size bounded and cannot select a table or path.
+- FFmpeg and Python use repository-selected executables/scripts and argument
+  arrays with `shell: false`; job input cannot supply commands or filesystem
+  paths.
+- Activity excludes source URLs, transcript, prompt, provider response, and
+  full analysis. No automatic `knowledge_memories` write occurs.
