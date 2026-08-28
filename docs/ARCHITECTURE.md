@@ -476,3 +476,32 @@ bounded text stages. Static agent and Zod contracts can later move behind a
 persisted job without changing their semantics. V1 retrieves no durable
 Marketing memory, registers no tools, and has no cancellation or recursive
 execution.
+
+## Future Creative Council Interaction Modes
+
+Creative Studio distinguishes reusable council infrastructure from its product
+interactions:
+
+```text
+Create: structured source -> finite workflow -> persisted artifact
+Ask:    team question -> bounded router -> selected finite workflow
+        -> synthesized team-facing answer
+```
+
+Create and Ask Council must not be forced into one generic chat abstraction.
+TASK-016 should define expanded specialist contracts and bounded orchestration
+primitives that can serve either mode without coupling every specialist to Reel
+Brief generation. TASK-020 owns the later conversational product and must begin
+with discovery rather than inheriting a speculative schema from V1.
+
+Ask routing is server-authoritative and code-defined. It selects the smallest
+approved specialist workflow, applies explicit call/context/cost/stopping
+limits, and routes all inference through ModelGateway logical tiers. It never
+spawns arbitrary agents, exposes raw chain-of-thought, or enables arbitrary
+tools. TASK-017 research and TASK-018 performance evidence remain separate
+authorized inputs, not implicit consequences of asking a question.
+
+Future context access repeats organization membership, Marketing enablement,
+RBAC, AI-policy, and memory-domain checks. Manifest declarations do not grant
+retrieval, agency memory remains isolated, working records are not automatically
+promoted, and no Ask Council workflow automatically writes memory.

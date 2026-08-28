@@ -317,3 +317,28 @@ Hook Strategist and Script Writer request `balanced`; Creative Critic requests
 loop around the gateway. The agent definitions register no tools. V1 obtains
 canonical Company Knowledge through the Core server interface but never invokes
 the durable memory retrieval context builder and never writes memory.
+
+## Future Ask Creative Council Boundary
+
+Ask Creative Council is a separate future advisory interaction over reusable
+council contracts, not a redesign of TASK-015 and not a general-purpose agent
+chat runtime. A server-authoritative router must map each validated Marketing
+question to the smallest approved finite workflow, select only relevant
+specialists, and produce a bounded synthesized answer. It must not call the
+entire council by default, spawn arbitrary agents, or recursively continue until
+a model claims satisfaction.
+
+Every specialist and synthesis call continues through ModelGateway using
+logical tiers and normal organization policy, provider allowlist, budget,
+timeout, trace, and structured-output enforcement. The future workflow must set
+explicit call, context, cost, latency, and stopping limits. It remains
+provider-neutral and must never bind Marketing architecture to a particular
+Ollama or hosted model.
+
+Authorized context must be requested explicitly through bounded Core/Marketing
+interfaces. Plugin manifest `memoryDomains` remains trace metadata, agency
+memory remains inaccessible, and neither questions nor answers automatically
+become durable memory. External research is a distinct TASK-017 capability that
+only an explicitly approved research workflow may invoke. User-facing answers
+may contain concise structured perspectives and disagreement, but never raw
+chain-of-thought, provider responses, or fabricated internal-agent dialogue.

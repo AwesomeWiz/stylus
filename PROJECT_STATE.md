@@ -4,28 +4,29 @@ Last Updated: 2026-08-28
 
 ## Overall Status
 
-TASK-015 CREATIVE COUNCIL V1 / READY FOR MANUAL QA
+TASK-015 COMPLETE / TASK-016 NEXT
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces for competitors, campaigns, Reel ideas,
-research, and creative briefs, plus a compact operational overview.
+research, and creative briefs, plus a compact operational overview and the
+bounded Creative Studio Create workflow.
 
 ---
 
 ## Current Phase
 
-Phase 12 — Creative Council V1
+Phase 13 — Creative Council Expansion
 
-Status: TASK-015 IMPLEMENTED / AUTOMATED VERIFICATION PASSED
+Status: TASK-016 NEXT / NOT STARTED
 
 ---
 
 ## Current Objective
 
-TASK-015 is current on `codex/task-015-creative-council-v1`. The approved bounded
-Hook Strategist -> Script Writer -> Creative Critic workflow, immutable Reel
-Brief versions, Creative Studio, and safe structured Reasoning History are
-implemented and ready for hosted migration/manual QA. Do not start TASK-016.
+TASK-015 passed manual QA and was merged into `main` as `7a17d2b`. Record the
+approved future distinction between bounded Create workflows and the separate
+Ask Creative Council advisory mode. TASK-016 remains the exact next repository
+implementation task and has not started.
 
 ---
 
@@ -837,6 +838,12 @@ no hosted change was applied. Linked database lint reports no existing-schema
 errors. Local pgTAP could not run because Docker, Podman, and local PostgreSQL
 are unavailable.
 
+Hosted manual QA was subsequently accepted, and TASK-015 was externally merged
+into `main` as `7a17d2b` on 2026-08-28. Its V1 contract remains exactly three
+successful tool-free structured calls—Hook Strategist, Script Writer, and
+Creative Critic—producing a versioned Reel Brief with safe structured Reasoning
+History and no durable memory retrieval or write.
+
 ---
 
 # Product Direction
@@ -954,52 +961,48 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-015 Creative Council V1 is implemented on
-`codex/task-015-creative-council-v1` and has passed automated verification. It
-uses three sequential structured ModelGateway calls, synchronous server-side
-orchestration, explicit optional TASK-014 evidence, and immutable Marketing-owned
-run/stage/brief history.
+TASK-015 Creative Council V1 passed manual QA and is merged into `main`. The
+approved future product direction now distinguishes its production-oriented
+Create mode from a separate Ask Creative Council advisory mode. TASK-020 owns
+that future conversational capability; nothing for it is implemented.
 
 ---
 
 # Known Issues
 
-Database pgTAP requires Docker/Podman or hosted execution when a local database
-is unavailable. The TASK-015 migration must be applied and its 21-assertion
-Creative Council suite run during hosted QA. Mid-run cancellation, queued
-serverless execution, Marketing memory retrieval, tools, external research, and
-TASK-016 council expansion remain deferred.
+Database pgTAP still requires Docker/Podman or hosted execution when a local
+database is unavailable. Ask Creative Council persistence, UI, retrieval,
+routing, and execution contracts remain intentionally undefined until TASK-020
+discovery. TASK-016 expansion, TASK-017 research, and TASK-018 performance
+learning remain separate future tasks.
 
 ---
 
 # Next Recommended Action
 
-Apply the TASK-015 forward migration during hosted manual QA, run the included
-pgTAP suite, and exercise success, versioning, role, policy-failure, and
-explicit-evidence paths. Do not begin TASK-016.
+Begin TASK-016 only under explicit implementation authorization. Its expanded
+specialists and bounded orchestration primitives should be reusable by later
+Create and Ask Council workflows without implementing TASK-020 prematurely.
 
 ---
 
 # Next Session Handoff
 
-TASK-015 is current on `codex/task-015-creative-council-v1`. One forward
-migration, `20260825001500_creative_council_v1.sql`, adds read-only RLS history
-for council runs, explicitly selected evidence, structured stages, and immutable
-Reel Brief versions. Hosted transition functions are service-role-only. Start
-and successful advancement revalidate active OWNER/ADMIN/MEMBER membership,
-Marketing enablement, same-organization source/evidence, stage order, logical
-tier, and `ai_runs` provenance; failure finalization can only close the matching
-creator's current RUNNING stage. Apply nothing automatically; run the included
-21-assertion pgTAP suite during hosted QA.
+TASK-015 is complete and merged. Its synchronous Create workflow remains Hook
+Strategist (`balanced`) -> Script Writer (`balanced`) -> Creative Critic
+(`reasoning`) -> versioned Reel Brief, with exactly three successful calls, no
+tools, no durable memory retrieval/write, and safe structured Reasoning History.
 
-The synchronous Marketing service calls Hook Strategist (`balanced`), Script
-Writer (`balanced`), and Creative Critic (`reasoning`) once each with 90-second
-per-stage timeouts. It retrieves bounded canonical Company Knowledge directly,
-not durable Marketing memory, and accepts at most three explicitly selected
-completed TASK-014 projections. Failure stops subsequent stages and preserves
-earlier structured results. Only three successful stages create a versioned
-brief. No tools, jobs, worker, research, memory write, or TASK-016 agent is part
-of V1.
+TASK-016 is the exact next repository task but is not started. Its specialist
+contracts should remain reusable by finite Create and Ask Council workflows.
+TASK-020 is the future Ask Creative Council product: bounded question routing to
+the smallest approved specialist workflow and one synthesized team-facing
+answer. It must preserve organization/RBAC/plugin/AI-policy boundaries,
+ModelGateway-only execution, agency-memory isolation, explicit bounded context,
+and no automatic memory writes, arbitrary tools, arbitrary spawning, or raw
+chain-of-thought. TASK-017 research and TASK-018 performance learning may later
+supply explicitly authorized evidence but are never implicit in asking a
+question.
 
 ---
 

@@ -503,3 +503,44 @@ membership removal during a provider call cannot strand an active run. An
 idempotency key plus one-active-run advisory lock blocks accidental
 replay/concurrency without preventing a later intentional version. Mid-run user
 cancellation and migration to persisted jobs are deferred.
+
+---
+
+## ADR-028 — Creative Council has distinct Create and Ask modes
+
+Status: ACCEPTED
+
+Creative Studio will eventually expose two interaction modes over reusable
+Creative Council infrastructure. Create is the bounded production mode proven
+by TASK-015: a structured source enters a finite workflow and produces an
+auditable persisted artifact, versioned where appropriate. Ask Council is a
+future advisory mode: an authorized team question enters bounded intent and
+workflow selection, invokes only the relevant approved specialists, and returns
+one synthesized team-facing answer.
+
+These modes must not be collapsed into a generic agent-chat abstraction. Ask
+Council routes each question to the smallest code-defined finite workflow able
+to answer it. It never dynamically spawns arbitrary agents until satisfied,
+invokes every specialist by default, or turns internal specialists into fake
+human chat participants. Optional specialist contributions, if shown, are
+concise structured conclusions. The synthesized answer may include a
+recommendation, audience, brand and creative perspectives, evidence,
+assumptions, disagreements, risks, and confidence; raw chain-of-thought is never
+exposed or persisted.
+
+Future Ask Council context is explicit, authorized, and bounded. It may use
+canonical Company context and appropriate Marketing records such as Reel Ideas,
+Campaigns, Creative Briefs, Research, Competitors, and completed competitor Reel
+analyses. Future Marketing memory requires its own authorized retrieval path.
+Manifest `memoryDomains` remains metadata rather than authority, agency memory
+remains inaccessible, working data is not promoted automatically, and Ask
+Council performs no automatic memory write.
+
+All model execution continues through ModelGateway and logical tiers. Routing
+must bound calls, context, cost, latency, and stopping conditions, particularly
+for local models and remote budgets. TASK-017 research and TASK-018 performance
+learning may later provide evidence through explicit authorized workflows, but
+asking a question does not inherently enable external research. TASK-016 should
+make specialist contracts reusable by Create and Ask modes; TASK-020 owns the
+future Ask Creative Council product and must begin with discovery before its
+persistence or UI contract is fixed.

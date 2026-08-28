@@ -266,8 +266,9 @@ Marketing is the first major Stylus plugin.
 TASK-013 establishes its manual operating foundation: Overview, Competitors,
 Reel Ideas, Campaigns, Research, and Creative Briefs. These are collaborative
 planning records, not claims of automated collection or AI-generated strategy.
-Reasoning History and Creative Studio are deferred to later agent and creative
-generation work.
+TASK-015 adds Creative Studio's bounded three-stage Create workflow, safe
+structured Reasoning History, and versioned Reel Briefs. Ask Creative Council
+remains a separate future advisory product under TASK-020.
 
 Initial focus:
 
@@ -370,6 +371,22 @@ Planned roles include:
 - Creative Judge
 
 Agents participate in bounded workflows.
+
+Creative Studio will eventually offer two distinct interaction modes:
+
+- **Create** turns a structured source into a bounded, auditable Marketing
+  artifact. TASK-015 establishes the first version with a Reel Idea and
+  versioned Reel Brief.
+- **Ask Council** will let authorized teammates ask Marketing advisory
+  questions. A bounded router selects the smallest appropriate approved
+  specialist workflow and returns one synthesized answer.
+
+Ask Council is future approved direction, not an implemented generic chatbot.
+It will not invoke every agent by default, dynamically spawn arbitrary agents,
+show fake internal-agent conversations, use unrestricted tools or research, or
+expose raw chain-of-thought. Context and costs remain bounded, organization and
+plugin authorization remain server-enforced, and model execution remains behind
+ModelGateway.
 
 ---
 
