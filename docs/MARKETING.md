@@ -30,8 +30,9 @@ source URL, invokes AI, promotes records to memory, or enqueues a job.
 10. Verify MEMBER can mutate, VIEWER has no mutation controls, a removed member is denied, and another organization cannot read or mutate the records.
 11. Confirm ordinary CRUD creates no `ai_runs`, `jobs`, or `knowledge_memories` rows.
 
-Competitor Reel analysis is TASK-014. External research automation is TASK-017.
-Creative Council, Reasoning History, and Creative Studio remain later work.
+Competitor Reel analysis is TASK-014. Creative Council V1, safe structured
+Reasoning History, and Creative Studio are TASK-015. External research
+automation remains TASK-017.
 
 ## Stage
 
@@ -269,3 +270,97 @@ media duration before broker persistence. Python/faster-whisper/PyAV are not
 used. If FFmpeg, ffprobe, whisper.cpp, its model, or native execution permission
 is unavailable, the worker does not advertise this Marketing capability and the
 job remains queued; unrelated worker diagnostics continue to function.
+
+## TASK-015 Creative Council V1
+
+Creative Studio lives at `/apps/marketing/creative-studio`. A run starts from
+exactly one active Reel Idea selected by the user and executes three code-owned,
+tool-free structured agents in a fixed order:
+
+```text
+Reel Idea -> Hook Strategist -> Script Writer -> Creative Critic -> Reel Brief
+```
+
+Hook Strategist returns a primary hook, concise rationale, at most two
+alternates, audience tension, evidence summary, assumptions, and confidence.
+Script Writer returns the chosen hook, spoken script, one-to-eight timed
+sections, CTA, caption, and up to eight visual directions. Creative Critic
+returns a verdict, strengths, weaknesses, risks, recommendations, audience,
+brand and originality assessments, and confidence. Its verdict never triggers a
+rewrite.
+
+All three calls use `marketing.creative-council.execute` through ModelGateway.
+Hook and Script use `balanced`; Critic uses `reasoning`; each has a 90-second
+timeout. The successful path has exactly three model calls. There is no
+application retry loop, tool, worker, queue, research adapter, agent recursion,
+or mid-run cancellation.
+
+### Context limits
+
+- Reel Idea projection: 6,000 serialized characters maximum; notes are reduced
+  to 1,000 characters.
+- Canonical Company projection: 20,000 characters maximum, using only relevant
+  identity, problem, product, audience, brand, positioning, and marketing
+  fields. Arrays are capped at eight entries of 240 characters.
+- Competitor evidence: zero-to-three explicitly selected completed TASK-014
+  analyses, 12,000 serialized characters total and 8 KiB per stored projection.
+  Only abstract hook explanation/type, pacing, bounded script-structure
+  observations, reusable patterns, cautions, transcript-pattern observations,
+  and deterministic scene metrics are included.
+
+Competitor MP4/WAV media, transcript text, source/signed URLs, storage paths, raw
+extraction artifacts, raw analysis JSON, primary-hook wording, CTA wording, key
+messages, and source summaries are excluded. Unselected, archived, incomplete,
+or cross-organization analyses are rejected. Competitor evidence informs
+differentiation and never authorizes imitation.
+
+### History, versioning, and failure
+
+Every request creates an immutable run unless its idempotency key or an active
+same-user/source run proves it is an accidental duplicate. Successful Hook and
+Script output is persisted before the next stage. Hook failure calls no later
+agent; Script failure preserves Hook; Critic failure preserves Hook and Script.
+Only a validated Critic result transactionally creates a successful immutable
+Reel Brief version. A later intentional run creates the next version and never
+overwrites its Reel Idea or a human Creative Brief.
+
+Reasoning History means these safe structured stage outputs, assumptions,
+evidence references, recommendations, risks, confidence, timestamps, and AI-run
+references. It never contains prompts, provider raw responses, chain-of-thought,
+credentials, media, or transcripts. No durable memory is retrieved or written.
+
+OWNER, ADMIN, and MEMBER may execute; VIEWER is read-only; removed members,
+cross-organization access, and disabled Marketing are denied. Organization AI
+policy, LOCAL_ONLY, REMOTE_ALLOWED, DISABLED, provider allowlists, remote budget,
+and normal AI-run tracing are checked independently for each stage.
+
+### Manual QA
+
+1. Apply `20260825001500_creative_council_v1.sql` to the hosted project and run
+   `creative_council_rls.test.sql`.
+2. Enable Marketing; configure an organization AI policy and a ModelGateway
+   provider reachable by the web server. For local QA, start Ollama through the
+   existing server-only configuration. Create Company Profile context and one
+   active Reel Idea. Optionally complete one TASK-014 analysis.
+3. As OWNER, ADMIN, or MEMBER, open `/apps/marketing/creative-studio`, select the
+   Reel Idea, leave competitor evidence empty, review the context summary, and
+   run Creative Council. Observe Hook, Script, and Critique status; confirm a
+   structured Reel Brief, `SUCCEEDED` run, exactly three linked successful
+   `ai_runs`, and the same version after refresh.
+4. Intentionally run the same Reel Idea again. Confirm a new run/version appears
+   and version one remains unchanged. Double-click a single submission and
+   confirm it creates only one run/version.
+5. Run once with exactly one explicitly selected eligible TASK-014 analysis.
+   Confirm only that reference is recorded. Run without selection and confirm no
+   competitor evidence row exists. Verify no transcript, media path, URL, or raw
+   analysis appears in history.
+6. Sign in as VIEWER. Confirm prior briefs/history are readable but no execution
+   control exists. Remove a MEMBER or disable Marketing and confirm execution is
+   denied; re-enable Marketing and confirm historical rows remain.
+7. Safely make the configured provider unavailable or set AI policy to DISABLED,
+   then request a new run. Confirm failure is recorded at the attempted stage,
+   later stages are absent, earlier successful stages (if any) remain, and no
+   successful Reel Brief version is created.
+8. Inspect `ai_runs` and the council tables. Confirm logical tiers are BALANCED,
+   BALANCED, REASONING; prompt/provider bodies are absent; the source Reel Idea,
+   human Creative Briefs, and `knowledge_memories` are unchanged.

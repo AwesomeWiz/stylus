@@ -471,3 +471,35 @@ Reel summary bound is valid JSON Schema. Only the Ollama adapter removes
 application's original Zod schema remains unchanged and validates the returned
 JSON, remote compatible providers receive the original schema, and every call
 still uses ModelGateway policy, routing, budget, and run tracing.
+
+---
+
+## ADR-027 — Creative Council V1 is a synchronous bounded workflow
+
+Status: ACCEPTED
+
+TASK-015 uses a Marketing-owned synchronous orchestration service rather than a
+new queue, SERVERLESS executor, Windows worker, autonomous agent runtime, or
+chat. One active Reel Idea passes through exactly three static tool-free logical
+agents in order: Hook Strategist, Script Writer, Creative Critic. A successful
+path therefore has exactly three structured ModelGateway calls. The gateway's
+existing policy-filtered provider behavior remains authoritative; application
+code adds no retry or loop. Every stage has a 90-second timeout.
+
+The workflow snapshots a deterministic bounded projection once: Reel Idea up to
+6,000 serialized characters, canonical Company context up to 20,000 characters,
+and zero-to-three explicitly selected completed TASK-014 projections totaling
+up to 12,000 characters. Competitor projection excludes media, transcripts,
+URLs, extraction artifacts, exact primary hooks, CTAs, key messages, and raw
+analysis JSON. Durable Marketing memory is neither retrieved nor written.
+
+Runs and successful/failed stages remain immutable structured Reasoning History.
+Only all three validated stages create an immutable Reel Brief version. A
+service-role-only transition boundary revalidates actor membership, Marketing
+enablement, organization references, stage order, requested tier, and AI-run
+provenance for start and successful advancement. Failure finalization is also
+service-only and can only terminalize the matching creator's RUNNING stage, so a
+membership removal during a provider call cannot strand an active run. An
+idempotency key plus one-active-run advisory lock blocks accidental
+replay/concurrency without preventing a later intentional version. Mid-run user
+cancellation and migration to persisted jobs are deferred.

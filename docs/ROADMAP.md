@@ -227,18 +227,24 @@ TASK-017, and AI creative generation in the later Creative Council phases.
 - [ ] semantic visual brand analysis (requires future vision foundation)
 - [x] versioned structured competitor intelligence
 
-TASK-014 V1 is implemented and awaits hosted migration/manual QA. TASK-015 must
-not begin until that QA is accepted.
+TASK-014 V1 is implemented and merged into `main` through its corrective commits.
 
 ---
 
 ## Phase 12 — Creative Council V1
 
-- [ ] Hook Strategist
-- [ ] Script Writer
-- [ ] Creative Critic
-- [ ] bounded workflow
-- [ ] Reel Brief
+- [x] Hook Strategist
+- [x] Script Writer
+- [x] Creative Critic
+- [x] bounded workflow
+- [x] versioned Reel Brief
+
+TASK-015 V1 uses three sequential tool-free structured ModelGateway calls in a
+bounded synchronous Marketing service. It starts from one active Reel Idea,
+optionally projects up to three explicitly selected TASK-014 analyses, snapshots
+bounded canonical Company context, and stores immutable safe Reasoning History.
+Marketing memory retrieval, cancellation, queues, research, and additional
+agents remain deferred.
 
 ---
 

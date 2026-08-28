@@ -301,3 +301,19 @@ The model receives bounded transcript text and numerical media metrics only. It
 receives no video, frames, Storage URLs, unrelated memory, or raw provider
 objects. TASK-014 does not extend ModelGateway to multimodal input and performs
 no OCR, semantic visual inference, or automatic memory write.
+
+## TASK-015 Creative Council Execution
+
+Marketing calls the existing trusted `generateAIStructured` entrypoint once for
+each of three static stages. ModelGateway generates each AI run ID, and each
+successful immutable stage retains the returned `ai_runs` provenance;
+organization, actor, plugin, provider, and model authority remain
+server-derived. Each call
+independently repeats ModelGateway policy, provider allowlist, routing, budget,
+trace, and authoritative Zod validation.
+
+Hook Strategist and Script Writer request `balanced`; Creative Critic requests
+`reasoning`; all use a 90-second timeout. Marketing adds no retry or fallback
+loop around the gateway. The agent definitions register no tools. V1 obtains
+canonical Company Knowledge through the Core server interface but never invokes
+the durable memory retrieval context builder and never writes memory.

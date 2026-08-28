@@ -19,10 +19,40 @@ describe("Marketing architecture boundary", () => {
       .map((file) => readFileSync(file, "utf8"))
       .join("\n");
     expect(source).toContain("generateAIStructuredForTrustedJob");
+    expect(source).toContain("generateAIStructured");
     expect(source).not.toMatch(
       /Ollama|OpenAICompatibleProvider|knowledge_memories|axios|pg_net/,
     );
     expect(source).not.toMatch(/fetch\([^)]*sourceUrl/);
+    expect(source).not.toMatch(
+      /buildAIKnowledgeContext|retrieveMemoriesForContext|write.*memory/i,
+    );
+  });
+  it("keeps Creative Council tool-free, provider-neutral, and server-authoritative", () => {
+    const orchestrator = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/modules/marketing/server/creative-council-orchestrator.ts",
+      ),
+      "utf8",
+    );
+    const action = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/modules/marketing/creative-council-actions.ts",
+      ),
+      "utf8",
+    );
+    expect(orchestrator).toContain("generateAIStructured");
+    expect(orchestrator).not.toMatch(
+      /Ollama|OpenAICompatibleProvider|generateAIStructuredForTrustedJob|enqueueJob|EXTERNAL_WORKER|SERVERLESS/,
+    );
+    expect(orchestrator).not.toMatch(
+      /buildAIKnowledgeContext|retrieveMemoriesForContext|knowledge_memories/,
+    );
+    expect(action).not.toMatch(
+      /form\.get\(["'](?:organizationId|actorId|providerId|modelId|providerUrl|pluginId)["']\)/,
+    );
   });
   it("keeps browser forms free of organization and actor provenance inputs", () => {
     const source = readFileSync(

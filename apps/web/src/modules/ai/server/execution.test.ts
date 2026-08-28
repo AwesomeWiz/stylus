@@ -88,6 +88,29 @@ describe("AI execution authorization", () => {
     ).toThrow();
   });
 
+  it("authorizes Creative Council only while Marketing is enabled", () => {
+    expect(
+      authorizeAIExecution({
+        capability: "marketing.creative-council.execute",
+        enabledPluginIds: ["marketing"],
+        pluginId: "marketing",
+        policy,
+        removedAt: null,
+        role: "MEMBER",
+      }),
+    ).toEqual({ memoryDomains: ["company", "marketing"] });
+    expect(() =>
+      authorizeAIExecution({
+        capability: "marketing.creative-council.execute",
+        enabledPluginIds: [],
+        pluginId: "marketing",
+        policy,
+        removedAt: null,
+        role: "MEMBER",
+      }),
+    ).toThrow();
+  });
+
   it("rejects a removed membership even if its former role could execute", () => {
     expect(() =>
       authorizeAIExecution({

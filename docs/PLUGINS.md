@@ -211,3 +211,10 @@ routes, reads, uploads, and AI continuation all re-check organization plugin
 enablement. A worker already holding a lease may persist deterministic output
 after disablement, but the broker marks the analysis blocked and starts no AI
 run. Re-enabling preserves all history; no Core table depends on this plugin.
+
+TASK-015 declares `marketing.creative-council.execute` and contributes the
+guarded Creative Studio route. The capability authorizes only the static
+Marketing service's three provider-neutral structured calls; it does not create
+a plugin tool, dynamic agent registration, job handler, or memory permission.
+Plugin disablement denies new execution and normal historical reads while
+retaining every run and Reel Brief row.

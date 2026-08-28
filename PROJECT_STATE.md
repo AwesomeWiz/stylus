@@ -4,7 +4,7 @@ Last Updated: 2026-08-28
 
 ## Overall Status
 
-TASK-014 COMPETITOR REEL ANALYSIS / CORRECTIVE VERIFICATION
+TASK-015 CREATIVE COUNCIL V1 / READY FOR MANUAL QA
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces for competitors, campaigns, Reel ideas,
@@ -14,19 +14,18 @@ research, and creative briefs, plus a compact operational overview.
 
 ## Current Phase
 
-Phase 11 — Competitor Reel Analysis
+Phase 12 — Creative Council V1
 
-Status: TASK-014 MANUAL-QA CORRECTIVE WORK
+Status: TASK-015 IMPLEMENTED / AUTOMATED VERIFICATION PASSED
 
 ---
 
 ## Current Objective
 
-TASK-014 remains current on `codex/task-014-competitor-reel-analysis`. A second
-real Windows run proved the complete native and Ollama connectivity path, then
-reproduced an Ollama grammar failure from the Reel schema's 2,000-character
-summary bound. Corrective verification and another new analysis version are
-required. Do not start TASK-015.
+TASK-015 is current on `codex/task-015-creative-council-v1`. The approved bounded
+Hook Strategist -> Script Writer -> Creative Critic workflow, immutable Reel
+Brief versions, Creative Studio, and safe structured Reasoning History are
+implemented and ready for hosted migration/manual QA. Do not start TASK-016.
 
 ---
 
@@ -801,6 +800,45 @@ run did not apply the migration.
 
 ---
 
+# Phase 12 Implementation
+
+- protected `/apps/marketing/creative-studio` route and Marketing navigation
+- one explicitly selected active Reel Idea per run
+- optional explicit selection of at most three eligible completed TASK-014
+  analyses through a 12,000-character allowlisted abstract projection
+- bounded 20,000-character canonical Company context without durable memory
+  retrieval
+- static Hook Strategist, Script Writer, and Creative Critic definitions
+- one structured ModelGateway call per stage using balanced, balanced, and
+  reasoning tiers with 90-second timeouts
+- immutable run, selected-evidence, stage, and versioned Reel Brief history
+- safe structured Reasoning History without prompts, provider output, or hidden
+  reasoning
+- client pending state plus server idempotency/advisory-lock duplicate protection
+- failure short-circuiting with successful prior-stage preservation
+- OWNER/ADMIN/MEMBER execute and VIEWER read-only behavior
+- no jobs, worker, tools, external research, Marketing memory, memory writes, or
+  TASK-016 agents
+
+Migration: `supabase/migrations/20260825001500_creative_council_v1.sql`
+
+Database QA: `supabase/tests/database/creative_council_rls.test.sql` contains 21
+organization, role, transition-privilege, duplicate, isolation, and non-promotion
+assertions. Hosted application and pgTAP verification remain required.
+
+Automated verification on 2026-08-28 passed focused TASK-015 coverage (8 files,
+48 tests), lint, worker/web type checking, the full worker suite (5 files, 32
+tests), the full web suite (112 files, 513 tests), and both production builds.
+All TASK-015 source and documentation files pass Prettier; the repository-wide
+format command still sees inherited Windows line-ending status noise in
+unchanged TASK-012/TASK-014 files, whose Git content has no diff. Linked
+migration dry-run reports only `20260825001500_creative_council_v1.sql` pending;
+no hosted change was applied. Linked database lint reports no existing-schema
+errors. Local pgTAP could not run because Docker, Podman, and local PostgreSQL
+are unavailable.
+
+---
+
 # Product Direction
 
 Stylus is a collaborative startup operating system.
@@ -916,30 +954,56 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-012 is complete. TASK-013 is ready for manual QA on `codex/task-013` and
-remains the current task until manual QA is accepted.
+TASK-015 Creative Council V1 is implemented on
+`codex/task-015-creative-council-v1` and has passed automated verification. It
+uses three sequential structured ModelGateway calls, synchronous server-side
+orchestration, explicit optional TASK-014 evidence, and immutable Marketing-owned
+run/stage/brief history.
 
 ---
 
 # Known Issues
 
 Database pgTAP requires Docker/Podman or hosted execution when a local database
-is unavailable. TASK-013 migrations must not be applied by Codex; hosted QA must
-apply them and run the 27-assertion Marketing RLS suite. Automated scraping,
-media analysis, external research, AI generation, agents, embeddings, and
-Marketing worker handlers remain deferred.
+is unavailable. The TASK-015 migration must be applied and its 21-assertion
+Creative Council suite run during hosted QA. Mid-run cancellation, queued
+serverless execution, Marketing memory retrieval, tools, external research, and
+TASK-016 council expansion remain deferred.
 
 ---
 
 # Next Recommended Action
 
-Complete TASK-014 interpretation/failure-lifecycle corrective verification,
-create the separate fix commit, then repeat hosted Windows-worker manual QA with
-Smart App Control enabled and Ollama reachable. Do not begin TASK-015.
+Apply the TASK-015 forward migration during hosted manual QA, run the included
+pgTAP suite, and exercise success, versioning, role, policy-failure, and
+explicit-evidence paths. Do not begin TASK-016.
 
 ---
 
 # Next Session Handoff
+
+TASK-015 is current on `codex/task-015-creative-council-v1`. One forward
+migration, `20260825001500_creative_council_v1.sql`, adds read-only RLS history
+for council runs, explicitly selected evidence, structured stages, and immutable
+Reel Brief versions. Hosted transition functions are service-role-only. Start
+and successful advancement revalidate active OWNER/ADMIN/MEMBER membership,
+Marketing enablement, same-organization source/evidence, stage order, logical
+tier, and `ai_runs` provenance; failure finalization can only close the matching
+creator's current RUNNING stage. Apply nothing automatically; run the included
+21-assertion pgTAP suite during hosted QA.
+
+The synchronous Marketing service calls Hook Strategist (`balanced`), Script
+Writer (`balanced`), and Creative Critic (`reasoning`) once each with 90-second
+per-stage timeouts. It retrieves bounded canonical Company Knowledge directly,
+not durable Marketing memory, and accepts at most three explicitly selected
+completed TASK-014 projections. Failure stops subsequent stages and preserves
+earlier structured results. Only three successful stages create a versioned
+brief. No tools, jobs, worker, research, memory write, or TASK-016 agent is part
+of V1.
+
+---
+
+# Historical TASK-014 Handoff
 
 Read:
 

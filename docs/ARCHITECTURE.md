@@ -454,3 +454,25 @@ with the whisper.cpp JSON sidecar in one controlled OS temp directory and
 removed on every exit path. Executable/model paths come only from worker-local
 operator configuration, never jobs or browser input. The CLI is spawned without
 a shell; native output and parsed transcript data are bounded before persistence.
+
+## TASK-015 Creative Council Flow
+
+```text
+authenticated Creative Studio Server Action
+  -> server-derived organization/actor + Marketing role
+  -> bounded Reel Idea / canonical Company / explicit TASK-014 projection
+  -> service-only idempotent council-run start
+  -> Hook Strategist structured ModelGateway call
+  -> immutable Hook stage
+  -> Script Writer structured ModelGateway call
+  -> immutable Script stage
+  -> Creative Critic structured ModelGateway call
+  -> immutable Critique stage + Reel Brief version
+```
+
+This is a synchronous Marketing service boundary, not a generic agent runtime.
+It uses no job executor or worker because the V1 contract is exactly three
+bounded text stages. Static agent and Zod contracts can later move behind a
+persisted job without changing their semantics. V1 retrieves no durable
+Marketing memory, registers no tools, and has no cancellation or recursive
+execution.
