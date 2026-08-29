@@ -4,7 +4,7 @@ Last Updated: 2026-08-29
 
 ## Overall Status
 
-TASK-016 IMPLEMENTED / READY FOR MANUAL QA
+TASK-016 IMPLEMENTED / READY FOR MANUAL QA AGAIN
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces for competitors, campaigns, Reel ideas,
@@ -17,7 +17,7 @@ five-stage Strategic Review in Creative Studio.
 
 Phase 13 — Creative Council Expansion
 
-Status: TASK-016 IMPLEMENTED / READY FOR MANUAL QA
+Status: TASK-016 IMPLEMENTED / READY FOR MANUAL QA AGAIN
 
 ---
 
@@ -896,6 +896,31 @@ reports one pre-existing warning in the already-applied TASK-015
 `record_marketing_creative_council_stage` enum assignment; the new TASK-016
 assignment uses explicit enum casts. Docker, Podman and local PostgreSQL are
 unavailable, so the 29-assertion TASK-016 pgTAP suite remains a hosted QA step.
+
+## TASK-016 Creative Judge Manual-QA Fix
+
+Resolved on 2026-08-29. The hosted failed run correctly preserved Audience,
+Brand, Strategy and Challenge successes, recorded Judge as failed, terminalized
+the run and created no final review. Its fifth `ai_run` was `SUCCEEDED`, proving
+that Ollama returned JSON which passed the provider envelope, JSON parsing and
+the static Judge Zod schema. The workflow then rejected it because the Judge's
+disposition set did not exactly cover the Challenge identifier. Raw Judge output
+was correctly not retained, so omission versus a different identifier cannot be
+distinguished retrospectively.
+
+The Judge now receives a per-run provider-visible schema containing the exact
+Challenge reference enum and exact required disposition count. The same dynamic
+Zod schema remains authoritative, and the existing final set-equality check is
+retained as defense in depth. ModelGateway also records bounded safe diagnostic
+categories, validation issue codes/paths, finish reason and known token usage
+for structured failures without storing response or prompt content. No database
+migration was required.
+
+Corrective verification passed 49 focused tests, followed by the final 44-test
+focused regression set, a one-call local Ollama reproduction using the real
+dynamic Judge schema, lint, worker/web type checking, the complete worker suite
+(5 files, 32 tests), the complete web suite (118 files, 562 tests), and both
+production builds. The combined repository suite is 123 files and 594 tests.
 
 ---
 

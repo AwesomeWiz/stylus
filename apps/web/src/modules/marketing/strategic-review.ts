@@ -166,7 +166,7 @@ export const challengeDispositionSchema = z
   })
   .strict();
 
-export const strategicCouncilReviewSchema = z
+const strategicCouncilReviewBaseSchema = z
   .object({
     approvedRecommendations: z
       .array(
@@ -197,19 +197,76 @@ export const strategicCouncilReviewSchema = z
     unresolvedUnknowns: boundedList(8, 500),
     verificationNeeds: boundedList(8, 500),
   })
-  .strict()
-  .superRefine((value, context) => {
-    const ids = value.challengeDispositions.map(
-      (item) => item.challengeReferenceId,
-    );
-    if (new Set(ids).size !== ids.length) {
-      context.addIssue({
-        code: "custom",
-        message: "Challenge dispositions must be unique.",
-        path: ["challengeDispositions"],
-      });
-    }
-  });
+  .strict();
+
+function requireUniqueChallengeDispositions(
+  value: z.infer<typeof strategicCouncilReviewBaseSchema>,
+  context: z.RefinementCtx,
+) {
+  const ids = value.challengeDispositions.map(
+    (item) => item.challengeReferenceId,
+  );
+  if (new Set(ids).size !== ids.length) {
+    context.addIssue({
+      code: "custom",
+      message: "Challenge dispositions must be unique.",
+      path: ["challengeDispositions"],
+    });
+  }
+}
+
+export const strategicCouncilReviewSchema =
+  strategicCouncilReviewBaseSchema.superRefine(
+    requireUniqueChallengeDispositions,
+  );
+
+export function createStrategicCouncilReviewSchema(
+  challengeReferenceIds: readonly string[],
+) {
+  const uniqueReferenceIds = [...new Set(challengeReferenceIds)];
+  if (uniqueReferenceIds.length !== challengeReferenceIds.length)
+    throw new Error("Challenge reference identifiers must be unique.");
+
+  const firstReferenceId = uniqueReferenceIds[0];
+  const dispositionSchema = firstReferenceId
+    ? challengeDispositionSchema
+        .extend({
+          challengeReferenceId: z.enum([
+            firstReferenceId,
+            ...uniqueReferenceIds.slice(1),
+          ]),
+        })
+        .strict()
+    : challengeDispositionSchema;
+
+  return strategicCouncilReviewBaseSchema
+    .extend({
+      challengeDispositions: z
+        .array(dispositionSchema)
+        .length(uniqueReferenceIds.length),
+    })
+    .strict()
+    .superRefine((value, context) => {
+      requireUniqueChallengeDispositions(value, context);
+      const actualReferenceIds = new Set(
+        value.challengeDispositions.map(
+          (disposition) => disposition.challengeReferenceId,
+        ),
+      );
+      if (
+        actualReferenceIds.size !== uniqueReferenceIds.length ||
+        !uniqueReferenceIds.every((referenceId) =>
+          actualReferenceIds.has(referenceId),
+        )
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "Every challenge must be dispositioned exactly once.",
+          path: ["challengeDispositions"],
+        });
+      }
+    });
+}
 
 export const reelBriefProjectionSchema = z
   .object({

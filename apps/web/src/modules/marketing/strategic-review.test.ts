@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 
 import {
   challengeReviewSchema,
   contentStrategySchema,
+  createStrategicCouncilReviewSchema,
   evidenceStatusSchema,
   judgeAddressesEveryChallenge,
   projectReelBrief,
@@ -239,6 +241,66 @@ describe("strategic review contracts", () => {
         challengeDispositions: [],
       }),
     ).toBe(false);
+  });
+
+  it("projects exact Challenge IDs and disposition count into the Judge schema", () => {
+    const challengeReferenceId = "10000000-0000-4000-8000-000000000016";
+    const schema = createStrategicCouncilReviewSchema([challengeReferenceId]);
+    const base = {
+      approvedRecommendations: [],
+      confidence: "MEDIUM" as const,
+      finalAssessment: "Bounded final assessment.",
+      rejectedOrRevisedRecommendations: [],
+      risks: [],
+      unresolvedUnknowns: [],
+      verificationNeeds: [],
+    };
+    expect(
+      schema.safeParse({
+        ...base,
+        challengeDispositions: [
+          {
+            challengeReferenceId,
+            disposition: "ACCEPTED",
+            rationale: "Accepted.",
+          },
+        ],
+      }).success,
+    ).toBe(true);
+    expect(
+      schema.safeParse({
+        ...base,
+        challengeDispositions: [
+          {
+            challengeReferenceId: "REC-1",
+            disposition: "ACCEPTED",
+            rationale: "Wrong reference.",
+          },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({ ...base, challengeDispositions: [] }).success,
+    ).toBe(false);
+
+    const jsonSchema = z.toJSONSchema(schema) as unknown as {
+      properties: {
+        challengeDispositions: {
+          items: { properties: { challengeReferenceId: { enum: string[] } } };
+          maxItems: number;
+          minItems: number;
+        };
+      };
+    };
+    expect(jsonSchema.properties.challengeDispositions).toMatchObject({
+      items: {
+        properties: {
+          challengeReferenceId: { enum: [challengeReferenceId] },
+        },
+      },
+      maxItems: 1,
+      minItems: 1,
+    });
   });
 
   it("projects one exact immutable Reel Brief and ignores browser-forge fields", () => {

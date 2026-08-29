@@ -159,6 +159,12 @@ provider claims, returned text is parsed as JSON and validated again with Zod.
 Malformed JSON or a schema mismatch becomes `invalid_response`, records a failed
 run and never reaches application code as typed data.
 
+Structured failures retain only bounded operational diagnostics in run trace:
+provider structured-request rejection, malformed provider envelope, malformed
+structured JSON, Zod issue codes/paths, or output truncation when the provider
+finish reason establishes it. Known finish reason and token usage are retained;
+prompt text, response text, field values and provider error bodies are not.
+
 Ollama compiles JSON Schema into llama.cpp grammar. llama.cpp rejects a literal
 string repetition of 2,000 or more, even though that is valid JSON Schema. The
 Ollama adapter therefore omits only `maxLength` values at that incompatible
@@ -351,6 +357,10 @@ status distinguishes supported, weakly supported, unsupported by supplied
 evidence, contradicted by supplied evidence and requires external verification.
 The Challenge Reviewer performs one pass, and the Judge must disposition every
 challenged reference exactly once as accepted, partially accepted or rejected.
+For each invocation, the Judge's provider-visible schema restricts disposition
+identifiers to the exact Challenge references and requires the exact disposition
+count. The dynamic Zod schema and a final set-equality check remain authoritative
+after provider generation.
 This reduces unsupported reasoning and surfaces uncertainty; it does not claim
 to eliminate hallucinations or expose chain-of-thought.
 

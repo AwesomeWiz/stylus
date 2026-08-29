@@ -141,7 +141,7 @@ const challenge: ChallengeReview = {
       evidenceStatus: "REQUIRES_EXTERNAL_VERIFICATION",
       missingEvidence: ["Audience response evidence"],
       reconsideration: "RECOMMENDED",
-      referenceId: "REC-1",
+      referenceId: context.reelBrief.sourceReelBriefVersionId,
       riskFlags: ["AUDIENCE_ASSUMPTION"],
       verificationRecommendation: "Validate through an authorized test.",
     },
@@ -161,7 +161,7 @@ const judge: StrategicCouncilReview = {
   ],
   challengeDispositions: [
     {
-      challengeReferenceId: "REC-1",
+      challengeReferenceId: context.reelBrief.sourceReelBriefVersionId,
       disposition: "PARTIALLY_ACCEPTED",
       rationale: "Keep the direction while preserving the verification need.",
     },
@@ -200,6 +200,7 @@ function dependencies(options?: {
   duplicate?: boolean;
   failAt?: string;
   failure?: Error;
+  judgeOutput?: unknown;
 }) {
   const calls: TestGenerationCall[] = [];
   const generate = vi.fn(async (call: TestGenerationCall) => {
@@ -207,7 +208,17 @@ function dependencies(options?: {
     if (call.schemaName === options?.failAt) {
       throw options?.failure ?? new AIError("provider_unavailable");
     }
-    const data = call.schema.parse(outputs[call.schemaName]);
+    const output =
+      call.schemaName === "marketing_strategic_council_review_v1" &&
+      options?.judgeOutput
+        ? options.judgeOutput
+        : outputs[call.schemaName];
+    let data: unknown;
+    try {
+      data = call.schema.parse(output);
+    } catch (cause) {
+      throw new AIError("invalid_response", { cause });
+    }
     return {
       data,
       estimatedCostUsd: 0,
@@ -317,6 +328,33 @@ describe("Strategic Review orchestration", () => {
       );
     },
   );
+
+  it("rejects a Zod-valid generic Judge result that dispositions the wrong Challenge ID", async () => {
+    const test = dependencies({
+      judgeOutput: {
+        ...judge,
+        challengeDispositions: [
+          {
+            challengeReferenceId: "REC-1",
+            disposition: "PARTIALLY_ACCEPTED",
+            rationale: "This does not identify the supplied Challenge.",
+          },
+        ],
+      },
+    });
+    await expect(runStrategicReview(request, test.deps)).rejects.toMatchObject({
+      category: "invalid_response",
+    });
+    expect(test.generate).toHaveBeenCalledTimes(5);
+    expect(test.store.record).toHaveBeenCalledTimes(4);
+    expect(test.store.complete).not.toHaveBeenCalled();
+    expect(test.store.fail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: "invalid_response",
+        stage: "JUDGE",
+      }),
+    );
+  });
 
   it.each(["policy_denied", "budget_exceeded", "timeout"] as const)(
     "preserves gateway %s without a Marketing-level retry",

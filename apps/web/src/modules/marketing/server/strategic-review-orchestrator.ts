@@ -13,6 +13,7 @@ import { normalizeAIError } from "@/modules/ai/errors";
 
 import { projectCompanyCreativeContext } from "../creative-council";
 import {
+  createStrategicCouncilReviewSchema,
   creativeJudgeInputSchema,
   judgeAddressesEveryChallenge,
   MAX_STRATEGIC_REVIEW_CONTEXT_CHARS,
@@ -381,7 +382,12 @@ export async function runStrategicReview(
     });
     const judge = await dependencies.generate(
       generationInput<StrategicCouncilReview>(
-        judgeAgent,
+        {
+          ...judgeAgent,
+          schema: createStrategicCouncilReviewSchema(
+            challenge.data.challenges.map((item) => item.referenceId),
+          ),
+        },
         judgeInput,
         deadline.signal,
         challenge.runId,

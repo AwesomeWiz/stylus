@@ -400,6 +400,11 @@ external verification. Unsupported is not treated as proven false. Creative
 Judge must disposition every challenged reference as accepted, partially
 accepted or rejected and preserve unresolved verification needs.
 
+The Judge schema is bound per invocation to the exact Challenge reference IDs
+and requires the same number of dispositions. This guides constrained local
+generation while preserving dynamic Zod validation and the final exact-set
+check; a valid generic string cannot silently identify a different claim.
+
 The exact Reel Brief projection and bounded canonical Company context are loaded
 server-side. The browser cannot supply organization, actor, provider, model,
 prompt or arbitrary context. No durable memory, competitor evidence, raw media,

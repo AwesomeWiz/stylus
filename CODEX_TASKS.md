@@ -4,7 +4,7 @@
 
 ## TASK-016 — Creative Council Expansion
 
-Status: IMPLEMENTED / READY FOR MANUAL QA
+Status: IMPLEMENTED / READY FOR MANUAL QA AGAIN
 
 Implemented as a separate synchronous Strategic Review over one exact immutable
 TASK-015 Reel Brief version. The approved workflow is Audience Researcher ->
@@ -14,6 +14,14 @@ versioned Strategic Council Review only after Judge success. All nine TASK-016
 specialists are statically registered; Trend, Competitor, Retention and Visual
 do not execute in this V1 workflow. Hosted migration, pgTAP and manual QA remain
 required. TASK-017 and TASK-020 have not started.
+
+Manual-QA correction: Creative Judge's generic output schema allowed a valid
+result whose disposition set did not exactly cover the Challenge identifiers,
+which the required post-gateway set check rejected. The Judge's per-run schema
+now exposes only the exact Challenge identifiers and exact disposition count
+while retaining authoritative Zod and final set validation. Safe
+structured-failure diagnostics were added to ModelGateway. No migration was
+required.
 
 ---
 
@@ -492,7 +500,7 @@ separate future interaction mode.
 
 ## TASK-016 — Creative Council Expansion
 
-Status: IMPLEMENTED / READY FOR MANUAL QA
+Status: IMPLEMENTED / READY FOR MANUAL QA AGAIN
 
 Add:
 

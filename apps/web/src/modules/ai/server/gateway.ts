@@ -102,6 +102,21 @@ const unknownUsage: AIUsage = {
   totalTokens: null,
 };
 
+function structuredValidationDiagnostic(error: z.ZodError) {
+  const issues = error.issues.slice(0, 5).map((issue) => {
+    const path = issue.path.slice(0, 6).map(String).join(".") || "$";
+    return `${issue.code}@${path}`;
+  });
+  return `structured_output_validation_failed:${issues.join(",")}`.slice(
+    0,
+    500,
+  );
+}
+
+function indicatesTruncation(finishReason: string | null) {
+  return finishReason === "length" || finishReason === "max_tokens";
+}
+
 export class ModelGateway {
   readonly #providers: ReadonlyMap<string, AIProviderAdapter>;
 
@@ -142,11 +157,17 @@ export class ModelGateway {
         try {
           json = JSON.parse(text);
         } catch (error) {
-          throw new AIError("invalid_response", { cause: error });
+          throw new AIError("invalid_response", {
+            cause: error,
+            diagnostic: "structured_output_malformed_json",
+          });
         }
         const parsed = request.schema.safeParse(json);
         if (!parsed.success)
-          throw new AIError("invalid_response", { cause: parsed.error });
+          throw new AIError("invalid_response", {
+            cause: parsed.error,
+            diagnostic: structuredValidationDiagnostic(parsed.error),
+          });
         structuredData = parsed.data;
       },
     );
@@ -179,6 +200,8 @@ export class ModelGateway {
     let selectedProviderId: string | null = null;
     let selectedIsRemote: boolean | null = null;
     let lastError = new AIError("provider_unavailable");
+    let lastFinishReason: string | null = null;
+    let lastUsage = unknownUsage;
     const attempts: string[] = [];
     try {
       const route = this.router.route({
@@ -207,7 +230,23 @@ export class ModelGateway {
               structuredOutput,
               temperature: options.temperature,
             });
-            validateText?.(providerResult.text);
+            lastFinishReason = providerResult.finishReason;
+            lastUsage = providerResult.usage;
+            try {
+              validateText?.(providerResult.text);
+            } catch (rawError) {
+              const validationError = normalizeAIError(rawError);
+              if (
+                validationError.category === "invalid_response" &&
+                indicatesTruncation(providerResult.finishReason)
+              ) {
+                throw new AIError("invalid_response", {
+                  cause: validationError,
+                  diagnostic: "structured_output_truncated",
+                });
+              }
+              throw validationError;
+            }
             const estimatedCostUsd = estimateModelCostUsd(
               model,
               providerResult.usage,
@@ -222,7 +261,11 @@ export class ModelGateway {
               providerId: model.providerId,
               runId: request.context.runId,
               status: "SUCCEEDED",
-              trace: { attempts, selectionReason: route.reason },
+              trace: {
+                attempts,
+                finishReason: providerResult.finishReason,
+                selectionReason: route.reason,
+              },
               usage: providerResult.usage,
             });
             return {
@@ -260,8 +303,12 @@ export class ModelGateway {
         providerId: selectedProviderId,
         runId: request.context.runId,
         status: terminalStatus(error),
-        trace: { attempts },
-        usage: unknownUsage,
+        trace: {
+          attempts,
+          ...(error.diagnostic ? { failureDiagnostic: error.diagnostic } : {}),
+          ...(lastFinishReason ? { finishReason: lastFinishReason } : {}),
+        },
+        usage: lastUsage,
       });
       throw error;
     }
