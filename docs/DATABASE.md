@@ -473,3 +473,37 @@ mid-call. Advisory locks plus a unique idempotency key and partial one-active-ru
 index prevent duplicate execution. Only the completion function, after Hook and
 Script rows exist and Critic AI succeeded, inserts a Reel Brief. No hard-delete
 or update surface exists for history.
+
+## Strategic Council Review V1
+
+Migration `20260825001600_creative_council_expansion.sql` adds a separate
+TASK-016 lifecycle without altering TASK-015 enums, tables or functions:
+
+- `marketing_strategic_review_runs` binds an invocation to one exact
+  `marketing_reel_brief_versions` row, its source Reel Idea, actor,
+  organization, Marketing plugin, workflow/schema version, bounded context,
+  idempotency key, stage and normalized failure state;
+- `marketing_strategic_review_stages` stores immutable Audience, Brand,
+  Strategy, Challenge and Judge success/failure rows with same-organization
+  `ai_runs` provenance; and
+- `marketing_strategic_council_review_versions` stores the immutable final
+  structured review with a monotonic version per exact source Reel Brief.
+
+The start function verifies the source UUID, source version and source Reel Idea
+against the bounded snapshot. Advisory locks, a creator/idempotency unique key
+and one-active-creator/source index prevent replay and concurrent duplicate
+execution. A completed run permits an intentional later invocation and review
+version.
+
+Service-only transition functions enforce Audience -> Brand -> Strategy ->
+Challenge -> Judge order, Marketing execution authorization, balanced tiers for
+Audience/Brand, reasoning tiers for the remaining stages, and successful
+`marketing.creative-council.execute` AI-run provenance. Final insertion occurs
+only after all four prior rows and a successful Judge AI run exist. Failure
+stores prior successful stages but never fabricates a final review.
+
+Authenticated clients have SELECT-only access through Marketing-enabled RLS.
+All lifecycle functions use `SECURITY DEFINER` with an empty search path and are
+granted only to `service_role`. JSON snapshots and results are size/type bounded;
+no prompt, provider response, chain-of-thought, media, transcript, credential or
+memory write is stored.

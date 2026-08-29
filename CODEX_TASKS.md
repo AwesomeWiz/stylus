@@ -4,12 +4,16 @@
 
 ## TASK-016 — Creative Council Expansion
 
-Status: NEXT / NOT STARTED
+Status: IMPLEMENTED / READY FOR MANUAL QA
 
-TASK-016 is the exact next repository implementation task. It expands the
-approved Creative Council specialist set and bounded orchestration primitives
-for reuse by future Create and Ask Council workflows. It does not implement the
-full TASK-020 conversational product without separate authorization.
+Implemented as a separate synchronous Strategic Review over one exact immutable
+TASK-015 Reel Brief version. The approved workflow is Audience Researcher ->
+Brand Director -> Content Strategist -> Challenge Reviewer -> Creative Judge,
+with exactly five maximum gateway calls, immutable partial stage history and a
+versioned Strategic Council Review only after Judge success. All nine TASK-016
+specialists are statically registered; Trend, Competitor, Retention and Visual
+do not execute in this V1 workflow. Hosted migration, pgTAP and manual QA remain
+required. TASK-017 and TASK-020 have not started.
 
 ---
 
@@ -488,6 +492,8 @@ separate future interaction mode.
 
 ## TASK-016 — Creative Council Expansion
 
+Status: IMPLEMENTED / READY FOR MANUAL QA
+
 Add:
 
 - Audience Researcher
@@ -504,6 +510,11 @@ future bounded Create workflows and bounded Ask Council workflows. Do not bind
 agent contracts exclusively to Reel Brief generation. TASK-016 preserves finite,
 code-defined workflows and does not implement the full conversational Ask
 Creative Council product unless separately authorized.
+
+Implementation adds Challenge Reviewer (`marketing.challenge-reviewer`) and a
+five-call Strategic Review artifact without changing TASK-015's three-call Reel
+Brief workflow. TASK-017 is the exact next planned implementation after
+TASK-016 manual QA and merge authorization.
 
 ---
 

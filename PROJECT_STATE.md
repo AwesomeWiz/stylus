@@ -1,15 +1,15 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-28
+Last Updated: 2026-08-29
 
 ## Overall Status
 
-TASK-015 COMPLETE / TASK-016 NEXT
+TASK-016 IMPLEMENTED / READY FOR MANUAL QA
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces for competitors, campaigns, Reel ideas,
-research, and creative briefs, plus a compact operational overview and the
-bounded Creative Studio Create workflow.
+research, and creative briefs, plus bounded Reel Brief creation and immutable
+five-stage Strategic Review in Creative Studio.
 
 ---
 
@@ -17,16 +17,16 @@ bounded Creative Studio Create workflow.
 
 Phase 13 — Creative Council Expansion
 
-Status: TASK-016 NEXT / NOT STARTED
+Status: TASK-016 IMPLEMENTED / READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-TASK-015 passed manual QA and was merged into `main` as `7a17d2b`. Record the
-approved future distinction between bounded Create workflows and the separate
-Ask Creative Council advisory mode. TASK-016 remains the exact next repository
-implementation task and has not started.
+Verify TASK-016's exact five-stage Strategic Review, forward migration,
+organization isolation, partial-failure history, idempotency, and unchanged
+TASK-015 Reel Brief generation in hosted manual QA. TASK-017 and TASK-020 remain
+unstarted.
 
 ---
 
@@ -846,6 +846,59 @@ History and no durable memory retrieval or write.
 
 ---
 
+# Phase 13 TASK-016 Implementation
+
+- static reusable definitions for Audience Researcher, Trend Researcher,
+  Competitor Analyst, Content Strategist, Retention Editor, Visual Director,
+  Brand Director, Creative Judge and Challenge Reviewer
+- professional Challenge Reviewer identity
+  `marketing.challenge-reviewer`, with bounded adversarial output and no claim
+  that unsupported material is necessarily false
+- separate synchronous Strategic Review bound to one exact immutable TASK-015
+  Reel Brief version
+- exact Audience -> Brand -> Strategy -> Challenge -> Judge order, five calls
+  maximum, 60-second call timeouts and a 285-second overall deadline
+- balanced tiers for Audience and Brand; reasoning tiers for Strategy,
+  Challenge and Judge; all calls use the existing Marketing capability through
+  ModelGateway
+- explicit evidence/inference/assumption and supported/weak/unsupported/
+  contradicted/requires-verification semantics
+- immutable successful partial stages, linked AI-run provenance, normalized
+  failure state and a versioned Strategic Council Review only after Judge
+  success
+- same-user/source active-run and idempotency protection while intentional later
+  review versions remain possible
+- Creative Studio execution, five-stage progress and structured review history;
+  VIEWER remains read-only
+- no durable memory retrieval/write, tools, competitor evidence, raw media,
+  external research, job/worker execution or TASK-020 chat behavior
+- TASK-015 Hook -> Script -> Critic semantics and Reel Brief history remain
+  unchanged
+
+Migration: `supabase/migrations/20260825001600_creative_council_expansion.sql`
+
+Database QA: `supabase/tests/database/strategic_review_rls.test.sql` covers
+service-only transitions, role/isolation boundaries, exact-source binding,
+sequential stages, idempotency, immutable completion and non-promotion.
+
+Automated verification on 2026-08-29 passed focused TASK-016/TASK-015 coverage
+(9 files, 63 tests), lint, worker/web type checking, the complete worker suite
+(5 files, 32 tests), the complete web suite (118 files, 559 tests), and both
+production builds. A final UI/migration/orchestration pass after presentation
+refinement passed 5 files and 35 tests plus the web production build. All
+TASK-016 and updated documentation files pass Prettier. Repository-wide
+`format:check` remains blocked by 40 inherited TASK-012/TASK-014 Windows
+line-ending files with no TASK-016 content changes; they were not rewritten.
+
+The linked migration dry-run applied nothing and reports exactly
+`20260825001600_creative_council_expansion.sql` pending. Linked schema lint
+reports one pre-existing warning in the already-applied TASK-015
+`record_marketing_creative_council_stage` enum assignment; the new TASK-016
+assignment uses explicit enum casts. Docker, Podman and local PostgreSQL are
+unavailable, so the 29-assertion TASK-016 pgTAP suite remains a hosted QA step.
+
+---
+
 # Product Direction
 
 Stylus is a collaborative startup operating system.
@@ -961,10 +1014,10 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-015 Creative Council V1 passed manual QA and is merged into `main`. The
-approved future product direction now distinguishes its production-oriented
-Create mode from a separate Ask Creative Council advisory mode. TASK-020 owns
-that future conversational capability; nothing for it is implemented.
+TASK-016 Strategic Review is implemented on its task branch and awaits hosted
+migration, pgTAP and manual QA. It adds reusable specialist contracts and a
+separate five-call immutable review artifact while preserving TASK-015's exact
+three-call Reel Brief workflow. TASK-017 and TASK-020 have not started.
 
 ---
 
@@ -974,15 +1027,19 @@ Database pgTAP still requires Docker/Podman or hosted execution when a local
 database is unavailable. Ask Creative Council persistence, UI, retrieval,
 routing, and execution contracts remain intentionally undefined until TASK-020
 discovery. TASK-016 expansion, TASK-017 research, and TASK-018 performance
-learning remain separate future tasks.
+learning remain separate concerns. The synchronous five-call workflow also
+depends on the target server sustaining its bounded 285-second deadline; if the
+deployment cannot, it fails safely and a future execution-placement decision is
+required rather than a silent job conversion.
 
 ---
 
 # Next Recommended Action
 
-Begin TASK-016 only under explicit implementation authorization. Its expanded
-specialists and bounded orchestration primitives should be reusable by later
-Create and Ask Council workflows without implementing TASK-020 prematurely.
+Apply the TASK-016 migration in hosted Supabase, run its pgTAP suite and complete
+the documented OWNER/ADMIN/MEMBER/VIEWER success, unsupported-claim, brand,
+failure, idempotency and TASK-015 regression QA. Do not begin TASK-017 until
+TASK-016 is accepted and merged.
 
 ---
 
@@ -993,8 +1050,13 @@ Strategist (`balanced`) -> Script Writer (`balanced`) -> Creative Critic
 (`reasoning`) -> versioned Reel Brief, with exactly three successful calls, no
 tools, no durable memory retrieval/write, and safe structured Reasoning History.
 
-TASK-016 is the exact next repository task but is not started. Its specialist
-contracts should remain reusable by finite Create and Ask Council workflows.
+TASK-016 adds Audience (`balanced`) -> Brand (`balanced`) -> Strategy
+(`reasoning`) -> Challenge (`reasoning`) -> Judge (`reasoning`) over an exact
+Reel Brief, with five calls maximum, 60-second call timeouts and a 285-second
+deadline. Successful stages and final versions are immutable; failures preserve
+prior stages and never fabricate a review. Trend, Competitor, Retention and
+Visual are registered but unused in V1.
+
 TASK-020 is the future Ask Creative Council product: bounded question routing to
 the smallest approved specialist workflow and one synthesized team-facing
 answer. It must preserve organization/RBAC/plugin/AI-policy boundaries,

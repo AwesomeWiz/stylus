@@ -318,6 +318,47 @@ loop around the gateway. The agent definitions register no tools. V1 obtains
 canonical Company Knowledge through the Core server interface but never invokes
 the durable memory retrieval context builder and never writes memory.
 
+## TASK-016 Strategic Review Execution
+
+TASK-016 registers nine reusable static specialist contracts. Its first
+user-invokable workflow is separate from TASK-015 and targets one exact immutable
+Reel Brief version:
+
+```text
+Audience Researcher (balanced)
+  -> Brand Director (balanced)
+  -> Content Strategist (reasoning)
+  -> Challenge Reviewer (reasoning)
+  -> Creative Judge (reasoning)
+```
+
+The successful path has exactly five structured ModelGateway calls. Each call
+has a 60-second timeout and the orchestration has a 285-second overall deadline.
+Marketing adds no retry, compensation stage, agent spawning, tool, or provider
+selection. Organization AI policy, provider allowlist, budget, routing, normal
+gateway fallback, Zod validation and `ai_runs` lifecycle remain authoritative
+for every call.
+
+The workflow snapshots one exact Reel Brief projection plus bounded canonical
+Company context. Audience and Brand receive that context; Strategy receives
+their structured conclusions; Challenge receives the Reel Brief and bounded
+upstream results but no company-wide context; Judge receives only bounded
+judgment context. It retrieves no durable memory, competitor evidence, media,
+transcript or external research and writes no memory.
+
+Evidence, inference and assumption are explicit output concepts. Evidence
+status distinguishes supported, weakly supported, unsupported by supplied
+evidence, contradicted by supplied evidence and requires external verification.
+The Challenge Reviewer performs one pass, and the Judge must disposition every
+challenged reference exactly once as accepted, partially accepted or rejected.
+This reduces unsupported reasoning and surfaces uncertainty; it does not claim
+to eliminate hallucinations or expose chain-of-thought.
+
+Trend Researcher, Competitor Analyst, Retention Editor and Visual Director are
+registered for future finite workflows but do not execute in Strategic Review
+V1. Trend and Competitor contracts can interpret only explicitly supplied
+authorized evidence and never claim independent research.
+
 ## Future Ask Creative Council Boundary
 
 Ask Creative Council is a separate future advisory interaction over reusable

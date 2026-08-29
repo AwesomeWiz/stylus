@@ -365,6 +365,78 @@ and normal AI-run tracing are checked independently for each stage.
    BALANCED, REASONING; prompt/provider bodies are absent; the source Reel Idea,
    human Creative Briefs, and `knowledge_memories` are unchanged.
 
+## TASK-016 Strategic Council Review V1
+
+Creative Studio adds a separate action on an existing immutable Reel Brief
+version:
+
+```text
+exact Reel Brief version
+  -> Audience Researcher
+  -> Brand Director
+  -> Content Strategist
+  -> Challenge Reviewer
+  -> Creative Judge
+  -> immutable Strategic Council Review v1
+```
+
+The successful path makes exactly five ModelGateway structured calls. Audience
+and Brand use `balanced`; Strategy, Challenge and Judge use `reasoning`. Calls
+have a 60-second timeout and the synchronous workflow has a 285-second overall
+deadline. There is no Marketing retry loop, recursive debate, agent spawning,
+tool, job or worker.
+
+All nine TASK-016 specialists are statically registered with typed input/output
+contracts. Trend Researcher, Competitor Analyst, Retention Editor and Visual
+Director are not invoked by this workflow. Trend and Competitor may only reason
+over explicitly supplied authorized evidence in a future workflow and never
+claim independent search, media access or current verification.
+
+Audience and Brand distinguish evidence, inference and assumption. Content
+Strategist creates bounded `REC-N` recommendations. Challenge Reviewer performs
+one adversarial pass and classifies claims as supported, weakly supported,
+unsupported by supplied evidence, contradicted by supplied evidence or requiring
+external verification. Unsupported is not treated as proven false. Creative
+Judge must disposition every challenged reference as accepted, partially
+accepted or rejected and preserve unresolved verification needs.
+
+The exact Reel Brief projection and bounded canonical Company context are loaded
+server-side. The browser cannot supply organization, actor, provider, model,
+prompt or arbitrary context. No durable memory, competitor evidence, raw media,
+transcript, URL or external research enters V1. Every successful stage and its
+AI-run provenance is immutable; failures stop immediately and preserve prior
+successes. Only Judge success creates a versioned Strategic Council Review.
+
+OWNER, ADMIN and MEMBER execute/read; VIEWER reads only. Service-only database
+transitions, Marketing RLS, same-organization foreign keys, idempotency and a
+one-active-source/actor guard protect the lifecycle. A completed review permits
+an intentional later immutable version. TASK-015 remains exactly Hook -> Script
+-> Critic -> Reel Brief.
+
+### Manual QA
+
+1. Apply `20260825001600_creative_council_expansion.sql` and run
+   `strategic_review_rls.test.sql` in the hosted project.
+2. Enable Marketing and organization AI policy, then generate or select a
+   successful TASK-015 Reel Brief in Creative Studio.
+3. As OWNER, ADMIN or MEMBER, select the exact brief version and click **Run
+   strategic review** once. Observe Audience, Brand, Strategy, Challenge and
+   Judge; confirm one final review and exactly five linked successful `ai_runs`.
+4. Refresh and confirm the review remains attached to the same source version.
+   Double-submit one invocation and confirm one run/final; intentionally submit
+   again after completion and confirm review version two without mutation.
+5. Use a brief that claims “Our audience definitely prefers 60-second Reels”
+   without evidence. Confirm Challenge marks it unsupported/requiring external
+   verification rather than true or false, and Judge records a disposition.
+6. Use an obvious canonical brand conflict and confirm Brand identifies it and
+   Challenge/Judge preserve the issue.
+7. Safely make the provider unavailable before Challenge. Confirm Judge does
+   not execute, no final review exists, and earlier successful stages remain.
+8. Confirm VIEWER sees history without the execution action; removed,
+   cross-organization and Marketing-disabled users are denied.
+9. Generate another ordinary TASK-015 Reel Brief and confirm Hook -> Script ->
+   Critic still performs exactly three calls.
+
 ## Approved Future Direction: Create and Ask Council
 
 Creative Studio will eventually support two distinct interactions over reusable

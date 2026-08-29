@@ -369,8 +369,17 @@ Planned roles include:
 - Brand Director
 - Creative Critic
 - Creative Judge
+- Challenge Reviewer
 
 Agents participate in bounded workflows.
+
+TASK-016 adds Strategic Review as a second Create workflow over an exact
+immutable Reel Brief version. Audience Researcher, Brand Director, Content
+Strategist, Challenge Reviewer and Creative Judge produce one immutable
+Strategic Council Review in five calls maximum. It is an auditable review
+artifact, not an internal chat transcript and not a rewrite of the source Reel
+Brief. The other TASK-016 specialists are reusable static contracts for later
+finite workflows but do not execute in Strategic Review V1.
 
 Creative Studio will eventually offer two distinct interaction modes:
 

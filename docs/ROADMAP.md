@@ -252,19 +252,23 @@ TASK-015 passed manual QA and is merged into `main`.
 
 ## Phase 13 — Creative Council Expansion
 
-- [ ] Audience Researcher
-- [ ] Trend Researcher
-- [ ] Competitor Analyst
-- [ ] Content Strategist
-- [ ] Retention Editor
-- [ ] Visual Director
-- [ ] Brand Director
-- [ ] Creative Judge
+- [x] Audience Researcher
+- [x] Trend Researcher
+- [x] Competitor Analyst
+- [x] Content Strategist
+- [x] Retention Editor
+- [x] Visual Director
+- [x] Brand Director
+- [x] Creative Judge
+- [x] Challenge Reviewer
 
-TASK-016 expands reusable specialist identities and bounded orchestration
-primitives for later Create and Ask Council workflows. It must not couple every
-specialist to Reel Brief generation or silently implement the full
-conversational product.
+TASK-016 registers reusable static, tool-free specialist contracts and adds one
+separate Strategic Review Create workflow over an exact TASK-015 Reel Brief
+version. Audience Researcher -> Brand Director -> Content Strategist ->
+Challenge Reviewer -> Creative Judge performs exactly five sequential calls and
+creates an immutable Strategic Council Review. Trend, Competitor, Retention and
+Visual specialists are registered but intentionally not invoked by this
+workflow. TASK-020 remains the unimplemented conversational product.
 
 ---
 

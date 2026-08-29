@@ -477,6 +477,32 @@ persisted job without changing their semantics. V1 retrieves no durable
 Marketing memory, registers no tools, and has no cancellation or recursive
 execution.
 
+## TASK-016 Strategic Review Flow
+
+```text
+authenticated Creative Studio Server Action
+  -> server-derived organization/actor + Marketing role
+  -> exact immutable Reel Brief version + bounded canonical Company projection
+  -> service-only idempotent strategic-review start
+  -> Audience Researcher (balanced) -> immutable stage
+  -> Brand Director (balanced) -> immutable stage
+  -> Content Strategist (reasoning) -> immutable candidate
+  -> Challenge Reviewer (reasoning) -> immutable adversarial review
+  -> Creative Judge (reasoning) -> immutable Strategic Council Review version
+```
+
+This remains a synchronous bounded Marketing workflow. It has five calls
+maximum, a 60-second per-call timeout and a 285-second overall deadline. It has
+no workflow retry, recursion, dynamic agent selection, tools, memory retrieval,
+external research, job or worker. Partial successful stages remain auditable;
+Challenge or Judge failure never fabricates a final artifact.
+
+Agent definition, workflow orchestration and persistence remain separate. All
+nine TASK-016 specialist contracts are code-owned and reusable, but Strategic
+Review invokes only Audience, Brand, Content Strategy, Challenge and Judge.
+Challenge receives only the source brief and bounded upstream conclusions;
+Judge explicitly dispositions every challenged reference.
+
 ## Future Creative Council Interaction Modes
 
 Creative Studio distinguishes reusable council infrastructure from its product
@@ -489,10 +515,10 @@ Ask:    team question -> bounded router -> selected finite workflow
 ```
 
 Create and Ask Council must not be forced into one generic chat abstraction.
-TASK-016 should define expanded specialist contracts and bounded orchestration
-primitives that can serve either mode without coupling every specialist to Reel
-Brief generation. TASK-020 owns the later conversational product and must begin
-with discovery rather than inheriting a speculative schema from V1.
+TASK-016 defines expanded specialist contracts and one bounded Strategic Review
+Create workflow without coupling every specialist to Reel Brief generation.
+TASK-020 owns the later conversational product and must begin with discovery
+rather than inheriting Strategic Review persistence or UI as a chat contract.
 
 Ask routing is server-authoritative and code-defined. It selects the smallest
 approved specialist workflow, applies explicit call/context/cost/stopping

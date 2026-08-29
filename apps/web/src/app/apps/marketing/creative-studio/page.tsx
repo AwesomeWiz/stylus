@@ -15,13 +15,14 @@ export default async function CreativeStudioPage() {
     <MarketingPage
       activePath="/apps/marketing/creative-studio"
       context={context}
-      description="Run the bounded three-stage council and review immutable Reel Brief versions."
+      description="Create immutable Reel Briefs and run bounded five-stage strategic reviews."
       title="Creative Studio"
     >
       <CreativeStudio
         {...data}
         companyContext={projectCompanyCreativeContext(companyKnowledge)}
         initialIdempotencyKey={crypto.randomUUID()}
+        initialStrategicReviewIdempotencyKey={crypto.randomUUID()}
         role={context.membership.role}
       />
     </MarketingPage>

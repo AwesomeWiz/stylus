@@ -52,9 +52,13 @@ const baseProps = {
   evidence: [],
   ideas: [idea],
   initialIdempotencyKey: "50000000-0000-4000-8000-000000000001",
+  initialStrategicReviewIdempotencyKey: "51000000-0000-4000-8000-000000000001",
   role: "MEMBER" as const,
   runs: [],
   stages: [],
+  strategicReviewRuns: [],
+  strategicReviewStages: [],
+  strategicReviews: [],
 };
 
 describe("Creative Studio", () => {
