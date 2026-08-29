@@ -18,6 +18,7 @@ const optionalNonnegativeNumber = z.preprocess(
 );
 
 const serverEnvironmentSchema = z.object({
+  CRON_SECRET: optionalString,
   NODE_ENV: z.enum(["development", "test", "production"]),
   STYLUS_AI_OLLAMA_BASE_URL: optionalUrl,
   STYLUS_AI_OLLAMA_MODEL: optionalString,
@@ -36,6 +37,7 @@ export function parseServerEnvironment(input: unknown) {
 export const serverEnv = {
   ...publicEnv,
   ...parseServerEnvironment({
+    CRON_SECRET: process.env.CRON_SECRET,
     NODE_ENV: process.env.NODE_ENV,
     STYLUS_AI_OLLAMA_BASE_URL: process.env.STYLUS_AI_OLLAMA_BASE_URL,
     STYLUS_AI_OLLAMA_MODEL: process.env.STYLUS_AI_OLLAMA_MODEL,

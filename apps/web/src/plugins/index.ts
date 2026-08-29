@@ -1,4 +1,4 @@
-import { createPluginRegistry } from "@/core/plugins/public";
+import { createPluginRegistry, definePlugin } from "@/core/plugins/public";
 import { getPluginIcon } from "@/core/plugins/icons";
 import {
   coreNavigationGroups,
@@ -7,10 +7,19 @@ import {
 
 import { examplePlugin } from "./example";
 import { marketingPlugin } from "./marketing";
+import { externalResearchJob } from "@/modules/marketing/external-research-job";
+
+const marketingPluginWithServerlessJobs = definePlugin({
+  ...marketingPlugin,
+  jobDefinitions: [
+    ...(marketingPlugin.jobDefinitions ?? []),
+    externalResearchJob,
+  ],
+});
 
 export const builtInPluginRegistry = createPluginRegistry([
   examplePlugin,
-  marketingPlugin,
+  marketingPluginWithServerlessJobs,
 ]);
 
 export function getApplicationNavigation(

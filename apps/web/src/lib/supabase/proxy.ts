@@ -18,6 +18,10 @@ export function isWorkerBrokerPath(pathname: string) {
   return pathname.startsWith("/api/worker/");
 }
 
+export function isServerlessJobCronPath(pathname: string) {
+  return pathname === "/api/cron/serverless-jobs";
+}
+
 export function getSessionRouteDecision(
   pathname: string,
   isAuthenticated: boolean,
@@ -34,7 +38,10 @@ export function getSessionRouteDecision(
 }
 
 export async function updateSession(request: NextRequest) {
-  if (isWorkerBrokerPath(request.nextUrl.pathname)) {
+  if (
+    isWorkerBrokerPath(request.nextUrl.pathname) ||
+    isServerlessJobCronPath(request.nextUrl.pathname)
+  ) {
     return NextResponse.next({ request });
   }
 

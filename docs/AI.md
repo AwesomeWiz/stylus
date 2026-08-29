@@ -393,3 +393,19 @@ become durable memory. External research is a distinct TASK-017 capability that
 only an explicitly approved research workflow may invoke. User-facing answers
 may contain concise structured perspectives and disagreement, but never raw
 chain-of-thought, provider responses, or fabricated internal-agent dialogue.
+
+## TASK-017 External Research Synthesis
+
+The hosted research handler may make exactly one
+`generateAIStructuredForTrustedJob()` call using capability
+`marketing.external-research.execute`, logical `balanced` tier, a 1,600-token
+output ceiling and the ordinary organization AI policy. Trusted job execution
+revalidates the exact running job, actor membership, Marketing enablement,
+policy, provider allowlist and remote budget before ModelGateway invocation.
+
+LOCAL_ONLY never falls back to a remote provider. If no hosted-compatible local
+provider exists, synthesis fails safely while already persisted source/evidence
+history remains. Retrieved text is explicitly untrusted data in a bounded user
+message. Structured findings must cite run-local evidence; unsupported
+interpretation is separately labeled as inference. No prompt, raw provider
+response or chain-of-thought is persisted.

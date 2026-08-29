@@ -507,3 +507,20 @@ All lifecycle functions use `SECURITY DEFINER` with an empty search path and are
 granted only to `service_role`. JSON snapshots and results are size/type bounded;
 no prompt, provider response, chain-of-thought, media, transcript, credential or
 memory write is stored.
+
+## External Research
+
+`20260825001700_external_research.sql` adds organization-scoped runs, immutable
+source observations, run-local evidence and immutable version-one reports. The
+run owns the durable job link, immutable request snapshot, source/count/warning
+telemetry, partial/failure state and synthesis `ai_runs` provenance. Foreign
+keys enforce same-organization job, member, AI-run, source and evidence links.
+
+The service-only atomic enqueue function receives organization and actor only
+from trusted server context, rechecks active membership and Marketing
+enablement, and inserts the run plus exact SERVERLESS job in one transaction.
+An advisory lock, invocation uniqueness, a partial unique active-run index and
+an hourly count enforce idempotency, one active run per organization and five
+submissions per hour. Lifecycle and trusted-AI functions are `SECURITY DEFINER`
+with an empty search path and service-role-only execute grants. Authenticated
+clients receive SELECT only through Marketing-enabled RLS.

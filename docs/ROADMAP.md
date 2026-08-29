@@ -274,15 +274,14 @@ workflow. TASK-020 remains the unimplemented conversational product.
 
 ## Phase 14 — External Marketing Research
 
-- [ ] source adapter
-- [ ] permitted Reddit research
-- [ ] Hacker News
-- [ ] RSS
-- [ ] web sources
-- [ ] normalization
-- [ ] deduplication
-- [ ] clustering
-- [ ] evidence storage
+- [x] static source-adapter registry
+- [x] fixed-host Hacker News top/new/ask retrieval
+- [x] explicit RSS/Atom feed retrieval through centralized safe fetch
+- [x] deterministic normalization and deduplication
+- [x] immutable source, evidence and Research Report persistence
+- [x] narrow hosted SERVERLESS executor
+- [ ] Reddit (explicitly excluded from V1)
+- [ ] generic web search/crawling (explicitly excluded from V1)
 
 ---
 

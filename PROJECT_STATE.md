@@ -4,29 +4,29 @@ Last Updated: 2026-08-29
 
 ## Overall Status
 
-TASK-016 IMPLEMENTED / READY FOR MANUAL QA AGAIN
+TASK-017 IMPLEMENTED / READY FOR MANUAL QA
 
 Stylus now has its first organization-enableable business plugin. Marketing
-provides guarded manual workspaces for competitors, campaigns, Reel ideas,
-research, and creative briefs, plus bounded Reel Brief creation and immutable
-five-stage Strategic Review in Creative Studio.
+provides guarded manual workspaces, bounded Creative Council workflows, and a
+durable external-research foundation over Hacker News and explicit RSS/Atom
+feeds. TASK-016 is merged; its exact five-stage Strategic Review remains intact.
 
 ---
 
 ## Current Phase
 
-Phase 13 — Creative Council Expansion
+Phase 14 — External Marketing Research
 
-Status: TASK-016 IMPLEMENTED / READY FOR MANUAL QA AGAIN
+Status: TASK-017 IMPLEMENTED / READY FOR MANUAL QA
 
 ---
 
 ## Current Objective
 
-Verify TASK-016's exact five-stage Strategic Review, forward migration,
-organization isolation, partial-failure history, idempotency, and unchanged
-TASK-015 Reel Brief generation in hosted manual QA. TASK-017 and TASK-020 remain
-unstarted.
+Apply and verify TASK-017's forward migration, hosted Cron executor, bounded
+HN/RSS retrieval, source-to-evidence-to-finding provenance, partial failures,
+organization isolation, and unchanged TASK-015/TASK-016 behavior. TASK-018 and
+TASK-020 remain unstarted.
 
 ---
 
@@ -1039,10 +1039,10 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-016 Strategic Review is implemented on its task branch and awaits hosted
-migration, pgTAP and manual QA. It adds reusable specialist contracts and a
-separate five-call immutable review artifact while preserving TASK-015's exact
-three-call Reel Brief workflow. TASK-017 and TASK-020 have not started.
+TASK-017 External Research is implemented on its task branch and awaits hosted
+migration, pgTAP, Cron configuration and manual QA. TASK-016 is merged. Its
+separate five-call immutable review artifact and TASK-015's exact three-call
+Reel Brief workflow remain unchanged. TASK-018 and TASK-020 have not started.
 
 ---
 
@@ -1061,10 +1061,10 @@ required rather than a silent job conversion.
 
 # Next Recommended Action
 
-Apply the TASK-016 migration in hosted Supabase, run its pgTAP suite and complete
-the documented OWNER/ADMIN/MEMBER/VIEWER success, unsupported-claim, brand,
-failure, idempotency and TASK-015 regression QA. Do not begin TASK-017 until
-TASK-016 is accepted and merged.
+Apply the TASK-017 migration in hosted Supabase, run its pgTAP suite, configure
+the authenticated hosted Cron trigger and complete the documented HN, RSS,
+provenance, prompt-injection, partial-failure, SSRF, provider-unavailable, RBAC
+and TASK-015/TASK-016 regression QA. Do not begin TASK-018 or TASK-020.
 
 ---
 
@@ -1158,3 +1158,38 @@ Earlier provider tests used small synthetic schemas and mocked HTTP, so they
 never exercised llama.cpp's grammar threshold. Earlier failure tests covered
 `provider_unavailable`/`true`, not the exact `validation_failed`/`false` pair or
 the persisted hosted transition.
+
+## Phase 14 TASK-017 External Research
+
+TASK-017 adds one durable `marketing.external-research.run` SERVERLESS job and
+an authenticated hosted executor that processes at most one claim per Cron
+invocation. Research requests atomically create the domain run and job, enforce
+one active run per organization and five submissions per hour, and derive
+organization/actor authority on the server. Hacker News uses a fixed official
+API host; up to two RSS/Atom feeds pass through centralized HTTPS-only,
+pinned-DNS safe fetch with redirect, address, timeout and byte revalidation.
+
+Deterministic code normalizes plain text, applies the 20-item/24k-character
+ceilings, hashes and deduplicates, then persists immutable source and EVID-n
+records. A partial run may synthesize retained evidence after source failures.
+Zero evidence fails without a report. Synthesis uses exactly one maximum
+`generateAIStructuredForTrustedJob` call at balanced tier and validates every
+source-backed reference before persisting the immutable report. Retrieved
+evidence remains auditable when AI policy/provider execution fails.
+
+No Reddit, generic search, article crawling, Windows-worker dependency,
+automatic Council research, agency memory, or automatic knowledge/memory write
+was introduced. TASK-015 and TASK-016 remain unchanged. Local pgTAP execution
+requires Docker/Podman, which was unavailable during implementation. The final
+linked dry run passed and reported only
+`20260825001700_external_research.sql` pending; nothing was applied. Linked
+database lint completed with only the pre-existing TASK-015 enum-assignment
+warning. The 32-assertion TASK-017 pgTAP suite and hosted manual QA remain
+deployment checks.
+
+Focused TASK-017 verification passed 12 files / 60 tests. The final complete
+suite passed 128 web files / 616 tests plus 5 worker files / 32 tests (648
+tests total). Repository lint, worker/web typechecks and worker/web production
+builds passed. Every TASK-017 source/document file passes targeted Prettier.
+Repository-wide Prettier still reports the 55 known unrelated legacy/Windows
+formatting files; they were preserved rather than rewritten.

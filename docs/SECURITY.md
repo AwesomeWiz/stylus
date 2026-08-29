@@ -418,3 +418,16 @@ Maintain security tests for:
   review. Failure preserves safe prior output, stores normalized metadata and
   never persists prompts, provider responses, chain-of-thought, secrets or an
   automatic memory write.
+
+## External Research Security
+
+- Only OWNER, ADMIN and MEMBER may enqueue; VIEWER and removed members remain
+  read-only/denied. Organization and actor come from fresh server context, and
+  service-only SQL revalidates membership plus Marketing enablement.
+- RSS/Atom permits only public HTTPS on port 443. DNS results are checked before
+  a custom HTTPS connection pins the selected public address while TLS retains
+  the original hostname. Every redirect is re-resolved and revalidated.
+- Source bodies, auth data and provider internals are neither logged nor stored.
+  Rendered excerpts are escaped text; displayed external links are HTTPS-only.
+- Untrusted content cannot select prompts, tools, providers, models, URLs,
+  memory, tenants or limits. No agency-memory or automatic-memory access exists.

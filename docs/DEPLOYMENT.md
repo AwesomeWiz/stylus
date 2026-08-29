@@ -290,3 +290,25 @@ continues consuming Storage until a future controlled cleanup feature exists.
 Python, faster-whisper, PyAV, and CTranslate2 are no longer TASK-014 deployment
 dependencies. Keep Windows Smart App Control and Code Integrity enabled; a
 blocked whisper.cpp executable means the capability remains unavailable.
+
+## TASK-017 Hosted External Research
+
+1. Apply `20260825001700_external_research.sql` and run
+   `supabase/tests/database/external_research_rls.test.sql`.
+2. Configure the server-only `SUPABASE_SERVICE_ROLE_KEY` and a high-entropy
+   `CRON_SECRET` in Vercel. Never use a `NEXT_PUBLIC_` prefix.
+3. Deploy `vercel.json`; it invokes `GET /api/cron/serverless-jobs` every five
+   minutes with `Authorization: Bearer $CRON_SECRET`. This cadence requires a
+   Vercel plan that supports sub-daily Cron, or an equivalent trusted scheduler
+   that supplies the same bearer header.
+4. Each invocation claims and processes at most one SERVERLESS job with a
+   120-second route/job bound. Monitor Vercel Cron logs plus safe job/run status;
+   no Windows worker is required.
+5. Configure an organization policy/provider that is reachable from the hosted
+   application. LOCAL_ONLY is never weakened: a laptop-only Ollama endpoint is
+   unavailable to Vercel, so evidence persists but synthesis safely fails and
+   no report is fabricated.
+
+Disable execution safely by pausing/removing the Vercel Cron schedule or
+rotating/removing `CRON_SECRET`; queued jobs remain durable. Disabling Marketing
+or removing execution membership prevents new work and trusted AI continuation.

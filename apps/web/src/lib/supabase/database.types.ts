@@ -135,6 +135,21 @@ export type MarketingStrategicReviewStatus = "RUNNING" | "SUCCEEDED" | "FAILED";
 export type MarketingStrategicReviewStage =
   "AUDIENCE" | "BRAND" | "STRATEGY" | "CHALLENGE" | "JUDGE" | "COMPLETE";
 export type MarketingStrategicReviewStageStatus = "SUCCEEDED" | "FAILED";
+export type MarketingExternalResearchStatus =
+  "QUEUED" | "RUNNING" | "SYNTHESIZING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
+export type MarketingExternalResearchAdapter = "hacker-news" | "rss-atom";
+export type MarketingExternalResearchSourceStatus = "SUCCEEDED" | "FAILED";
+export type MarketingExternalResearchSourceFailure =
+  | "invalid_source"
+  | "policy_denied"
+  | "rate_limited"
+  | "timeout"
+  | "transient_failure"
+  | "permanent_failure"
+  | "invalid_content_type"
+  | "oversized_response"
+  | "malformed_source"
+  | "no_results";
 
 type MarketingAuditRow = {
   archived_at: string | null;
@@ -329,6 +344,70 @@ export type MarketingStrategicCouncilReviewVersionRow = {
   strategic_review_run_id: string;
   structured_review: unknown;
   version_number: number;
+};
+export type MarketingExternalResearchRunRow = {
+  completed_at: string | null;
+  created_at: string;
+  created_by: string;
+  dedupe_count: number;
+  evidence_count: number;
+  failed_source_count: number;
+  failure_category: JobErrorCategory | null;
+  failure_stage: "retrieval" | "synthesis" | "execution" | null;
+  fetched_bytes: number;
+  id: string;
+  invocation_key: string;
+  job_id: string;
+  normalized_characters: number;
+  organization_id: string;
+  partial: boolean;
+  request_snapshot: unknown;
+  requested_source_count: number;
+  retained_item_count: number;
+  retrieved_item_count: number;
+  started_at: string | null;
+  status: MarketingExternalResearchStatus;
+  successful_source_count: number;
+  synthesis_ai_run_id: string | null;
+  warning_categories: string[];
+};
+export type MarketingExternalResearchSourceRow = {
+  adapter: MarketingExternalResearchAdapter;
+  author: string | null;
+  canonical_url: string | null;
+  content_hash: string | null;
+  created_at: string;
+  failure_category: MarketingExternalResearchSourceFailure | null;
+  fetched_at: string;
+  id: string;
+  native_id: string | null;
+  organization_id: string;
+  published_at: string | null;
+  run_id: string;
+  safe_metadata: Record<string, unknown>;
+  source_key: string;
+  status: MarketingExternalResearchSourceStatus;
+  title: string | null;
+};
+export type MarketingExternalResearchEvidenceRow = {
+  created_at: string;
+  evidence_id: string;
+  evidence_type: "DISCUSSION" | "FEED_ITEM";
+  excerpt: string;
+  id: string;
+  organization_id: string;
+  run_id: string;
+  source_id: string;
+};
+export type MarketingExternalResearchReportRow = {
+  created_at: string;
+  created_by: string;
+  id: string;
+  organization_id: string;
+  run_id: string;
+  schema_version: "marketing-external-research-report-v1";
+  structured_report: unknown;
+  version_number: 1;
 };
 export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
 
@@ -1005,6 +1084,30 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      marketing_external_research_runs: {
+        Row: MarketingExternalResearchRunRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_external_research_sources: {
+        Row: MarketingExternalResearchSourceRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_external_research_evidence: {
+        Row: MarketingExternalResearchEvidenceRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_external_research_reports: {
+        Row: MarketingExternalResearchReportRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       organization_invitations: {
         Row: OrganizationInvitationRow;
         Insert: never;
@@ -1250,6 +1353,123 @@ export type Database = {
           p_trace_metadata: Record<string, unknown>;
         };
         Returns: AIRunRow;
+      };
+      enqueue_marketing_external_research: {
+        Args: {
+          p_actor_id: string;
+          p_invocation_key: string;
+          p_organization_id: string;
+          p_request_snapshot: Record<string, unknown>;
+        };
+        Returns: unknown;
+      };
+      begin_marketing_external_research: {
+        Args: { p_job_id: string; p_run_id: string };
+        Returns: undefined;
+      };
+      record_marketing_external_research_retrieval: {
+        Args: {
+          p_dedupe_count: number;
+          p_evidence: unknown[];
+          p_fetched_bytes: number;
+          p_job_id: string;
+          p_normalized_characters: number;
+          p_partial: boolean;
+          p_retrieved_count: number;
+          p_run_id: string;
+          p_sources: unknown[];
+          p_warning_categories: string[];
+        };
+        Returns: undefined;
+      };
+      start_marketing_external_research_ai_run: {
+        Args: {
+          p_capability: string;
+          p_id: string;
+          p_job_id: string;
+          p_operation: string;
+          p_requested_tier: AILogicalTierRecord;
+          p_trace_metadata: Record<string, unknown>;
+        };
+        Returns: AIRunRow;
+      };
+      complete_marketing_external_research_ai_run: {
+        Args: {
+          p_duration_ms: number;
+          p_error_category: AIErrorCategoryRecord | null;
+          p_estimated_cost_usd: number | null;
+          p_id: string;
+          p_input_tokens: number | null;
+          p_is_remote: boolean | null;
+          p_job_id: string;
+          p_output_tokens: number | null;
+          p_provider_id: string | null;
+          p_selected_model_id: string | null;
+          p_status: AIRunStatus;
+          p_total_tokens: number | null;
+          p_trace_metadata: Record<string, unknown>;
+        };
+        Returns: AIRunRow;
+      };
+      complete_marketing_external_research: {
+        Args: {
+          p_ai_run_id: string;
+          p_job_id: string;
+          p_report: Record<string, unknown>;
+          p_run_id: string;
+        };
+        Returns: string;
+      };
+      fail_marketing_external_research: {
+        Args: {
+          p_failure_category: JobErrorCategory;
+          p_failure_stage: "retrieval" | "synthesis" | "execution";
+          p_job_id: string;
+          p_run_id: string;
+        };
+        Returns: undefined;
+      };
+      claim_next_job: {
+        Args: {
+          p_execution_class: JobExecutionClass;
+          p_executor_id: string;
+          p_lease_seconds?: number;
+        };
+        Returns: JobRow | null;
+      };
+      heartbeat_job: {
+        Args: {
+          p_executor_id: string;
+          p_job_id: string;
+          p_lease_seconds?: number;
+        };
+        Returns: JobRow;
+      };
+      report_job_progress: {
+        Args: {
+          p_executor_id: string;
+          p_job_id: string;
+          p_message: string;
+          p_progress: number;
+        };
+        Returns: JobRow;
+      };
+      complete_job: {
+        Args: {
+          p_executor_id: string;
+          p_job_id: string;
+          p_result_metadata: Record<string, unknown>;
+        };
+        Returns: JobRow;
+      };
+      report_job_failure: {
+        Args: {
+          p_error_category: JobErrorCategory;
+          p_executor_id: string;
+          p_job_id: string;
+          p_retryable: boolean;
+        };
+        Returns: JobRow;
       };
       accept_organization_invitation: {
         Args: { p_token: string };
@@ -1541,6 +1761,10 @@ export type Database = {
       marketing_strategic_review_stage: MarketingStrategicReviewStage;
       marketing_strategic_review_stage_status: MarketingStrategicReviewStageStatus;
       marketing_strategic_review_status: MarketingStrategicReviewStatus;
+      marketing_external_research_status: MarketingExternalResearchStatus;
+      marketing_external_research_adapter: MarketingExternalResearchAdapter;
+      marketing_external_research_source_status: MarketingExternalResearchSourceStatus;
+      marketing_external_research_source_failure: MarketingExternalResearchSourceFailure;
       marketing_reel_idea_status: MarketingReelIdeaStatus;
       marketing_research_category: MarketingResearchCategory;
       job_error_category: JobErrorCategory;

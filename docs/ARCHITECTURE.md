@@ -531,3 +531,22 @@ Future context access repeats organization membership, Marketing enablement,
 RBAC, AI-policy, and memory-domain checks. Manifest declarations do not grant
 retrieval, agency memory remains isolated, working records are not automatically
 promoted, and no Ask Council workflow automatically writes memory.
+
+## TASK-017 Hosted External Research Flow
+
+```text
+Marketing Research Server Action
+  -> atomic run + SERVERLESS job enqueue
+  -> authenticated Vercel Cron route (one claim)
+  -> static external-research handler
+  -> fixed-host HN + pinned-DNS RSS/Atom adapters
+  -> deterministic normalized source + EVID-n persistence
+  -> one maximum trusted ModelGateway structured synthesis
+  -> reference validation -> immutable Research Report
+```
+
+The browser cannot choose tenant, actor, adapter implementation, provider,
+model, prompt, retry or ceilings. The Windows laptop is not involved. Existing
+TASK-015/TASK-016 workflows do not call research. A future workflow may consume
+an explicit report ID plus selected evidence IDs only through the server-only
+projection that repeats membership, role and organization checks.

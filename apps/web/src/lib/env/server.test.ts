@@ -23,4 +23,13 @@ describe("server environment validation", () => {
       STYLUS_AI_REMOTE_INPUT_USD_PER_MILLION: 0.5,
     });
   });
+
+  it("accepts a server-only Cron bearer secret", () => {
+    expect(
+      parseServerEnvironment({
+        CRON_SECRET: "high-entropy-secret",
+        NODE_ENV: "production",
+      }),
+    ).toMatchObject({ CRON_SECRET: "high-entropy-secret" });
+  });
 });

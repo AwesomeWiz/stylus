@@ -485,3 +485,17 @@ never retrieves agency memory. TASK-017 research may support an explicitly
 research-enabled workflow, and TASK-018 performance learning may provide
 authorized evidence; an ordinary Ask Council question enables neither by
 default.
+
+## External Research V1
+
+The Research area keeps TASK-013 Manual Notes separate from durable External
+Research. A bounded request selects one HN stream and/or up to two explicit
+RSS/Atom feeds. Hosted execution persists source status, EVID-n excerpts,
+dedupe/failure counts and an immutable structured report. Findings navigate to
+evidence and safe source URLs; publication time remains distinct from fetched
+time, and missing publication time remains unknown.
+
+V1 has no Reddit, generic search, article crawling, social scraping, automatic
+Council execution or memory promotion. A future authorized workflow can request
+an explicit report plus selected evidence through a server-only bounded
+projection; no existing Council path consumes it automatically.

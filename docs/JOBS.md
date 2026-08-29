@@ -209,3 +209,17 @@ attempt 1/3 is intentional: the remaining attempts are a ceiling, not a promise
 to retry permanent validation defects. The worker serializes that exact category
 and `retryable: false`; broker diagnostics distinguish malformed envelopes,
 malformed payloads, and RPC/claim failures without logging request bodies.
+
+## External Research SERVERLESS Job
+
+TASK-017 statically registers `marketing.external-research.run` with capability
+`marketing.external-research.execute`, SERVERLESS execution, required
+idempotency, one attempt, a 120-second timeout and Marketing concurrency group.
+The Vercel Cron route authenticates `CRON_SECRET`, claims only SERVERLESS work
+through the existing atomic lease RPC, and calls `runOne()` exactly once per
+request. Progress, heartbeat, completion, failure, cancellation and stale-lease
+semantics reuse TASK-011.
+
+Source retrieval performs at most one internal retry for a narrow transient
+category. Marketing does not retry synthesis and the platform definition has
+one attempt, preventing multiplicative provider calls.
