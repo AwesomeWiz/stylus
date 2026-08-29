@@ -100,6 +100,59 @@ describe("ModelGateway", () => {
     expect(invalid.runs.completions[0]).toMatchObject({
       errorCategory: "invalid_response",
       status: "FAILED",
+      trace: {
+        failureDiagnostic:
+          "structured_output_validation_failed:invalid_type@score",
+        finishReason: "stop",
+      },
+    });
+  });
+
+  it("records safe malformed and truncated structured-output diagnostics", async () => {
+    const schema = z.object({ score: z.number().int() });
+    const malformed = setup([
+      new FakeAIProvider("fake-local", [{ text: "{" }]),
+    ]);
+    await expect(
+      malformed.gateway.generateStructured({
+        context,
+        options,
+        policy,
+        schema,
+        schemaName: "score_result",
+      }),
+    ).rejects.toMatchObject({ category: "invalid_response" });
+    expect(malformed.runs.completions[0]).toMatchObject({
+      trace: {
+        failureDiagnostic: "structured_output_malformed_json",
+        finishReason: "stop",
+      },
+    });
+
+    const truncated = setup([
+      new FakeAIProvider("fake-local", [
+        {
+          finishReason: "length",
+          text: "{",
+          usage: { inputTokens: 10, outputTokens: 100, totalTokens: 110 },
+        },
+      ]),
+    ]);
+    await expect(
+      truncated.gateway.generateStructured({
+        context: { ...context, runId: crypto.randomUUID() },
+        options,
+        policy,
+        schema,
+        schemaName: "score_result",
+      }),
+    ).rejects.toMatchObject({ category: "invalid_response" });
+    expect(truncated.runs.completions[0]).toMatchObject({
+      trace: {
+        failureDiagnostic: "structured_output_truncated",
+        finishReason: "length",
+      },
+      usage: { inputTokens: 10, outputTokens: 100, totalTokens: 110 },
     });
   });
 

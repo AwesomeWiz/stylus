@@ -159,6 +159,12 @@ provider claims, returned text is parsed as JSON and validated again with Zod.
 Malformed JSON or a schema mismatch becomes `invalid_response`, records a failed
 run and never reaches application code as typed data.
 
+Structured failures retain only bounded operational diagnostics in run trace:
+provider structured-request rejection, malformed provider envelope, malformed
+structured JSON, Zod issue codes/paths, or output truncation when the provider
+finish reason establishes it. Known finish reason and token usage are retained;
+prompt text, response text, field values and provider error bodies are not.
+
 Ollama compiles JSON Schema into llama.cpp grammar. llama.cpp rejects a literal
 string repetition of 2,000 or more, even though that is valid JSON Schema. The
 Ollama adapter therefore omits only `maxLength` values at that incompatible
@@ -317,6 +323,51 @@ Hook Strategist and Script Writer request `balanced`; Creative Critic requests
 loop around the gateway. The agent definitions register no tools. V1 obtains
 canonical Company Knowledge through the Core server interface but never invokes
 the durable memory retrieval context builder and never writes memory.
+
+## TASK-016 Strategic Review Execution
+
+TASK-016 registers nine reusable static specialist contracts. Its first
+user-invokable workflow is separate from TASK-015 and targets one exact immutable
+Reel Brief version:
+
+```text
+Audience Researcher (balanced)
+  -> Brand Director (balanced)
+  -> Content Strategist (reasoning)
+  -> Challenge Reviewer (reasoning)
+  -> Creative Judge (reasoning)
+```
+
+The successful path has exactly five structured ModelGateway calls. Each call
+has a 60-second timeout and the orchestration has a 285-second overall deadline.
+Marketing adds no retry, compensation stage, agent spawning, tool, or provider
+selection. Organization AI policy, provider allowlist, budget, routing, normal
+gateway fallback, Zod validation and `ai_runs` lifecycle remain authoritative
+for every call.
+
+The workflow snapshots one exact Reel Brief projection plus bounded canonical
+Company context. Audience and Brand receive that context; Strategy receives
+their structured conclusions; Challenge receives the Reel Brief and bounded
+upstream results but no company-wide context; Judge receives only bounded
+judgment context. It retrieves no durable memory, competitor evidence, media,
+transcript or external research and writes no memory.
+
+Evidence, inference and assumption are explicit output concepts. Evidence
+status distinguishes supported, weakly supported, unsupported by supplied
+evidence, contradicted by supplied evidence and requires external verification.
+The Challenge Reviewer performs one pass, and the Judge must disposition every
+challenged reference exactly once as accepted, partially accepted or rejected.
+For each invocation, the Judge's provider-visible schema restricts disposition
+identifiers to the exact Challenge references and requires the exact disposition
+count. The dynamic Zod schema and a final set-equality check remain authoritative
+after provider generation.
+This reduces unsupported reasoning and surfaces uncertainty; it does not claim
+to eliminate hallucinations or expose chain-of-thought.
+
+Trend Researcher, Competitor Analyst, Retention Editor and Visual Director are
+registered for future finite workflows but do not execute in Strategic Review
+V1. Trend and Competitor contracts can interpret only explicitly supplied
+authorized evidence and never claim independent research.
 
 ## Future Ask Creative Council Boundary
 

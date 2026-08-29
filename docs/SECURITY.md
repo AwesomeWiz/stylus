@@ -400,3 +400,21 @@ Maintain security tests for:
 - Persisted history contains structured user-facing output and normalized
   failure metadata only. It contains no prompt, hidden reasoning, provider raw
   response, credential, or automatic memory promotion.
+- TASK-016 Strategic Review accepts only an idempotency UUID and exact Reel
+  Brief version UUID from the browser. The server loads and snapshots the
+  same-organization immutable brief plus bounded canonical Company context;
+  organization, actor, provider, model, prompts and context records cannot be
+  supplied by the client.
+- Strategic Review tables are authenticated SELECT-only behind Marketing RLS.
+  Service-only pinned-search-path transitions enforce active execution role,
+  plugin enablement, exact-source relational integrity, sequential stage,
+  logical tier and `ai_runs` provenance. Advisory locks plus database uniqueness
+  block accidental duplicate active/final records.
+- Challenge receives no company-wide context, memory, competitor records, media
+  or research. No TASK-016 specialist has a tool or memory domain. Evidence
+  status and Judge dispositions reduce unsupported reasoning without treating
+  prompt instructions as authorization or claiming hallucination elimination.
+- Only Judge success after the other four successful stages creates a final
+  review. Failure preserves safe prior output, stores normalized metadata and
+  never persists prompts, provider responses, chain-of-thought, secrets or an
+  automatic memory write.

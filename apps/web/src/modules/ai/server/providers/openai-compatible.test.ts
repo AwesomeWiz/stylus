@@ -143,7 +143,10 @@ describe("OpenAICompatibleProvider", () => {
           name: "structured_test",
         },
       }),
-    ).rejects.toMatchObject({ category: "invalid_response" });
+    ).rejects.toMatchObject({
+      category: "invalid_response",
+      diagnostic: "provider_structured_request_rejected",
+    });
   });
 
   it("accepts only fixed server configuration URL shapes", () => {

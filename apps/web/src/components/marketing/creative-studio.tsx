@@ -20,12 +20,16 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import { StrategicReviewPanel } from "@/components/marketing/strategic-review-panel";
 import type {
   MarketingCreativeCouncilEvidenceRow,
   MarketingCreativeCouncilRunRow,
   MarketingCreativeCouncilStageRow,
   MarketingReelBriefVersionRow,
   MarketingReelIdeaRow,
+  MarketingStrategicCouncilReviewVersionRow,
+  MarketingStrategicReviewRunRow,
+  MarketingStrategicReviewStageRow,
   OrganizationRole,
 } from "@/lib/supabase/database.types";
 import { canMutateMarketing } from "@/modules/marketing/authorization";
@@ -52,9 +56,13 @@ export function CreativeStudio({
   evidence,
   ideas,
   initialIdempotencyKey,
+  initialStrategicReviewIdempotencyKey,
   role,
   runs,
   stages,
+  strategicReviewRuns,
+  strategicReviewStages,
+  strategicReviews,
 }: {
   briefs: MarketingReelBriefVersionRow[];
   companyContext: CompanyCreativeContext;
@@ -62,9 +70,13 @@ export function CreativeStudio({
   evidence: MarketingCreativeCouncilEvidenceRow[];
   ideas: MarketingReelIdeaRow[];
   initialIdempotencyKey: string;
+  initialStrategicReviewIdempotencyKey: string;
   role: OrganizationRole;
   runs: MarketingCreativeCouncilRunRow[];
   stages: MarketingCreativeCouncilStageRow[];
+  strategicReviewRuns: MarketingStrategicReviewRunRow[];
+  strategicReviewStages: MarketingStrategicReviewStageRow[];
+  strategicReviews: MarketingStrategicCouncilReviewVersionRow[];
 }) {
   const router = useRouter();
   const editable = canMutateMarketing(role);
@@ -238,6 +250,15 @@ export function CreativeStudio({
           </div>
         )}
       </section>
+
+      <StrategicReviewPanel
+        briefs={briefs}
+        initialIdempotencyKey={initialStrategicReviewIdempotencyKey}
+        reviews={strategicReviews}
+        role={role}
+        runs={strategicReviewRuns}
+        stages={strategicReviewStages}
+      />
 
       <CouncilHistory
         briefs={briefs}

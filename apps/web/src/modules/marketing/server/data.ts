@@ -14,6 +14,9 @@ import type {
   MarketingReelBriefVersionRow,
   MarketingReelIdeaRow,
   MarketingResearchRow,
+  MarketingStrategicCouncilReviewVersionRow,
+  MarketingStrategicReviewRunRow,
+  MarketingStrategicReviewStageRow,
 } from "@/lib/supabase/database.types";
 
 async function rows<T>(
@@ -212,7 +215,7 @@ export async function getMarketingOverview(organizationId: string) {
 
 export async function getCreativeStudioData(organizationId: string) {
   const db = await createServerSupabaseClient();
-  const [ideas, analyses, runs] = await Promise.all([
+  const [ideas, analyses, runs, strategicReviewRuns] = await Promise.all([
     listMarketingReelIdeas(organizationId),
     rows<MarketingCompetitorReelAnalysisRow>(
       db
@@ -233,6 +236,15 @@ export async function getCreativeStudioData(organizationId: string) {
         .order("created_at", { ascending: false })
         .limit(50),
       "Creative Council history could not be loaded.",
+    ),
+    rows<MarketingStrategicReviewRunRow>(
+      db
+        .from("marketing_strategic_review_runs")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      "Strategic review history could not be loaded.",
     ),
   ]);
 
@@ -317,5 +329,39 @@ export async function getCreativeStudioData(organizationId: string) {
       ])
     : [[], [], []];
 
-  return { briefs, eligibleEvidence, evidence, ideas, runs, stages };
+  const strategicRunIds = strategicReviewRuns.map((run) => run.id);
+  const [strategicReviewStages, strategicReviews] = strategicRunIds.length
+    ? await Promise.all([
+        rows<MarketingStrategicReviewStageRow>(
+          db
+            .from("marketing_strategic_review_stages")
+            .select("*")
+            .eq("organization_id", organizationId)
+            .in("strategic_review_run_id", strategicRunIds)
+            .order("created_at", { ascending: true }),
+          "Strategic review stages could not be loaded.",
+        ),
+        rows<MarketingStrategicCouncilReviewVersionRow>(
+          db
+            .from("marketing_strategic_council_review_versions")
+            .select("*")
+            .eq("organization_id", organizationId)
+            .in("strategic_review_run_id", strategicRunIds)
+            .order("created_at", { ascending: false }),
+          "Strategic Council Review versions could not be loaded.",
+        ),
+      ])
+    : [[], []];
+
+  return {
+    briefs,
+    eligibleEvidence,
+    evidence,
+    ideas,
+    runs,
+    stages,
+    strategicReviewRuns,
+    strategicReviewStages,
+    strategicReviews,
+  };
 }

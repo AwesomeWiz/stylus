@@ -131,6 +131,10 @@ export type MarketingCreativeCouncilStatus = "RUNNING" | "SUCCEEDED" | "FAILED";
 export type MarketingCreativeCouncilStage =
   "HOOK" | "SCRIPT" | "CRITIQUE" | "COMPLETE";
 export type MarketingCreativeCouncilStageStatus = "SUCCEEDED" | "FAILED";
+export type MarketingStrategicReviewStatus = "RUNNING" | "SUCCEEDED" | "FAILED";
+export type MarketingStrategicReviewStage =
+  "AUDIENCE" | "BRAND" | "STRATEGY" | "CHALLENGE" | "JUDGE" | "COMPLETE";
+export type MarketingStrategicReviewStageStatus = "SUCCEEDED" | "FAILED";
 
 type MarketingAuditRow = {
   archived_at: string | null;
@@ -283,6 +287,48 @@ export type MarketingReelBriefVersionRow = {
   title: string;
   version_number: number;
   visual_directions: unknown;
+};
+export type MarketingStrategicReviewRunRow = {
+  completed_at: string | null;
+  context_snapshot: unknown;
+  created_at: string;
+  created_by: string;
+  current_stage: MarketingStrategicReviewStage;
+  failed_stage: MarketingStrategicReviewStage | null;
+  failure_category: AIErrorCategoryRecord | null;
+  id: string;
+  idempotency_key: string;
+  organization_id: string;
+  plugin_id: "marketing";
+  schema_version: "strategic-council-review-v1";
+  source_reel_brief_version_id: string;
+  source_reel_idea_id: string;
+  status: MarketingStrategicReviewStatus;
+  workflow_version: "strategic-review-v1";
+};
+export type MarketingStrategicReviewStageRow = {
+  ai_run_id: string | null;
+  completed_at: string;
+  created_at: string;
+  failure_category: AIErrorCategoryRecord | null;
+  id: string;
+  organization_id: string;
+  stage: MarketingStrategicReviewStage;
+  status: MarketingStrategicReviewStageStatus;
+  strategic_review_run_id: string;
+  structured_output: unknown;
+};
+export type MarketingStrategicCouncilReviewVersionRow = {
+  created_at: string;
+  created_by: string;
+  id: string;
+  organization_id: string;
+  schema_version: "strategic-council-review-v1";
+  source_reel_brief_version_id: string;
+  source_reel_idea_id: string;
+  strategic_review_run_id: string;
+  structured_review: unknown;
+  version_number: number;
 };
 export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
 
@@ -941,6 +987,24 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      marketing_strategic_review_runs: {
+        Row: MarketingStrategicReviewRunRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_strategic_review_stages: {
+        Row: MarketingStrategicReviewStageRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_strategic_council_review_versions: {
+        Row: MarketingStrategicCouncilReviewVersionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       organization_invitations: {
         Row: OrganizationInvitationRow;
         Insert: never;
@@ -1097,6 +1161,48 @@ export type Database = {
           p_organization_id: string;
           p_run_id: string;
           p_stage: MarketingCreativeCouncilStage;
+        };
+        Returns: undefined;
+      };
+      start_marketing_strategic_review: {
+        Args: {
+          p_actor_id: string;
+          p_context_snapshot: Record<string, unknown>;
+          p_idempotency_key: string;
+          p_organization_id: string;
+          p_source_reel_brief_version_id: string;
+        };
+        Returns: unknown;
+      };
+      record_marketing_strategic_review_stage: {
+        Args: {
+          p_actor_id: string;
+          p_ai_run_id: string;
+          p_organization_id: string;
+          p_run_id: string;
+          p_stage: MarketingStrategicReviewStage;
+          p_structured_output: Record<string, unknown>;
+        };
+        Returns: undefined;
+      };
+      complete_marketing_strategic_review: {
+        Args: {
+          p_actor_id: string;
+          p_ai_run_id: string;
+          p_organization_id: string;
+          p_review: Record<string, unknown>;
+          p_run_id: string;
+        };
+        Returns: unknown;
+      };
+      fail_marketing_strategic_review: {
+        Args: {
+          p_actor_id: string;
+          p_ai_run_id: string | null;
+          p_failure_category: AIErrorCategoryRecord;
+          p_organization_id: string;
+          p_run_id: string;
+          p_stage: MarketingStrategicReviewStage;
         };
         Returns: undefined;
       };
@@ -1432,6 +1538,9 @@ export type Database = {
       marketing_creative_council_stage: MarketingCreativeCouncilStage;
       marketing_creative_council_stage_status: MarketingCreativeCouncilStageStatus;
       marketing_creative_council_status: MarketingCreativeCouncilStatus;
+      marketing_strategic_review_stage: MarketingStrategicReviewStage;
+      marketing_strategic_review_stage_status: MarketingStrategicReviewStageStatus;
+      marketing_strategic_review_status: MarketingStrategicReviewStatus;
       marketing_reel_idea_status: MarketingReelIdeaStatus;
       marketing_research_category: MarketingResearchCategory;
       job_error_category: JobErrorCategory;

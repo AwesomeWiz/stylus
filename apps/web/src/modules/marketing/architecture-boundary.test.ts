@@ -54,6 +54,32 @@ describe("Marketing architecture boundary", () => {
       /form\.get\(["'](?:organizationId|actorId|providerId|modelId|providerUrl|pluginId)["']\)/,
     );
   });
+  it("keeps Strategic Review on the same trusted memory-free gateway boundary", () => {
+    const orchestrator = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/modules/marketing/server/strategic-review-orchestrator.ts",
+      ),
+      "utf8",
+    );
+    const action = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/modules/marketing/strategic-review-actions.ts",
+      ),
+      "utf8",
+    );
+    expect(orchestrator).toContain("generateAIStructured");
+    expect(orchestrator).not.toMatch(
+      /Ollama|OpenAICompatibleProvider|generateAIStructuredForTrustedJob|enqueueJob|EXTERNAL_WORKER|SERVERLESS|fetch\(/,
+    );
+    expect(orchestrator).not.toMatch(
+      /buildAIKnowledgeContext|retrieveMemoriesForContext|knowledge_memories|marketing_competitor_reel/,
+    );
+    expect(action).not.toMatch(
+      /form\.get\(["'](?:organizationId|actorId|providerId|modelId|providerUrl|pluginId|context|hiddenPrompt)["']\)/,
+    );
+  });
   it("keeps browser forms free of organization and actor provenance inputs", () => {
     const source = readFileSync(
       resolve(

@@ -544,3 +544,44 @@ asking a question does not inherently enable external research. TASK-016 should
 make specialist contracts reusable by Create and Ask modes; TASK-020 owns the
 future Ask Creative Council product and must begin with discovery before its
 persistence or UI contract is fixed.
+
+---
+
+## ADR-029 — Strategic Review is a separate five-stage immutable workflow
+
+Status: ACCEPTED
+
+TASK-016 does not expand TASK-015's Hook -> Script -> Critic state machine.
+Instead, one exact immutable Reel Brief version enters a separate synchronous
+workflow: Audience Researcher, Brand Director, Content Strategist, Challenge
+Reviewer and Creative Judge. The maximum is five sequential ModelGateway calls,
+with 60 seconds per call and a 285-second overall deadline. There is no
+application retry, recursive debate, dynamic agent selection, job or worker.
+
+All nine TASK-016 specialists are static code-owned contracts separated from
+workflow and persistence. Trend Researcher, Competitor Analyst, Retention Editor
+and Visual Director are registered but unused in Strategic Review V1. Trend and
+Competitor may only interpret evidence explicitly supplied by a future
+authorized workflow; registration grants no research, media, memory or tool
+access.
+
+The workflow distinguishes evidence, inference and assumption and uses bounded
+recommendation references. Challenge performs one adversarial pass, never
+treats missing support as proof of falsity, and may require external
+verification. Judge performs one final pass and must disposition every
+challenged reference. These layers reduce unsupported reasoning and surface
+uncertainty; they neither expose chain-of-thought nor guarantee hallucination
+elimination.
+
+Runs and successful partial stages are immutable and reference ordinary
+`ai_runs`. Only Judge success creates a versioned Strategic Council Review tied
+to its exact source brief. Database transitions are service-only, RLS-isolated,
+same-organization, idempotent and sequential. The browser supplies neither
+tenant/actor provenance nor context/model authority. V1 uses bounded canonical
+Company context but no durable memory, competitor evidence, external research,
+tools or automatic memory writes.
+
+This artifact remains a Create-mode review. It does not define TASK-020's Ask
+Council conversation, routing, persistence or UI contract. TASK-017 research
+and TASK-018 performance evidence may be supplied only through future explicit
+authorized workflows.

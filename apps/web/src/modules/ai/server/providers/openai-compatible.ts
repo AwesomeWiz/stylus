@@ -75,7 +75,9 @@ function httpError(status: number, structuredOutput: boolean) {
   if (status === 408 || status >= 500)
     return new AIError("provider_unavailable");
   if (status === 400 && structuredOutput)
-    return new AIError("invalid_response");
+    return new AIError("invalid_response", {
+      diagnostic: "provider_structured_request_rejected",
+    });
   if (status === 400 || status === 413) return new AIError("context_limit");
   return new AIError("unknown");
 }
@@ -154,15 +156,24 @@ export class OpenAICompatibleProvider implements AIProviderAdapter {
     if (!response.ok)
       throw httpError(response.status, Boolean(structuredOutput));
     const raw = await response.text();
-    if (raw.length > 1_000_000) throw new AIError("invalid_response");
+    if (raw.length > 1_000_000)
+      throw new AIError("invalid_response", {
+        diagnostic: "provider_envelope_too_large",
+      });
     let parsedJson: unknown;
     try {
       parsedJson = JSON.parse(raw);
     } catch (error) {
-      throw new AIError("invalid_response", { cause: error });
+      throw new AIError("invalid_response", {
+        cause: error,
+        diagnostic: "provider_envelope_malformed_json",
+      });
     }
     const parsed = responseSchema.safeParse(parsedJson);
-    if (!parsed.success) throw new AIError("invalid_response");
+    if (!parsed.success)
+      throw new AIError("invalid_response", {
+        diagnostic: "provider_envelope_invalid",
+      });
     const usage = parsed.data.usage;
     return {
       finishReason: parsed.data.choices[0]!.finish_reason ?? null,
