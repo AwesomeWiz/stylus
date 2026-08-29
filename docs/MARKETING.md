@@ -364,3 +364,47 @@ and normal AI-run tracing are checked independently for each stage.
 8. Inspect `ai_runs` and the council tables. Confirm logical tiers are BALANCED,
    BALANCED, REASONING; prompt/provider bodies are absent; the source Reel Idea,
    human Creative Briefs, and `knowledge_memories` are unchanged.
+
+## Approved Future Direction: Create and Ask Council
+
+Creative Studio will eventually support two distinct interactions over reusable
+Creative Council infrastructure:
+
+```text
+Create                                Ask Council
+structured source                     team question
+  -> bounded workflow                   -> bounded intent/workflow routing
+  -> persisted artifact                 -> relevant approved specialists
+                                          -> bounded synthesis
+                                          -> team-facing answer
+```
+
+Create remains production-oriented, structured, auditable, and versioned where
+appropriate. TASK-015 is its valid V1: exactly Hook Strategist, Script Writer,
+and Creative Critic produce a Reel Brief in three successful calls. Ask Council
+is a future advisory mode for questions about priorities, positioning, brand,
+audience, campaigns, content strategy, and creative improvement. It is not
+implemented by TASK-015 or TASK-016.
+
+Ask Council must route a question to the smallest approved code-defined finite
+workflow rather than invoke the whole council or spawn agents dynamically. For
+example, a hook question may need Hook Strategist and Creative Critic, while an
+on-brand question may eventually need Brand Director and Creative Critic. These
+examples guide bounded routing and do not freeze exact mappings before TASK-020
+discovery.
+
+The result is one synthesized user-facing answer, not a transcript of internal
+agent discussion or fake specialist chat bubbles. Safe answer concepts include
+recommendations, concise audience/brand/creative perspectives, evidence,
+assumptions, disagreements, risks, and confidence. Raw chain-of-thought is
+never exposed or persisted.
+
+Future context may include bounded authorized Company data and appropriate
+Marketing records: Reel Ideas, Campaigns, Creative Briefs, Research,
+Competitors, and completed competitor Reel analyses. Marketing memory requires
+a future explicit authorization/retrieval design. Working records are not
+automatically promoted, manifest memory domains grant no access, and Marketing
+never retrieves agency memory. TASK-017 research may support an explicitly
+research-enabled workflow, and TASK-018 performance learning may provide
+authorized evidence; an ordinary Ask Council question enables neither by
+default.

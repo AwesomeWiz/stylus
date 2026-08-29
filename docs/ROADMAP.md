@@ -246,6 +246,8 @@ bounded canonical Company context, and stores immutable safe Reasoning History.
 Marketing memory retrieval, cancellation, queues, research, and additional
 agents remain deferred.
 
+TASK-015 passed manual QA and is merged into `main`.
+
 ---
 
 ## Phase 13 — Creative Council Expansion
@@ -258,6 +260,11 @@ agents remain deferred.
 - [ ] Visual Director
 - [ ] Brand Director
 - [ ] Creative Judge
+
+TASK-016 expands reusable specialist identities and bounded orchestration
+primitives for later Create and Ask Council workflows. It must not couple every
+specialist to Reel Brief generation or silently implement the full
+conversational product.
 
 ---
 
@@ -292,3 +299,21 @@ agents remain deferred.
 - [ ] selected capabilities
 - [ ] isolated agency domain
 - [ ] agency UI integration
+
+---
+
+## Phase 17 — Ask Creative Council
+
+- [ ] conversational Marketing question contract
+- [ ] bounded intent/workflow routing
+- [ ] smallest relevant approved specialist selection
+- [ ] synthesized structured council answer
+- [ ] company-aware authorized context
+- [ ] team collaboration and bounded history decision
+- [ ] RBAC, organization, plugin, AI-policy, call, and cost limits
+
+TASK-020 is the dedicated future advisory mode. It may consume explicitly
+authorized TASK-017 research or TASK-018 performance evidence, but neither is
+implicitly activated by a question. It uses ModelGateway logical tiers and
+finite code-defined workflows; no generic chatbot, arbitrary tool use, arbitrary
+agent spawning, raw chain-of-thought, or automatic memory write is permitted.

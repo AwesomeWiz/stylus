@@ -2,6 +2,19 @@
 
 # Current
 
+## TASK-016 — Creative Council Expansion
+
+Status: NEXT / NOT STARTED
+
+TASK-016 is the exact next repository implementation task. It expands the
+approved Creative Council specialist set and bounded orchestration primitives
+for reuse by future Create and Ask Council workflows. It does not implement the
+full TASK-020 conversational product without separate authorization.
+
+---
+
+# Completed
+
 ## TASK-012 — Windows Worker
 
 Status: COMPLETE / READY FOR MANUAL QA
@@ -39,8 +52,6 @@ Manual-QA hardening:
   files/444 tests and both production builds passed; no migration required
 
 ---
-
-# Completed
 
 ## TASK-011 — Heavy Job Infrastructure
 
@@ -445,7 +456,7 @@ manual retest remains pending; no additional migration is required.
 
 ## TASK-015 — Creative Council V1
 
-Status: IMPLEMENTED / READY FOR MANUAL QA
+Status: COMPLETE / MERGED
 
 Initial agents:
 
@@ -466,8 +477,12 @@ duplicate runs while a new intentional request creates the next version.
 Verification passed: 8 focused files/48 tests, lint, worker/web type checking,
 5 worker files/32 tests, 112 web files/513 tests, and both production builds.
 All TASK-015 files pass formatting. Linked dry-run reports only
-`20260825001500_creative_council_v1.sql` pending; it was not applied. Hosted
-pgTAP and end-to-end manual QA remain required before merge.
+`20260825001500_creative_council_v1.sql` pending during implementation; that run
+did not apply it. Hosted manual QA was subsequently accepted.
+
+Manual QA was accepted and TASK-015 was merged into `main` as `7a17d2b`.
+Its three-agent Create workflow remains unchanged; Ask Creative Council is a
+separate future interaction mode.
 
 ---
 
@@ -483,6 +498,12 @@ Add:
 - Visual Director
 - Brand Director
 - Creative Judge
+
+Expanded specialists and orchestration primitives must be reusable by both
+future bounded Create workflows and bounded Ask Council workflows. Do not bind
+agent contracts exclusively to Reel Brief generation. TASK-016 preserves finite,
+code-defined workflows and does not implement the full conversational Ask
+Creative Council product unless separately authorized.
 
 ---
 
@@ -522,3 +543,30 @@ Future only.
 Integrate the separate AI Web Agency through Stylus plugin interfaces.
 
 Agency memory must remain isolated.
+
+---
+
+## TASK-020 — Ask Creative Council
+
+Future approved direction only.
+
+Planned scope:
+
+- conversational Marketing questions from authorized team members
+- bounded company-aware Company and Marketing context
+- code-defined intent/workflow routing to the smallest approved specialist set
+- synthesized team-facing answers with concise perspectives, evidence,
+  assumptions, disagreements, risks, and confidence where appropriate
+- bounded collaborative conversation/history persistence if justified by its
+  discovery pass
+- organization, role, plugin, AI-policy, and ModelGateway boundaries
+- explicit call, cost, context, and stopping limits using logical model tiers
+- optional explicit use of TASK-017 research evidence when a selected workflow
+  requires research; ordinary questions do not imply web research
+- future TASK-018 performance evidence through an authorized bounded interface
+
+Do not implement Ask Council as a generic chatbot, an unrestricted research
+assistant, or an autonomous swarm. It must not expose raw chain-of-thought,
+spawn arbitrary agents, invoke arbitrary tools, broaden Marketing into agency
+memory, or write durable memory automatically. Its own discovery pass must
+define persistence and implementation contracts before development begins.
