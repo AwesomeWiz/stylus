@@ -4,7 +4,7 @@ Last Updated: 2026-08-30
 
 ## Overall Status
 
-TASK-017B IMPLEMENTED / READY FOR HOSTED MIGRATION AND QA
+TASK-017B IMPLEMENTED / READY FOR HOSTED RETEST
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
@@ -19,15 +19,15 @@ intact.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017B IMPLEMENTED / READY FOR HOSTED MIGRATION AND QA
+Status: TASK-017B IMPLEMENTED / READY FOR HOSTED RETEST
 
 ---
 
 ## Current Objective
 
-Apply only the new TASK-017B forward migration in hosted Supabase, then verify
-HN text, discussion and linked-article evidence through the existing Hobby
-execution path. Preserve source-to-evidence-to-finding provenance,
+Deploy the TASK-017B pinned-lookup correction, then verify HN text, discussion
+and linked-article evidence through the existing Hobby execution path. Preserve
+source-to-evidence-to-finding provenance,
 organization isolation and unchanged TASK-015/TASK-016 behavior. TASK-017C,
 TASK-018 and TASK-020 remain unstarted.
 
@@ -1281,8 +1281,8 @@ network concurrency is at most two inside the existing three-request gate.
 schema correction. It extends immutable evidence with typed per-item
 provenance, content hashes and bounded metadata, replaces only the service-only
 retrieval RPC, preserves RLS and does not rewrite `01700` or `01710`. The pgTAP
-plan now includes 38 assertions. The migration has not been applied to hosted
-Supabase.
+plan now includes 38 assertions. Hosted evidence rows confirm that the migration
+has been applied to Supabase.
 
 Article/comment failure remains partial when story evidence survives. Safe
 diagnostics include `extraction_failed` and `empty_content`; no response body,
@@ -1300,3 +1300,17 @@ pending and applied nothing; linked database lint reported only the pre-existing
 TASK-015 enum-assignment warning. The 38-assertion pgTAP suite was updated, but
 local execution remains blocked because the local Supabase Docker database is
 not running.
+
+Hosted QA later proved that linked-article transport stopped before opening a
+socket on Node 24: the HTTPS client requested an `all: true` custom lookup
+result, while the pinned lookup returned the legacy scalar callback shape.
+Node rejected that shape with `ERR_INVALID_IP_ADDRESS`, previously normalized
+as `connection_failure`. The lookup now returns the same single validated pin
+as a one-entry array when requested, retains scalar compatibility otherwise,
+and categorizes that runtime-contract error as `transport_failure`. No SSRF,
+DNS, TLS, redirect, size, timeout, tenant or evidence boundary changed.
+
+Corrective verification passed 3 focused files / 45 tests and the complete web
+suite at 132 files / 656 tests. Targeted formatting, web lint, worker/web
+typechecks and both production builds passed. No migration or hosted database
+change is required for this transport correction.

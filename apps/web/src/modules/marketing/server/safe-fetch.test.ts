@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  createPinnedLookup,
   networkDiagnosticCategory,
   RunByteBudget,
   safeFetchArticle,
@@ -60,6 +61,26 @@ describe("pinned-DNS external research safe fetch", () => {
     ).toBe("tls_failure");
     expect(networkDiagnosticCategory({ code: "ECONNREFUSED" })).toBe(
       "connection_failure",
+    );
+    expect(networkDiagnosticCategory({ code: "ERR_INVALID_IP_ADDRESS" })).toBe(
+      "transport_failure",
+    );
+  });
+
+  it("returns the validated pin in the callback shape requested by Node", () => {
+    const address = { address: "8.8.8.8", family: 4 as const };
+    const lookup = createPinnedLookup(address);
+    const allCallback = vi.fn();
+    const oneCallback = vi.fn();
+
+    lookup("article.example.test", { all: true }, allCallback);
+    lookup("article.example.test", { all: false }, oneCallback);
+
+    expect(allCallback).toHaveBeenCalledWith(null, [address]);
+    expect(oneCallback).toHaveBeenCalledWith(
+      null,
+      address.address,
+      address.family,
     );
   });
 

@@ -4,6 +4,10 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Fixed TASK-017B pinned article retrieval on Node runtimes that request the
+  custom DNS lookup result with `all: true`; the same validated address remains
+  pinned and transport-contract failures now receive a safe specific diagnostic.
+
 ### Added
 
 - Initial product and architecture specification.

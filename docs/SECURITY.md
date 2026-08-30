@@ -432,8 +432,10 @@ Maintain security tests for:
   are mandatory. IP literals, localhost/`.local`, loopback, private, link-local,
   reserved and special-use DNS answers are rejected; any unsafe answer rejects
   the host. DNS resolution is inside the request timeout, the validated address
-  is pinned while TLS SNI/hostname verification uses the original host, and
-  every bounded redirect repeats validation. Requests carry no cookie or
+  is pinned while TLS SNI/hostname verification uses the original host. The
+  lookup returns exactly that validated pin in the scalar or `all: true`
+  callback form requested by Node, and every bounded redirect repeats
+  validation. Requests carry no cookie or
   authorization header and never execute JavaScript, forms or embedded links.
 - Source bodies, auth data and provider internals are neither logged nor stored.
   Rendered excerpts are escaped text; displayed external links are HTTPS-only.

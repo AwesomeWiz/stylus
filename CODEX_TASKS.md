@@ -4,7 +4,7 @@
 
 ## TASK-017B — External Research Content Enrichment
 
-Status: IMPLEMENTED / READY FOR HOSTED MIGRATION AND QA
+Status: IMPLEMENTED / READY FOR HOSTED RETEST
 
 The existing TASK-017 durable SERVERLESS path now enriches only matched HN
 stories with native text, bounded top-level/one-level discussion and bounded
@@ -12,9 +12,16 @@ linked-article text through the pinned-DNS safe-fetch boundary. Immutable
 evidence distinguishes HN story, HN text, HN comment and article content with
 per-item provenance and hashes. Deterministic extraction/preprocessing still
 permits at most one trusted ModelGateway synthesis and fits the Vercel Hobby
-window. `20260825001720_external_research_content_enrichment.sql` is pending
-hosted application. Manual notes and TASK-015/TASK-016 remain unchanged.
+window. Hosted evidence confirms that
+`20260825001720_external_research_content_enrichment.sql` is applied. Manual
+notes and TASK-015/TASK-016 remain unchanged.
 TASK-017C, TASK-018 and TASK-020 have not started.
+
+Hosted article QA identified a Node 24 custom-lookup compatibility defect, not
+a danluu.com content failure: Node requested an `all: true` lookup response but
+the pinned transport returned the legacy scalar callback form. The corrective
+implementation preserves the single validated address and all SSRF/TLS limits,
+adds a transport-contract regression, and awaits hosted retest.
 
 ---
 

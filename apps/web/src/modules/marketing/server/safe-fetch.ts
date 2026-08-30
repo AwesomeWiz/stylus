@@ -2,7 +2,7 @@ import "server-only";
 
 import { lookup as dnsLookup } from "node:dns/promises";
 import { request as httpsRequest } from "node:https";
-import { isIP } from "node:net";
+import { isIP, type LookupFunction } from "node:net";
 
 import { externalResearchLimits } from "../external-research";
 
@@ -22,6 +22,7 @@ export type SourceDiagnosticCategory =
   | "dns_failure"
   | "unsafe_address"
   | "connection_failure"
+  | "transport_failure"
   | "tls_failure"
   | "timeout"
   | "http_status"
@@ -408,9 +409,10 @@ function header(headers: TransportResponse["headers"], name: string) {
 
 export function networkDiagnosticCategory(
   error: unknown,
-): "connection_failure" | "dns_failure" | "tls_failure" {
+): "connection_failure" | "dns_failure" | "tls_failure" | "transport_failure" {
   const code = nestedErrorCode(error);
   if (code === "ENOTFOUND" || code === "EAI_AGAIN") return "dns_failure";
+  if (code === "ERR_INVALID_IP_ADDRESS") return "transport_failure";
   if (
     code.startsWith("ERR_TLS") ||
     code.startsWith("CERT_") ||
@@ -472,8 +474,7 @@ async function pinnedHttpsRequest(input: {
           "accept-encoding": "identity",
           "user-agent": "StylusExternalResearch/1.0",
         },
-        lookup: (_hostname, _options, callback) =>
-          callback(null, input.address.address, input.address.family),
+        lookup: createPinnedLookup(input.address),
         signal: input.signal,
       },
       (response) => {
@@ -515,4 +516,14 @@ async function pinnedHttpsRequest(input: {
     request.on("error", reject);
     request.end();
   });
+}
+
+export function createPinnedLookup(address: Address): LookupFunction {
+  return (_hostname, options, callback) => {
+    if (options.all) {
+      callback(null, [address]);
+      return;
+    }
+    callback(null, address.address, address.family);
+  };
 }
