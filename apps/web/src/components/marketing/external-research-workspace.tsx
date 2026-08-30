@@ -221,7 +221,9 @@ function ResearchHistory({
         const report = externalResearchReportSchema.safeParse(
           reportByRun.get(run.id)?.structured_report,
         );
-        const runEvidence = evidence.filter((item) => item.run_id === run.id);
+        const runEvidence = evidence
+          .filter((item) => item.run_id === run.id)
+          .sort(compareEvidenceIds);
         const sourceById = new Map(
           sources
             .filter((item) => item.run_id === run.id)
@@ -385,6 +387,15 @@ function SourceHistory({
 function diagnosticCategory(source: MarketingExternalResearchSourceRow) {
   const value = source.safe_metadata.diagnosticCategory;
   return typeof value === "string" ? value : null;
+}
+
+function compareEvidenceIds(
+  left: MarketingExternalResearchEvidenceRow,
+  right: MarketingExternalResearchEvidenceRow,
+) {
+  const leftNumber = Number(left.evidence_id.replace(/^EVID-/, ""));
+  const rightNumber = Number(right.evidence_id.replace(/^EVID-/, ""));
+  return leftNumber - rightNumber;
 }
 
 function candidateCount(source: MarketingExternalResearchSourceRow) {

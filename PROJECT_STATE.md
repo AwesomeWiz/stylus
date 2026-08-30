@@ -25,9 +25,9 @@ Status: TASK-017B IMPLEMENTED / READY FOR HOSTED RETEST
 
 ## Current Objective
 
-Deploy the TASK-017B pinned-lookup correction, then verify HN text, discussion
-and linked-article evidence through the existing Hobby execution path. Preserve
-source-to-evidence-to-finding provenance,
+Deploy the TASK-017B synthesis correction, then verify HN text, discussion,
+linked-article evidence and the immutable report through the existing Hobby
+execution path. Preserve source-to-evidence-to-finding provenance,
 organization isolation and unchanged TASK-015/TASK-016 behavior. TASK-017C,
 TASK-018 and TASK-020 remain unstarted.
 
@@ -1314,3 +1314,26 @@ Corrective verification passed 3 focused files / 45 tests and the complete web
 suite at 132 files / 656 tests. Targeted formatting, web lint, worker/web
 typechecks and both production builds passed. No migration or hosted database
 change is required for this transport correction.
+
+The next hosted enriched run proved retrieval and all 12 evidence rows, then
+made one `openai-compatible` / `remote-default` structured attempt. A prior
+attempt returned 1,598 of the 1,600 allowed output tokens with finish reason
+`length` and `structured_output_truncated`; the enriched retest returned no
+provider response before the former 25-second synthesis timeout. Neither case
+reached evidence-reference post-validation or report persistence. The exact
+14,190-character, 12-evidence synthesis context was below its 40,000-character
+ceiling.
+
+Synthesis now supplies a per-run structured schema whose evidence-reference
+enum is exactly the EVID identifiers in context, preserves post-validation,
+and bounds report breadth so a useful concise report fits the unchanged 1,600
+output-token ceiling. The synthesis allowance is 35 seconds inside the existing
+55-second workflow and five-second durable-completion reserve; timeout remains
+single-attempt and safe. Evidence display sorts numeric EVID suffixes without
+changing immutable IDs. No retrieval, migration, provider, authorization,
+prompt-injection, memory, tool or one-call boundary changed.
+
+Synthesis corrective verification passed 4 focused files / 31 tests and the
+complete web suite at 132 files / 659 tests. Targeted formatting, web lint,
+web typecheck and the web production build passed. Worker code was unaffected,
+so its suite/build were not rerun. No migration was added or changed.

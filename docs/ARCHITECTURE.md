@@ -544,7 +544,7 @@ Marketing Research Server Action
   -> deterministic query matching
   -> matched HN native text + bounded comments + pinned-DNS linked article
   -> typed, hashed source + EVID-n persistence
-  -> one maximum trusted ModelGateway structured synthesis
+  -> exact per-run EVID enum -> one maximum trusted ModelGateway structured synthesis
   -> reference validation -> immutable Research Report
 ```
 
@@ -570,3 +570,9 @@ Evidence-type/native-ID, canonical-URL/content and normalized-content hashes
 deduplicate fragments before deterministic EVID assignment. The model receives
 only the selected bounded immutable records; no new agent, tool, provider path,
 memory path, Core dependency or Council invocation exists.
+
+The synthesis schema narrows every supported evidence reference to the exact
+identifiers included in that run's bounded context. Concise report cardinality
+limits keep the strict response within the fixed output ceiling; application
+post-validation repeats the same reference-set check before immutable report
+persistence.

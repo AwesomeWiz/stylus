@@ -451,6 +451,10 @@ Maintain security tests for:
   article claim, submitter text and an individual community comment. Hostile
   text is retained as evidence rather than interpreted as an instruction; raw
   prompt, provider response and chain-of-thought remain unpersisted.
+- The structured synthesis schema permits only the exact EVID identifiers in
+  the bounded per-run context. The same set is checked again after generation
+  before immutable report persistence; malformed, truncated or unknown
+  references fail without a second model attempt.
 - Immediate hosted execution receives only the trusted job UUID returned by the
   service-only enqueue. The browser cannot select a job, executor, tenant or
   handler. Immediate and daily recovery execution share atomic database claims,

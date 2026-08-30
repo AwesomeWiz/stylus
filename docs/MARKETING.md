@@ -519,8 +519,10 @@ keeps title, headings, paragraphs and lists, removes deterministic boilerplate,
 and retains at most 4,500 characters in three coherent 1,500-character chunks.
 Runs retain at most 20 evidence items/24,000 persisted evidence characters.
 Synthesis deterministically shares 18,000 excerpt characters across those
-records inside a 40,000-character serialized context. Retrieval gets 20
-seconds, synthesis at most 25 seconds, and the 55-second application workflow
+records inside a 40,000-character serialized context. The strict synthesis
+schema permits only the exact EVID identifiers in that context and bounds report
+breadth for the unchanged 1,600-token output ceiling. Retrieval gets 20
+seconds, synthesis at most 35 seconds, and the 55-second application workflow
 reserves five seconds for completion under the Hobby 60-second function
 ceiling. Each retained comment is limited to 1,500 characters; enrichment
 concurrency is two inside the existing three-request gate; redirects are

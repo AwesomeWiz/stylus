@@ -165,8 +165,72 @@ describe("external research job handler", () => {
     expect(options.messages[0]?.content).toContain("untrusted quoted data");
     expect(options.messages[1]?.content).toContain("Ignore prior instructions");
     expect(options.maxOutputTokens).toBe(1_600);
-    expect(options.timeoutMs).toBeLessThanOrEqual(25_000);
+    expect(options.timeoutMs).toBe(35_000);
     expect(options).not.toHaveProperty("tools");
+  });
+
+  it("synthesizes the hosted 12-item enriched shape with exact dynamic references", async () => {
+    mocks.retrieve.mockResolvedValue({
+      failures: [],
+      items: [hostedEnrichedItem()],
+    });
+    const enrichedReport = {
+      ...report,
+      findings: [
+        {
+          confidence: "MEDIUM",
+          id: "F-1",
+          statement: "Article and discussion evidence align.",
+          supportedBy: ["EVID-2", "EVID-12"],
+        },
+      ],
+    };
+    mocks.generate.mockImplementation(async (input) => {
+      expect(input.schema.safeParse(enrichedReport).success).toBe(true);
+      expect(
+        input.schema.safeParse({
+          ...enrichedReport,
+          findings: [
+            { ...enrichedReport.findings[0], supportedBy: ["EVID-13"] },
+          ],
+        }).success,
+      ).toBe(false);
+      return {
+        data: enrichedReport,
+        runId: "00000000-0000-4000-8000-000000000004",
+      };
+    });
+
+    const result = await runExternalResearchJob(
+      { runId: "00000000-0000-4000-8000-000000000001" },
+      jobContext(),
+    );
+
+    expect(result).toMatchObject({ evidenceCount: 12 });
+    expect(mocks.generate).toHaveBeenCalledOnce();
+    const generation = mocks.generate.mock.calls[0]![0];
+    const context = JSON.parse(generation.options.messages[1]!.content);
+    expect(
+      context.evidence.map(
+        (evidence: { evidenceId: string }) => evidence.evidenceId,
+      ),
+    ).toEqual(Array.from({ length: 12 }, (_, index) => `EVID-${index + 1}`));
+    expect(
+      context.evidence.map(
+        (evidence: { evidenceType: string }) => evidence.evidenceType,
+      ),
+    ).toEqual([
+      "HN_STORY",
+      "ARTICLE_CONTENT",
+      ...Array(8).fill("HN_COMMENT"),
+      "ARTICLE_CONTENT",
+      "ARTICLE_CONTENT",
+    ]);
+    expect(generation.options.messages[1]!.content.length).toBeLessThanOrEqual(
+      40_000,
+    );
+    expect(generation.options.maxOutputTokens).toBe(1_600);
+    expect(generation.options.timeoutMs).toBe(35_000);
   });
 
   it("assigns deterministic typed evidence IDs and deduplicates repeated fragments", async () => {
@@ -364,6 +428,42 @@ function item(
     publishedAt: "2026-08-28T00:00:00.000Z",
     title: "Onboarding",
     ...overrides,
+  };
+}
+
+function hostedEnrichedItem(): NormalizedResearchItem {
+  const base = item();
+  const common = {
+    author: "researcher",
+    fetchedAt: "2026-08-30T10:15:35.885Z",
+    metadata: { storyId: 1 },
+    parentNativeId: "1",
+    publishedAt: "2026-08-30T00:00:00.000Z",
+    title: null,
+  };
+  return {
+    ...base,
+    evidence: [
+      base.evidence[0]!,
+      ...Array.from({ length: 3 }, (_, index) => ({
+        ...common,
+        canonicalUrl: "https://article.example.test/story",
+        evidenceType: "ARTICLE_CONTENT" as const,
+        excerpt: `Article chunk ${index + 1}`,
+        metadata: { chunk: index + 1, storyId: 1 },
+        nativeId: `1:article:${index + 1}`,
+        title: "Article",
+      })),
+      ...Array.from({ length: 8 }, (_, index) => ({
+        ...common,
+        canonicalUrl: `https://news.ycombinator.com/item?id=${index + 2}`,
+        evidenceType: "HN_COMMENT" as const,
+        excerpt: `Comment ${index + 1}`,
+        metadata: { depth: index % 2, storyId: 1 },
+        nativeId: String(index + 2),
+      })),
+    ],
+    normalizedText: "Hosted enriched evidence",
   };
 }
 

@@ -7,6 +7,10 @@ All notable user-facing changes to Stylus will be documented here.
 - Fixed TASK-017B pinned article retrieval on Node runtimes that request the
   custom DNS lookup result with `all: true`; the same validated address remains
   pinned and transport-contract failures now receive a safe specific diagnostic.
+- Fixed enriched External Research synthesis by constraining structured
+  evidence references to the exact per-run EVID set, bounding report breadth,
+  and using 35 seconds of the existing 55-second workflow budget. Evidence now
+  displays in numeric EVID order.
 
 ### Added
 

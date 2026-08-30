@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createExternalResearchSynthesisSchema,
   externalResearchReportSchema,
   externalResearchRequestSchema,
   projectExternalResearchEvidence,
@@ -78,6 +79,33 @@ describe("external research contracts", () => {
     expect(() => validateEvidenceReferences(report, ["EVID-1"])).toThrow(
       "invalid evidence reference",
     );
+  });
+
+  it("constrains structured synthesis references to the exact evidence set", () => {
+    const evidenceIds = Array.from(
+      { length: 12 },
+      (_, index) => `EVID-${index + 1}`,
+    );
+    const schema = createExternalResearchSynthesisSchema(evidenceIds);
+
+    expect(schema.safeParse(reportWithReference("EVID-12")).success).toBe(true);
+    expect(schema.safeParse(reportWithReference("EVID-13")).success).toBe(
+      false,
+    );
+    expect(
+      schema.safeParse({
+        ...reportWithReference("EVID-1"),
+        findings: Array.from({ length: 7 }, (_, index) => ({
+          confidence: "MEDIUM",
+          id: `F-${index + 1}`,
+          statement: `Finding ${index + 1}`,
+          supportedBy: ["EVID-1"],
+        })),
+      }).success,
+    ).toBe(false);
+    expect(() =>
+      createExternalResearchSynthesisSchema(["EVID-1", "EVID-1"]),
+    ).toThrow("identifiers are invalid");
   });
 
   it("keeps future Council projection explicit, selected, and bounded", () => {
@@ -159,7 +187,7 @@ function item(
   };
 }
 
-function reportWithReference(reference: "EVID-1" | "EVID-2") {
+function reportWithReference(reference: string) {
   return externalResearchReportSchema.parse({
     confidence: "MEDIUM",
     disagreements: [],

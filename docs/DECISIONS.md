@@ -636,8 +636,10 @@ canonical-URL and content-hash deduplication precedes EVID assignment. Enriched
 evidence is immutable, organization-scoped and linked to the existing durable
 run/source record; legacy evidence remains valid.
 
-Retrieval is bounded to 20 seconds and synthesis to 25 seconds inside a
-55-second workflow with a five-second completion reserve. Partial enrichment
+Retrieval is bounded to 20 seconds and synthesis to 35 seconds inside a
+55-second workflow with a five-second completion reserve. The synthesis schema
+uses the exact per-run EVID set and concise report cardinalities while retaining
+defense-in-depth reference validation. Partial enrichment
 failures retain useful story/article/comment evidence. One trusted ModelGateway
 synthesis remains the maximum and treats every external field as untrusted
 quoted data with no tool, memory or autonomous-retrieval authority. TASK-017C,
