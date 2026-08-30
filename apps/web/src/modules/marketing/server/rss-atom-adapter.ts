@@ -70,27 +70,44 @@ export function createRssAtomAdapter(
             read(entry, "guid") ?? read(entry, "id"),
             500,
           );
+          const author =
+            normalizePlainText(
+              read(entry, "author") ?? read(entry, "dc:creator"),
+              120,
+            ) || null;
+          const canonicalUrl =
+            normalizeCanonicalUrl(readLink(entry)) ?? loaded.finalUrl;
+          const publishedAt = parsePublishedAt(
+            read(entry, "pubDate") ??
+              read(entry, "published") ??
+              read(entry, "updated") ??
+              read(entry, "dc:date"),
+          );
           return [
             {
               adapterId: "rss-atom" as const,
-              author:
-                normalizePlainText(
-                  read(entry, "author") ?? read(entry, "dc:creator"),
-                  120,
-                ) || null,
-              canonicalUrl:
-                normalizeCanonicalUrl(readLink(entry)) ?? loaded.finalUrl,
+              author,
+              canonicalUrl,
               contentHash: normalizedContentHash(normalizedText),
+              evidence: [
+                {
+                  author,
+                  canonicalUrl,
+                  evidenceType: "FEED_ITEM" as const,
+                  excerpt: normalizedText,
+                  fetchedAt: context.fetchedAt,
+                  metadata: { feedUrl: loaded.finalUrl },
+                  nativeId: nativeId || `entry-${index + 1}`,
+                  parentNativeId: null,
+                  publishedAt,
+                  title: title || null,
+                },
+              ],
               fetchedAt: context.fetchedAt,
               metadata: { feedUrl: loaded.finalUrl },
               nativeId: nativeId || `entry-${index + 1}`,
               normalizedText,
-              publishedAt: parsePublishedAt(
-                read(entry, "pubDate") ??
-                  read(entry, "published") ??
-                  read(entry, "updated") ??
-                  read(entry, "dc:date"),
-              ),
+              publishedAt,
               title: title || null,
             },
           ];

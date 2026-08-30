@@ -11,6 +11,30 @@ import type {
   SourceFailureCategory,
 } from "./safe-fetch";
 
+export const researchEvidenceKinds = [
+  "DISCUSSION",
+  "FEED_ITEM",
+  "HN_STORY",
+  "HN_TEXT",
+  "HN_COMMENT",
+  "ARTICLE_CONTENT",
+] as const;
+
+export type ResearchEvidenceKind = (typeof researchEvidenceKinds)[number];
+
+export type ResearchEvidenceDraft = {
+  author: string | null;
+  canonicalUrl: string | null;
+  evidenceType: ResearchEvidenceKind;
+  excerpt: string;
+  fetchedAt: string;
+  metadata: Record<string, string | number | boolean>;
+  nativeId: string | null;
+  parentNativeId: string | null;
+  publishedAt: string | null;
+  title: string | null;
+};
+
 export type NormalizedResearchItem = {
   adapterId: "hacker-news" | "rss-atom";
   author: string | null;
@@ -22,6 +46,7 @@ export type NormalizedResearchItem = {
   normalizedText: string;
   publishedAt: string | null;
   title: string | null;
+  evidence: ResearchEvidenceDraft[];
 };
 
 export type SourceRequestFailure = {
@@ -106,7 +131,10 @@ export function normalizePlainText(
 
 export function normalizedContentHash(value: string) {
   return createHash("sha256")
-    .update(value.toLocaleLowerCase().replace(/\s+/g, " ").trim(), "utf8")
+    .update(
+      value.toLocaleLowerCase("en-US").replace(/\s+/g, " ").trim(),
+      "utf8",
+    )
     .digest("hex");
 }
 
@@ -142,7 +170,8 @@ export function normalizeCanonicalUrl(value: unknown) {
     [...url.searchParams.keys()]
       .filter((key) => /^utm_|^(?:fbclid|gclid)$/i.test(key))
       .forEach((key) => url.searchParams.delete(key));
-    return url.toString();
+    const normalized = url.toString();
+    return normalized.length <= 1_000 ? normalized : null;
   } catch {
     return null;
   }

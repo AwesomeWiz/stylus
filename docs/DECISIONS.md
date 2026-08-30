@@ -618,3 +618,28 @@ Only retained evidence reaches one maximum trusted ModelGateway structured
 synthesis. Reports are immutable and every supported statement must reference
 persisted evidence from that run. Research is Marketing working data: it does
 not automatically execute either Council workflow or write durable memory.
+
+## ADR-031 — Enrich only matched research sources into typed immutable evidence
+
+TASK-017B deepens the existing HN adapter after deterministic matching instead
+of adding a search engine or crawler. At most two matched stories receive native
+text, a bounded first-five top-level plus first-listed one-level reply sample,
+and at most two unique linked-article fetches. Linked articles reuse the
+pinned-DNS HTTPS boundary; a pinned `htmlparser2` dependency performs
+deterministic non-browser extraction and paragraph-based chunking. No embedded
+link is followed and no JavaScript or extra model call is used.
+
+Separate `HN_STORY`, `HN_TEXT`, `HN_COMMENT` and `ARTICLE_CONTENT` evidence rows
+preserve the semantic source of each claim and establish an extensible
+provenance contract for future research types. Deterministic native-ID,
+canonical-URL and content-hash deduplication precedes EVID assignment. Enriched
+evidence is immutable, organization-scoped and linked to the existing durable
+run/source record; legacy evidence remains valid.
+
+Retrieval is bounded to 20 seconds and synthesis to 25 seconds inside a
+55-second workflow with a five-second completion reserve. Partial enrichment
+failures retain useful story/article/comment evidence. One trusted ModelGateway
+synthesis remains the maximum and treats every external field as untrusted
+quoted data with no tool, memory or autonomous-retrieval authority. TASK-017C,
+not this decision, owns future Reddit and bounded web/fashion-editorial source
+expansion; social-platform intelligence remains separate.

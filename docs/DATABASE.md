@@ -531,3 +531,19 @@ trusted job UUID returned by enqueue, uses row locking plus the existing
 concurrency-group advisory lock, and performs the same eligibility, lease and
 attempt transition as the generic recovery claim. It neither changes research
 data nor grants a browser a claim capability.
+
+`20260825001720_external_research_content_enrichment.sql` is a forward-only
+TASK-017B extension to immutable evidence. It retains legacy
+`DISCUSSION`/`FEED_ITEM` values and adds `HN_STORY`, `HN_TEXT`, `HN_COMMENT` and
+`ARTICLE_CONTENT`. New enriched rows carry bounded native/parent IDs, canonical
+HTTPS resource URL, title, author, published/fetched timestamps, SHA-256 content
+hash and bounded safe metadata. Existing rows remain untouched and readable;
+the immutable update/delete trigger remains active.
+
+The migration replaces only
+`record_marketing_external_research_retrieval(...)`, retaining its
+`SECURITY DEFINER` marker, empty `search_path`, active job lease, Marketing
+enablement and current membership checks. Execute remains revoked from browser
+roles and granted only to `service_role`. Evidence/source organization foreign
+keys, SELECT-only RLS, 20-row/24,000-character bounds and immutable report
+references are unchanged.

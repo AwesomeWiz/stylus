@@ -2,21 +2,19 @@
 
 # Current
 
-## TASK-017 — External Research
+## TASK-017B — External Research Content Enrichment
 
-Status: IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
+Status: IMPLEMENTED / READY FOR HOSTED MIGRATION AND QA
 
-Implemented as durable Marketing external-research runs backed by an exact
-statically registered SERVERLESS job, immediate hosted post-response execution,
-and a Cron-secret-authenticated daily recovery route,
-fixed-host Hacker News retrieval, pinned-DNS RSS/Atom safe fetch, deterministic
-normalization/deduplication/evidence, and at most one trusted ModelGateway
-synthesis. Reports and provenance are immutable. Manual notes and TASK-015/
-TASK-016 remain unchanged. Hosted QA has applied both TASK-017 migrations and
-verified the Hobby execution path. The HN retrieval correction now treats
-multi-word inputs as deterministic keyword groups and records a successful
-zero-match observation separately from transport/source failure. TASK-018 and
-TASK-020 have not started.
+The existing TASK-017 durable SERVERLESS path now enriches only matched HN
+stories with native text, bounded top-level/one-level discussion and bounded
+linked-article text through the pinned-DNS safe-fetch boundary. Immutable
+evidence distinguishes HN story, HN text, HN comment and article content with
+per-item provenance and hashes. Deterministic extraction/preprocessing still
+permits at most one trusted ModelGateway synthesis and fits the Vercel Hobby
+window. `20260825001720_external_research_content_enrichment.sql` is pending
+hosted application. Manual notes and TASK-015/TASK-016 remain unchanged.
+TASK-017C, TASK-018 and TASK-020 have not started.
 
 ---
 
@@ -532,7 +530,7 @@ external-evidence capability.
 
 ## TASK-017 — Marketing Research
 
-Status: IMPLEMENTED / READY FOR MANUAL QA
+Status: COMPLETE / MERGED
 
 Implemented scope:
 
@@ -544,8 +542,20 @@ Implemented scope:
 - exactly one trusted structured synthesis maximum
 - immutable source, evidence and report history with RLS
 
-V1 excludes Reddit, generic web search/crawling, article-body fetching,
-automatic Council research and automatic memory promotion.
+The original V1 foundation excluded article-body fetching. TASK-017B adds
+matched-story content enrichment without adding Reddit, generic web discovery,
+social scraping, automatic Council research or automatic memory promotion.
+
+---
+
+## TASK-017C — Fashion Research Source Expansion
+
+Status: FUTURE / NOT STARTED
+
+Planned discovery should prioritize Reddit plus bounded web/fashion-editorial
+source discovery while reusing TASK-017B evidence, provenance, safe-fetch and
+partial-failure contracts. Instagram, TikTok, Pinterest and YouTube intelligence
+remain a separate future media/platform capability.
 
 ---
 

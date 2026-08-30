@@ -427,6 +427,14 @@ Maintain security tests for:
 - RSS/Atom permits only public HTTPS on port 443. DNS results are checked before
   a custom HTTPS connection pins the selected public address while TLS retains
   the original hostname. Every redirect is re-resolved and revalidated.
+- TASK-017B linked articles use that same boundary only after deterministic HN
+  matching. HTTPS, port 443, credential-free hostnames and textual content types
+  are mandatory. IP literals, localhost/`.local`, loopback, private, link-local,
+  reserved and special-use DNS answers are rejected; any unsafe answer rejects
+  the host. DNS resolution is inside the request timeout, the validated address
+  is pinned while TLS SNI/hostname verification uses the original host, and
+  every bounded redirect repeats validation. Requests carry no cookie or
+  authorization header and never execute JavaScript, forms or embedded links.
 - Source bodies, auth data and provider internals are neither logged nor stored.
   Rendered excerpts are escaped text; displayed external links are HTTPS-only.
 - Retrieval diagnostics are restricted to normalized categories, bounded
@@ -435,6 +443,12 @@ Maintain security tests for:
   rendered. A successful zero-match source is distinct from a network failure.
 - Untrusted content cannot select prompts, tools, providers, models, URLs,
   memory, tenants or limits. No agency-memory or automatic-memory access exists.
+- HN titles/text/comments and article titles/body/URLs/metadata are serialized
+  as untrusted quoted evidence beneath a fixed system instruction. The single
+  synthesis has no tools or retrieval capability and is told to distinguish an
+  article claim, submitter text and an individual community comment. Hostile
+  text is retained as evidence rather than interpreted as an instruction; raw
+  prompt, provider response and chain-of-thought remain unpersisted.
 - Immediate hosted execution receives only the trusted job UUID returned by the
   service-only enqueue. The browser cannot select a job, executor, tenant or
   handler. Immediate and daily recovery execution share atomic database claims,

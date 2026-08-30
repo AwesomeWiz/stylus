@@ -13,6 +13,8 @@ All notable user-facing changes to Stylus will be documented here.
   and Creative Critic workflow.
 - Immutable versioned Reel Briefs and safe structured Reasoning History.
 - Explicit bounded TASK-014 competitor-evidence selection for Creative Council.
+- Provenance-preserving External Research enrichment for matched Hacker News
+  native text, bounded discussion and safely extracted linked articles.
 
 ### Changed
 

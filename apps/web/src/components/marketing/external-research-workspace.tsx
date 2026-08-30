@@ -279,21 +279,49 @@ function ResearchHistory({
                 <ol className="mt-3 space-y-3">
                   {runEvidence.map((item) => {
                     const source = sourceById.get(item.source_id);
+                    const canonicalUrl =
+                      item.canonical_url ?? source?.canonical_url;
                     return (
                       <li
-                        className="text-sm"
+                        className="border-l pl-3 text-sm"
                         id={`${run.id}-${item.evidence_id}`}
                         key={item.id}
                       >
-                        <strong>{item.evidence_id}</strong> · {item.excerpt}
-                        {source?.canonical_url ? (
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <strong>{item.evidence_id}</strong>
+                          <span className="text-muted-foreground text-xs font-medium">
+                            {evidenceTypeLabel(item.evidence_type)}
+                          </span>
+                          {item.author ? (
+                            <span className="text-muted-foreground text-xs">
+                              by {item.author}
+                            </span>
+                          ) : null}
+                          {canonicalUrl ? (
+                            <span className="text-muted-foreground text-xs">
+                              {sourceDomain(canonicalUrl)}
+                            </span>
+                          ) : null}
+                          {item.published_at ? (
+                            <span className="text-muted-foreground text-xs">
+                              {formatDate(item.published_at)}
+                            </span>
+                          ) : null}
+                        </div>
+                        {item.title ? (
+                          <p className="mt-1 font-medium">{item.title}</p>
+                        ) : null}
+                        <p className="mt-1 whitespace-pre-line">
+                          {item.excerpt}
+                        </p>
+                        {canonicalUrl ? (
                           <a
-                            className="text-primary ml-2 inline-flex items-center gap-1 underline-offset-4 hover:underline"
-                            href={source.canonical_url}
+                            className="text-primary mt-1 inline-flex items-center gap-1 text-xs underline-offset-4 hover:underline"
+                            href={canonicalUrl}
                             rel="noreferrer"
                             target="_blank"
                           >
-                            Source <ExternalLink className="size-3" />
+                            Open source <ExternalLink className="size-3" />
                           </a>
                         ) : null}
                       </li>
@@ -459,4 +487,16 @@ function formatDate(value: string) {
     timeStyle: "short",
     timeZone: "UTC",
   }).format(new Date(value));
+}
+
+function evidenceTypeLabel(value: string) {
+  return label(value).replace(/^Hn\b/, "HN");
+}
+
+function sourceDomain(value: string) {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return "External source";
+  }
 }

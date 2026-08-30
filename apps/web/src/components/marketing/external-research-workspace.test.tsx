@@ -87,14 +87,23 @@ describe("External Research workspace", () => {
         {...base}
         evidence={[
           {
+            author: "founder",
+            canonical_url: "https://news.ycombinator.com/item?id=1",
+            content_hash: "a".repeat(64),
             created_at: "2026-08-29T00:00:00.000Z",
             evidence_id: "EVID-1",
-            evidence_type: "DISCUSSION",
+            evidence_type: "HN_STORY",
             excerpt: "A public excerpt",
+            fetched_at: "2026-08-29T00:00:00.000Z",
             id: "evidence-row",
+            native_id: "1",
             organization_id: "org",
+            parent_native_id: null,
+            published_at: "2026-08-28T00:00:00.000Z",
             run_id: "run",
+            safe_metadata: {},
             source_id: "source",
+            title: "A public story",
           },
         ]}
         reports={[
@@ -137,7 +146,9 @@ describe("External Research workspace", () => {
       "href",
       "#run-EVID-1",
     );
-    expect(screen.getByRole("link", { name: /Source/ })).toHaveAttribute(
+    expect(screen.getByText("HN story")).toBeInTheDocument();
+    expect(screen.getByText("news.ycombinator.com")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Open source/ })).toHaveAttribute(
       "href",
       "https://news.ycombinator.com/item?id=1",
     );

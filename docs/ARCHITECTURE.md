@@ -541,7 +541,9 @@ Marketing Research Server Action
   -> authenticated daily Vercel Cron route -> generic atomic claim (recovery)
   -> static external-research handler
   -> fixed-host HN + pinned-DNS RSS/Atom adapters
-  -> deterministic normalized source + EVID-n persistence
+  -> deterministic query matching
+  -> matched HN native text + bounded comments + pinned-DNS linked article
+  -> typed, hashed source + EVID-n persistence
   -> one maximum trusted ModelGateway structured synthesis
   -> reference validation -> immutable Research Report
 ```
@@ -551,3 +553,20 @@ model, prompt, retry or ceilings. The Windows laptop is not involved. Existing
 TASK-015/TASK-016 workflows do not call research. A future workflow may consume
 an explicit report ID plus selected evidence IDs only through the server-only
 projection that repeats membership, role and organization checks.
+
+TASK-017B keeps enrichment inside the Marketing adapter boundary. Initial HN
+candidates are never article/comment crawled: fixed-host metadata is normalized
+and query-matched first, then only two matched stories may be enriched. Article
+fetching reuses the centralized pinned-DNS textual-fetch primitive and does not
+execute JavaScript, inspect embedded links, recurse, invoke a browser or bypass
+the registered job. `htmlparser2` supplies a lightweight deterministic DOM for
+boilerplate removal and paragraph/section chunking.
+
+Evidence is no longer an opaque story-sized blob. `HN_STORY`, `HN_TEXT`,
+`HN_COMMENT` and `ARTICLE_CONTENT` rows each retain exact external URL, native
+and parent identifiers, author/title, publication/retrieval times, content hash
+and bounded safe metadata. Legacy `DISCUSSION`/`FEED_ITEM` rows remain readable.
+Evidence-type/native-ID, canonical-URL/content and normalized-content hashes
+deduplicate fragments before deterministic EVID assignment. The model receives
+only the selected bounded immutable records; no new agent, tool, provider path,
+memory path, Core dependency or Council invocation exists.

@@ -4,12 +4,14 @@ Last Updated: 2026-08-30
 
 ## Overall Status
 
-TASK-017 IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
+TASK-017B IMPLEMENTED / READY FOR HOSTED MIGRATION AND QA
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
-durable external-research foundation over Hacker News and explicit RSS/Atom
-feeds. TASK-016 is merged; its exact five-stage Strategic Review remains intact.
+durable external-research system over Hacker News and explicit RSS/Atom feeds.
+TASK-017B adds substantive HN text, bounded discussion and safely extracted
+linked-article evidence. TASK-016's exact five-stage Strategic Review remains
+intact.
 
 ---
 
@@ -17,17 +19,17 @@ feeds. TASK-016 is merged; its exact five-stage Strategic Review remains intact.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017 IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
+Status: TASK-017B IMPLEMENTED / READY FOR HOSTED MIGRATION AND QA
 
 ---
 
 ## Current Objective
 
-Re-test TASK-017's corrected deterministic Hacker News matching and actionable
-source diagnostics in hosted Preview. Both forward migrations and the Hobby
-execution path have been verified through hosted QA. Preserve bounded HN/RSS
-retrieval, source-to-evidence-to-finding provenance, organization isolation and
-unchanged TASK-015/TASK-016 behavior. TASK-018 and TASK-020 remain unstarted.
+Apply only the new TASK-017B forward migration in hosted Supabase, then verify
+HN text, discussion and linked-article evidence through the existing Hobby
+execution path. Preserve source-to-evidence-to-finding provenance,
+organization isolation and unchanged TASK-015/TASK-016 behavior. TASK-017C,
+TASK-018 and TASK-020 remain unstarted.
 
 ---
 
@@ -1241,9 +1243,10 @@ synthesis and safely fails the overall run. Actual retrieval failures retain
 their existing database category plus a safe diagnostic category and bounded
 counts/HTTP status in existing `safe_metadata`.
 
-No `01720` migration is required: the applied source table already supports a
-successful observation with a deterministic content hash and bounded JSON
-metadata. SSRF policy, fixed HN host, RSS pinned-DNS/TLS hostname validation,
+No `01720` migration was required for that matching-only correction: the
+applied source table already supported a successful observation with a
+deterministic content hash and bounded JSON metadata. SSRF policy, fixed HN
+host, RSS pinned-DNS/TLS hostname validation,
 redirect revalidation, byte/time bounds, immutable provenance, one synthesis
 maximum and job claim/idempotency boundaries remain unchanged.
 
@@ -1253,3 +1256,47 @@ worker/web typechecks, worker/web production builds and targeted formatting for
 all 16 changed files passed. Repository-wide Prettier continues to report only
 the same 55 unrelated baseline files; none was rewritten. Hosted QA confirms
 `01700` and `01710` are applied, and this correction adds no migration.
+
+### TASK-017B External Research content enrichment
+
+TASK-017B preserves the durable TASK-017 job and enriches only the first two
+deterministically matched HN stories. Each matched story can yield separate
+`HN_STORY`, `HN_TEXT`, `HN_COMMENT` and `ARTICLE_CONTENT` evidence. Discussion
+selection keeps at most five top-level comments per story, the first listed
+reply when usable at one nested level, and ten comments per run. Linked articles are limited
+to two unique HTTPS URLs per run and pass through the existing pinned-DNS fetch
+boundary before deterministic `htmlparser2` extraction and paragraph-based
+chunking.
+
+The runtime reserves the 60-second Hobby window: retrieval is capped at 20
+seconds, article/comment requests at 8 seconds each, synthesis at 25 seconds,
+the complete workflow at 55 seconds, and five seconds are reserved for durable
+completion. Article responses are capped at 512 KiB; extracted article text at
+4,500 characters in at most three 1,500-character chunks; evidence at 20 items,
+24,000 total persisted characters, 18,000 synthesis-evidence characters and a
+40,000-character serialized synthesis context. Enrichment
+network concurrency is at most two inside the existing three-request gate.
+
+`20260825001720_external_research_content_enrichment.sql` is the forward-only
+schema correction. It extends immutable evidence with typed per-item
+provenance, content hashes and bounded metadata, replaces only the service-only
+retrieval RPC, preserves RLS and does not rewrite `01700` or `01710`. The pgTAP
+plan now includes 38 assertions. The migration has not been applied to hosted
+Supabase.
+
+Article/comment failure remains partial when story evidence survives. Safe
+diagnostics include `extraction_failed` and `empty_content`; no response body,
+header, address, stack trace, prompt, credential or raw model output is stored.
+Exactly one trusted ModelGateway synthesis remains the maximum, with external
+text explicitly treated as untrusted quoted data and no tool or memory access.
+TASK-017C remains future fashion-oriented source expansion: Reddit plus bounded
+web/fashion-editorial discovery. Social-platform intelligence remains separate.
+
+Focused TASK-017B verification passed 8 files / 72 tests. The final complete
+suite passed 132 web files / 655 tests plus 5 worker files / 32 tests (687 tests
+total). Targeted formatting, repository lint, worker/web typechecks and both
+production builds passed. The linked migration dry-run reported only `01720`
+pending and applied nothing; linked database lint reported only the pre-existing
+TASK-015 enum-assignment warning. The 38-assertion pgTAP suite was updated, but
+local execution remains blocked because the local Supabase Docker database is
+not running.

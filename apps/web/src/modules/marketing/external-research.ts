@@ -1,9 +1,21 @@
 import { z } from "zod";
 
 export const externalResearchLimits = Object.freeze({
+  articleChunksPerStory: 3,
+  articleNormalizedCharacters: 4_500,
+  articleRequestsPerRun: 2,
+  articleResponseBytes: 512 * 1024,
+  commentsPerRun: 10,
+  completionReserveMs: 5_000,
   concurrentRequests: 3,
-  evidenceExcerptCharacters: 800,
+  enrichmentConcurrency: 2,
+  enrichedItemCharacters: 12_000,
+  enrichedHackerNewsStories: 2,
+  evidenceExcerptCharacters: 1_500,
   evidenceItems: 20,
+  hackerNewsCommentCharacters: 1_500,
+  hackerNewsCommentDepth: 1,
+  hackerNewsTopLevelComments: 5,
   maxRedirects: 3,
   modelOutputTokens: 1_600,
   normalizedItemCharacters: 1_500,
@@ -14,12 +26,16 @@ export const externalResearchLimits = Object.freeze({
   responseBytes: 1024 * 1024,
   retainedItemsPerSource: 10,
   retainedItemsPerRun: 20,
+  retrievalTimeoutMs: 20_000,
   rssFeeds: 2,
   sourceRequests: 3,
+  sourceObservations: 30,
   sourceTimeoutMs: 8_000,
-  synthesisContextCharacters: 24_000,
+  synthesisContextCharacters: 40_000,
+  synthesisEvidenceCharacters: 18_000,
+  synthesisTimeoutMs: 25_000,
   totalFetchedBytes: 4 * 1024 * 1024,
-  workflowTimeoutMs: 120_000,
+  workflowTimeoutMs: 55_000,
 });
 
 export const externalResearchObjectives = [
