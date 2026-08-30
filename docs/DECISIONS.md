@@ -589,9 +589,17 @@ authorized workflows.
 ## ADR-030 — External research is a bounded durable evidence workflow
 
 TASK-017 uses one exact Marketing SERVERLESS job rather than browser-held work,
-the Windows worker, a crawler, or a general agent runtime. Vercel Cron calls one
-Node route with `CRON_SECRET`; each invocation claims and processes at most one
-statically registered SERVERLESS job through the existing lease lifecycle.
+the Windows worker, a crawler, or a general agent runtime. After a hosted
+enqueue, stable Next.js `after()` execution invokes the shared registry-backed
+executor with the trusted persisted job ID. A Vercel Hobby-compatible daily
+Cron calls one Node route with `CRON_SECRET` for recovery; each invocation
+claims and processes at most one statically registered SERVERLESS job through
+the same lease lifecycle.
+
+The immediate and recovery paths never call Marketing handler internals. A
+service-only targeted claim uses the same `SKIP LOCKED`, attempt, lease and
+concurrency-group invariants as the generic claim. Therefore overlapping
+post-response and Cron invocations cannot execute one persisted job twice.
 
 Hacker News retrieval is confined to its code-owned API host. Browser-supplied
 RSS/Atom URLs cross one pinned-DNS HTTPS safe-fetch boundary that rejects

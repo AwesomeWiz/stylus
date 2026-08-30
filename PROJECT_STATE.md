@@ -1,6 +1,6 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-29
+Last Updated: 2026-08-30
 
 ## Overall Status
 
@@ -23,7 +23,8 @@ Status: TASK-017 IMPLEMENTED / READY FOR MANUAL QA
 
 ## Current Objective
 
-Apply and verify TASK-017's forward migration, hosted Cron executor, bounded
+Apply and verify TASK-017's forward migrations, immediate hosted executor with
+daily Cron recovery, bounded
 HN/RSS retrieval, source-to-evidence-to-finding provenance, partial failures,
 organization isolation, and unchanged TASK-015/TASK-016 behavior. TASK-018 and
 TASK-020 remain unstarted.
@@ -1040,7 +1041,8 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 # Current Work
 
 TASK-017 External Research is implemented on its task branch and awaits hosted
-migration, pgTAP, Cron configuration and manual QA. TASK-016 is merged. Its
+migrations, pgTAP, immediate execution/daily Cron configuration and manual QA.
+TASK-016 is merged. Its
 separate five-call immutable review artifact and TASK-015's exact three-call
 Reel Brief workflow remain unchanged. TASK-018 and TASK-020 have not started.
 
@@ -1061,8 +1063,9 @@ required rather than a silent job conversion.
 
 # Next Recommended Action
 
-Apply the TASK-017 migration in hosted Supabase, run its pgTAP suite, configure
-the authenticated hosted Cron trigger and complete the documented HN, RSS,
+Apply the TASK-017 migrations in hosted Supabase, run its pgTAP suite, configure
+the authenticated hosted immediate executor and daily recovery Cron, then
+complete the documented HN, RSS,
 provenance, prompt-injection, partial-failure, SSRF, provider-unavailable, RBAC
 and TASK-015/TASK-016 regression QA. Do not begin TASK-018 or TASK-020.
 
@@ -1181,10 +1184,10 @@ No Reddit, generic search, article crawling, Windows-worker dependency,
 automatic Council research, agency memory, or automatic knowledge/memory write
 was introduced. TASK-015 and TASK-016 remain unchanged. Local pgTAP execution
 requires Docker/Podman, which was unavailable during implementation. The final
-linked dry run passed and reported only
+linked dry run passed and reported
 `20260825001700_external_research.sql` pending; nothing was applied. Linked
 database lint completed with only the pre-existing TASK-015 enum-assignment
-warning. The 32-assertion TASK-017 pgTAP suite and hosted manual QA remain
+warning. The TASK-017 pgTAP suite and hosted manual QA remain
 deployment checks.
 
 Focused TASK-017 verification passed 12 files / 60 tests. The final complete
@@ -1193,3 +1196,29 @@ tests total). Repository lint, worker/web typechecks and worker/web production
 builds passed. Every TASK-017 source/document file passes targeted Prettier.
 Repository-wide Prettier still reports the 55 known unrelated legacy/Windows
 formatting files; they were preserved rather than rewritten.
+
+### TASK-017 Vercel Hobby execution correction
+
+Vercel Hobby rejects sub-daily Cron expressions, so the recovery schedule is
+now `0 3 * * *` (daily at 03:00 UTC, with Hobby timing variance). A successful
+hosted enqueue registers a stable Next.js `after()` callback that runs the same
+registry-backed `JobExecutor` after the Server Action response. The callback
+targets only the trusted job ID returned by the service-only atomic enqueue;
+`20260825001710_claim_serverless_job.sql` adds the service-only `SKIP LOCKED`
+claim needed to preserve exact-job execution and concurrent claim safety.
+
+The durable job remains authoritative. Immediate execution failure leaves an
+unclaimed job queued, and the authenticated daily Cron route drains at most one
+remaining SERVERLESS job. Both paths use the same registry, store and atomic
+database lease. Hobby functions are limited to 60 seconds even though the
+durable job contract retains its 120-second timeout; runs exceeding the hosted
+function window fail safely and require a platform with a longer function
+duration rather than bypassing the queue or AI policy.
+
+Corrective verification passed 9 focused files / 41 tests, 131 web files / 627
+tests and 5 worker files / 32 tests (659 full-suite tests total). Lint,
+worker/web typechecks, worker/web production builds and targeted formatting
+passed. The pgTAP plan now contains 35 assertions. Linked migration dry-run
+reported exactly `20260825001700_external_research.sql` and
+`20260825001710_claim_serverless_job.sql` pending and applied neither. Linked
+database lint still reports only the pre-existing TASK-015 warning.

@@ -280,6 +280,7 @@ workflow. TASK-020 remains the unimplemented conversational product.
 - [x] deterministic normalization and deduplication
 - [x] immutable source, evidence and Research Report persistence
 - [x] narrow hosted SERVERLESS executor
+- [x] Vercel Hobby immediate execution with once-daily durable recovery
 - [ ] Reddit (explicitly excluded from V1)
 - [ ] generic web search/crawling (explicitly excluded from V1)
 

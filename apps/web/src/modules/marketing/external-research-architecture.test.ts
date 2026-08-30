@@ -51,8 +51,30 @@ describe("external research architecture boundaries", () => {
 
   it("limits each Cron request to one executor call", () => {
     const route = source("src/app/api/cron/serverless-jobs/route.ts");
-    expect(route.match(/runOne\(\)/g) ?? []).toHaveLength(1);
+    expect(
+      route.match(/runOneHostedServerlessJob\("cron"\)/g) ?? [],
+    ).toHaveLength(1);
     expect(route).toContain("isAuthorizedCronRequest");
     expect(route).not.toMatch(/while\s*\(|Promise\.all/);
+  });
+
+  it("uses Hobby-compatible daily recovery and a shared immediate executor", () => {
+    const action = source("src/modules/marketing/external-research-actions.ts");
+    const hosted = source(
+      "src/modules/jobs/server/hosted-serverless-execution.ts",
+    );
+    const vercel = JSON.parse(source("../../vercel.json")) as {
+      crons: { schedule: string }[];
+    };
+    expect(vercel.crons).toEqual([
+      expect.objectContaining({ schedule: "0 3 * * *" }),
+    ]);
+    expect(action).toContain("after(async () =>");
+    expect(action).toContain(
+      'runOneHostedServerlessJob("immediate", result.jobId)',
+    );
+    expect(hosted).toContain("applicationJobRegistry");
+    expect(hosted).toContain("SupabaseServerlessJobExecutionStore");
+    expect(action).not.toContain("runExternalResearchJob");
   });
 });

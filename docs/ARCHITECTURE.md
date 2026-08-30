@@ -537,7 +537,8 @@ promoted, and no Ask Council workflow automatically writes memory.
 ```text
 Marketing Research Server Action
   -> atomic run + SERVERLESS job enqueue
-  -> authenticated Vercel Cron route (one claim)
+  -> hosted after() callback -> targeted atomic claim (immediate)
+  -> authenticated daily Vercel Cron route -> generic atomic claim (recovery)
   -> static external-research handler
   -> fixed-host HN + pinned-DNS RSS/Atom adapters
   -> deterministic normalized source + EVID-n persistence

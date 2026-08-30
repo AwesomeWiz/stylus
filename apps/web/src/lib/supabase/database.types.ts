@@ -1437,6 +1437,14 @@ export type Database = {
         };
         Returns: JobRow | null;
       };
+      claim_serverless_job: {
+        Args: {
+          p_executor_id: string;
+          p_job_id: string;
+          p_lease_seconds?: number;
+        };
+        Returns: JobRow | null;
+      };
       heartbeat_job: {
         Args: {
           p_executor_id: string;

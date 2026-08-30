@@ -524,3 +524,10 @@ an hourly count enforce idempotency, one active run per organization and five
 submissions per hour. Lifecycle and trusted-AI functions are `SECURITY DEFINER`
 with an empty search path and service-role-only execute grants. Authenticated
 clients receive SELECT only through Marketing-enabled RLS.
+
+`20260825001710_claim_serverless_job.sql` adds a forward-only, service-role-only
+targeted SERVERLESS claim for the immediate hosted adapter. It accepts only the
+trusted job UUID returned by enqueue, uses row locking plus the existing
+concurrency-group advisory lock, and performs the same eligibility, lease and
+attempt transition as the generic recovery claim. It neither changes research
+data nor grants a browser a claim capability.

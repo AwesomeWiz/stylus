@@ -215,10 +215,14 @@ malformed payloads, and RPC/claim failures without logging request bodies.
 TASK-017 statically registers `marketing.external-research.run` with capability
 `marketing.external-research.execute`, SERVERLESS execution, required
 idempotency, one attempt, a 120-second timeout and Marketing concurrency group.
-The Vercel Cron route authenticates `CRON_SECRET`, claims only SERVERLESS work
-through the existing atomic lease RPC, and calls `runOne()` exactly once per
-request. Progress, heartbeat, completion, failure, cancellation and stale-lease
-semantics reuse TASK-011.
+On Vercel, the successful enqueue Server Action registers a stable `after()`
+callback that targets the newly persisted job through the shared registry,
+executor and a service-only atomic claim. The daily recovery Cron route
+authenticates `CRON_SECRET`, uses the same executor with the ordinary SERVERLESS
+queue claim, and calls it exactly once per request. Concurrent immediate/Cron
+attempts rely on PostgreSQL row locks, attempts, leases and concurrency-group
+locking rather than process-local state. Progress, heartbeat, completion,
+failure, cancellation and stale-lease semantics reuse TASK-011.
 
 Source retrieval performs at most one internal retry for a narrow transient
 category. Marketing does not retry synthesis and the platform definition has

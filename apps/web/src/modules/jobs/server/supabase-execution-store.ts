@@ -8,12 +8,20 @@ import type { ClaimedJob, JobExecutionStore } from "./executor";
 export class SupabaseServerlessJobExecutionStore implements JobExecutionStore {
   private readonly service = createServiceSupabaseClient();
 
+  constructor(private readonly targetJobId?: string) {}
+
   async claim(executorId: string): Promise<ClaimedJob | null> {
-    const { data, error } = await this.service.rpc("claim_next_job", {
-      p_execution_class: "SERVERLESS",
-      p_executor_id: executorId,
-      p_lease_seconds: 120,
-    });
+    const { data, error } = this.targetJobId
+      ? await this.service.rpc("claim_serverless_job", {
+          p_executor_id: executorId,
+          p_job_id: this.targetJobId,
+          p_lease_seconds: 120,
+        })
+      : await this.service.rpc("claim_next_job", {
+          p_execution_class: "SERVERLESS",
+          p_executor_id: executorId,
+          p_lease_seconds: 120,
+        });
     if (error) throw new Error("Serverless job claim failed");
     if (!data) return null;
     return {

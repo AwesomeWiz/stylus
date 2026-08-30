@@ -431,3 +431,7 @@ Maintain security tests for:
   Rendered excerpts are escaped text; displayed external links are HTTPS-only.
 - Untrusted content cannot select prompts, tools, providers, models, URLs,
   memory, tenants or limits. No agency-memory or automatic-memory access exists.
+- Immediate hosted execution receives only the trusted job UUID returned by the
+  service-only enqueue. The browser cannot select a job, executor, tenant or
+  handler. Immediate and daily recovery execution share atomic database claims,
+  leases, attempt limits, concurrency locking and the static job registry.

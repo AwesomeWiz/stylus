@@ -1,19 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ runOne: vi.fn(), store: vi.fn() }));
+const mocks = vi.hoisted(() => ({ runOne: vi.fn() }));
 vi.mock("@/lib/env/server", () => ({
   serverEnv: { CRON_SECRET: "cron-secret" },
 }));
-vi.mock("@/modules/jobs/server/registry", () => ({
-  applicationJobRegistry: {},
-}));
-vi.mock("@/modules/jobs/server/supabase-execution-store", () => ({
-  SupabaseServerlessJobExecutionStore: mocks.store,
-}));
-vi.mock("@/modules/jobs/server/executor", () => ({
-  JobExecutor: class {
-    runOne = mocks.runOne;
-  },
+vi.mock("@/modules/jobs/server/hosted-serverless-execution", () => ({
+  runOneHostedServerlessJob: mocks.runOne,
 }));
 
 import { GET } from "./route";
@@ -39,7 +31,7 @@ describe("hosted SERVERLESS Cron route", () => {
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ processed: true });
-    expect(mocks.runOne).toHaveBeenCalledOnce();
+    expect(mocks.runOne).toHaveBeenCalledExactlyOnceWith("cron");
   });
 
   it("normalizes executor failures without internals", async () => {

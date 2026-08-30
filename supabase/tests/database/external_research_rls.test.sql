@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(35);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000000','authenticated','authenticated','research-owner@example.test','',now(),'{}','{}',now(),now()),
@@ -26,6 +26,8 @@ reset role;
 
 select results_eq($$ select public.has_function_privilege('authenticated','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[false],'browser cannot invoke atomic research enqueue');
 select results_eq($$ select public.has_function_privilege('service_role','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[true],'service role may invoke atomic research enqueue');
+select results_eq($$ select public.has_function_privilege('authenticated','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[false],'browser cannot target a SERVERLESS claim');
+select results_eq($$ select public.has_function_privilege('service_role','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[true],'service role may target a SERVERLESS claim');
 
 set local role service_role;
 select lives_ok($$
@@ -75,8 +77,17 @@ select throws_ok($$
 $$,'22023',null,'invalid feed request is rejected');
 
 select lives_ok($$
-  select public.claim_next_job('task-017-lifecycle','SERVERLESS',120)
-$$,'hosted executor claims the exact research job');
+  select public.claim_serverless_job(
+    (select job_id from public.marketing_external_research_runs limit 1),
+    'task-017-lifecycle',120
+  )
+$$,'immediate hosted executor atomically claims the exact research job');
+select results_eq($$
+  select (public.claim_serverless_job(
+    (select job_id from public.marketing_external_research_runs limit 1),
+    'task-017-concurrent',120
+  )).id is null
+$$,array[true],'concurrent immediate or Cron execution cannot claim the running job twice');
 select lives_ok($$
   select public.begin_marketing_external_research(
     (select job_id from public.marketing_external_research_runs limit 1),

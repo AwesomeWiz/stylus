@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
 
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
+import {
+  isHostedServerlessExecutionEnabled,
+  runOneHostedServerlessJob,
+} from "@/modules/jobs/server/hosted-serverless-execution";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
 
 import { assertCanMutateMarketing } from "./authorization";
@@ -11,6 +17,14 @@ import {
   externalResearchRequestSchema,
   type ExternalResearchActionState,
 } from "./external-research";
+
+const enqueueResultSchema = z
+  .object({
+    duplicate: z.boolean(),
+    jobId: z.uuid(),
+    runId: z.uuid(),
+  })
+  .strict();
 
 export async function enqueueExternalResearchAction(
   _state: ExternalResearchActionState,
@@ -48,7 +62,17 @@ export async function enqueueExternalResearchAction(
       },
     );
     if (error || !data) throw new Error("enqueue_failed");
-    const result = data as { duplicate?: boolean; runId?: string };
+    const result = enqueueResultSchema.parse(data);
+    if (isHostedServerlessExecutionEnabled()) {
+      after(async () => {
+        try {
+          await runOneHostedServerlessJob("immediate", result.jobId);
+        } catch {
+          // The durable queued job remains authoritative. Daily Cron can recover
+          // work when the immediate serverless invocation cannot start.
+        }
+      });
+    }
     revalidatePath("/apps/marketing/research");
     return {
       message: result.duplicate

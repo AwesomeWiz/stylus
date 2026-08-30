@@ -6,6 +6,9 @@ import {
   listMarketingResearch,
 } from "@/modules/marketing/server/data";
 import { requireEnabledPlugin } from "@/modules/plugins/server/guard";
+
+export const maxDuration = 60;
+
 export default async function Page({
   searchParams,
 }: {
