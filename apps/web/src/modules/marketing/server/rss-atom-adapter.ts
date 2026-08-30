@@ -100,28 +100,42 @@ export function createRssAtomAdapter(
           externalResearchLimits.retainedItemsPerSource,
         );
         return {
-          failures: retained.length
+          emptyResults: retained.length
             ? []
             : [
                 {
                   adapterId: "rss-atom" as const,
                   canonicalUrl: loaded.finalUrl,
-                  category: "no_results" as const,
+                  diagnosticCategory: entries.length
+                    ? ("zero_matching_candidates" as const)
+                    : ("zero_candidates" as const),
+                  metadata: {
+                    candidateCount: entries.length,
+                    feedUrl: loaded.finalUrl,
+                    matchingCandidateCount: items.length,
+                  },
                 },
               ],
+          failures: [],
           items: retained,
         };
       } catch (error) {
-        const category =
+        const failure =
           error instanceof SourceRetrievalError
-            ? error.category
-            : "malformed_source";
+            ? error
+            : new SourceRetrievalError("malformed_source");
         return {
+          emptyResults: [],
           failures: [
             {
               adapterId: "rss-atom",
               canonicalUrl: request.url,
-              category,
+              category: failure.category,
+              diagnosticCategory: failure.diagnosticCategory,
+              metadata: {
+                ...failure.diagnosticMetadata,
+                feedUrl: request.url,
+              },
             },
           ],
           items: [],

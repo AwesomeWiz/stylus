@@ -13,7 +13,11 @@ import {
   normalizePlainText,
   type ResearchSourceAdapter,
 } from "./research-sources";
-import { SourceRetrievalError, withSourceRetry } from "./safe-fetch";
+import {
+  networkDiagnosticCategory,
+  SourceRetrievalError,
+  withSourceRetry,
+} from "./safe-fetch";
 
 const HN_API = "https://hacker-news.firebaseio.com/v0";
 
@@ -24,19 +28,23 @@ const requestSchema = z
   })
   .strict();
 
-type HackerNewsRequest = z.infer<typeof requestSchema>;
+const hnIdsSchema = z.array(z.number().int().positive()).max(500);
+const hnItemSchema = z
+  .object({
+    by: z.string().optional(),
+    dead: z.boolean().optional(),
+    descendants: z.number().int().nonnegative().optional(),
+    deleted: z.boolean().optional(),
+    id: z.number().int().positive(),
+    score: z.number().int().nonnegative().optional(),
+    text: z.string().optional(),
+    time: z.number().int().positive().optional(),
+    title: z.string().optional(),
+    type: z.string().optional(),
+  })
+  .nullable();
 
-type HNItem = {
-  by?: string;
-  descendants?: number;
-  deleted?: boolean;
-  id?: number;
-  score?: number;
-  text?: string;
-  time?: number;
-  title?: string;
-  type?: string;
-};
+type HackerNewsRequest = z.infer<typeof requestSchema>;
 
 export function createHackerNewsAdapter(
   fetchImpl: typeof fetch = fetch,
@@ -46,22 +54,24 @@ export function createHackerNewsAdapter(
     id: "hacker-news",
     requestSchema,
     async retrieve(request, context) {
+      const streamUrl = `https://news.ycombinator.com/${request.stream}`;
       try {
         const suffix =
           request.stream === "ask" ? "askstories" : `${request.stream}stories`;
         const ids = await withSourceRetry(
           () =>
             context.requestGate.run(() =>
-              fetchHackerNewsJson<number[]>(
+              fetchHackerNewsJson(
                 `${HN_API}/${suffix}.json`,
                 context,
                 fetchImpl,
+                hnIdsSchema,
               ),
             ),
           undefined,
           context.signal,
         );
-        const candidates = Array.isArray(ids) ? ids.slice(0, 20) : [];
+        const candidates = ids.slice(0, 20);
         const loaded = await mapWithConcurrency(
           candidates,
           externalResearchLimits.concurrentRequests,
@@ -69,10 +79,11 @@ export function createHackerNewsAdapter(
             withSourceRetry(
               () =>
                 context.requestGate.run(() =>
-                  fetchHackerNewsJson<HNItem>(
+                  fetchHackerNewsJson(
                     `${HN_API}/item/${id}.json`,
                     context,
                     fetchImpl,
+                    hnItemSchema,
                   ),
                 ),
               undefined,
@@ -83,79 +94,110 @@ export function createHackerNewsAdapter(
                 failure:
                   error instanceof SourceRetrievalError
                     ? error
-                    : new SourceRetrievalError("transient_failure", true),
+                    : new SourceRetrievalError(
+                        "transient_failure",
+                        true,
+                        undefined,
+                        networkDiagnosticCategory(error),
+                      ),
                 item: null,
               }),
             ),
         );
-        const itemFailure = loaded.find((result) => result.failure)?.failure;
-        const items = loaded.flatMap(({ item }) => {
-          if (!item || item.deleted || item.type !== "story" || !item.id)
+        const itemFailures = loaded.flatMap(({ failure }) =>
+          failure ? [failure] : [],
+        );
+        const eligible = loaded.flatMap(({ item }) => {
+          if (!item || item.dead || item.deleted || item.type !== "story")
             return [];
           const title = normalizePlainText(item.title, 300);
           const body = normalizePlainText(item.text);
           const normalizedText = normalizePlainText(`${title}\n${body}`);
-          if (
-            !normalizedText ||
-            !matchesQueryTerms(normalizedText, request.queryTerms)
-          )
-            return [];
-          return [
-            {
-              adapterId: "hacker-news" as const,
-              author: normalizePlainText(item.by, 120) || null,
-              canonicalUrl: `https://news.ycombinator.com/item?id=${item.id}`,
-              contentHash: normalizedContentHash(normalizedText),
-              fetchedAt: context.fetchedAt,
-              metadata: {
-                comments: Math.max(0, item.descendants ?? 0),
-                score: Math.max(0, item.score ?? 0),
-                stream: request.stream,
-              },
-              nativeId: String(item.id),
-              normalizedText,
-              publishedAt: item.time
-                ? new Date(item.time * 1_000).toISOString()
-                : null,
-              title: title || null,
-            },
-          ];
+          return normalizedText ? [{ item, normalizedText, title }] : [];
         });
-        const retained = items.slice(
-          0,
-          externalResearchLimits.retainedItemsPerSource,
+        const matching = eligible.filter(({ normalizedText }) =>
+          matchesQueryTerms(normalizedText, request.queryTerms),
         );
+        const retained = matching
+          .map(({ item, normalizedText, title }) => ({
+            adapterId: "hacker-news" as const,
+            author: normalizePlainText(item.by, 120) || null,
+            canonicalUrl: `https://news.ycombinator.com/item?id=${item.id}`,
+            contentHash: normalizedContentHash(normalizedText),
+            fetchedAt: context.fetchedAt,
+            metadata: {
+              comments: Math.max(0, item.descendants ?? 0),
+              score: Math.max(0, item.score ?? 0),
+              stream: request.stream,
+            },
+            nativeId: String(item.id),
+            normalizedText,
+            publishedAt: item.time
+              ? new Date(item.time * 1_000).toISOString()
+              : null,
+            title: title || null,
+          }))
+          .slice(0, externalResearchLimits.retainedItemsPerSource);
+        const metrics = {
+          candidateCount: candidates.length,
+          eligibleCandidateCount: eligible.length,
+          itemFailureCount: itemFailures.length,
+          matchingCandidateCount: matching.length,
+          stream: request.stream,
+        };
+        const itemFailure = itemFailures[0];
         return {
+          emptyResults:
+            !itemFailure && !retained.length
+              ? [
+                  {
+                    adapterId: "hacker-news" as const,
+                    canonicalUrl: streamUrl,
+                    diagnosticCategory: eligible.length
+                      ? ("zero_matching_candidates" as const)
+                      : ("zero_candidates" as const),
+                    metadata: metrics,
+                  },
+                ]
+              : [],
           failures: itemFailure
             ? [
                 {
                   adapterId: "hacker-news" as const,
-                  canonicalUrl: `https://news.ycombinator.com/${request.stream}`,
+                  canonicalUrl: streamUrl,
                   category: itemFailure.category,
+                  diagnosticCategory: itemFailure.diagnosticCategory,
+                  metadata: {
+                    ...itemFailure.diagnosticMetadata,
+                    ...metrics,
+                  },
                 },
               ]
-            : retained.length
-              ? []
-              : [
-                  {
-                    adapterId: "hacker-news" as const,
-                    canonicalUrl: `https://news.ycombinator.com/${request.stream}`,
-                    category: "no_results" as const,
-                  },
-                ],
+            : [],
           items: retained,
         };
       } catch (error) {
-        const category =
+        const failure =
           error instanceof SourceRetrievalError
-            ? error.category
-            : "malformed_source";
+            ? error
+            : new SourceRetrievalError(
+                "malformed_source",
+                false,
+                undefined,
+                "malformed_payload",
+              );
         return {
+          emptyResults: [],
           failures: [
             {
               adapterId: "hacker-news",
-              canonicalUrl: `https://news.ycombinator.com/${request.stream}`,
-              category,
+              canonicalUrl: streamUrl,
+              category: failure.category,
+              diagnosticCategory: failure.diagnosticCategory,
+              metadata: {
+                ...failure.diagnosticMetadata,
+                stream: request.stream,
+              },
             },
           ],
           items: [],
@@ -171,6 +213,7 @@ async function fetchHackerNewsJson<T>(
     ReturnType<typeof createHackerNewsAdapter>["retrieve"]
   >[1],
   fetchImpl: typeof fetch,
+  schema: z.ZodType<T>,
 ) {
   if (!url.startsWith(`${HN_API}/`))
     throw new SourceRetrievalError("policy_denied");
@@ -188,7 +231,9 @@ async function fetchHackerNewsJson<T>(
       signal: controller.signal,
     });
     if (response.status === 408)
-      throw new SourceRetrievalError("timeout", true);
+      throw new SourceRetrievalError("timeout", true, undefined, "timeout", {
+        httpStatus: response.status,
+      });
     if (response.status === 429) {
       const retryAfter = Number(response.headers.get("retry-after"));
       throw new SourceRetrievalError(
@@ -197,11 +242,26 @@ async function fetchHackerNewsJson<T>(
         Number.isFinite(retryAfter) && retryAfter >= 0
           ? retryAfter * 1_000
           : undefined,
+        "http_status",
+        { httpStatus: response.status },
       );
     }
     if ([500, 502, 503, 504].includes(response.status))
-      throw new SourceRetrievalError("transient_failure", true);
-    if (!response.ok) throw new SourceRetrievalError("permanent_failure");
+      throw new SourceRetrievalError(
+        "transient_failure",
+        true,
+        undefined,
+        "http_status",
+        { httpStatus: response.status },
+      );
+    if (!response.ok)
+      throw new SourceRetrievalError(
+        "permanent_failure",
+        false,
+        undefined,
+        "http_status",
+        { httpStatus: response.status },
+      );
     if (
       !response.headers
         .get("content-type")
@@ -214,12 +274,25 @@ async function fetchHackerNewsJson<T>(
       throw new SourceRetrievalError("oversized_response");
     const body = await readBoundedBody(response);
     context.budget.consume(body.byteLength);
-    return JSON.parse(new TextDecoder().decode(body)) as T;
+    let payload: unknown;
+    try {
+      payload = JSON.parse(new TextDecoder().decode(body));
+    } catch {
+      throw new SourceRetrievalError("malformed_source");
+    }
+    const parsed = schema.safeParse(payload);
+    if (!parsed.success) throw new SourceRetrievalError("malformed_source");
+    return parsed.data;
   } catch (error) {
     if (error instanceof SourceRetrievalError) throw error;
     if (controller.signal.aborted)
       throw new SourceRetrievalError("timeout", true);
-    throw new SourceRetrievalError("transient_failure", true);
+    throw new SourceRetrievalError(
+      "transient_failure",
+      true,
+      undefined,
+      networkDiagnosticCategory(error),
+    );
   } finally {
     clearTimeout(timer);
     context.signal.removeEventListener("abort", abort);

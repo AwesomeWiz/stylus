@@ -142,6 +142,44 @@ describe("External Research workspace", () => {
       "https://news.ycombinator.com/item?id=1",
     );
   });
+
+  it("distinguishes successful zero matches from a source retrieval failure", () => {
+    render(
+      <ExternalResearchWorkspace
+        {...base}
+        runs={[{ ...run, evidence_count: 0, status: "FAILED" }]}
+        sources={[
+          {
+            adapter: "hacker-news",
+            author: null,
+            canonical_url: "https://news.ycombinator.com/top",
+            content_hash: "b".repeat(64),
+            created_at: "2026-08-29T00:00:00.000Z",
+            failure_category: null,
+            fetched_at: "2026-08-29T00:00:00.000Z",
+            id: "empty-source",
+            native_id: null,
+            organization_id: "org",
+            published_at: null,
+            run_id: "run",
+            safe_metadata: {
+              candidateCount: 20,
+              diagnosticCategory: "zero_matching_candidates",
+              matchingCandidateCount: 0,
+            },
+            source_key: "SRC-1",
+            status: "SUCCEEDED",
+            title: null,
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByText(/SRC-1 · Hacker-news · SUCCEEDED/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Zero matching candidates/)).toBeInTheDocument();
+    expect(screen.getByText(/20 candidates checked/)).toBeInTheDocument();
+  });
 });
 
 const run = {

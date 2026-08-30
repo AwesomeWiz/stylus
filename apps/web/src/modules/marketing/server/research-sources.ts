@@ -5,7 +5,11 @@ import { createHash } from "node:crypto";
 import type { z } from "zod";
 
 import { externalResearchLimits } from "../external-research";
-import type { SourceFailureCategory } from "./safe-fetch";
+import type {
+  SourceDiagnosticCategory,
+  SourceDiagnosticMetadata,
+  SourceFailureCategory,
+} from "./safe-fetch";
 
 export type NormalizedResearchItem = {
   adapterId: "hacker-news" | "rss-atom";
@@ -24,9 +28,19 @@ export type SourceRequestFailure = {
   adapterId: NormalizedResearchItem["adapterId"];
   canonicalUrl: string | null;
   category: SourceFailureCategory;
+  diagnosticCategory: SourceDiagnosticCategory;
+  metadata: SourceDiagnosticMetadata;
+};
+
+export type EmptySourceResult = {
+  adapterId: NormalizedResearchItem["adapterId"];
+  canonicalUrl: string | null;
+  diagnosticCategory: "zero_candidates" | "zero_matching_candidates";
+  metadata: SourceDiagnosticMetadata;
 };
 
 export type AdapterResult = {
+  emptyResults?: EmptySourceResult[];
   failures: SourceRequestFailure[];
   items: NormalizedResearchItem[];
 };
@@ -97,9 +111,19 @@ export function normalizedContentHash(value: string) {
 }
 
 export function matchesQueryTerms(value: string, queryTerms: string[]) {
-  const normalized = value.toLocaleLowerCase();
+  const candidateTokens = new Set(searchTokens(value));
   return queryTerms.some((term) =>
-    normalized.includes(term.toLocaleLowerCase()),
+    searchTokens(term).some((token) => candidateTokens.has(token)),
+  );
+}
+
+function searchTokens(value: string) {
+  return (
+    value
+      .normalize("NFKC")
+      .toLocaleLowerCase("en-US")
+      .match(/[\p{L}\p{N}]+/gu)
+      ?.filter((token) => token.length >= 2) ?? []
   );
 }
 

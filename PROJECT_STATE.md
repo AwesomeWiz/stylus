@@ -4,7 +4,7 @@ Last Updated: 2026-08-30
 
 ## Overall Status
 
-TASK-017 IMPLEMENTED / READY FOR MANUAL QA
+TASK-017 IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
@@ -17,17 +17,17 @@ feeds. TASK-016 is merged; its exact five-stage Strategic Review remains intact.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017 IMPLEMENTED / READY FOR MANUAL QA
+Status: TASK-017 IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
 
 ---
 
 ## Current Objective
 
-Apply and verify TASK-017's forward migrations, immediate hosted executor with
-daily Cron recovery, bounded
-HN/RSS retrieval, source-to-evidence-to-finding provenance, partial failures,
-organization isolation, and unchanged TASK-015/TASK-016 behavior. TASK-018 and
-TASK-020 remain unstarted.
+Re-test TASK-017's corrected deterministic Hacker News matching and actionable
+source diagnostics in hosted Preview. Both forward migrations and the Hobby
+execution path have been verified through hosted QA. Preserve bounded HN/RSS
+retrieval, source-to-evidence-to-finding provenance, organization isolation and
+unchanged TASK-015/TASK-016 behavior. TASK-018 and TASK-020 remain unstarted.
 
 ---
 
@@ -1222,3 +1222,34 @@ passed. The pgTAP plan now contains 35 assertions. Linked migration dry-run
 reported exactly `20260825001700_external_research.sql` and
 `20260825001710_claim_serverless_job.sql` pending and applied neither. Linked
 database lint still reports only the pre-existing TASK-015 warning.
+
+### TASK-017 Hacker News hosted-QA correction
+
+Hosted QA proved that the fixed HN stream and its sampled item requests had
+completed successfully, but all candidates were removed at filtering because
+each multi-word query input was previously required to occur as one contiguous
+literal phrase. The `no_results` outcome therefore represented stage-C zero
+matches, not a Vercel timeout, Firebase transport failure or RSS safe-fetch
+rejection.
+
+Filtering now tokenizes normalized Unicode query inputs and candidates, then
+matches deterministic bounded keywords. HN payloads receive strict bounded
+schema validation and deleted, dead, non-story and blank candidates remain
+ineligible. HN and RSS adapters persist healthy zero-candidate/zero-match
+observations as successful sources while zero retained evidence still prevents
+synthesis and safely fails the overall run. Actual retrieval failures retain
+their existing database category plus a safe diagnostic category and bounded
+counts/HTTP status in existing `safe_metadata`.
+
+No `01720` migration is required: the applied source table already supports a
+successful observation with a deterministic content hash and bounded JSON
+metadata. SSRF policy, fixed HN host, RSS pinned-DNS/TLS hostname validation,
+redirect revalidation, byte/time bounds, immutable provenance, one synthesis
+maximum and job claim/idempotency boundaries remain unchanged.
+
+Corrective verification passed 14 focused files / 79 tests, 131 web files / 634
+tests and 5 worker files / 32 tests (666 full-suite tests total). Lint,
+worker/web typechecks, worker/web production builds and targeted formatting for
+all 16 changed files passed. Repository-wide Prettier continues to report only
+the same 55 unrelated baseline files; none was rewritten. Hosted QA confirms
+`01700` and `01710` are applied, and this correction adds no migration.

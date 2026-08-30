@@ -334,8 +334,14 @@ function SourceHistory({
             <span className="text-foreground font-medium">
               {source.source_key} · {label(source.adapter)} · {source.status}
             </span>
+            {diagnosticCategory(source)
+              ? ` · ${label(diagnosticCategory(source)!)}`
+              : ""}
             {source.failure_category
               ? ` · ${label(source.failure_category)}`
+              : ""}
+            {candidateCount(source) !== null
+              ? ` · ${candidateCount(source)} candidates checked`
               : ""}
             {source.published_at
               ? ` · published ${formatDate(source.published_at)}`
@@ -346,6 +352,18 @@ function SourceHistory({
       </ul>
     </details>
   );
+}
+
+function diagnosticCategory(source: MarketingExternalResearchSourceRow) {
+  const value = source.safe_metadata.diagnosticCategory;
+  return typeof value === "string" ? value : null;
+}
+
+function candidateCount(source: MarketingExternalResearchSourceRow) {
+  const value = source.safe_metadata.candidateCount;
+  return typeof value === "number" && Number.isSafeInteger(value)
+    ? value
+    : null;
 }
 
 function StatementList({

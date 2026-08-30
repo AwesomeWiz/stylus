@@ -111,7 +111,13 @@ describe("external research job handler", () => {
   it("records partial source failure while synthesizing retained evidence once", async () => {
     mocks.retrieve.mockResolvedValue({
       failures: [
-        { adapterId: "hacker-news", canonicalUrl: null, category: "timeout" },
+        {
+          adapterId: "hacker-news",
+          canonicalUrl: null,
+          category: "timeout",
+          diagnosticCategory: "timeout",
+          metadata: { stream: "top" },
+        },
       ],
       items: [item()],
     });
@@ -139,7 +145,9 @@ describe("external research job handler", () => {
         {
           adapterId: "hacker-news",
           canonicalUrl: null,
-          category: "no_results",
+          category: "transient_failure",
+          diagnosticCategory: "connection_failure",
+          metadata: { stream: "top" },
         },
       ],
       items: [],
@@ -155,6 +163,49 @@ describe("external research job handler", () => {
       "fail_marketing_external_research",
       expect.objectContaining({ p_failure_stage: "retrieval" }),
     );
+  });
+
+  it("persists zero query matches as a successful source observation and skips synthesis", async () => {
+    mocks.retrieve.mockResolvedValue({
+      emptyResults: [
+        {
+          adapterId: "hacker-news",
+          canonicalUrl: "https://news.ycombinator.com/top",
+          diagnosticCategory: "zero_matching_candidates",
+          metadata: {
+            candidateCount: 20,
+            eligibleCandidateCount: 20,
+            matchingCandidateCount: 0,
+            stream: "top",
+          },
+        },
+      ],
+      failures: [],
+      items: [],
+    });
+    await expect(
+      runExternalResearchJob(
+        { runId: "00000000-0000-4000-8000-000000000001" },
+        jobContext(),
+      ),
+    ).rejects.toMatchObject({ category: "permanent_failure" });
+    const retrieval = mocks.rpc.mock.calls.find(
+      ([name]) => name === "record_marketing_external_research_retrieval",
+    )?.[1];
+    expect(retrieval.p_sources).toEqual([
+      expect.objectContaining({
+        failureCategory: null,
+        safeMetadata: expect.objectContaining({
+          diagnosticCategory: "zero_matching_candidates",
+          matchingCandidateCount: 0,
+        }),
+        status: "SUCCEEDED",
+      }),
+    ]);
+    expect(retrieval.p_warning_categories).toContain(
+      "zero_matching_candidates",
+    );
+    expect(mocks.generate).not.toHaveBeenCalled();
   });
 
   it("retains persisted evidence and creates no report after synthesis failure", async () => {

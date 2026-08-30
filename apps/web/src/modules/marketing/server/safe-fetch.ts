@@ -18,11 +18,33 @@ export type SourceFailureCategory =
   | "malformed_source"
   | "no_results";
 
+export type SourceDiagnosticCategory =
+  | "dns_failure"
+  | "unsafe_address"
+  | "connection_failure"
+  | "tls_failure"
+  | "timeout"
+  | "http_status"
+  | "invalid_content_type"
+  | "response_too_large"
+  | "malformed_payload"
+  | "zero_candidates"
+  | "zero_matching_candidates";
+
+export type SourceDiagnosticMetadata = Record<
+  string,
+  boolean | number | string
+>;
+
 export class SourceRetrievalError extends Error {
   constructor(
     readonly category: SourceFailureCategory,
     readonly retryable = false,
     readonly retryAfterMs?: number,
+    readonly diagnosticCategory: SourceDiagnosticCategory = defaultDiagnosticCategory(
+      category,
+    ),
+    readonly diagnosticMetadata: SourceDiagnosticMetadata = {},
   ) {
     super(`External source failed: ${category}`);
     this.name = "SourceRetrievalError";
@@ -94,17 +116,33 @@ export async function safeFetchXml(
       continue;
     }
     if (response.status === 408)
-      throw new SourceRetrievalError("timeout", true);
+      throw new SourceRetrievalError("timeout", true, undefined, "timeout", {
+        httpStatus: response.status,
+      });
     if (response.status === 429)
       throw new SourceRetrievalError(
         "rate_limited",
         true,
         retryAfterMilliseconds(header(response.headers, "retry-after")),
+        "http_status",
+        { httpStatus: response.status },
       );
     if ([500, 502, 503, 504].includes(response.status))
-      throw new SourceRetrievalError("transient_failure", true);
+      throw new SourceRetrievalError(
+        "transient_failure",
+        true,
+        undefined,
+        "http_status",
+        { httpStatus: response.status },
+      );
     if (response.status < 200 || response.status >= 300)
-      throw new SourceRetrievalError("permanent_failure");
+      throw new SourceRetrievalError(
+        "permanent_failure",
+        false,
+        undefined,
+        "http_status",
+        { httpStatus: response.status },
+      );
     const contentType = header(response.headers, "content-type")
       ?.split(";", 1)
       .at(0)
@@ -142,13 +180,23 @@ async function fetchOnce(
 ) {
   if (signal?.aborted) throw new SourceRetrievalError("timeout", true);
   const addresses = await dependencies.resolve(url.hostname).catch(() => {
-    throw new SourceRetrievalError("transient_failure", true);
+    throw new SourceRetrievalError(
+      "transient_failure",
+      true,
+      undefined,
+      "dns_failure",
+    );
   });
   if (
     !addresses.length ||
     addresses.some((address) => !isPublicAddress(address.address))
   )
-    throw new SourceRetrievalError("policy_denied");
+    throw new SourceRetrievalError(
+      "policy_denied",
+      false,
+      undefined,
+      "unsafe_address",
+    );
   const controller = new AbortController();
   const abort = () => controller.abort();
   signal?.addEventListener("abort", abort, { once: true });
@@ -169,7 +217,12 @@ async function fetchOnce(
     if (error instanceof SourceRetrievalError) throw error;
     if (controller.signal.aborted)
       throw new SourceRetrievalError("timeout", true);
-    throw new SourceRetrievalError("transient_failure", true);
+    throw new SourceRetrievalError(
+      "transient_failure",
+      true,
+      undefined,
+      networkDiagnosticCategory(error),
+    );
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener("abort", abort);
@@ -281,6 +334,54 @@ function retryAfterMilliseconds(value: string | undefined) {
 function header(headers: TransportResponse["headers"], name: string) {
   const value = headers[name] ?? headers[name.toLowerCase()];
   return Array.isArray(value) ? value[0] : value;
+}
+
+export function networkDiagnosticCategory(
+  error: unknown,
+): "connection_failure" | "dns_failure" | "tls_failure" {
+  const code = nestedErrorCode(error);
+  if (code === "ENOTFOUND" || code === "EAI_AGAIN") return "dns_failure";
+  if (
+    code.startsWith("ERR_TLS") ||
+    code.startsWith("CERT_") ||
+    code === "DEPTH_ZERO_SELF_SIGNED_CERT" ||
+    code === "SELF_SIGNED_CERT_IN_CHAIN" ||
+    code === "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+  )
+    return "tls_failure";
+  return "connection_failure";
+}
+
+function nestedErrorCode(error: unknown): string {
+  if (!error || typeof error !== "object") return "";
+  const candidate = error as { cause?: unknown; code?: unknown };
+  if (typeof candidate.code === "string") return candidate.code.toUpperCase();
+  return candidate.cause === error ? "" : nestedErrorCode(candidate.cause);
+}
+
+function defaultDiagnosticCategory(
+  category: SourceFailureCategory,
+): SourceDiagnosticCategory {
+  switch (category) {
+    case "policy_denied":
+      return "unsafe_address";
+    case "timeout":
+      return "timeout";
+    case "invalid_content_type":
+      return "invalid_content_type";
+    case "oversized_response":
+      return "response_too_large";
+    case "malformed_source":
+    case "invalid_source":
+      return "malformed_payload";
+    case "no_results":
+      return "zero_matching_candidates";
+    case "rate_limited":
+    case "permanent_failure":
+      return "http_status";
+    case "transient_failure":
+      return "connection_failure";
+  }
 }
 
 async function pinnedHttpsRequest(input: {

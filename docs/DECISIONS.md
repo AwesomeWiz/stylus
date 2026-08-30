@@ -607,6 +607,13 @@ non-public resolution and revalidates redirects. Deterministic code owns
 normalization, bounds, hashing, deduplication and EVID identifiers. Untrusted
 source text has no instruction or tool authority.
 
+Multi-word query inputs use deterministic normalized keyword tokens rather than
+requiring a contiguous phrase. Source adapters distinguish successful retrieval
+with zero candidates or zero matches from DNS, address-policy, connection, TLS,
+HTTP, content-type, size and payload failures. The distinction is stored in the
+existing bounded source metadata contract, so no schema change is required and
+no sensitive transport detail is retained.
+
 Only retained evidence reaches one maximum trusted ModelGateway structured
 synthesis. Reports are immutable and every supported statement must reference
 persisted evidence from that run. Research is Marketing working data: it does

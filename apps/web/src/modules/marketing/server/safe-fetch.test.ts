@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  networkDiagnosticCategory,
   RunByteBudget,
   safeFetchXml,
   SourceRetrievalError,
@@ -33,10 +34,27 @@ describe("pinned-DNS RSS safe fetch", () => {
           ],
           transport,
         }),
-      ).rejects.toMatchObject({ category: "policy_denied" });
+      ).rejects.toMatchObject({
+        category: "policy_denied",
+        diagnosticCategory: "unsafe_address",
+      });
       expect(transport).not.toHaveBeenCalled();
     },
   );
+
+  it("distinguishes DNS, TLS, and connection failures without exposing details", () => {
+    expect(networkDiagnosticCategory({ code: "ENOTFOUND" })).toBe(
+      "dns_failure",
+    );
+    expect(
+      networkDiagnosticCategory({
+        cause: { code: "UNABLE_TO_VERIFY_LEAF_SIGNATURE" },
+      }),
+    ).toBe("tls_failure");
+    expect(networkDiagnosticCategory({ code: "ECONNREFUSED" })).toBe(
+      "connection_failure",
+    );
+  });
 
   it("pins the validated address and revalidates every redirect host", async () => {
     const resolve = vi

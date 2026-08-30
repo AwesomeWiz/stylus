@@ -15,11 +15,14 @@ import {
 import {
   deduplicateResearchItems,
   type AdapterResult,
+  type EmptySourceResult,
   type NormalizedResearchItem,
+  normalizedContentHash,
   RequestConcurrencyGate,
+  type SourceRequestFailure,
 } from "./research-sources";
 import { researchSourceAdapterRegistry } from "./research-adapter-registry";
-import { RunByteBudget, type SourceFailureCategory } from "./safe-fetch";
+import { RunByteBudget } from "./safe-fetch";
 
 export async function runExternalResearchJob(
   input: { runId: string },
@@ -75,10 +78,18 @@ export async function runExternalResearchJob(
     throw new JobExecutionError("cancelled");
   const retrievedItems = results.flatMap((result) => result.items);
   const failures = results.flatMap((result) => result.failures);
+  const emptyResults = results.flatMap((result) => result.emptyResults ?? []);
   const deduplicated = deduplicateResearchItems(retrievedItems);
-  const persistence = buildRetrievalPersistence(deduplicated.items, failures);
+  const persistence = buildRetrievalPersistence(
+    deduplicated.items,
+    failures,
+    emptyResults,
+  );
   const warnings: string[] = [
-    ...new Set(failures.map((failure) => failure.category)),
+    ...new Set([
+      ...failures.map((failure) => failure.category),
+      ...emptyResults.map((result) => result.diagnosticCategory),
+    ]),
   ];
   if (deduplicated.truncatedCount) warnings.push("limit_truncated");
   const partial = failures.length > 0 && deduplicated.items.length > 0;
@@ -205,11 +216,8 @@ function sourceForSynthesis(
 
 function buildRetrievalPersistence(
   items: NormalizedResearchItem[],
-  failures: Array<{
-    adapterId: NormalizedResearchItem["adapterId"];
-    canonicalUrl: string | null;
-    category: SourceFailureCategory;
-  }>,
+  failures: SourceRequestFailure[],
+  emptyResults: EmptySourceResult[],
 ) {
   const sources: Array<Record<string, unknown>> = items.map((item, index) => ({
     adapter: item.adapterId,
@@ -225,7 +233,7 @@ function buildRetrievalPersistence(
     status: "SUCCEEDED",
     title: item.title,
   }));
-  failures.forEach((failure, index) =>
+  failures.forEach((failure) =>
     sources.push({
       adapter: failure.adapterId,
       author: null,
@@ -235,12 +243,37 @@ function buildRetrievalPersistence(
       fetchedAt: new Date().toISOString(),
       nativeId: null,
       publishedAt: null,
-      safeMetadata: { sourceRequest: `failed-${index + 1}` },
+      safeMetadata: {
+        ...failure.metadata,
+        diagnosticCategory: failure.diagnosticCategory,
+        sourceRequest: sourceRequestKeyForOutcome(failure),
+      },
       sourceKey: `SRC-${sources.length + 1}`,
       status: "FAILED",
       title: null,
     }),
   );
+  emptyResults.forEach((result) => {
+    const safeMetadata = {
+      ...result.metadata,
+      diagnosticCategory: result.diagnosticCategory,
+      sourceRequest: sourceRequestKeyForOutcome(result),
+    };
+    sources.push({
+      adapter: result.adapterId,
+      author: null,
+      canonicalUrl: result.canonicalUrl,
+      contentHash: normalizedContentHash(JSON.stringify(safeMetadata)),
+      failureCategory: null,
+      fetchedAt: new Date().toISOString(),
+      nativeId: null,
+      publishedAt: null,
+      safeMetadata,
+      sourceKey: `SRC-${sources.length + 1}`,
+      status: "SUCCEEDED",
+      title: null,
+    });
+  });
   const evidence = items.map((item, index) => ({
     evidenceId: `EVID-${index + 1}`,
     evidenceType: item.adapterId === "hacker-news" ? "DISCUSSION" : "FEED_ITEM",
@@ -257,6 +290,18 @@ function sourceRequestKey(item: NormalizedResearchItem) {
   return item.adapterId === "hacker-news"
     ? `hacker-news:${String(item.metadata.stream)}`
     : `rss-atom:${String(item.metadata.feedUrl)}`;
+}
+
+function sourceRequestKeyForOutcome(
+  result: SourceRequestFailure | EmptySourceResult,
+) {
+  const stream = result.metadata.stream;
+  if (result.adapterId === "hacker-news" && typeof stream === "string")
+    return `hacker-news:${stream}`;
+  const feedUrl = result.metadata.feedUrl;
+  return result.adapterId === "rss-atom" && typeof feedUrl === "string"
+    ? `rss-atom:${feedUrl}`
+    : `${result.adapterId}:${result.canonicalUrl ?? "unknown"}`;
 }
 
 async function failRun(

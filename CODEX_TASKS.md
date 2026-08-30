@@ -4,7 +4,7 @@
 
 ## TASK-017 — External Research
 
-Status: IMPLEMENTED / READY FOR MANUAL QA
+Status: IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
 
 Implemented as durable Marketing external-research runs backed by an exact
 statically registered SERVERLESS job, immediate hosted post-response execution,
@@ -12,8 +12,11 @@ and a Cron-secret-authenticated daily recovery route,
 fixed-host Hacker News retrieval, pinned-DNS RSS/Atom safe fetch, deterministic
 normalization/deduplication/evidence, and at most one trusted ModelGateway
 synthesis. Reports and provenance are immutable. Manual notes and TASK-015/
-TASK-016 remain unchanged. Both TASK-017 migrations, Cron configuration, pgTAP and
-manual QA remain required. TASK-018 and TASK-020 have not started.
+TASK-016 remain unchanged. Hosted QA has applied both TASK-017 migrations and
+verified the Hobby execution path. The HN retrieval correction now treats
+multi-word inputs as deterministic keyword groups and records a successful
+zero-match observation separately from transport/source failure. TASK-018 and
+TASK-020 have not started.
 
 ---
 

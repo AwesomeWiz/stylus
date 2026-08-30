@@ -44,6 +44,90 @@ describe("research source adapters", () => {
     ).toBe(false);
   });
 
+  it("matches multi-word query terms as deterministic keywords instead of literal phrases", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("topstories.json")) return json([201]);
+      return json({
+        by: "founder",
+        id: 201,
+        title: "Marketing systems used by early startup teams",
+        type: "story",
+      });
+    });
+    const result = await createHackerNewsAdapter(fetchMock).retrieve(
+      {
+        queryTerms: [
+          "startup marketing",
+          "content management",
+          "brand consistency",
+        ],
+        stream: "top",
+      },
+      context(),
+    );
+    expect(result.items).toHaveLength(1);
+    expect(result.failures).toEqual([]);
+    expect(result.emptyResults).toEqual([]);
+  });
+
+  it("records a successful zero-match outcome separately from source failure", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input) =>
+      String(input).endsWith("topstories.json")
+        ? json([301])
+        : json({ id: 301, title: "A new Rust compiler", type: "story" }),
+    );
+    const result = await createHackerNewsAdapter(fetchMock).retrieve(
+      { queryTerms: ["brand consistency"], stream: "top" },
+      context(),
+    );
+    expect(result.items).toEqual([]);
+    expect(result.failures).toEqual([]);
+    expect(result.emptyResults).toEqual([
+      expect.objectContaining({
+        diagnosticCategory: "zero_matching_candidates",
+        metadata: expect.objectContaining({
+          candidateCount: 1,
+          eligibleCandidateCount: 1,
+          matchingCandidateCount: 0,
+        }),
+      }),
+    ]);
+  });
+
+  it("keeps an actual HN transport failure distinct and safely classified", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => {
+      throw Object.assign(new TypeError("fetch failed"), {
+        cause: { code: "ENOTFOUND" },
+      });
+    });
+    const result = await createHackerNewsAdapter(fetchMock).retrieve(
+      { queryTerms: ["startup"], stream: "top" },
+      context(),
+    );
+    expect(result.items).toEqual([]);
+    expect(result.emptyResults).toEqual([]);
+    expect(result.failures).toEqual([
+      expect.objectContaining({
+        category: "transient_failure",
+        diagnosticCategory: "dns_failure",
+      }),
+    ]);
+  });
+
+  it("rejects malformed HN payloads without treating them as zero matches", async () => {
+    const result = await createHackerNewsAdapter(async () =>
+      json({ ids: [1] }),
+    ).retrieve({ queryTerms: ["startup"], stream: "top" }, context());
+    expect(result.emptyResults).toEqual([]);
+    expect(result.failures).toEqual([
+      expect.objectContaining({
+        category: "malformed_source",
+        diagnosticCategory: "malformed_payload",
+      }),
+    ]);
+  });
+
   it("parses bounded RSS evidence as text and never fetches article links", async () => {
     const transport = vi.fn(async () => ({
       body: new TextEncoder().encode(`
