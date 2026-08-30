@@ -10,6 +10,10 @@ import type {
   MarketingCreativeCouncilEvidenceRow,
   MarketingCreativeCouncilRunRow,
   MarketingCreativeCouncilStageRow,
+  MarketingExternalResearchEvidenceRow,
+  MarketingExternalResearchReportRow,
+  MarketingExternalResearchRunRow,
+  MarketingExternalResearchSourceRow,
   MarketingCreativeBriefRow,
   MarketingReelBriefVersionRow,
   MarketingReelIdeaRow,
@@ -142,6 +146,50 @@ export async function listMarketingResearch(
     ).order("updated_at", { ascending: false }),
     "Marketing research could not be loaded.",
   );
+}
+
+export async function getExternalResearchHistory(organizationId: string) {
+  const db = await createServerSupabaseClient();
+  const runs = await rows<MarketingExternalResearchRunRow>(
+    db
+      .from("marketing_external_research_runs")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    "External research history could not be loaded.",
+  );
+  if (!runs.length) return { evidence: [], reports: [], runs, sources: [] };
+  const runIds = runs.map((run) => run.id);
+  const [sources, evidence, reports] = await Promise.all([
+    rows<MarketingExternalResearchSourceRow>(
+      db
+        .from("marketing_external_research_sources")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .in("run_id", runIds)
+        .order("source_key"),
+      "External research sources could not be loaded.",
+    ),
+    rows<MarketingExternalResearchEvidenceRow>(
+      db
+        .from("marketing_external_research_evidence")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .in("run_id", runIds)
+        .order("evidence_id"),
+      "External research evidence could not be loaded.",
+    ),
+    rows<MarketingExternalResearchReportRow>(
+      db
+        .from("marketing_external_research_reports")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .in("run_id", runIds),
+      "External research reports could not be loaded.",
+    ),
+  ]);
+  return { evidence, reports, runs, sources };
 }
 export async function listMarketingCreativeBriefs(
   organizationId: string,

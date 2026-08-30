@@ -2,30 +2,34 @@
 
 # Current
 
-## TASK-016 — Creative Council Expansion
+## TASK-017 — External Research
 
-Status: IMPLEMENTED / READY FOR MANUAL QA AGAIN
+Status: IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
 
-Implemented as a separate synchronous Strategic Review over one exact immutable
-TASK-015 Reel Brief version. The approved workflow is Audience Researcher ->
-Brand Director -> Content Strategist -> Challenge Reviewer -> Creative Judge,
-with exactly five maximum gateway calls, immutable partial stage history and a
-versioned Strategic Council Review only after Judge success. All nine TASK-016
-specialists are statically registered; Trend, Competitor, Retention and Visual
-do not execute in this V1 workflow. Hosted migration, pgTAP and manual QA remain
-required. TASK-017 and TASK-020 have not started.
-
-Manual-QA correction: Creative Judge's generic output schema allowed a valid
-result whose disposition set did not exactly cover the Challenge identifiers,
-which the required post-gateway set check rejected. The Judge's per-run schema
-now exposes only the exact Challenge identifiers and exact disposition count
-while retaining authoritative Zod and final set validation. Safe
-structured-failure diagnostics were added to ModelGateway. No migration was
-required.
+Implemented as durable Marketing external-research runs backed by an exact
+statically registered SERVERLESS job, immediate hosted post-response execution,
+and a Cron-secret-authenticated daily recovery route,
+fixed-host Hacker News retrieval, pinned-DNS RSS/Atom safe fetch, deterministic
+normalization/deduplication/evidence, and at most one trusted ModelGateway
+synthesis. Reports and provenance are immutable. Manual notes and TASK-015/
+TASK-016 remain unchanged. Hosted QA has applied both TASK-017 migrations and
+verified the Hobby execution path. The HN retrieval correction now treats
+multi-word inputs as deterministic keyword groups and records a successful
+zero-match observation separately from transport/source failure. TASK-018 and
+TASK-020 have not started.
 
 ---
 
 # Completed
+
+## TASK-016 — Creative Council Expansion
+
+Status: COMPLETE / MERGED
+
+The exact five-stage Strategic Review and its Creative Judge manual-QA
+correction are merged. TASK-017 does not alter or automatically invoke it.
+
+---
 
 ## TASK-012 — Windows Worker
 
@@ -521,25 +525,27 @@ Creative Council product unless separately authorized.
 
 Implementation adds Challenge Reviewer (`marketing.challenge-reviewer`) and a
 five-call Strategic Review artifact without changing TASK-015's three-call Reel
-Brief workflow. TASK-017 is the exact next planned implementation after
-TASK-016 manual QA and merge authorization.
+Brief workflow. TASK-016 is merged and TASK-017 follows it as a separate
+external-evidence capability.
 
 ---
 
 ## TASK-017 — Marketing Research
 
-Planned scope:
+Status: IMPLEMENTED / READY FOR MANUAL QA
 
-- source adapter interface
-- permitted web sources
-- Reddit-compatible source strategy
-- Hacker News
-- RSS
-- web research
-- normalization
-- deduplication
-- clustering
-- evidence storage
+Implemented scope:
+
+- fixed-host Hacker News top/new/ask retrieval
+- explicit public-HTTPS RSS/Atom feeds through centralized pinned-DNS safe fetch
+- durable SERVERLESS research jobs, immediate hosted execution, and
+  authenticated once-daily recovery Cron compatible with Vercel Hobby
+- deterministic bounded normalization, hashing, deduplication and evidence
+- exactly one trusted structured synthesis maximum
+- immutable source, evidence and report history with RLS
+
+V1 excludes Reddit, generic web search/crawling, article-body fetching,
+automatic Council research and automatic memory promotion.
 
 ---
 

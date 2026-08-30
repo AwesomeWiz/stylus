@@ -135,21 +135,29 @@ export async function generateAIStructured<T>(
 class TrustedJobAIRunStore implements AIRunStore {
   constructor(
     private readonly jobId: string,
+    private readonly workflow: "reel" | "research",
     private readonly service: ReturnType<typeof createServiceSupabaseClient>,
   ) {}
   async start(input: AIRunStart) {
-    const { error } = await this.service.rpc("start_marketing_reel_ai_run", {
+    const args = {
       p_capability: input.context.capability,
       p_id: input.context.runId,
       p_job_id: this.jobId,
       p_operation: input.operation,
       p_requested_tier: tierToRecordForTrusted[input.requestedTier],
       p_trace_metadata: { ...input.trace },
-    });
+    };
+    const { error } =
+      this.workflow === "research"
+        ? await this.service.rpc(
+            "start_marketing_external_research_ai_run",
+            args,
+          )
+        : await this.service.rpc("start_marketing_reel_ai_run", args);
     if (error) throw new AIError("unknown");
   }
   async complete(input: AIRunCompletion) {
-    const { error } = await this.service.rpc("complete_marketing_reel_ai_run", {
+    const args = {
       p_duration_ms: input.durationMs,
       p_error_category: input.errorCategory,
       p_estimated_cost_usd: input.estimatedCostUsd,
@@ -163,7 +171,14 @@ class TrustedJobAIRunStore implements AIRunStore {
       p_status: input.status,
       p_total_tokens: input.usage.totalTokens,
       p_trace_metadata: { ...input.trace },
-    });
+    };
+    const { error } =
+      this.workflow === "research"
+        ? await this.service.rpc(
+            "complete_marketing_external_research_ai_run",
+            args,
+          )
+        : await this.service.rpc("complete_marketing_reel_ai_run", args);
     if (error) throw new AIError("unknown");
   }
 }
@@ -172,6 +187,17 @@ const tierToRecordForTrusted = {
   balanced: "BALANCED",
   fast: "FAST",
   reasoning: "REASONING",
+} as const;
+
+const trustedJobContracts = {
+  "marketing.competitor-reels.analyze": {
+    jobType: "marketing.competitor-reel.extract",
+    workflow: "reel",
+  },
+  "marketing.external-research.execute": {
+    jobType: "marketing.external-research.run",
+    workflow: "research",
+  },
 } as const;
 
 export async function generateAIStructuredForTrustedJob<T>(input: {
@@ -184,6 +210,9 @@ export async function generateAIStructuredForTrustedJob<T>(input: {
   schema: z.ZodType<T>;
   schemaName: string;
 }) {
+  const contract =
+    trustedJobContracts[input.capability as keyof typeof trustedJobContracts];
+  if (!contract) throw new AIError("policy_denied");
   const service = createServiceSupabaseClient();
   const month = new Date();
   month.setUTCDate(1);
@@ -235,7 +264,7 @@ export async function generateAIStructuredForTrustedJob<T>(input: {
     jobResult.data.organization_id !== input.organizationId ||
     jobResult.data.created_by !== input.actorId ||
     jobResult.data.plugin_id !== input.pluginId ||
-    jobResult.data.job_type !== "marketing.competitor-reel.extract" ||
+    jobResult.data.job_type !== contract.jobType ||
     jobResult.data.status !== "RUNNING"
   )
     throw new AIError("policy_denied");
@@ -252,7 +281,7 @@ export async function generateAIStructuredForTrustedJob<T>(input: {
     0,
   );
   const gateway = createConfiguredModelGateway(
-    new TrustedJobAIRunStore(input.jobId, service),
+    new TrustedJobAIRunStore(input.jobId, contract.workflow, service),
   );
   return gateway.generateStructured({
     context: {

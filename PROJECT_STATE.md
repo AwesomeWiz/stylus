@@ -1,32 +1,33 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-29
+Last Updated: 2026-08-30
 
 ## Overall Status
 
-TASK-016 IMPLEMENTED / READY FOR MANUAL QA AGAIN
+TASK-017 IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
 
 Stylus now has its first organization-enableable business plugin. Marketing
-provides guarded manual workspaces for competitors, campaigns, Reel ideas,
-research, and creative briefs, plus bounded Reel Brief creation and immutable
-five-stage Strategic Review in Creative Studio.
+provides guarded manual workspaces, bounded Creative Council workflows, and a
+durable external-research foundation over Hacker News and explicit RSS/Atom
+feeds. TASK-016 is merged; its exact five-stage Strategic Review remains intact.
 
 ---
 
 ## Current Phase
 
-Phase 13 — Creative Council Expansion
+Phase 14 — External Marketing Research
 
-Status: TASK-016 IMPLEMENTED / READY FOR MANUAL QA AGAIN
+Status: TASK-017 IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
 
 ---
 
 ## Current Objective
 
-Verify TASK-016's exact five-stage Strategic Review, forward migration,
-organization isolation, partial-failure history, idempotency, and unchanged
-TASK-015 Reel Brief generation in hosted manual QA. TASK-017 and TASK-020 remain
-unstarted.
+Re-test TASK-017's corrected deterministic Hacker News matching and actionable
+source diagnostics in hosted Preview. Both forward migrations and the Hobby
+execution path have been verified through hosted QA. Preserve bounded HN/RSS
+retrieval, source-to-evidence-to-finding provenance, organization isolation and
+unchanged TASK-015/TASK-016 behavior. TASK-018 and TASK-020 remain unstarted.
 
 ---
 
@@ -1039,10 +1040,11 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-016 Strategic Review is implemented on its task branch and awaits hosted
-migration, pgTAP and manual QA. It adds reusable specialist contracts and a
-separate five-call immutable review artifact while preserving TASK-015's exact
-three-call Reel Brief workflow. TASK-017 and TASK-020 have not started.
+TASK-017 External Research is implemented on its task branch and awaits hosted
+migrations, pgTAP, immediate execution/daily Cron configuration and manual QA.
+TASK-016 is merged. Its
+separate five-call immutable review artifact and TASK-015's exact three-call
+Reel Brief workflow remain unchanged. TASK-018 and TASK-020 have not started.
 
 ---
 
@@ -1061,10 +1063,11 @@ required rather than a silent job conversion.
 
 # Next Recommended Action
 
-Apply the TASK-016 migration in hosted Supabase, run its pgTAP suite and complete
-the documented OWNER/ADMIN/MEMBER/VIEWER success, unsupported-claim, brand,
-failure, idempotency and TASK-015 regression QA. Do not begin TASK-017 until
-TASK-016 is accepted and merged.
+Apply the TASK-017 migrations in hosted Supabase, run its pgTAP suite, configure
+the authenticated hosted immediate executor and daily recovery Cron, then
+complete the documented HN, RSS,
+provenance, prompt-injection, partial-failure, SSRF, provider-unavailable, RBAC
+and TASK-015/TASK-016 regression QA. Do not begin TASK-018 or TASK-020.
 
 ---
 
@@ -1158,3 +1161,95 @@ Earlier provider tests used small synthetic schemas and mocked HTTP, so they
 never exercised llama.cpp's grammar threshold. Earlier failure tests covered
 `provider_unavailable`/`true`, not the exact `validation_failed`/`false` pair or
 the persisted hosted transition.
+
+## Phase 14 TASK-017 External Research
+
+TASK-017 adds one durable `marketing.external-research.run` SERVERLESS job and
+an authenticated hosted executor that processes at most one claim per Cron
+invocation. Research requests atomically create the domain run and job, enforce
+one active run per organization and five submissions per hour, and derive
+organization/actor authority on the server. Hacker News uses a fixed official
+API host; up to two RSS/Atom feeds pass through centralized HTTPS-only,
+pinned-DNS safe fetch with redirect, address, timeout and byte revalidation.
+
+Deterministic code normalizes plain text, applies the 20-item/24k-character
+ceilings, hashes and deduplicates, then persists immutable source and EVID-n
+records. A partial run may synthesize retained evidence after source failures.
+Zero evidence fails without a report. Synthesis uses exactly one maximum
+`generateAIStructuredForTrustedJob` call at balanced tier and validates every
+source-backed reference before persisting the immutable report. Retrieved
+evidence remains auditable when AI policy/provider execution fails.
+
+No Reddit, generic search, article crawling, Windows-worker dependency,
+automatic Council research, agency memory, or automatic knowledge/memory write
+was introduced. TASK-015 and TASK-016 remain unchanged. Local pgTAP execution
+requires Docker/Podman, which was unavailable during implementation. The final
+linked dry run passed and reported
+`20260825001700_external_research.sql` pending; nothing was applied. Linked
+database lint completed with only the pre-existing TASK-015 enum-assignment
+warning. The TASK-017 pgTAP suite and hosted manual QA remain
+deployment checks.
+
+Focused TASK-017 verification passed 12 files / 60 tests. The final complete
+suite passed 128 web files / 616 tests plus 5 worker files / 32 tests (648
+tests total). Repository lint, worker/web typechecks and worker/web production
+builds passed. Every TASK-017 source/document file passes targeted Prettier.
+Repository-wide Prettier still reports the 55 known unrelated legacy/Windows
+formatting files; they were preserved rather than rewritten.
+
+### TASK-017 Vercel Hobby execution correction
+
+Vercel Hobby rejects sub-daily Cron expressions, so the recovery schedule is
+now `0 3 * * *` (daily at 03:00 UTC, with Hobby timing variance). A successful
+hosted enqueue registers a stable Next.js `after()` callback that runs the same
+registry-backed `JobExecutor` after the Server Action response. The callback
+targets only the trusted job ID returned by the service-only atomic enqueue;
+`20260825001710_claim_serverless_job.sql` adds the service-only `SKIP LOCKED`
+claim needed to preserve exact-job execution and concurrent claim safety.
+
+The durable job remains authoritative. Immediate execution failure leaves an
+unclaimed job queued, and the authenticated daily Cron route drains at most one
+remaining SERVERLESS job. Both paths use the same registry, store and atomic
+database lease. Hobby functions are limited to 60 seconds even though the
+durable job contract retains its 120-second timeout; runs exceeding the hosted
+function window fail safely and require a platform with a longer function
+duration rather than bypassing the queue or AI policy.
+
+Corrective verification passed 9 focused files / 41 tests, 131 web files / 627
+tests and 5 worker files / 32 tests (659 full-suite tests total). Lint,
+worker/web typechecks, worker/web production builds and targeted formatting
+passed. The pgTAP plan now contains 35 assertions. Linked migration dry-run
+reported exactly `20260825001700_external_research.sql` and
+`20260825001710_claim_serverless_job.sql` pending and applied neither. Linked
+database lint still reports only the pre-existing TASK-015 warning.
+
+### TASK-017 Hacker News hosted-QA correction
+
+Hosted QA proved that the fixed HN stream and its sampled item requests had
+completed successfully, but all candidates were removed at filtering because
+each multi-word query input was previously required to occur as one contiguous
+literal phrase. The `no_results` outcome therefore represented stage-C zero
+matches, not a Vercel timeout, Firebase transport failure or RSS safe-fetch
+rejection.
+
+Filtering now tokenizes normalized Unicode query inputs and candidates, then
+matches deterministic bounded keywords. HN payloads receive strict bounded
+schema validation and deleted, dead, non-story and blank candidates remain
+ineligible. HN and RSS adapters persist healthy zero-candidate/zero-match
+observations as successful sources while zero retained evidence still prevents
+synthesis and safely fails the overall run. Actual retrieval failures retain
+their existing database category plus a safe diagnostic category and bounded
+counts/HTTP status in existing `safe_metadata`.
+
+No `01720` migration is required: the applied source table already supports a
+successful observation with a deterministic content hash and bounded JSON
+metadata. SSRF policy, fixed HN host, RSS pinned-DNS/TLS hostname validation,
+redirect revalidation, byte/time bounds, immutable provenance, one synthesis
+maximum and job claim/idempotency boundaries remain unchanged.
+
+Corrective verification passed 14 focused files / 79 tests, 131 web files / 634
+tests and 5 worker files / 32 tests (666 full-suite tests total). Lint,
+worker/web typechecks, worker/web production builds and targeted formatting for
+all 16 changed files passed. Repository-wide Prettier continues to report only
+the same 55 unrelated baseline files; none was rewritten. Hosted QA confirms
+`01700` and `01710` are applied, and this correction adds no migration.

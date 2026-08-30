@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getSessionRouteDecision, isWorkerBrokerPath } from "./proxy";
+import {
+  getSessionRouteDecision,
+  isServerlessJobCronPath,
+  isWorkerBrokerPath,
+} from "./proxy";
 
 describe("session route decisions", () => {
   it("redirects unauthenticated application requests to login", () => {
@@ -36,5 +40,14 @@ describe("session route decisions", () => {
     expect(isWorkerBrokerPath("/workers")).toBe(false);
     expect(getSessionRouteDecision("/api/private", false)).toBe("/login");
     expect(getSessionRouteDecision("/workers", false)).toBe("/login");
+  });
+
+  it("recognizes only the exact authenticated serverless Cron route", () => {
+    expect(isServerlessJobCronPath("/api/cron/serverless-jobs")).toBe(true);
+    expect(isServerlessJobCronPath("/api/cron/serverless-jobs/extra")).toBe(
+      false,
+    );
+    expect(isServerlessJobCronPath("/api/cron/private")).toBe(false);
+    expect(getSessionRouteDecision("/api/private", false)).toBe("/login");
   });
 });

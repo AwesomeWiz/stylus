@@ -20,4 +20,7 @@ None.
 
 ### Fixed
 
-None.
+- External Research no longer mislabels a successful Hacker News retrieval with
+  zero literal-phrase matches as a source failure; multi-word query inputs use
+  deterministic keyword matching and source history exposes safe diagnostic
+  outcomes.

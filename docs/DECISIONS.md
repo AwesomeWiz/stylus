@@ -585,3 +585,36 @@ This artifact remains a Create-mode review. It does not define TASK-020's Ask
 Council conversation, routing, persistence or UI contract. TASK-017 research
 and TASK-018 performance evidence may be supplied only through future explicit
 authorized workflows.
+
+## ADR-030 — External research is a bounded durable evidence workflow
+
+TASK-017 uses one exact Marketing SERVERLESS job rather than browser-held work,
+the Windows worker, a crawler, or a general agent runtime. After a hosted
+enqueue, stable Next.js `after()` execution invokes the shared registry-backed
+executor with the trusted persisted job ID. A Vercel Hobby-compatible daily
+Cron calls one Node route with `CRON_SECRET` for recovery; each invocation
+claims and processes at most one statically registered SERVERLESS job through
+the same lease lifecycle.
+
+The immediate and recovery paths never call Marketing handler internals. A
+service-only targeted claim uses the same `SKIP LOCKED`, attempt, lease and
+concurrency-group invariants as the generic claim. Therefore overlapping
+post-response and Cron invocations cannot execute one persisted job twice.
+
+Hacker News retrieval is confined to its code-owned API host. Browser-supplied
+RSS/Atom URLs cross one pinned-DNS HTTPS safe-fetch boundary that rejects
+non-public resolution and revalidates redirects. Deterministic code owns
+normalization, bounds, hashing, deduplication and EVID identifiers. Untrusted
+source text has no instruction or tool authority.
+
+Multi-word query inputs use deterministic normalized keyword tokens rather than
+requiring a contiguous phrase. Source adapters distinguish successful retrieval
+with zero candidates or zero matches from DNS, address-policy, connection, TLS,
+HTTP, content-type, size and payload failures. The distinction is stored in the
+existing bounded source metadata contract, so no schema change is required and
+no sensitive transport detail is retained.
+
+Only retained evidence reaches one maximum trusted ModelGateway structured
+synthesis. Reports are immutable and every supported statement must reference
+persisted evidence from that run. Research is Marketing working data: it does
+not automatically execute either Council workflow or write durable memory.

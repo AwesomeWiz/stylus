@@ -54,6 +54,13 @@ export class JobCancelledError extends Error {
   }
 }
 
+export class JobExecutionError extends Error {
+  constructor(readonly category: JobErrorCategory) {
+    super(`Job execution failed: ${category}`);
+    this.name = "JobExecutionError";
+  }
+}
+
 export class JobExecutor {
   constructor(
     private readonly executorId: string,
@@ -201,6 +208,7 @@ function normalizeExecutionError(
   signal: AbortSignal,
 ): JobErrorCategory {
   if (error instanceof JobCancelledError) return "cancelled";
+  if (error instanceof JobExecutionError) return error.category;
   if (signal.aborted) return "timeout";
   if (error instanceof InvalidJobResultError) return "validation_failed";
   return "internal_error";

@@ -290,3 +290,35 @@ continues consuming Storage until a future controlled cleanup feature exists.
 Python, faster-whisper, PyAV, and CTranslate2 are no longer TASK-014 deployment
 dependencies. Keep Windows Smart App Control and Code Integrity enabled; a
 blocked whisper.cpp executable means the capability remains unavailable.
+
+## TASK-017 Hosted External Research
+
+1. Apply `20260825001700_external_research.sql` followed by
+   `20260825001710_claim_serverless_job.sql`, then run
+   `supabase/tests/database/external_research_rls.test.sql`.
+2. Configure the server-only `SUPABASE_SERVICE_ROLE_KEY` and a high-entropy
+   `CRON_SECRET` in Vercel. Never use a `NEXT_PUBLIC_` prefix.
+3. Deploy `vercel.json`; its Hobby-compatible `0 3 * * *` schedule invokes
+   `GET /api/cron/serverless-jobs` once daily with
+   `Authorization: Bearer $CRON_SECRET`. Hobby may invoke it anywhere within
+   the selected UTC hour.
+4. Normal hosted submissions do not wait for Cron. After enqueue commits, the
+   Server Action registers a Next.js `after()` callback that targets the exact
+   persisted job through the ordinary registry/executor and atomic database
+   lease. The response does not wait for research completion.
+5. Daily Cron is recovery/drain infrastructure for a job that remains queued
+   because immediate execution did not start. It makes one generic SERVERLESS
+   claim per invocation; concurrent immediate/Cron claims cannot both win.
+6. Vercel Hobby functions have a 60-second maximum duration. The durable job
+   definition retains its 120-second safety bound, but a hosted run must finish
+   inside Hobby's function window. Use a plan/runtime with a longer supported
+   duration if real workloads consistently exceed 60 seconds.
+7. Configure an organization policy/provider that is reachable from the hosted
+   application. LOCAL_ONLY is never weakened: a laptop-only Ollama endpoint is
+   unavailable to Vercel, so evidence persists but synthesis safely fails and
+   no report is fabricated.
+
+Disable recovery safely by pausing/removing the Vercel Cron schedule or
+rotating/removing `CRON_SECRET`; queued jobs remain durable. Immediate execution
+continues only after an authorized hosted enqueue. Disabling Marketing or
+removing execution membership prevents new work and trusted AI continuation.

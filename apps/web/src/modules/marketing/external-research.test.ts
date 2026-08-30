@@ -1,0 +1,169 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  externalResearchReportSchema,
+  externalResearchRequestSchema,
+  projectExternalResearchEvidence,
+  validateEvidenceReferences,
+} from "./external-research";
+import {
+  deduplicateResearchItems,
+  normalizedContentHash,
+  RequestConcurrencyGate,
+  type NormalizedResearchItem,
+} from "./server/research-sources";
+
+describe("external research contracts", () => {
+  it("accepts only the bounded source and question contract", () => {
+    expect(
+      externalResearchRequestSchema.parse({
+        hackerNewsStream: "ask",
+        objective: "AUDIENCE_PAINS",
+        queryTerms: ["Startups", "startups"],
+        question: "What pain points recur for founders?",
+        rssFeedUrls: ["https://example.test/feed.xml"],
+      }).queryTerms,
+    ).toEqual(["startups"]);
+    expect(() =>
+      externalResearchRequestSchema.parse({
+        hackerNewsStream: null,
+        objective: "AUDIENCE_PAINS",
+        queryTerms: ["startups"],
+        question: "What pain points recur for founders?",
+        rssFeedUrls: ["http://localhost/feed.xml"],
+      }),
+    ).toThrow();
+  });
+
+  it("deduplicates deterministically by native id, canonical URL, and hash", () => {
+    const base = item({ nativeId: "1", normalizedText: "same evidence" });
+    const result = deduplicateResearchItems([
+      base,
+      item({ nativeId: "1", normalizedText: "different" }),
+      item({ canonicalUrl: base.canonicalUrl, nativeId: "2" }),
+      item({ canonicalUrl: "https://example.test/other", nativeId: "3" }),
+    ]);
+    expect(result.items).toHaveLength(2);
+    expect(result.duplicateCount).toBe(2);
+  });
+
+  it("enforces the 20-item and 24k normalized-text ceilings deterministically", () => {
+    const small = Array.from({ length: 25 }, (_, index) =>
+      item({
+        canonicalUrl: `https://example.test/${index}`,
+        nativeId: String(index),
+        normalizedText: `evidence ${index}`,
+      }),
+    );
+    const boundedByItems = deduplicateResearchItems(small);
+    expect(boundedByItems.items).toHaveLength(20);
+    expect(boundedByItems.truncatedCount).toBe(5);
+    expect(boundedByItems.duplicateCount).toBe(0);
+
+    const large = Array.from({ length: 20 }, (_, index) =>
+      item({
+        canonicalUrl: `https://example.test/large-${index}`,
+        contentHash: String(index).padStart(64, "a").slice(-64),
+        nativeId: `large-${index}`,
+        normalizedText: `${index}`.padEnd(1_500, "x"),
+      }),
+    );
+    const boundedByText = deduplicateResearchItems(large);
+    expect(boundedByText.normalizedCharacters).toBeLessThanOrEqual(24_000);
+    expect(boundedByText.items).toHaveLength(16);
+  });
+
+  it("rejects synthesis references outside the persisted evidence set", () => {
+    const report = reportWithReference("EVID-2");
+    expect(() => validateEvidenceReferences(report, ["EVID-1"])).toThrow(
+      "invalid evidence reference",
+    );
+  });
+
+  it("keeps future Council projection explicit, selected, and bounded", () => {
+    expect(
+      projectExternalResearchEvidence({
+        evidence: [
+          {
+            evidenceId: "EVID-1",
+            excerpt: "public evidence",
+            sourceId: "source",
+          },
+        ],
+        selectedEvidenceIds: ["EVID-1"],
+      }),
+    ).toEqual([
+      { evidenceId: "EVID-1", excerpt: "public evidence", sourceId: "source" },
+    ]);
+    expect(() =>
+      projectExternalResearchEvidence({
+        evidence: [],
+        selectedEvidenceIds: ["EVID-1"],
+      }),
+    ).toThrow();
+  });
+
+  it("never runs more than three source requests concurrently", async () => {
+    const gate = new RequestConcurrencyGate(3);
+    let active = 0;
+    let maximum = 0;
+    let release: (() => void) | undefined;
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const operations = Array.from({ length: 6 }, () =>
+      gate.run(async () => {
+        active += 1;
+        maximum = Math.max(maximum, active);
+        await blocked;
+        active -= 1;
+      }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(maximum).toBe(3);
+    release?.();
+    await Promise.all(operations);
+  });
+});
+
+function item(
+  overrides: Partial<NormalizedResearchItem> = {},
+): NormalizedResearchItem {
+  const normalizedText = overrides.normalizedText ?? "evidence";
+  return {
+    adapterId: "hacker-news",
+    author: null,
+    canonicalUrl: "https://news.ycombinator.com/item?id=1",
+    contentHash: normalizedContentHash(normalizedText),
+    fetchedAt: "2026-08-29T00:00:00.000Z",
+    metadata: { stream: "top" },
+    nativeId: "1",
+    normalizedText,
+    publishedAt: null,
+    title: "Evidence",
+    ...overrides,
+  };
+}
+
+function reportWithReference(reference: "EVID-1" | "EVID-2") {
+  return externalResearchReportSchema.parse({
+    confidence: "MEDIUM",
+    disagreements: [],
+    findings: [
+      {
+        confidence: "MEDIUM",
+        id: "F-1",
+        statement: "Finding",
+        supportedBy: [reference],
+      },
+    ],
+    freshnessAssessment: "Current as of retrieval.",
+    inferences: [],
+    limitations: [],
+    partialFailureWarnings: [],
+    patterns: [],
+    recommendations: [],
+    summary: "Summary",
+    unresolvedQuestions: [],
+  });
+}
