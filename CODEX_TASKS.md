@@ -30,6 +30,16 @@ Supabase dry run reports only
 not run because Docker/Podman is unavailable; the migration and hosted source
 paths remain for manual QA.
 
+Hosted relevance hardening rejects editorial candidates whose only overlap is
+generic vocabulary such as `fashion`, `style` or `trend`. Meaningful explicit
+terms are authoritative; question concepts are a deterministic fallback only
+when those terms are generic. Feed metadata is checked before article retrieval
+and extracted article text is checked again before persistence. The hosted
+oversize records were Vogue article responses correctly stopped by the existing
+512 KiB limit, which remains unchanged. Corrective verification passed 7 focused
+files / 52 tests and the full 136-file / 708-test web suite plus formatting,
+lint, web typecheck and production build. No corrective migration is needed.
+
 ---
 
 # Completed

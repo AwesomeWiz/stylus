@@ -131,6 +131,13 @@ describe("external research job handler", () => {
       "reddit",
       "fashion-editorial",
     ]);
+    expect(mocks.retrieve).toHaveBeenCalledWith(
+      "fashion-editorial",
+      expect.objectContaining({
+        question: "What sizing frustrations recur for fashion shoppers?",
+      }),
+      expect.anything(),
+    );
     expect(mocks.retrieve).not.toHaveBeenCalledWith(
       "hacker-news",
       expect.anything(),

@@ -580,3 +580,13 @@ visual treatment or Council judgment. Every signal and opportunity cites one to
 three exact current-run EVID identifiers. TASK-017C invokes no Council workflow,
 writes no memory and implements no performance learning. Instagram, TikTok,
 YouTube and Pinterest remain TASK-017D discovery.
+
+Editorial registry membership establishes fetch authorization, not topical
+relevance. A separate deterministic relevance profile removes low-information
+fashion and request vocabulary, gives meaningful explicit user-term concepts
+precedence over question vocabulary, and uses meaningful question concepts only
+when the explicit terms are generic. A small code-owned alias set covers narrow
+forms such as sustainable/ethical/circular/resale, sizing and pricing. Feed
+title/summary text must pass before article fetch; already fetched article text
+must independently pass before `ARTICLE_CONTENT` can persist. No embeddings or
+model relevance call is used.

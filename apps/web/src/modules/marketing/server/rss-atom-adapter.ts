@@ -31,6 +31,7 @@ type XmlRecord = Record<string, unknown>;
 
 export function createRssAtomAdapter(
   safeFetchDependencies?: SafeFetchDependencies,
+  candidateMatcher?: (candidateText: string) => boolean,
 ): ResearchSourceAdapter<RssRequest> {
   return {
     displayName: "RSS / Atom",
@@ -63,7 +64,9 @@ export function createRssAtomAdapter(
           const normalizedText = normalizePlainText(`${title}\n${body}`);
           if (
             !normalizedText ||
-            !matchesQueryTerms(normalizedText, request.queryTerms)
+            !(candidateMatcher
+              ? candidateMatcher(normalizedText)
+              : matchesQueryTerms(normalizedText, request.queryTerms))
           )
             return [];
           const nativeId = normalizePlainText(

@@ -689,3 +689,11 @@ and strategic Content Opportunity Candidates cite exact current-run evidence.
 They are not hooks, scripts or Reel Briefs and trigger no Council, memory,
 performance-learning or social-platform workflow. TASK-017D owns future
 Instagram/TikTok/YouTube/Pinterest discovery.
+
+Source allowlisting and topical relevance are separate controls. Editorial
+candidate relevance is deterministic and lexical: low-information domain and
+request words never satisfy the gate by themselves, meaningful explicit-term
+concepts take precedence, and meaningful question concepts are only a fallback
+for generic-only explicit terms. Metadata is gated before article fetch and
+extracted article text is gated again. This avoids both irrelevant evidence and
+an extra model/embedding call while preserving the existing safe-fetch limits.

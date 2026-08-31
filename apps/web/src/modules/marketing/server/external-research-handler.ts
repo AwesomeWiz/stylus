@@ -105,6 +105,7 @@ export async function runExternalResearchJob(
           {
             ...request.plan.editorial,
             queryTerms: request.queryTerms,
+            question: request.question,
           },
           adapterContext,
         ),

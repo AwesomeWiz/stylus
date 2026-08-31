@@ -1448,3 +1448,16 @@ zero vulnerabilities. The linked Supabase dry run confirmed only
 `20260825001730_fashion_marketing_intelligence.sql` is pending and applied
 nothing. Local pgTAP remains a hosted-verification item because Docker/Podman is
 not installed on this machine.
+
+Hosted QA then found that the shared token matcher accepted two unrelated Vogue
+items because each explicit multi-word term contained the generic token
+`fashion`. TASK-017C now applies a dedicated deterministic editorial relevance
+profile: meaningful explicit-term concepts take precedence, generic
+fashion/request vocabulary cannot establish relevance, and meaningful question
+concepts are only a fallback when the explicit terms contain no usable topic.
+Feed metadata is gated before article fetching and safely extracted article
+content is checked independently before it can become evidence. The two hosted
+oversize diagnostics were confirmed as Vogue article bodies correctly rejected
+by the unchanged 512 KiB limit. Corrective verification passed 7 focused files /
+52 tests, the complete 136-file / 708-test web suite, scoped formatting, lint,
+web typecheck and the production web build. No migration was required.

@@ -5,6 +5,11 @@ import { z } from "zod";
 import { externalResearchLimits } from "../external-research";
 import { extractArticleContent } from "./article-extractor";
 import {
+  createFashionRelevanceProfile,
+  isFashionResearchCandidateRelevant,
+  type FashionRelevanceProfile,
+} from "./fashion-relevance";
+import {
   getFashionEditorialSources,
   isAllowedEditorialArticleUrl,
   type FashionEditorialSource,
@@ -35,6 +40,7 @@ import {
 const requestSchema = z
   .object({
     includeSearchDiscovery: z.boolean(),
+    question: z.string().trim().min(10).max(500),
     queryTerms: z.array(z.string().min(1).max(80)).min(1).max(5),
     sourceIds: z.array(z.string().min(2).max(64)).min(1).max(2),
   })
@@ -53,7 +59,13 @@ export function createFashionEditorialAdapter(
     requestSchema,
     async retrieve(request, context) {
       const sources = getFashionEditorialSources(request.sourceIds);
-      const rss = createRssAtomAdapter(dependencies.safeFetch);
+      const relevance = createFashionRelevanceProfile({
+        explicitTerms: request.queryTerms,
+        question: request.question,
+      });
+      const rss = createRssAtomAdapter(dependencies.safeFetch, (candidate) =>
+        isFashionResearchCandidateRelevant(candidate, relevance),
+      );
       const feedResults = await Promise.all(
         sources.map(async (source) => {
           const result = await rss.retrieve(
@@ -90,6 +102,7 @@ export function createFashionEditorialAdapter(
           source,
           item.nativeId,
           context,
+          relevance,
           dependencies.safeFetch,
         );
         failures.push(...article.failures);
@@ -114,6 +127,7 @@ export function createFashionEditorialAdapter(
             provider,
             sources,
             request.queryTerms,
+            relevance,
             context,
             dependencies.safeFetch,
           );
@@ -180,6 +194,7 @@ async function retrieveSearchCandidates(
   provider: FashionSearchProvider,
   sources: FashionEditorialSource[],
   queryTerms: string[],
+  relevance: FashionRelevanceProfile,
   context: ResearchAdapterContext,
   safeFetchDependencies?: SafeFetchDependencies,
 ) {
@@ -234,12 +249,15 @@ async function retrieveSearchCandidates(
       });
       continue;
     }
+    if (!isFashionResearchCandidateRelevant(candidate.title ?? "", relevance))
+      continue;
     seen.add(canonical);
     const article = await retrieveEditorialArticle(
       canonical,
       source,
       null,
       context,
+      relevance,
       safeFetchDependencies,
     );
     failures.push(...article.failures);
@@ -276,6 +294,7 @@ async function retrieveEditorialArticle(
   source: FashionEditorialSource,
   parentNativeId: string | null,
   context: ResearchAdapterContext,
+  relevance: FashionRelevanceProfile,
   dependencies?: SafeFetchDependencies,
 ) {
   try {
@@ -306,6 +325,18 @@ async function retrieveEditorialArticle(
         false,
         undefined,
         "empty_content",
+      );
+    if (
+      !isFashionResearchCandidateRelevant(
+        `${extracted.title ?? ""}\n${extracted.chunks.join("\n")}`,
+        relevance,
+      )
+    )
+      throw new SourceRetrievalError(
+        "no_results",
+        false,
+        undefined,
+        "zero_matching_candidates",
       );
     return {
       evidence: extracted.chunks.map(
