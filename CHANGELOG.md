@@ -18,6 +18,9 @@ All notable user-facing changes to Stylus will be documented here.
 - Added bounded structural paths to invalid OpenAI-compatible provider-envelope
   diagnostics after two independent hosted responses failed at that boundary;
   provider bodies, values, generated content, and credentials remain discarded.
+- OpenRouter structured-output requests now require routed providers to honor
+  every requested parameter instead of allowing unsupported schema parameters
+  to be ignored.
 
 ### Added
 

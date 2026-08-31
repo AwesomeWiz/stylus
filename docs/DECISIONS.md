@@ -647,3 +647,20 @@ synthesis remains the maximum and treats every external field as untrusted
 quoted data with no tool, memory or autonomous-retrieval authority. TASK-017C,
 not this decision, owns future Reddit and bounded web/fashion-editorial source
 expansion; social-platform intelligence remains separate.
+
+## ADR-032 — Require parameter-capable OpenRouter routes for structured output
+
+OpenAI-compatible syntax alone does not prove that every routed provider honors
+strict JSON Schema. OpenRouter's default provider routing may pass a request to
+a provider that ignores unsupported parameters, while `openrouter/free`
+randomly selects from a changing free-model pool. Stylus therefore sends
+`provider.require_parameters=true` only for structured requests to the exact
+OpenRouter host. Generic compatible endpoints and text generation are not given
+OpenRouter-specific fields.
+
+The gateway continues to reject malformed JSON and schema-invalid content. It
+does not repair JSON, strip fences, retry, weaken Zod/EVID validation or persist
+provider content. Production structured workflows should configure a concrete
+model that advertises both `response_format` and `structured_outputs`; the model
+registry's capability flag is an operator declaration rather than runtime
+provider discovery.

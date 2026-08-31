@@ -36,9 +36,16 @@ Hosted structured-synthesis/report-persistence retest remains.
 Two later independent hosted attempts returned HTTP-success JSON that failed
 the OpenAI-compatible envelope before `message.content` extraction. The adapter
 still rejects those responses, but its safe trace now adds bounded Zod issue
-codes and schema paths without retaining provider values or bodies. This is
-diagnostic hardening only; another deployment and eventual hosted retest are
-required to identify the incompatible envelope field and prove report success.
+codes and schema paths without retaining provider values or bodies.
+
+The next deployed CDLM attempt passed the provider envelope and returned usage
+plus `finishReason=stop`, then failed because `message.content` was malformed
+JSON. Investigation confirmed that the generated strict schema is closed and
+contains the exact per-run EVID enum, while the configured `openrouter/free`
+alias can select different free models. OpenRouter structured requests now set
+`provider.require_parameters=true`; hosted production guidance requires a
+concrete model advertising structured outputs rather than the random free
+router. Report-success retest remains.
 
 ---
 

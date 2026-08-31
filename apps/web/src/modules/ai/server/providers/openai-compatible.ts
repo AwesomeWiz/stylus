@@ -79,6 +79,10 @@ function endpoint(baseUrl: string, path: string) {
   return base.toString();
 }
 
+function isOpenRouterBaseUrl(baseUrl: string) {
+  return new URL(baseUrl).hostname.toLowerCase() === "openrouter.ai";
+}
+
 const OLLAMA_GRAMMAR_MAX_REPETITION = 2_000;
 
 export function ollamaCompatibleJsonSchema(schema: unknown): unknown {
@@ -152,6 +156,9 @@ export class OpenAICompatibleProvider implements AIProviderAdapter {
             max_tokens: request.maxOutputTokens,
             messages: request.messages,
             model: request.model,
+            ...(structuredOutput && isOpenRouterBaseUrl(this.baseUrl)
+              ? { provider: { require_parameters: true } }
+              : {}),
             ...(structuredOutput
               ? {
                   response_format: {

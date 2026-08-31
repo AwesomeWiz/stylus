@@ -75,6 +75,13 @@ are never accepted, preventing Stylus from becoming an arbitrary SSRF proxy.
 Provider availability is evaluated at explicit health/execution boundaries, not
 on every render or during application startup.
 
+For structured requests to the exact `openrouter.ai` host, the adapter sends
+`provider.require_parameters=true` so OpenRouter will not route to a provider
+that ignores `response_format` or another requested parameter. The request still
+uses the ordinary strict JSON-schema envelope and remains fail-closed on
+malformed content. Generic OpenAI-compatible endpoints receive no
+OpenRouter-specific provider preference.
+
 ## Model Registry and Logical Tiers
 
 Each registered model has a stable Stylus ID, provider ID/model name, enabled
@@ -91,6 +98,12 @@ The initial logical tiers are:
 Plugins request a tier and required capabilities, not a vendor model. Duplicate
 model IDs fail registration; disabled and unsupported models are unavailable.
 Pricing is optional configuration, not volatile business logic.
+
+Capability flags are deployment declarations, not provider discovery. A
+configured routing alias such as `openrouter/free` can choose a different model
+for each call even when the alias advertises structured-output filtering. Hosted
+workflows that require repeatable strict schema behavior should configure a
+concrete model whose current provider metadata advertises structured outputs.
 
 ## Routing and Fallback
 

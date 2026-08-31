@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -107,6 +108,41 @@ describe("external research contracts", () => {
     expect(() =>
       createExternalResearchSynthesisSchema(["EVID-1", "EVID-1"]),
     ).toThrow("identifiers are invalid");
+  });
+
+  it("emits a closed strict JSON schema with the exact evidence enum", () => {
+    const evidenceIds = Array.from(
+      { length: 10 },
+      (_, index) => `EVID-${index + 1}`,
+    );
+    const jsonSchema = z.toJSONSchema(
+      createExternalResearchSynthesisSchema(evidenceIds),
+    ) as Record<string, unknown>;
+    const objectNodes: Array<Record<string, unknown>> = [];
+    const visit = (node: unknown) => {
+      if (!node || typeof node !== "object") return;
+      const record = node as Record<string, unknown>;
+      if (record.type === "object") objectNodes.push(record);
+      if (record.properties && typeof record.properties === "object")
+        Object.values(record.properties).forEach(visit);
+      visit(record.items);
+    };
+    visit(jsonSchema);
+
+    expect(objectNodes.length).toBeGreaterThan(0);
+    for (const node of objectNodes) {
+      const properties = node.properties as Record<string, unknown>;
+      expect(node.additionalProperties).toBe(false);
+      expect(node.required).toEqual(Object.keys(properties));
+    }
+    const findings = (
+      jsonSchema.properties as Record<string, Record<string, unknown>>
+    ).findings!;
+    const findingProperties = (
+      findings.items as { properties: Record<string, Record<string, unknown>> }
+    ).properties;
+    const supportedBy = findingProperties.supportedBy!;
+    expect((supportedBy.items as { enum: string[] }).enum).toEqual(evidenceIds);
   });
 
   it("keeps the maximum synthesis response bounded below the provider output ceiling", () => {

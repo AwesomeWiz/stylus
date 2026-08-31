@@ -1,6 +1,6 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-30
+Last Updated: 2026-08-31
 
 ## Overall Status
 
@@ -1381,3 +1381,21 @@ Provider-envelope diagnostic verification passed 4 focused files / 38 tests
 and the complete suites at 132 web files / 662 tests plus 5 worker files / 32
 tests (694 tests total). Targeted formatting, repository lint, worker/web
 typechecks and both production builds passed.
+
+The deployed `a4727726` CDLM run subsequently proved that its provider envelope
+was valid: one `remote-default` attempt returned `finishReason=stop`, complete
+usage metadata and string `message.content`. The gateway then failed before
+report-schema validation because that string was malformed JSON. The generated
+request used `response_format.type=json_schema`, `strict=true`, a closed schema
+whose object properties are all required, and the exact EVID-1 through EVID-10
+enum. No prompt, response body or generated content was retained or inspected.
+
+OpenRouter documents that provider routing otherwise permits providers to
+ignore unsupported parameters. Structured requests to the exact OpenRouter
+host now add `provider.require_parameters=true`; other compatible endpoints and
+ordinary text requests are unchanged. The `openrouter/free` alias remains a
+random, changing free-model pool and is unsuitable as a deterministic hosted
+structured-output contract. Deployment should select a concrete advertised
+structured-output model before the single report-success retest. No migration,
+retry, JSON repair, timeout/token increase or research-boundary change is
+required.

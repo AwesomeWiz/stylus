@@ -166,6 +166,47 @@ describe("OpenAICompatibleProvider", () => {
     expect(
       body.response_format.json_schema.schema.properties.summary.maxLength,
     ).toBe(2_000);
+    expect(body).not.toHaveProperty("provider");
+  });
+
+  it("requires OpenRouter providers to honor structured-output parameters", async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "{}" } }] }),
+        ),
+      );
+    const provider = new OpenAICompatibleProvider("openai-compatible", {
+      baseUrl: "https://openrouter.ai/api/v1",
+      fetch,
+    });
+    const jsonSchema = {
+      additionalProperties: false,
+      properties: { summary: { type: "string" } },
+      required: ["summary"],
+      type: "object",
+    };
+
+    await provider.generate({
+      ...request,
+      structuredOutput: {
+        jsonSchema,
+        name: "structured_test",
+      },
+    });
+
+    expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toMatchObject({
+      provider: { require_parameters: true },
+      response_format: {
+        json_schema: {
+          name: "structured_test",
+          schema: jsonSchema,
+          strict: true,
+        },
+        type: "json_schema",
+      },
+    });
   });
 
   it("categorizes an Ollama structured-request HTTP 400 as invalid response", async () => {

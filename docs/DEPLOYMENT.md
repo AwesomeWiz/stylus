@@ -180,6 +180,23 @@ These values must remain server environment configuration and must never use a
 `NEXT_PUBLIC_` prefix. Base URLs are deployment-controlled; the AI Settings page
 contains provider IDs only and cannot turn Stylus into an arbitrary URL proxy.
 
+When the base URL is `https://openrouter.ai/api/v1`, structured requests require
+all routed providers to support the supplied parameters. Do not use the random
+`openrouter/free` router as the production contract for immutable structured
+workflows. Configure a concrete model that currently advertises
+`response_format` and `structured_outputs`, for example:
+
+```text
+STYLUS_AI_OPENAI_COMPATIBLE_MODEL=openai/gpt-4.1-nano
+STYLUS_AI_REMOTE_INPUT_USD_PER_MILLION=0.10
+STYLUS_AI_REMOTE_OUTPUT_USD_PER_MILLION=0.40
+```
+
+Provider capabilities and pricing are external deployment facts and must be
+rechecked before changing production configuration. Free variants remain useful
+for experiments but have lower availability/rate limits and do not provide a
+stable underlying-model choice through the free router.
+
 A hosted deployment cannot reach `127.0.0.1` on a developer laptop. Configure a
 provider reachable from the hosted server or leave hosted AI disabled. Do not
 create an unauthenticated tunnel to Ollama. The later outbound worker/job system
