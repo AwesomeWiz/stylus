@@ -288,6 +288,9 @@ workflow. TASK-020 remains the unimplemented conversational product.
 - [ ] TASK-017C bounded web and fashion-editorial discovery
 - [ ] social-platform intelligence (separate future media/platform phase)
 
+TASK-017B implementation and hosted acceptance are complete; it is ready for
+the user-managed merge.
+
 ---
 
 ## Phase 15 — Performance Learning

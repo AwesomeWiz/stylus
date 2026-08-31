@@ -4,7 +4,7 @@
 
 ## TASK-017B — External Research Content Enrichment
 
-Status: IMPLEMENTED / READY FOR HOSTED RETEST
+Status: COMPLETE / READY FOR MERGE
 
 The existing TASK-017 durable SERVERLESS path now enriches only matched HN
 stories with native text, bounded top-level/one-level discussion and bounded
@@ -45,7 +45,14 @@ contains the exact per-run EVID enum, while the configured `openrouter/free`
 alias can select different free models. OpenRouter structured requests now set
 `provider.require_parameters=true`; hosted production guidance requires a
 concrete model advertising structured outputs rather than the random free
-router. Report-success retest remains.
+router. The final acceptance result is recorded below.
+
+Final hosted acceptance passed with the TASK-017B executor. The accepted run
+persisted one typed HN story, ten bounded comments and three article chunks,
+then completed one structured `remote-default` attempt and one immutable
+version-1 report. All cited references, including `EVID-14`, belonged to the
+run's exact persisted evidence set. No retry, repair, extra model call, memory
+write or automatic Council invocation occurred.
 
 ---
 

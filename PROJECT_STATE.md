@@ -4,7 +4,7 @@ Last Updated: 2026-08-31
 
 ## Overall Status
 
-TASK-017B IMPLEMENTED / READY FOR HOSTED RETEST
+TASK-017B COMPLETE / READY FOR MERGE
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
@@ -19,17 +19,17 @@ intact.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017B IMPLEMENTED / READY FOR HOSTED RETEST
+Status: TASK-017B COMPLETE / READY FOR MERGE
 
 ---
 
 ## Current Objective
 
-Deploy the TASK-017B synthesis correction, then verify HN text, discussion,
-linked-article evidence and the immutable report through the existing Hobby
-execution path. Preserve source-to-evidence-to-finding provenance,
-organization isolation and unchanged TASK-015/TASK-016 behavior. TASK-017C,
-TASK-018 and TASK-020 remain unstarted.
+Await the user-managed TASK-017B merge. Hosted acceptance has verified HN story,
+discussion and linked-article evidence plus one immutable, evidence-grounded
+report through the existing Hobby execution path. Preserve
+source-to-evidence-to-finding provenance, organization isolation and unchanged
+TASK-015/TASK-016 behavior. TASK-017C, TASK-018 and TASK-020 remain unstarted.
 
 ---
 
@@ -1399,3 +1399,11 @@ structured-output contract. Deployment should select a concrete advertised
 structured-output model before the single report-success retest. No migration,
 retry, JSON repair, timeout/token increase or research-boundary change is
 required.
+
+Final hosted acceptance passed on the concrete-model deployment. Research run
+`1a293e26-3946-4574-a4e7-5e2dd5e6ddfc` persisted one `HN_STORY`, ten bounded
+`HN_COMMENT` records and three `ARTICLE_CONTENT` chunks with typed provenance.
+Its single `remote-default` structured attempt finished with `stop`, validated
+the exact per-run evidence enum including cited `EVID-14`, and created exactly
+one immutable version-1 Research Report. No retry, repair, additional model
+call, memory write or downstream Council workflow occurred.
