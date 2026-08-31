@@ -46,6 +46,46 @@ describe("OpenAICompatibleProvider", () => {
     );
   });
 
+  it("reports only bounded structural paths for invalid provider envelopes", async () => {
+    const privateValue = "private-provider-value-must-not-be-retained";
+    const provider = new OpenAICompatibleProvider("openai-compatible", {
+      baseUrl: "https://models.example.test",
+      fetch: vi.fn<typeof globalThis.fetch>().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            choices: Array.from({ length: 8 }, () => ({
+              message: { content: null, privateValue },
+            })),
+            usage: { prompt_tokens: privateValue },
+          }),
+          { status: 200 },
+        ),
+      ),
+    });
+
+    const error = await provider
+      .generate(request)
+      .catch((reason: unknown) =>
+        reason instanceof Error ? reason : new Error("Unexpected rejection"),
+      );
+
+    expect(error).toMatchObject({
+      category: "invalid_response",
+      diagnostic:
+        "provider_envelope_invalid:invalid_type@choices.0.message.content,invalid_type@choices.1.message.content,invalid_type@choices.2.message.content,invalid_type@choices.3.message.content,invalid_type@choices.4.message.content",
+    });
+    expect(JSON.stringify(error)).not.toContain(privateValue);
+    const diagnostic = (error as Error & { diagnostic: string }).diagnostic;
+    const issues = diagnostic
+      .replace("provider_envelope_invalid:", "")
+      .split(",");
+    expect(issues).toHaveLength(5);
+    expect(
+      issues.every((issue) => issue.split("@")[1]!.split(".").length <= 6),
+    ).toBe(true);
+    expect(diagnostic.length).toBeLessThanOrEqual(500);
+  });
+
   it.each([
     [401, "authentication_failed"],
     [429, "rate_limited"],

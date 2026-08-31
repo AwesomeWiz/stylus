@@ -29,6 +29,33 @@ const responseSchema = z.object({
     .optional(),
 });
 
+const PROVIDER_ENVELOPE_DIAGNOSTIC_CHARACTERS = 500;
+const PROVIDER_ENVELOPE_DIAGNOSTIC_ISSUES = 5;
+const PROVIDER_ENVELOPE_DIAGNOSTIC_PATH_SEGMENTS = 6;
+const PROVIDER_ENVELOPE_DIAGNOSTIC_PATH_SEGMENT_CHARACTERS = 40;
+
+function providerEnvelopeValidationDiagnostic(error: z.ZodError) {
+  const issues = error.issues
+    .slice(0, PROVIDER_ENVELOPE_DIAGNOSTIC_ISSUES)
+    .map((issue) => {
+      const path =
+        issue.path
+          .slice(0, PROVIDER_ENVELOPE_DIAGNOSTIC_PATH_SEGMENTS)
+          .map((segment) =>
+            String(segment).slice(
+              0,
+              PROVIDER_ENVELOPE_DIAGNOSTIC_PATH_SEGMENT_CHARACTERS,
+            ),
+          )
+          .join(".") || "$";
+      return `${issue.code}@${path}`;
+    });
+  return `provider_envelope_invalid:${issues.join(",")}`.slice(
+    0,
+    PROVIDER_ENVELOPE_DIAGNOSTIC_CHARACTERS,
+  );
+}
+
 export function normalizeProviderBaseUrl(value: string) {
   const url = new URL(value);
   if (
@@ -172,7 +199,7 @@ export class OpenAICompatibleProvider implements AIProviderAdapter {
     const parsed = responseSchema.safeParse(parsedJson);
     if (!parsed.success)
       throw new AIError("invalid_response", {
-        diagnostic: "provider_envelope_invalid",
+        diagnostic: providerEnvelopeValidationDiagnostic(parsed.error),
       });
     const usage = parsed.data.usage;
     return {

@@ -156,6 +156,36 @@ describe("ModelGateway", () => {
     });
   });
 
+  it("persists a sanitized provider-envelope path diagnostic without provider values", async () => {
+    const provider = new FakeAIProvider("fake-local", []);
+    provider.generate = async () => {
+      throw new AIError("invalid_response", {
+        diagnostic:
+          "provider_envelope_invalid:invalid_type@choices.0.message.content",
+      });
+    };
+    const invalid = setup([provider]);
+
+    await expect(
+      invalid.gateway.generateStructured({
+        context,
+        options,
+        policy,
+        schema: z.object({ score: z.number().int() }),
+        schemaName: "score_result",
+      }),
+    ).rejects.toMatchObject({ category: "invalid_response" });
+
+    expect(invalid.runs.completions[0]).toMatchObject({
+      trace: {
+        attempts: ["local-fast:1"],
+        failureDiagnostic:
+          "provider_envelope_invalid:invalid_type@choices.0.message.content",
+      },
+      usage: { inputTokens: null, outputTokens: null, totalTokens: null },
+    });
+  });
+
   it("uses bounded retry for transient errors and not for authentication", async () => {
     const transient = new FakeAIProvider("fake-local", [
       { error: "rate_limited" },

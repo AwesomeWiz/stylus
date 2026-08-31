@@ -165,6 +165,9 @@ Marketing must not retrieve Agency memory.
   provider secret or URL is accepted by browser execution requests
 - plugins use the normalized Stylus AI boundary and cannot import provider
   implementations; raw provider clients/responses are never public contracts
+- invalid provider envelopes retain only bounded Zod issue codes and expected
+  schema paths; raw bodies, field values, generated content, headers, provider
+  error text and validation objects are not persisted or logged
 - organization and actor IDs plus run IDs are derived server-side; inactive
   memberships and VIEWER execution are denied before provider setup
 - plugin-originated execution requires static registration, current organization

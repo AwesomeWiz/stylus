@@ -33,6 +33,13 @@ per-statement citation limits now fit that ceiling without removing input
 evidence or changing provenance, policy, timeout, retry or one-call behavior.
 Hosted structured-synthesis/report-persistence retest remains.
 
+Two later independent hosted attempts returned HTTP-success JSON that failed
+the OpenAI-compatible envelope before `message.content` extraction. The adapter
+still rejects those responses, but its safe trace now adds bounded Zod issue
+codes and schema paths without retaining provider values or bodies. This is
+diagnostic hardening only; another deployment and eventual hosted retest are
+required to identify the incompatible envelope field and prove report success.
+
 ---
 
 # Completed

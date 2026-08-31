@@ -15,6 +15,9 @@ All notable user-facing changes to Stylus will be documented here.
   and text bounds after hosted evidence showed the prior concise schema could
   still exhaust its 1,600-token ceiling. All retained input evidence and exact
   EVID provenance checks remain unchanged.
+- Added bounded structural paths to invalid OpenAI-compatible provider-envelope
+  diagnostics after two independent hosted responses failed at that boundary;
+  provider bodies, values, generated content, and credentials remain discarded.
 
 ### Added
 

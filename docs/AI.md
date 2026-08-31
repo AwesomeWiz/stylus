@@ -160,10 +160,13 @@ Malformed JSON or a schema mismatch becomes `invalid_response`, records a failed
 run and never reaches application code as typed data.
 
 Structured failures retain only bounded operational diagnostics in run trace:
-provider structured-request rejection, malformed provider envelope, malformed
-structured JSON, Zod issue codes/paths, or output truncation when the provider
-finish reason establishes it. Known finish reason and token usage are retained;
-prompt text, response text, field values and provider error bodies are not.
+provider structured-request rejection, malformed provider envelope, invalid
+provider-envelope Zod issue codes/paths, malformed structured JSON, report Zod
+issue codes/paths, or output truncation when the provider finish reason
+establishes it. At most five envelope issues, six path segments and 500 total
+diagnostic characters are retained. Known finish reason and token usage are
+retained when the envelope exposes them; prompt text, response text, field
+values, validation objects and provider error bodies are not.
 
 Ollama compiles JSON Schema into llama.cpp grammar. llama.cpp rejects a literal
 string repetition of 2,000 or more, even though that is valid JSON Schema. The

@@ -1359,3 +1359,25 @@ Final response-bounds corrective verification passed 4 focused files / 32
 tests and the complete suites at 132 web files / 660 tests plus 5 worker files
 / 32 tests (692 tests total). Targeted formatting, repository lint, worker/web
 typechecks and both production builds passed. No migration was added or changed.
+
+Two independent post-`a686c2e` hosted synthesis attempts then failed earlier at
+the provider-envelope boundary. `Creepy Crawlies` and the separate CDLM article
+both received HTTP-success JSON that did not match the OpenAI-compatible
+envelope; neither exposed usage, finish reason or `message.content`, and neither
+reached report JSON parsing, dynamic EVID validation or persistence. The CDLM
+AI run `fec8fd9e-f518-4aaf-bd4d-6596d0a2ad36` failed after 7,869 ms with
+`provider_envelope_invalid`, independently establishing a repeated provider
+response pattern rather than another timeout or truncation.
+
+The adapter remains fail-closed. Provider-envelope failures now retain only up
+to five Zod issue codes and bounded schema paths in the existing 500-character
+safe diagnostic. Raw bodies, field values, content, prompts, headers,
+credentials and arbitrary provider error text remain discarded, and the Zod
+error object is not attached as an error cause. This is observability hardening
+only: provider validation, research behavior, schema, timeout, retry,
+provenance, persistence and routing are unchanged. No migration is required.
+
+Provider-envelope diagnostic verification passed 4 focused files / 38 tests
+and the complete suites at 132 web files / 662 tests plus 5 worker files / 32
+tests (694 tests total). Targeted formatting, repository lint, worker/web
+typechecks and both production builds passed.
