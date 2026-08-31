@@ -1,9 +1,21 @@
 import { z } from "zod";
 
 export const externalResearchLimits = Object.freeze({
+  articleChunksPerStory: 3,
+  articleNormalizedCharacters: 4_500,
+  articleRequestsPerRun: 2,
+  articleResponseBytes: 512 * 1024,
+  commentsPerRun: 10,
+  completionReserveMs: 5_000,
   concurrentRequests: 3,
-  evidenceExcerptCharacters: 800,
+  enrichmentConcurrency: 2,
+  enrichedItemCharacters: 12_000,
+  enrichedHackerNewsStories: 2,
+  evidenceExcerptCharacters: 1_500,
   evidenceItems: 20,
+  hackerNewsCommentCharacters: 1_500,
+  hackerNewsCommentDepth: 1,
+  hackerNewsTopLevelComments: 5,
   maxRedirects: 3,
   modelOutputTokens: 1_600,
   normalizedItemCharacters: 1_500,
@@ -14,12 +26,30 @@ export const externalResearchLimits = Object.freeze({
   responseBytes: 1024 * 1024,
   retainedItemsPerSource: 10,
   retainedItemsPerRun: 20,
+  retrievalTimeoutMs: 20_000,
   rssFeeds: 2,
   sourceRequests: 3,
+  sourceObservations: 30,
   sourceTimeoutMs: 8_000,
-  synthesisContextCharacters: 24_000,
+  synthesisContextCharacters: 40_000,
+  synthesisEvidenceCharacters: 18_000,
+  synthesisTimeoutMs: 35_000,
   totalFetchedBytes: 4 * 1024 * 1024,
-  workflowTimeoutMs: 120_000,
+  workflowTimeoutMs: 55_000,
+});
+
+export const externalResearchSynthesisLimits = Object.freeze({
+  disagreementItems: 1,
+  findingItems: 4,
+  freshnessCharacters: 140,
+  inferenceItems: 2,
+  listItemCharacters: 100,
+  listItems: 3,
+  patternItems: 2,
+  recommendationItems: 2,
+  statementCharacters: 140,
+  statementEvidenceReferences: 3,
+  summaryCharacters: 350,
 });
 
 export const externalResearchObjectives = [
@@ -97,10 +127,11 @@ export const externalResearchJobInputSchema = z
   .object({ runId: z.uuid() })
   .strict();
 
+const confidenceSchema = z.enum(["LOW", "MEDIUM", "HIGH"]);
 const evidenceReferenceSchema = z.string().regex(/^EVID-(?:[1-9]|1\d|20)$/);
 const supportedStatementSchema = z
   .object({
-    confidence: z.enum(["LOW", "MEDIUM", "HIGH"]),
+    confidence: confidenceSchema,
     statement: z.string().trim().min(1).max(1_000),
     supportedBy: z.array(evidenceReferenceSchema).min(1).max(10),
   })
@@ -108,7 +139,7 @@ const supportedStatementSchema = z
 
 export const externalResearchReportSchema = z
   .object({
-    confidence: z.enum(["LOW", "MEDIUM", "HIGH"]),
+    confidence: confidenceSchema,
     disagreements: z.array(supportedStatementSchema).max(5),
     findings: z
       .array(
@@ -122,7 +153,7 @@ export const externalResearchReportSchema = z
       .array(
         z
           .object({
-            confidence: z.enum(["LOW", "MEDIUM", "HIGH"]),
+            confidence: confidenceSchema,
             statement: z.string().trim().min(1).max(1_000),
           })
           .strict(),
@@ -136,6 +167,95 @@ export const externalResearchReportSchema = z
     unresolvedQuestions: z.array(z.string().trim().min(1).max(500)).max(10),
   })
   .strict();
+
+export function createExternalResearchSynthesisSchema(
+  evidenceIds: readonly string[],
+) {
+  const uniqueEvidenceIds = [...new Set(evidenceIds)];
+  if (
+    uniqueEvidenceIds.length === 0 ||
+    uniqueEvidenceIds.length !== evidenceIds.length ||
+    uniqueEvidenceIds.length > externalResearchLimits.evidenceItems ||
+    uniqueEvidenceIds.some(
+      (evidenceId) => !evidenceReferenceSchema.safeParse(evidenceId).success,
+    )
+  )
+    throw new Error("Synthesis evidence identifiers are invalid.");
+
+  const firstEvidenceId = uniqueEvidenceIds[0]!;
+  const exactEvidenceReferenceSchema = z.enum([
+    firstEvidenceId,
+    ...uniqueEvidenceIds.slice(1),
+  ]);
+  const conciseSupportedStatementSchema = z
+    .object({
+      confidence: confidenceSchema,
+      statement: z
+        .string()
+        .trim()
+        .min(1)
+        .max(externalResearchSynthesisLimits.statementCharacters),
+      supportedBy: z
+        .array(exactEvidenceReferenceSchema)
+        .min(1)
+        .max(
+          Math.min(
+            externalResearchSynthesisLimits.statementEvidenceReferences,
+            uniqueEvidenceIds.length,
+          ),
+        ),
+    })
+    .strict();
+  const conciseText = (maximum: number) =>
+    z.string().trim().min(1).max(maximum);
+
+  return z
+    .object({
+      confidence: confidenceSchema,
+      disagreements: z
+        .array(conciseSupportedStatementSchema)
+        .max(externalResearchSynthesisLimits.disagreementItems),
+      findings: z
+        .array(
+          conciseSupportedStatementSchema.extend({
+            id: z.string().regex(/^F-(?:[1-9]|1\d|20)$/),
+          }),
+        )
+        .max(externalResearchSynthesisLimits.findingItems),
+      freshnessAssessment: conciseText(
+        externalResearchSynthesisLimits.freshnessCharacters,
+      ),
+      inferences: z
+        .array(
+          z
+            .object({
+              confidence: confidenceSchema,
+              statement: conciseText(
+                externalResearchSynthesisLimits.statementCharacters,
+              ),
+            })
+            .strict(),
+        )
+        .max(externalResearchSynthesisLimits.inferenceItems),
+      limitations: z
+        .array(conciseText(externalResearchSynthesisLimits.listItemCharacters))
+        .max(externalResearchSynthesisLimits.listItems),
+      partialFailureWarnings: z
+        .array(conciseText(externalResearchSynthesisLimits.listItemCharacters))
+        .max(externalResearchSynthesisLimits.listItems),
+      patterns: z
+        .array(conciseSupportedStatementSchema)
+        .max(externalResearchSynthesisLimits.patternItems),
+      recommendations: z
+        .array(conciseSupportedStatementSchema)
+        .max(externalResearchSynthesisLimits.recommendationItems),
+      summary: conciseText(externalResearchSynthesisLimits.summaryCharacters),
+      unresolvedQuestions: z
+        .array(conciseText(externalResearchSynthesisLimits.listItemCharacters))
+        .max(externalResearchSynthesisLimits.listItems),
+    })
+    .strict();
+}
 
 export type ExternalResearchReport = z.infer<
   typeof externalResearchReportSchema

@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  createPinnedLookup,
   networkDiagnosticCategory,
   RunByteBudget,
+  safeFetchArticle,
   safeFetchXml,
   SourceRetrievalError,
   validatePublicHttpsUrl,
@@ -11,7 +13,7 @@ import {
 
 const xml = new TextEncoder().encode("<rss><channel /></rss>");
 
-describe("pinned-DNS RSS safe fetch", () => {
+describe("pinned-DNS external research safe fetch", () => {
   it.each([
     "http://example.test/feed",
     "https://localhost/feed",
@@ -23,24 +25,30 @@ describe("pinned-DNS RSS safe fetch", () => {
     expect(() => validatePublicHttpsUrl(url)).toThrow(SourceRetrievalError);
   });
 
-  it.each(["127.0.0.1", "10.0.0.1", "169.254.1.1", "::1", "2001:db8::1"])(
-    "rejects non-public resolution %s before transport",
-    async (address) => {
-      const transport = vi.fn();
-      await expect(
-        safeFetchXml("https://feeds.example.test/rss", new RunByteBudget(), {
-          resolve: async () => [
-            { address, family: address.includes(":") ? 6 : 4 },
-          ],
-          transport,
-        }),
-      ).rejects.toMatchObject({
-        category: "policy_denied",
-        diagnosticCategory: "unsafe_address",
-      });
-      expect(transport).not.toHaveBeenCalled();
-    },
-  );
+  it.each([
+    "127.0.0.1",
+    "10.0.0.1",
+    "169.254.1.1",
+    "192.0.2.1",
+    "::1",
+    "fc00::1",
+    "fe80::1",
+    "2001:db8::1",
+  ])("rejects non-public resolution %s before transport", async (address) => {
+    const transport = vi.fn();
+    await expect(
+      safeFetchXml("https://feeds.example.test/rss", new RunByteBudget(), {
+        resolve: async () => [
+          { address, family: address.includes(":") ? 6 : 4 },
+        ],
+        transport,
+      }),
+    ).rejects.toMatchObject({
+      category: "policy_denied",
+      diagnosticCategory: "unsafe_address",
+    });
+    expect(transport).not.toHaveBeenCalled();
+  });
 
   it("distinguishes DNS, TLS, and connection failures without exposing details", () => {
     expect(networkDiagnosticCategory({ code: "ENOTFOUND" })).toBe(
@@ -53,6 +61,26 @@ describe("pinned-DNS RSS safe fetch", () => {
     ).toBe("tls_failure");
     expect(networkDiagnosticCategory({ code: "ECONNREFUSED" })).toBe(
       "connection_failure",
+    );
+    expect(networkDiagnosticCategory({ code: "ERR_INVALID_IP_ADDRESS" })).toBe(
+      "transport_failure",
+    );
+  });
+
+  it("returns the validated pin in the callback shape requested by Node", () => {
+    const address = { address: "8.8.8.8", family: 4 as const };
+    const lookup = createPinnedLookup(address);
+    const allCallback = vi.fn();
+    const oneCallback = vi.fn();
+
+    lookup("article.example.test", { all: true }, allCallback);
+    lookup("article.example.test", { all: false }, oneCallback);
+
+    expect(allCallback).toHaveBeenCalledWith(null, [address]);
+    expect(oneCallback).toHaveBeenCalledWith(
+      null,
+      address.address,
+      address.family,
     );
   });
 
@@ -178,6 +206,123 @@ describe("pinned-DNS RSS safe fetch", () => {
           status: 200,
         }),
       }),
+    ).rejects.toMatchObject({ category: "malformed_source" });
+  });
+
+  it("includes DNS resolution inside the per-request timeout", async () => {
+    vi.useFakeTimers();
+    try {
+      const pending = safeFetchArticle(
+        "https://article.example.test/story",
+        new RunByteBudget(),
+        {
+          resolve: () => new Promise(() => undefined),
+          transport: vi.fn(),
+        },
+      );
+      const assertion = expect(pending).rejects.toMatchObject({
+        category: "timeout",
+      });
+      await vi.advanceTimersByTimeAsync(8_000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("revalidates an article redirect and rejects an unsafe destination", async () => {
+    const transport = vi.fn().mockResolvedValue({
+      body: new Uint8Array(),
+      headers: { location: "https://internal.example.test/article" },
+      status: 302,
+    });
+    await expect(
+      safeFetchArticle(
+        "https://public.example.test/article",
+        new RunByteBudget(),
+        {
+          resolve: vi
+            .fn()
+            .mockResolvedValueOnce([{ address: "8.8.8.8", family: 4 }])
+            .mockResolvedValueOnce([{ address: "10.0.0.2", family: 4 }]),
+          transport,
+        },
+      ),
+    ).rejects.toMatchObject({
+      category: "policy_denied",
+      diagnosticCategory: "unsafe_address",
+    });
+    expect(transport).toHaveBeenCalledOnce();
+  });
+
+  it("accepts only bounded textual article responses through the pinned transport", async () => {
+    const transport = vi.fn(async () => ({
+      body: new TextEncoder().encode(
+        "<html><main><p>Evidence</p></main></html>",
+      ),
+      headers: { "content-type": "text/html; charset=utf-8" },
+      status: 200,
+    }));
+    const result = await safeFetchArticle(
+      "https://article.example.test/story",
+      new RunByteBudget(),
+      {
+        resolve: async () => [{ address: "8.8.8.8", family: 4 }],
+        transport,
+      },
+    );
+    expect(result.body).toContain("Evidence");
+    expect(transport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accept: expect.stringContaining("text/html"),
+        maximumBytes: 512 * 1024,
+      }),
+    );
+    await expect(
+      safeFetchArticle(
+        "https://article.example.test/image",
+        new RunByteBudget(),
+        {
+          resolve: async () => [{ address: "8.8.8.8", family: 4 }],
+          transport: async () => ({
+            body: new Uint8Array([1, 2, 3]),
+            headers: { "content-type": "image/png" },
+            status: 200,
+          }),
+        },
+      ),
+    ).rejects.toMatchObject({ category: "invalid_content_type" });
+  });
+
+  it("enforces the article byte ceiling and malformed UTF-8 handling", async () => {
+    const resolve = async () => [{ address: "8.8.8.8", family: 4 as const }];
+    await expect(
+      safeFetchArticle(
+        "https://article.example.test/large",
+        new RunByteBudget(),
+        {
+          resolve,
+          transport: async () => ({
+            body: new Uint8Array(512 * 1024 + 1),
+            headers: { "content-type": "text/html" },
+            status: 200,
+          }),
+        },
+      ),
+    ).rejects.toMatchObject({ category: "oversized_response" });
+    await expect(
+      safeFetchArticle(
+        "https://article.example.test/encoding",
+        new RunByteBudget(),
+        {
+          resolve,
+          transport: async () => ({
+            body: new Uint8Array([255]),
+            headers: { "content-type": "text/html" },
+            status: 200,
+          }),
+        },
+      ),
     ).rejects.toMatchObject({ category: "malformed_source" });
   });
 

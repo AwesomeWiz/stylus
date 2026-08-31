@@ -23,18 +23,27 @@ describe("external research architecture boundaries", () => {
     );
   });
 
-  it("uses only the fixed HN host and the centralized RSS safe fetch", () => {
+  it("uses the fixed HN host and centralized pinned-DNS textual safe fetches", () => {
     const hackerNews = source(
       "src/modules/marketing/server/hacker-news-adapter.ts",
     );
     const rss = source("src/modules/marketing/server/rss-atom-adapter.ts");
+    const safeFetch = source("src/modules/marketing/server/safe-fetch.ts");
     expect(hackerNews).toContain(
       'const HN_API = "https://hacker-news.firebaseio.com/v0"',
     );
     expect(hackerNews).toContain('redirect: "error"');
     expect(hackerNews).not.toMatch(/reddit|generic search/i);
+    expect(hackerNews).toContain("safeFetchArticle(");
     expect(rss).toContain("safeFetchXml(");
     expect(rss).not.toMatch(/fetch\(/);
+    expect(safeFetch).toContain("validatePublicHttpsUrl");
+    expect(safeFetch).toContain("pinnedHttpsRequest");
+    expect(safeFetch).toContain("httpsRequest(");
+    expect(safeFetch).toContain("lookup:");
+    expect(safeFetch).not.toContain("rejectUnauthorized: false");
+    expect(safeFetch).not.toMatch(/headers:\s*\{[\s\S]*?authorization/i);
+    expect(safeFetch).not.toMatch(/headers:\s*\{[\s\S]*?cookie/i);
   });
 
   it("does not wire external research into Council, memory, or the Windows worker", () => {

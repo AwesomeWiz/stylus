@@ -2,7 +2,7 @@ import "server-only";
 
 import { lookup as dnsLookup } from "node:dns/promises";
 import { request as httpsRequest } from "node:https";
-import { isIP } from "node:net";
+import { isIP, type LookupFunction } from "node:net";
 
 import { externalResearchLimits } from "../external-research";
 
@@ -22,12 +22,15 @@ export type SourceDiagnosticCategory =
   | "dns_failure"
   | "unsafe_address"
   | "connection_failure"
+  | "transport_failure"
   | "tls_failure"
   | "timeout"
   | "http_status"
   | "invalid_content_type"
   | "response_too_large"
   | "malformed_payload"
+  | "extraction_failed"
+  | "empty_content"
   | "zero_candidates"
   | "zero_matching_candidates";
 
@@ -81,7 +84,9 @@ type TransportResponse = {
 export type SafeFetchDependencies = {
   resolve(hostname: string): Promise<Address[]>;
   transport(input: {
+    accept?: string;
     address: Address;
+    maximumBytes?: number;
     signal: AbortSignal;
     url: URL;
   }): Promise<TransportResponse>;
@@ -100,13 +105,66 @@ const defaults: SafeFetchDependencies = {
 
 export async function safeFetchXml(
   rawUrl: string,
-  budget: RunByteBudget,
+  budget: Pick<RunByteBudget, "consume">,
   dependencies: SafeFetchDependencies = defaults,
+  signal?: AbortSignal,
+) {
+  return safeFetchTextualResource(
+    rawUrl,
+    budget,
+    {
+      accept:
+        "application/rss+xml, application/atom+xml, application/xml, text/xml",
+      contentTypes: new Set([
+        "application/atom+xml",
+        "application/rss+xml",
+        "application/xml",
+        "text/xml",
+      ]),
+      maximumBytes: externalResearchLimits.responseBytes,
+    },
+    dependencies,
+    signal,
+  );
+}
+
+export async function safeFetchArticle(
+  rawUrl: string,
+  budget: Pick<RunByteBudget, "consume">,
+  dependencies: SafeFetchDependencies = defaults,
+  signal?: AbortSignal,
+) {
+  return safeFetchTextualResource(
+    rawUrl,
+    budget,
+    {
+      accept: "text/html, application/xhtml+xml, text/plain;q=0.8",
+      contentTypes: new Set([
+        "application/xhtml+xml",
+        "text/html",
+        "text/plain",
+      ]),
+      maximumBytes: externalResearchLimits.articleResponseBytes,
+    },
+    dependencies,
+    signal,
+  );
+}
+
+async function safeFetchTextualResource(
+  rawUrl: string,
+  budget: Pick<RunByteBudget, "consume">,
+  options: {
+    accept: string;
+    contentTypes: Set<string>;
+    maximumBytes: number;
+  },
+  dependencies: SafeFetchDependencies,
   signal?: AbortSignal,
 ) {
   let current = validatePublicHttpsUrl(rawUrl);
   for (let redirectCount = 0; ; redirectCount += 1) {
-    const response = await fetchOnce(current, dependencies, signal);
+    const response = await fetchOnce(current, dependencies, options, signal);
     budget.consume(response.body.byteLength);
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const location = header(response.headers, "location");
@@ -148,15 +206,7 @@ export async function safeFetchXml(
       .at(0)
       ?.trim()
       .toLowerCase();
-    if (
-      !contentType ||
-      ![
-        "application/atom+xml",
-        "application/rss+xml",
-        "application/xml",
-        "text/xml",
-      ].includes(contentType)
-    )
+    if (!contentType || !options.contentTypes.has(contentType))
       throw new SourceRetrievalError("invalid_content_type");
     let body: string;
     try {
@@ -176,27 +226,10 @@ export async function safeFetchXml(
 async function fetchOnce(
   url: URL,
   dependencies: SafeFetchDependencies,
+  options: { accept: string; maximumBytes: number },
   signal?: AbortSignal,
 ) {
   if (signal?.aborted) throw new SourceRetrievalError("timeout", true);
-  const addresses = await dependencies.resolve(url.hostname).catch(() => {
-    throw new SourceRetrievalError(
-      "transient_failure",
-      true,
-      undefined,
-      "dns_failure",
-    );
-  });
-  if (
-    !addresses.length ||
-    addresses.some((address) => !isPublicAddress(address.address))
-  )
-    throw new SourceRetrievalError(
-      "policy_denied",
-      false,
-      undefined,
-      "unsafe_address",
-    );
   const controller = new AbortController();
   const abort = () => controller.abort();
   signal?.addEventListener("abort", abort, { once: true });
@@ -205,12 +238,38 @@ async function fetchOnce(
     externalResearchLimits.sourceTimeoutMs,
   );
   try {
+    const addresses = await abortable(
+      dependencies.resolve(url.hostname),
+      controller.signal,
+    ).catch((error: unknown) => {
+      if (controller.signal.aborted)
+        throw new SourceRetrievalError("timeout", true);
+      if (error instanceof SourceRetrievalError) throw error;
+      throw new SourceRetrievalError(
+        "transient_failure",
+        true,
+        undefined,
+        "dns_failure",
+      );
+    });
+    if (
+      !addresses.length ||
+      addresses.some((address) => !isPublicAddress(address.address))
+    )
+      throw new SourceRetrievalError(
+        "policy_denied",
+        false,
+        undefined,
+        "unsafe_address",
+      );
     const response = await dependencies.transport({
+      accept: options.accept,
       address: addresses[0]!,
+      maximumBytes: options.maximumBytes,
       signal: controller.signal,
       url,
     });
-    if (response.body.byteLength > externalResearchLimits.responseBytes)
+    if (response.body.byteLength > options.maximumBytes)
       throw new SourceRetrievalError("oversized_response");
     return response;
   } catch (error) {
@@ -227,6 +286,18 @@ async function fetchOnce(
     clearTimeout(timer);
     signal?.removeEventListener("abort", abort);
   }
+}
+
+function abortable<T>(operation: Promise<T>, signal: AbortSignal) {
+  if (signal.aborted)
+    return Promise.reject(new SourceRetrievalError("timeout", true));
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => reject(new SourceRetrievalError("timeout", true));
+    signal.addEventListener("abort", abort, { once: true });
+    operation
+      .then(resolve, reject)
+      .finally(() => signal.removeEventListener("abort", abort));
+  });
 }
 
 export function validatePublicHttpsUrl(rawUrl: string) {
@@ -338,9 +409,10 @@ function header(headers: TransportResponse["headers"], name: string) {
 
 export function networkDiagnosticCategory(
   error: unknown,
-): "connection_failure" | "dns_failure" | "tls_failure" {
+): "connection_failure" | "dns_failure" | "tls_failure" | "transport_failure" {
   const code = nestedErrorCode(error);
   if (code === "ENOTFOUND" || code === "EAI_AGAIN") return "dns_failure";
+  if (code === "ERR_INVALID_IP_ADDRESS") return "transport_failure";
   if (
     code.startsWith("ERR_TLS") ||
     code.startsWith("CERT_") ||
@@ -385,7 +457,9 @@ function defaultDiagnosticCategory(
 }
 
 async function pinnedHttpsRequest(input: {
+  accept?: string;
   address: Address;
+  maximumBytes?: number;
   signal: AbortSignal;
   url: URL;
 }): Promise<TransportResponse> {
@@ -395,12 +469,12 @@ async function pinnedHttpsRequest(input: {
       {
         headers: {
           accept:
+            input.accept ??
             "application/rss+xml, application/atom+xml, application/xml, text/xml",
           "accept-encoding": "identity",
           "user-agent": "StylusExternalResearch/1.0",
         },
-        lookup: (_hostname, _options, callback) =>
-          callback(null, input.address.address, input.address.family),
+        lookup: createPinnedLookup(input.address),
         signal: input.signal,
       },
       (response) => {
@@ -413,7 +487,9 @@ async function pinnedHttpsRequest(input: {
           return;
         }
         const declared = Number(response.headers["content-length"] ?? 0);
-        if (declared > externalResearchLimits.responseBytes) {
+        const maximumBytes =
+          input.maximumBytes ?? externalResearchLimits.responseBytes;
+        if (declared > maximumBytes) {
           response.resume();
           reject(new SourceRetrievalError("oversized_response"));
           return;
@@ -422,7 +498,7 @@ async function pinnedHttpsRequest(input: {
         let bytes = 0;
         response.on("data", (chunk: Buffer) => {
           bytes += chunk.byteLength;
-          if (bytes > externalResearchLimits.responseBytes) {
+          if (bytes > maximumBytes) {
             response.destroy(new SourceRetrievalError("oversized_response"));
             return;
           }
@@ -440,4 +516,14 @@ async function pinnedHttpsRequest(input: {
     request.on("error", reject);
     request.end();
   });
+}
+
+export function createPinnedLookup(address: Address): LookupFunction {
+  return (_hostname, options, callback) => {
+    if (options.all) {
+      callback(null, [address]);
+      return;
+    }
+    callback(null, address.address, address.family);
+  };
 }

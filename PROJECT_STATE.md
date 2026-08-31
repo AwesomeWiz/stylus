@@ -1,15 +1,17 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-30
+Last Updated: 2026-08-31
 
 ## Overall Status
 
-TASK-017 IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
+TASK-017B COMPLETE / READY FOR MERGE
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
-durable external-research foundation over Hacker News and explicit RSS/Atom
-feeds. TASK-016 is merged; its exact five-stage Strategic Review remains intact.
+durable external-research system over Hacker News and explicit RSS/Atom feeds.
+TASK-017B adds substantive HN text, bounded discussion and safely extracted
+linked-article evidence. TASK-016's exact five-stage Strategic Review remains
+intact.
 
 ---
 
@@ -17,17 +19,17 @@ feeds. TASK-016 is merged; its exact five-stage Strategic Review remains intact.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017 IMPLEMENTED / HOSTED QA CORRECTION READY FOR RETEST
+Status: TASK-017B COMPLETE / READY FOR MERGE
 
 ---
 
 ## Current Objective
 
-Re-test TASK-017's corrected deterministic Hacker News matching and actionable
-source diagnostics in hosted Preview. Both forward migrations and the Hobby
-execution path have been verified through hosted QA. Preserve bounded HN/RSS
-retrieval, source-to-evidence-to-finding provenance, organization isolation and
-unchanged TASK-015/TASK-016 behavior. TASK-018 and TASK-020 remain unstarted.
+Await the user-managed TASK-017B merge. Hosted acceptance has verified HN story,
+discussion and linked-article evidence plus one immutable, evidence-grounded
+report through the existing Hobby execution path. Preserve
+source-to-evidence-to-finding provenance, organization isolation and unchanged
+TASK-015/TASK-016 behavior. TASK-017C, TASK-018 and TASK-020 remain unstarted.
 
 ---
 
@@ -1241,9 +1243,10 @@ synthesis and safely fails the overall run. Actual retrieval failures retain
 their existing database category plus a safe diagnostic category and bounded
 counts/HTTP status in existing `safe_metadata`.
 
-No `01720` migration is required: the applied source table already supports a
-successful observation with a deterministic content hash and bounded JSON
-metadata. SSRF policy, fixed HN host, RSS pinned-DNS/TLS hostname validation,
+No `01720` migration was required for that matching-only correction: the
+applied source table already supported a successful observation with a
+deterministic content hash and bounded JSON metadata. SSRF policy, fixed HN
+host, RSS pinned-DNS/TLS hostname validation,
 redirect revalidation, byte/time bounds, immutable provenance, one synthesis
 maximum and job claim/idempotency boundaries remain unchanged.
 
@@ -1253,3 +1256,154 @@ worker/web typechecks, worker/web production builds and targeted formatting for
 all 16 changed files passed. Repository-wide Prettier continues to report only
 the same 55 unrelated baseline files; none was rewritten. Hosted QA confirms
 `01700` and `01710` are applied, and this correction adds no migration.
+
+### TASK-017B External Research content enrichment
+
+TASK-017B preserves the durable TASK-017 job and enriches only the first two
+deterministically matched HN stories. Each matched story can yield separate
+`HN_STORY`, `HN_TEXT`, `HN_COMMENT` and `ARTICLE_CONTENT` evidence. Discussion
+selection keeps at most five top-level comments per story, the first listed
+reply when usable at one nested level, and ten comments per run. Linked articles are limited
+to two unique HTTPS URLs per run and pass through the existing pinned-DNS fetch
+boundary before deterministic `htmlparser2` extraction and paragraph-based
+chunking.
+
+The runtime reserves the 60-second Hobby window: retrieval is capped at 20
+seconds, article/comment requests at 8 seconds each, synthesis at 25 seconds,
+the complete workflow at 55 seconds, and five seconds are reserved for durable
+completion. Article responses are capped at 512 KiB; extracted article text at
+4,500 characters in at most three 1,500-character chunks; evidence at 20 items,
+24,000 total persisted characters, 18,000 synthesis-evidence characters and a
+40,000-character serialized synthesis context. Enrichment
+network concurrency is at most two inside the existing three-request gate.
+
+`20260825001720_external_research_content_enrichment.sql` is the forward-only
+schema correction. It extends immutable evidence with typed per-item
+provenance, content hashes and bounded metadata, replaces only the service-only
+retrieval RPC, preserves RLS and does not rewrite `01700` or `01710`. The pgTAP
+plan now includes 38 assertions. Hosted evidence rows confirm that the migration
+has been applied to Supabase.
+
+Article/comment failure remains partial when story evidence survives. Safe
+diagnostics include `extraction_failed` and `empty_content`; no response body,
+header, address, stack trace, prompt, credential or raw model output is stored.
+Exactly one trusted ModelGateway synthesis remains the maximum, with external
+text explicitly treated as untrusted quoted data and no tool or memory access.
+TASK-017C remains future fashion-oriented source expansion: Reddit plus bounded
+web/fashion-editorial discovery. Social-platform intelligence remains separate.
+
+Focused TASK-017B verification passed 8 files / 72 tests. The final complete
+suite passed 132 web files / 655 tests plus 5 worker files / 32 tests (687 tests
+total). Targeted formatting, repository lint, worker/web typechecks and both
+production builds passed. The linked migration dry-run reported only `01720`
+pending and applied nothing; linked database lint reported only the pre-existing
+TASK-015 enum-assignment warning. The 38-assertion pgTAP suite was updated, but
+local execution remains blocked because the local Supabase Docker database is
+not running.
+
+Hosted QA later proved that linked-article transport stopped before opening a
+socket on Node 24: the HTTPS client requested an `all: true` custom lookup
+result, while the pinned lookup returned the legacy scalar callback shape.
+Node rejected that shape with `ERR_INVALID_IP_ADDRESS`, previously normalized
+as `connection_failure`. The lookup now returns the same single validated pin
+as a one-entry array when requested, retains scalar compatibility otherwise,
+and categorizes that runtime-contract error as `transport_failure`. No SSRF,
+DNS, TLS, redirect, size, timeout, tenant or evidence boundary changed.
+
+Corrective verification passed 3 focused files / 45 tests and the complete web
+suite at 132 files / 656 tests. Targeted formatting, web lint, worker/web
+typechecks and both production builds passed. No migration or hosted database
+change is required for this transport correction.
+
+The next hosted enriched run proved retrieval and all 12 evidence rows, then
+made one `openai-compatible` / `remote-default` structured attempt. A prior
+attempt returned 1,598 of the 1,600 allowed output tokens with finish reason
+`length` and `structured_output_truncated`; the enriched retest returned no
+provider response before the former 25-second synthesis timeout. Neither case
+reached evidence-reference post-validation or report persistence. The exact
+14,190-character, 12-evidence synthesis context was below its 40,000-character
+ceiling.
+
+Synthesis now supplies a per-run structured schema whose evidence-reference
+enum is exactly the EVID identifiers in context, preserves post-validation,
+and bounds report breadth so a useful concise report fits the unchanged 1,600
+output-token ceiling. The synthesis allowance is 35 seconds inside the existing
+55-second workflow and five-second durable-completion reserve; timeout remains
+single-attempt and safe. Evidence display sorts numeric EVID suffixes without
+changing immutable IDs. No retrieval, migration, provider, authorization,
+prompt-injection, memory, tool or one-call boundary changed.
+
+Synthesis corrective verification passed 4 focused files / 31 tests and the
+complete web suite at 132 files / 659 tests. Targeted formatting, web lint,
+web typecheck and the web production build passed. Worker code was unaffected,
+so its suite/build were not rerun. No migration was added or changed.
+
+A final hosted `Creepy Crawlies` run proved the complete enrichment path with
+13 immutable evidence rows, including three `ARTICLE_CONTENT` chunks. Its one
+AI attempt returned 1,598 tokens with finish reason `length`; the durable
+diagnostic was again `structured_output_truncated`, so JSON validation could
+not produce typed data and report persistence was not reached. This was not a
+provider timeout: the AI run completed in 32,288 ms inside the 35-second limit.
+
+The remaining defect was a mismatch between the 1,600-token ceiling and the
+synthesis schema's still-permissive maximum response: the prose requested
+conciseness, but the schema allowed six findings, four patterns, four
+recommendations and substantially longer text. Synthesis-only hard limits now
+match the prompt at four findings, two patterns, two recommendations, one
+disagreement and two inferences, with shorter field and citation bounds. All
+13 input evidence records remain available, the exact per-run EVID enum and
+post-validation remain intact, and the one-call/35-second/provider-policy
+contracts are unchanged. No migration is required; hosted retest remains.
+
+Final response-bounds corrective verification passed 4 focused files / 32
+tests and the complete suites at 132 web files / 660 tests plus 5 worker files
+/ 32 tests (692 tests total). Targeted formatting, repository lint, worker/web
+typechecks and both production builds passed. No migration was added or changed.
+
+Two independent post-`a686c2e` hosted synthesis attempts then failed earlier at
+the provider-envelope boundary. `Creepy Crawlies` and the separate CDLM article
+both received HTTP-success JSON that did not match the OpenAI-compatible
+envelope; neither exposed usage, finish reason or `message.content`, and neither
+reached report JSON parsing, dynamic EVID validation or persistence. The CDLM
+AI run `fec8fd9e-f518-4aaf-bd4d-6596d0a2ad36` failed after 7,869 ms with
+`provider_envelope_invalid`, independently establishing a repeated provider
+response pattern rather than another timeout or truncation.
+
+The adapter remains fail-closed. Provider-envelope failures now retain only up
+to five Zod issue codes and bounded schema paths in the existing 500-character
+safe diagnostic. Raw bodies, field values, content, prompts, headers,
+credentials and arbitrary provider error text remain discarded, and the Zod
+error object is not attached as an error cause. This is observability hardening
+only: provider validation, research behavior, schema, timeout, retry,
+provenance, persistence and routing are unchanged. No migration is required.
+
+Provider-envelope diagnostic verification passed 4 focused files / 38 tests
+and the complete suites at 132 web files / 662 tests plus 5 worker files / 32
+tests (694 tests total). Targeted formatting, repository lint, worker/web
+typechecks and both production builds passed.
+
+The deployed `a4727726` CDLM run subsequently proved that its provider envelope
+was valid: one `remote-default` attempt returned `finishReason=stop`, complete
+usage metadata and string `message.content`. The gateway then failed before
+report-schema validation because that string was malformed JSON. The generated
+request used `response_format.type=json_schema`, `strict=true`, a closed schema
+whose object properties are all required, and the exact EVID-1 through EVID-10
+enum. No prompt, response body or generated content was retained or inspected.
+
+OpenRouter documents that provider routing otherwise permits providers to
+ignore unsupported parameters. Structured requests to the exact OpenRouter
+host now add `provider.require_parameters=true`; other compatible endpoints and
+ordinary text requests are unchanged. The `openrouter/free` alias remains a
+random, changing free-model pool and is unsuitable as a deterministic hosted
+structured-output contract. Deployment should select a concrete advertised
+structured-output model before the single report-success retest. No migration,
+retry, JSON repair, timeout/token increase or research-boundary change is
+required.
+
+Final hosted acceptance passed on the concrete-model deployment. Research run
+`1a293e26-3946-4574-a4e7-5e2dd5e6ddfc` persisted one `HN_STORY`, ten bounded
+`HN_COMMENT` records and three `ARTICLE_CONTENT` chunks with typed provenance.
+Its single `remote-default` structured attempt finished with `stop`, validated
+the exact per-run evidence enum including cited `EVID-14`, and created exactly
+one immutable version-1 Research Report. No retry, repair, additional model
+call, memory write or downstream Council workflow occurred.

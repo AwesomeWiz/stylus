@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(35);
+select plan(38);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000000','authenticated','authenticated','research-owner@example.test','',now(),'{}','{}',now(),now()),
@@ -26,6 +26,7 @@ reset role;
 
 select results_eq($$ select public.has_function_privilege('authenticated','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[false],'browser cannot invoke atomic research enqueue');
 select results_eq($$ select public.has_function_privilege('service_role','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[true],'service role may invoke atomic research enqueue');
+select results_eq($$ select public.has_function_privilege('authenticated','public.record_marketing_external_research_retrieval(uuid,uuid,jsonb,jsonb,boolean,text[],integer,integer,integer,integer)','execute') $$,array[false],'browser cannot persist enriched research evidence');
 select results_eq($$ select public.has_function_privilege('authenticated','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[false],'browser cannot target a SERVERLESS claim');
 select results_eq($$ select public.has_function_privilege('service_role','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[true],'service role may target a SERVERLESS claim');
 
@@ -99,10 +100,11 @@ select lives_ok($$
     (select job_id from public.marketing_external_research_runs limit 1),
     (select id from public.marketing_external_research_runs limit 1),
     '[{"sourceKey":"SRC-1","adapter":"hacker-news","status":"SUCCEEDED","nativeId":"1","canonicalUrl":"https://news.ycombinator.com/item?id=1","title":"Source","author":"founder","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","failureCategory":null,"safeMetadata":{"sourceRequest":"hacker-news:top"}}]'::jsonb,
-    '[{"evidenceId":"EVID-1","evidenceType":"DISCUSSION","excerpt":"Bounded public evidence.","sourceKey":"SRC-1"}]'::jsonb,
+    '[{"evidenceId":"EVID-1","evidenceType":"HN_STORY","excerpt":"Bounded public evidence.","sourceKey":"SRC-1","nativeId":"1","parentNativeId":null,"canonicalUrl":"https://news.ycombinator.com/item?id=1","title":"Source","author":"founder","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","safeMetadata":{"score":10}}]'::jsonb,
     false,'{}',1,0,100,24
   )
 $$,'retrieval persists source and evidence provenance');
+select results_eq($$ select evidence_type || ':' || native_id || ':' || (safe_metadata->>'score') from public.marketing_external_research_evidence limit 1 $$,array['HN_STORY:1:10'],'enriched evidence keeps its exact type and native provenance');
 select results_eq($$ select status::text from public.marketing_external_research_runs limit 1 $$,array['SYNTHESIZING'],'evidence advances the run to synthesis');
 select lives_ok($$
   select public.start_marketing_external_research_ai_run(
@@ -199,6 +201,7 @@ select results_eq($$ select count(*)::integer from public.marketing_external_res
 
 reset role;
 select throws_ok($$ update public.marketing_external_research_sources set title='changed' $$,'55000',null,'persisted sources are immutable');
+select throws_ok($$ update public.marketing_external_research_evidence set excerpt='changed' $$,'55000',null,'enriched evidence is immutable');
 select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000171' $$,array[0]::integer[],'external research writes no durable memory');
 select results_eq($$ select max_attempts from public.job_definitions where job_type='marketing.external-research.run' $$,array[1],'research job has no platform retry multiplication');
 select results_eq($$ select timeout_seconds from public.job_definitions where job_type='marketing.external-research.run' $$,array[120],'research job has a 120-second workflow bound');

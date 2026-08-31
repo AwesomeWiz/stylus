@@ -8,7 +8,9 @@ const sql = readFileSync(
     "../../supabase/migrations/20260825001710_claim_serverless_job.sql",
   ),
   "utf8",
-).toLowerCase();
+)
+  .replaceAll("\r\n", "\n")
+  .toLowerCase();
 
 describe("TASK-017 immediate claim migration", () => {
   it("atomically targets only one eligible SERVERLESS job", () => {

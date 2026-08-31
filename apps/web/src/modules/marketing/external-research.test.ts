@@ -1,8 +1,11 @@
+import { z } from "zod";
 import { describe, expect, it } from "vitest";
 
 import {
+  createExternalResearchSynthesisSchema,
   externalResearchReportSchema,
   externalResearchRequestSchema,
+  externalResearchSynthesisLimits,
   projectExternalResearchEvidence,
   validateEvidenceReferences,
 } from "./external-research";
@@ -80,6 +83,139 @@ describe("external research contracts", () => {
     );
   });
 
+  it("constrains structured synthesis references to the exact evidence set", () => {
+    const evidenceIds = Array.from(
+      { length: 12 },
+      (_, index) => `EVID-${index + 1}`,
+    );
+    const schema = createExternalResearchSynthesisSchema(evidenceIds);
+
+    expect(schema.safeParse(reportWithReference("EVID-12")).success).toBe(true);
+    expect(schema.safeParse(reportWithReference("EVID-13")).success).toBe(
+      false,
+    );
+    expect(
+      schema.safeParse({
+        ...reportWithReference("EVID-1"),
+        findings: Array.from({ length: 5 }, (_, index) => ({
+          confidence: "MEDIUM",
+          id: `F-${index + 1}`,
+          statement: `Finding ${index + 1}`,
+          supportedBy: ["EVID-1"],
+        })),
+      }).success,
+    ).toBe(false);
+    expect(() =>
+      createExternalResearchSynthesisSchema(["EVID-1", "EVID-1"]),
+    ).toThrow("identifiers are invalid");
+  });
+
+  it("emits a closed strict JSON schema with the exact evidence enum", () => {
+    const evidenceIds = Array.from(
+      { length: 10 },
+      (_, index) => `EVID-${index + 1}`,
+    );
+    const jsonSchema = z.toJSONSchema(
+      createExternalResearchSynthesisSchema(evidenceIds),
+    ) as Record<string, unknown>;
+    const objectNodes: Array<Record<string, unknown>> = [];
+    const visit = (node: unknown) => {
+      if (!node || typeof node !== "object") return;
+      const record = node as Record<string, unknown>;
+      if (record.type === "object") objectNodes.push(record);
+      if (record.properties && typeof record.properties === "object")
+        Object.values(record.properties).forEach(visit);
+      visit(record.items);
+    };
+    visit(jsonSchema);
+
+    expect(objectNodes.length).toBeGreaterThan(0);
+    for (const node of objectNodes) {
+      const properties = node.properties as Record<string, unknown>;
+      expect(node.additionalProperties).toBe(false);
+      expect(node.required).toEqual(Object.keys(properties));
+    }
+    const findings = (
+      jsonSchema.properties as Record<string, Record<string, unknown>>
+    ).findings!;
+    const findingProperties = (
+      findings.items as { properties: Record<string, Record<string, unknown>> }
+    ).properties;
+    const supportedBy = findingProperties.supportedBy!;
+    expect((supportedBy.items as { enum: string[] }).enum).toEqual(evidenceIds);
+  });
+
+  it("keeps the maximum synthesis response bounded below the provider output ceiling", () => {
+    const schema = createExternalResearchSynthesisSchema([
+      "EVID-1",
+      "EVID-2",
+      "EVID-3",
+    ]);
+    const statement = () => ({
+      confidence: "MEDIUM",
+      statement: "x".repeat(
+        externalResearchSynthesisLimits.statementCharacters,
+      ),
+      supportedBy: ["EVID-1", "EVID-2", "EVID-3"],
+    });
+    const list = Array.from(
+      { length: externalResearchSynthesisLimits.listItems },
+      () => "x".repeat(externalResearchSynthesisLimits.listItemCharacters),
+    );
+    const maximumReport = {
+      confidence: "MEDIUM",
+      disagreements: Array.from(
+        { length: externalResearchSynthesisLimits.disagreementItems },
+        statement,
+      ),
+      findings: Array.from(
+        { length: externalResearchSynthesisLimits.findingItems },
+        (_, index) => ({ ...statement(), id: `F-${index + 1}` }),
+      ),
+      freshnessAssessment: "x".repeat(
+        externalResearchSynthesisLimits.freshnessCharacters,
+      ),
+      inferences: Array.from(
+        { length: externalResearchSynthesisLimits.inferenceItems },
+        () => ({
+          confidence: "MEDIUM",
+          statement: "x".repeat(
+            externalResearchSynthesisLimits.statementCharacters,
+          ),
+        }),
+      ),
+      limitations: list,
+      partialFailureWarnings: list,
+      patterns: Array.from(
+        { length: externalResearchSynthesisLimits.patternItems },
+        statement,
+      ),
+      recommendations: Array.from(
+        { length: externalResearchSynthesisLimits.recommendationItems },
+        statement,
+      ),
+      summary: "x".repeat(externalResearchSynthesisLimits.summaryCharacters),
+      unresolvedQuestions: list,
+    };
+
+    expect(schema.safeParse(maximumReport).success).toBe(true);
+    expect(JSON.stringify(maximumReport).length).toBeLessThan(4_500);
+    expect(
+      schema.safeParse({
+        ...maximumReport,
+        findings: [...maximumReport.findings, { ...statement(), id: "F-5" }],
+      }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({
+        ...maximumReport,
+        summary: "x".repeat(
+          externalResearchSynthesisLimits.summaryCharacters + 1,
+        ),
+      }).success,
+    ).toBe(false);
+  });
+
   it("keeps future Council projection explicit, selected, and bounded", () => {
     expect(
       projectExternalResearchEvidence({
@@ -135,6 +271,20 @@ function item(
     author: null,
     canonicalUrl: "https://news.ycombinator.com/item?id=1",
     contentHash: normalizedContentHash(normalizedText),
+    evidence: [
+      {
+        author: null,
+        canonicalUrl: "https://news.ycombinator.com/item?id=1",
+        evidenceType: "HN_STORY",
+        excerpt: normalizedText,
+        fetchedAt: "2026-08-29T00:00:00.000Z",
+        metadata: {},
+        nativeId: "1",
+        parentNativeId: null,
+        publishedAt: null,
+        title: "Evidence",
+      },
+    ],
     fetchedAt: "2026-08-29T00:00:00.000Z",
     metadata: { stream: "top" },
     nativeId: "1",
@@ -145,7 +295,7 @@ function item(
   };
 }
 
-function reportWithReference(reference: "EVID-1" | "EVID-2") {
+function reportWithReference(reference: string) {
   return externalResearchReportSchema.parse({
     confidence: "MEDIUM",
     disagreements: [],

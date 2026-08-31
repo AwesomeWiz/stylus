@@ -227,3 +227,13 @@ failure, cancellation and stale-lease semantics reuse TASK-011.
 Source retrieval performs at most one internal retry for a narrow transient
 category. Marketing does not retry synthesis and the platform definition has
 one attempt, preventing multiplicative provider calls.
+
+TASK-017B keeps the durable 120-second lease/definition for recovery semantics
+but applies a stricter hosted application budget: 20 seconds for retrieval, 25
+seconds maximum for the single synthesis, 55 seconds overall and a five-second
+completion reserve beneath Vercel Hobby's 60-second ceiling. Enrichment is
+inside the same registered handler and claim; it does not enqueue child jobs or
+invoke Marketing internals outside the registry. A slow/blocked article or
+comment becomes bounded partial failure when story evidence remains. Platform
+interruption leaves the durable job lifecycle authoritative rather than adding
+an untracked fire-and-forget path.

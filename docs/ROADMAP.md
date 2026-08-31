@@ -281,8 +281,15 @@ workflow. TASK-020 remains the unimplemented conversational product.
 - [x] immutable source, evidence and Research Report persistence
 - [x] narrow hosted SERVERLESS executor
 - [x] Vercel Hobby immediate execution with once-daily durable recovery
-- [ ] Reddit (explicitly excluded from V1)
-- [ ] generic web search/crawling (explicitly excluded from V1)
+- [x] TASK-017B native HN text and typed story evidence
+- [x] TASK-017B bounded top-level/one-level HN discussion evidence
+- [x] TASK-017B matched-story article safe fetch and deterministic extraction
+- [ ] TASK-017C Reddit research
+- [ ] TASK-017C bounded web and fashion-editorial discovery
+- [ ] social-platform intelligence (separate future media/platform phase)
+
+TASK-017B implementation and hosted acceptance are complete; it is ready for
+the user-managed merge.
 
 ---
 

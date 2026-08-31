@@ -9,6 +9,13 @@ const sql = readFileSync(
   ),
   "utf8",
 ).toLowerCase();
+const enrichmentSql = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825001720_external_research_content_enrichment.sql",
+  ),
+  "utf8",
+).toLowerCase();
 
 describe("TASK-017 migration contract", () => {
   it("atomically creates one run and its exact statically registered SERVERLESS job", () => {
@@ -52,5 +59,21 @@ describe("TASK-017 migration contract", () => {
     expect(sql).not.toContain("knowledge_memories");
     expect(sql).not.toContain("cron.schedule");
     expect(sql).not.toContain("pg_net");
+  });
+
+  it("adds forward-only typed evidence provenance without changing access boundaries", () => {
+    expect(enrichmentSql).toContain(
+      "create or replace function public.record_marketing_external_research_retrieval",
+    );
+    expect(enrichmentSql).toContain("'hn_story', 'hn_text', 'hn_comment'");
+    expect(enrichmentSql).toContain("'article_content'");
+    expect(enrichmentSql).toContain(
+      "native_id,parent_native_id,canonical_url,title,author,published_at",
+    );
+    expect(enrichmentSql).toContain("fetched_at,content_hash,safe_metadata");
+    expect(enrichmentSql).toContain("security definer set search_path = ''");
+    expect(enrichmentSql).toContain("from public,anon,authenticated");
+    expect(enrichmentSql).toContain("to service_role");
+    expect(enrichmentSql).not.toContain("knowledge_memories");
   });
 });

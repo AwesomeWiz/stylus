@@ -486,7 +486,7 @@ research-enabled workflow, and TASK-018 performance learning may provide
 authorized evidence; an ordinary Ask Council question enables neither by
 default.
 
-## External Research V1
+## External Research V1 and TASK-017B enrichment
 
 The Research area keeps TASK-013 Manual Notes separate from durable External
 Research. A bounded request selects one HN stream and/or up to two explicit
@@ -504,7 +504,40 @@ synthesis and fails the overall run safely. Source observations retain only
 bounded diagnostic categories and counts, never response bodies or network
 internals.
 
-V1 has no Reddit, generic search, article crawling, social scraping, automatic
-Council execution or memory promotion. A future authorized workflow can request
-an explicit report plus selected evidence through a server-only bounded
-projection; no existing Council path consumes it automatically.
+TASK-017B enriches only the first two matched HN stories, never the initial
+candidate set. Native submission text becomes `HN_TEXT`; story identity and
+score/comment metadata become `HN_STORY`; at most five top-level comments per
+story plus the first listed reply when usable at one nested level become
+`HN_COMMENT`, capped at ten comments per run. At most two unique linked HTTPS
+articles are fetched and converted into `ARTICLE_CONTENT` by deterministic DOM
+extraction. Every kind remains a separate immutable evidence row so users and
+synthesis can distinguish an article author's statement, submitter text and an
+individual HN comment.
+
+Article responses are limited to 512 KiB and 8 seconds per attempt. Extraction
+keeps title, headings, paragraphs and lists, removes deterministic boilerplate,
+and retains at most 4,500 characters in three coherent 1,500-character chunks.
+Runs retain at most 20 evidence items/24,000 persisted evidence characters.
+Synthesis deterministically shares 18,000 excerpt characters across those
+records inside a 40,000-character serialized context. The strict synthesis
+schema permits only the exact EVID identifiers in that context and bounds report
+breadth for the unchanged 1,600-token output ceiling: at most four findings,
+two patterns, two recommendations, one disagreement and two inferences, with
+short bounded statements and at most three EVID references per supported
+statement. These response limits do not remove any retained evidence from the
+synthesis input. Retrieval gets 20 seconds, synthesis at most 35 seconds, and
+the 55-second application workflow reserves five seconds for completion under
+the Hobby 60-second function ceiling. Each retained comment is limited to 1,500
+characters; enrichment concurrency is two inside the existing three-request
+gate; redirects are limited to three; and the run-wide fetched body budget
+remains 4 MiB. Article or comment failure records a safe diagnostic and
+preserves usable HN evidence.
+
+TASK-017B still has no Reddit, general web discovery, recursive crawling,
+social scraping, automatic Council execution or memory promotion. TASK-017C is
+future fashion-oriented source expansion expected to prioritize Reddit plus
+bounded web/fashion-editorial discovery. Instagram/TikTok/Pinterest/YouTube
+intelligence remains separate because it requires richer media and platform
+handling. A future authorized workflow can request an explicit report plus
+selected evidence through a server-only bounded projection; no existing Council
+path consumes it automatically.

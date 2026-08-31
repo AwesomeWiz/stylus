@@ -390,14 +390,29 @@ export type MarketingExternalResearchSourceRow = {
   title: string | null;
 };
 export type MarketingExternalResearchEvidenceRow = {
+  author: string | null;
+  canonical_url: string | null;
+  content_hash: string | null;
   created_at: string;
   evidence_id: string;
-  evidence_type: "DISCUSSION" | "FEED_ITEM";
+  evidence_type:
+    | "DISCUSSION"
+    | "FEED_ITEM"
+    | "HN_STORY"
+    | "HN_TEXT"
+    | "HN_COMMENT"
+    | "ARTICLE_CONTENT";
   excerpt: string;
+  fetched_at: string | null;
   id: string;
+  native_id: string | null;
   organization_id: string;
+  parent_native_id: string | null;
+  published_at: string | null;
   run_id: string;
+  safe_metadata: Record<string, unknown>;
   source_id: string;
+  title: string | null;
 };
 export type MarketingExternalResearchReportRow = {
   created_at: string;

@@ -87,14 +87,23 @@ describe("External Research workspace", () => {
         {...base}
         evidence={[
           {
+            author: "founder",
+            canonical_url: "https://news.ycombinator.com/item?id=1",
+            content_hash: "a".repeat(64),
             created_at: "2026-08-29T00:00:00.000Z",
             evidence_id: "EVID-1",
-            evidence_type: "DISCUSSION",
+            evidence_type: "HN_STORY",
             excerpt: "A public excerpt",
+            fetched_at: "2026-08-29T00:00:00.000Z",
             id: "evidence-row",
+            native_id: "1",
             organization_id: "org",
+            parent_native_id: null,
+            published_at: "2026-08-28T00:00:00.000Z",
             run_id: "run",
+            safe_metadata: {},
             source_id: "source",
+            title: "A public story",
           },
         ]}
         reports={[
@@ -137,7 +146,9 @@ describe("External Research workspace", () => {
       "href",
       "#run-EVID-1",
     );
-    expect(screen.getByRole("link", { name: /Source/ })).toHaveAttribute(
+    expect(screen.getByText("HN story")).toBeInTheDocument();
+    expect(screen.getByText("news.ycombinator.com")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Open source/ })).toHaveAttribute(
       "href",
       "https://news.ycombinator.com/item?id=1",
     );
@@ -180,7 +191,46 @@ describe("External Research workspace", () => {
     expect(screen.getByText(/Zero matching candidates/)).toBeInTheDocument();
     expect(screen.getByText(/20 candidates checked/)).toBeInTheDocument();
   });
+
+  it("orders evidence identifiers numerically without changing identity", () => {
+    render(
+      <ExternalResearchWorkspace
+        {...base}
+        evidence={[evidenceRow("EVID-10"), evidenceRow("EVID-9")]}
+        runs={[{ ...run, evidence_count: 2, status: "FAILED" }]}
+      />,
+    );
+    expect(
+      screen
+        .getAllByText(/^EVID-(?:9|10)$/)
+        .map((element) => element.textContent),
+    ).toEqual(["EVID-9", "EVID-10"]);
+    expect(document.getElementById("run-EVID-9")).toBeInTheDocument();
+    expect(document.getElementById("run-EVID-10")).toBeInTheDocument();
+  });
 });
+
+function evidenceRow(evidenceId: string) {
+  return {
+    author: "researcher",
+    canonical_url: "https://example.test/article",
+    content_hash: evidenceId.padEnd(64, "a").slice(0, 64),
+    created_at: "2026-08-30T10:15:38.000Z",
+    evidence_id: evidenceId,
+    evidence_type: "ARTICLE_CONTENT" as const,
+    excerpt: `Excerpt for ${evidenceId}`,
+    fetched_at: "2026-08-30T10:15:35.000Z",
+    id: `row-${evidenceId}`,
+    native_id: `native-${evidenceId}`,
+    organization_id: "org",
+    parent_native_id: "story",
+    published_at: null,
+    run_id: "run",
+    safe_metadata: {},
+    source_id: "source",
+    title: "Article",
+  };
+}
 
 const run = {
   completed_at: "2026-08-29T00:01:00.000Z",
