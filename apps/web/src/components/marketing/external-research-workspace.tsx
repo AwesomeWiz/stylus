@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   ExternalLink,
   FileSearch,
+  Lightbulb,
   LoaderCircle,
   ShieldCheck,
   TriangleAlert,
@@ -28,10 +29,12 @@ import type {
 import { canMutateMarketing } from "@/modules/marketing/authorization";
 import { enqueueExternalResearchAction } from "@/modules/marketing/external-research-actions";
 import {
-  externalResearchObjectives,
   externalResearchReportSchema,
   initialExternalResearchActionState,
+  marketingResearchIntents,
   type ExternalResearchActionState,
+  type FashionResearchPlanPreview,
+  type FashionResearchReport,
 } from "@/modules/marketing/external-research";
 
 export function ExternalResearchWorkspace({
@@ -40,6 +43,7 @@ export function ExternalResearchWorkspace({
   reports,
   role,
   runs,
+  sourcePlanPreviews = [],
   sources,
 }: {
   evidence: MarketingExternalResearchEvidenceRow[];
@@ -47,11 +51,17 @@ export function ExternalResearchWorkspace({
   reports: MarketingExternalResearchReportRow[];
   role: OrganizationRole;
   runs: MarketingExternalResearchRunRow[];
+  sourcePlanPreviews?: FashionResearchPlanPreview[];
   sources: MarketingExternalResearchSourceRow[];
 }) {
   const router = useRouter();
   const editable = canMutateMarketing(role);
   const [invocationKey, setInvocationKey] = useState(initialInvocationKey);
+  const [intent, setIntent] =
+    useState<(typeof marketingResearchIntents)[number]>("AUDIENCE_PAIN");
+  const sourcePlan = sourcePlanPreviews.find(
+    (preview) => preview.intent === intent,
+  );
   const execute = useCallback(
     async (state: ExternalResearchActionState, form: FormData) => {
       const result = await enqueueExternalResearchAction(state, form);
@@ -83,8 +93,8 @@ export function ExternalResearchWorkspace({
           External research
         </h2>
         <p className="text-muted-foreground mt-1 max-w-3xl text-sm">
-          Collect bounded public evidence from Hacker News and explicit RSS or
-          Atom feeds, then create one immutable evidence-linked report.
+          Turn bounded consumer and editorial evidence into fashion-marketing
+          signals and strategic content opportunity candidates.
         </p>
       </div>
       {editable ? (
@@ -103,15 +113,22 @@ export function ExternalResearchWorkspace({
             />
           </Field>
           <div className="space-y-4">
-            <Field label="Objective">
+            <Field label="Primary marketing intent">
               <select
                 className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
                 disabled={pending || active}
-                name="objective"
+                name="intent"
+                onChange={(event) =>
+                  setIntent(
+                    event.target
+                      .value as (typeof marketingResearchIntents)[number],
+                  )
+                }
+                value={intent}
               >
-                {externalResearchObjectives.map((objective) => (
-                  <option key={objective} value={objective}>
-                    {label(objective)}
+                {marketingResearchIntents.map((researchIntent) => (
+                  <option key={researchIntent} value={researchIntent}>
+                    {label(researchIntent)}
                   </option>
                 ))}
               </select>
@@ -134,34 +151,39 @@ export function ExternalResearchWorkspace({
               </div>
             </Field>
           </div>
-          <Field label="Hacker News stream">
-            <select
-              className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
-              defaultValue="top"
-              disabled={pending || active}
-              name="hackerNewsStream"
-            >
-              <option value="">Not selected</option>
-              <option value="top">Top stories</option>
-              <option value="new">New stories</option>
-              <option value="ask">Ask HN</option>
-            </select>
-          </Field>
-          <Field label="RSS / Atom feeds (optional, maximum 2)">
-            <div className="space-y-2">
-              {[0, 1].map((index) => (
-                <input
-                  className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
-                  disabled={pending || active}
-                  key={index}
-                  maxLength={500}
-                  name="rssFeedUrl"
-                  placeholder="https://example.com/feed.xml"
-                  type="url"
-                />
+          {intent === "FASHION_TECH" ? (
+            <Field label="Hacker News stream">
+              <select
+                className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+                defaultValue="new"
+                disabled={pending || active}
+                name="hackerNewsStream"
+              >
+                <option value="new">New stories</option>
+                <option value="top">Top stories</option>
+                <option value="ask">Ask HN</option>
+              </select>
+            </Field>
+          ) : null}
+          <div className="space-y-2 lg:col-span-2">
+            <p className="text-sm font-medium">Deterministic source plan</p>
+            <div className="flex flex-wrap gap-2">
+              {sourcePlan?.sources.map((source) => (
+                <span
+                  className="border-input bg-muted/40 rounded-md border px-2.5 py-1.5 text-xs"
+                  key={source.family}
+                >
+                  {label(source.family)} · {source.labels.join(", ")}
+                  {!source.available ? " · configuration required" : ""}
+                </span>
               ))}
             </div>
-          </Field>
+            <p className="text-muted-foreground text-xs">
+              Stylus selects these allowlisted sources before retrieval. Source
+              domains, communities, provider settings, and credentials cannot be
+              supplied from this form.
+            </p>
+          </div>
           <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
             <Button disabled={pending || active} type="submit">
               {pending || active ? (
@@ -245,33 +267,11 @@ function ResearchHistory({
               <Status status={run.status} />
             </div>
             {report.success ? (
-              <div className="space-y-4">
-                <p className="text-sm">{report.data.summary}</p>
-                <StatementList
-                  heading="Findings"
-                  items={report.data.findings}
-                  runId={run.id}
-                />
-                <StatementList
-                  heading="Patterns"
-                  items={report.data.patterns}
-                  runId={run.id}
-                />
-                <p className="text-muted-foreground text-xs">
-                  Freshness: {report.data.freshnessAssessment}
-                </p>
-                {report.data.limitations.length ? (
-                  <p className="text-muted-foreground text-xs">
-                    Limitations: {report.data.limitations.join("; ")}
-                  </p>
-                ) : null}
-                {report.data.partialFailureWarnings.length ? (
-                  <p className="text-muted-foreground text-xs">
-                    Partial coverage:{" "}
-                    {report.data.partialFailureWarnings.join("; ")}
-                  </p>
-                ) : null}
-              </div>
+              "schemaVersion" in report.data ? (
+                <FashionReport report={report.data} runId={run.id} />
+              ) : (
+                <LegacyReport report={report.data} runId={run.id} />
+              )
             ) : null}
             {runEvidence.length ? (
               <details>
@@ -283,6 +283,7 @@ function ResearchHistory({
                     const source = sourceById.get(item.source_id);
                     const canonicalUrl =
                       item.canonical_url ?? source?.canonical_url;
+                    const contextLabel = evidenceSourceContext(item, source);
                     return (
                       <li
                         className="border-l pl-3 text-sm"
@@ -297,6 +298,11 @@ function ResearchHistory({
                           {item.author ? (
                             <span className="text-muted-foreground text-xs">
                               by {item.author}
+                            </span>
+                          ) : null}
+                          {contextLabel ? (
+                            <span className="text-muted-foreground text-xs">
+                              {contextLabel}
                             </span>
                           ) : null}
                           {canonicalUrl ? (
@@ -444,6 +450,202 @@ function StatementList({
   );
 }
 
+function LegacyReport({
+  report,
+  runId,
+}: {
+  report: Extract<
+    ReturnType<typeof externalResearchReportSchema.parse>,
+    { findings: unknown }
+  >;
+  runId: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm">{report.summary}</p>
+      <StatementList heading="Findings" items={report.findings} runId={runId} />
+      <StatementList heading="Patterns" items={report.patterns} runId={runId} />
+      <p className="text-muted-foreground text-xs">
+        Freshness: {report.freshnessAssessment}
+      </p>
+      {report.limitations.length ? (
+        <p className="text-muted-foreground text-xs">
+          Limitations: {report.limitations.join("; ")}
+        </p>
+      ) : null}
+      {report.partialFailureWarnings.length ? (
+        <p className="text-muted-foreground text-xs">
+          Partial coverage: {report.partialFailureWarnings.join("; ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function FashionReport({
+  report,
+  runId,
+}: {
+  report: FashionResearchReport;
+  runId: string;
+}) {
+  return (
+    <div className="space-y-5">
+      <p className="text-sm">{report.summary}</p>
+      <FashionSignalList
+        heading="Audience signals"
+        items={report.audienceSignals.map((item) => ({
+          evidenceRefs: item.evidenceRefs,
+          label: label(item.signalType),
+          text: item.statement,
+        }))}
+        runId={runId}
+      />
+      <FashionSignalList
+        heading="Audience language"
+        items={report.languageSignals.map((item) => ({
+          evidenceRefs: item.evidenceRefs,
+          label: item.phraseOrPattern,
+          text: item.interpretation,
+        }))}
+        runId={runId}
+      />
+      <FashionSignalList
+        heading="Trend signals"
+        items={report.trendSignals.map((item) => ({
+          evidenceRefs: item.evidenceRefs,
+          label: label(item.confidence),
+          text: item.statement,
+        }))}
+        runId={runId}
+      />
+      <FashionSignalList
+        heading="Purchase objections"
+        items={report.objections.map((item) => ({
+          evidenceRefs: item.evidenceRefs,
+          text: item.objection,
+        }))}
+        runId={runId}
+      />
+      <FashionSignalList
+        heading="Debates"
+        items={report.debates.map((item) => ({
+          evidenceRefs: item.evidenceRefs,
+          text: item.positionSummary,
+        }))}
+        runId={runId}
+      />
+      {report.contentOpportunities.length ? (
+        <section
+          aria-label="Content opportunity candidates"
+          className="space-y-3"
+        >
+          <h4 className="flex items-center gap-2 text-sm font-semibold">
+            <Lightbulb className="size-4" /> Content opportunity candidates
+          </h4>
+          <div className="divide-y border-y">
+            {report.contentOpportunities.map((opportunity, index) => (
+              <article
+                className="space-y-2 py-3"
+                key={`${opportunity.title}-${index}`}
+              >
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <h5 className="text-sm font-semibold">{opportunity.title}</h5>
+                  <span className="text-muted-foreground text-xs">
+                    {label(opportunity.opportunityType)} ·{" "}
+                    {label(opportunity.confidence)} confidence
+                  </span>
+                </div>
+                <p className="text-sm">{opportunity.suggestedAngle}</p>
+                <dl className="grid gap-1 text-xs sm:grid-cols-[8rem_1fr]">
+                  <dt className="text-muted-foreground">Audience tension</dt>
+                  <dd>{opportunity.audienceTension}</dd>
+                  <dt className="text-muted-foreground">Why it matters</dt>
+                  <dd>{opportunity.whyItMatters}</dd>
+                  <dt className="text-muted-foreground">Freshness</dt>
+                  <dd>{opportunity.freshness}</dd>
+                </dl>
+                {opportunity.caveats.length ? (
+                  <p className="text-muted-foreground text-xs">
+                    Caveats: {opportunity.caveats.join("; ")}
+                  </p>
+                ) : null}
+                <EvidenceLinks
+                  references={opportunity.evidenceRefs}
+                  runId={runId}
+                />
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+      <div className="space-y-1 text-xs">
+        <p className="font-medium">Source diversity</p>
+        {report.sourceCoverage.map((coverage) => (
+          <p className="text-muted-foreground" key={coverage.family}>
+            {label(coverage.family)} · {label(coverage.status)} ·{" "}
+            {coverage.evidenceCount} evidence ·{" "}
+            {coverage.sourceLabels.join(", ") || "No retained source"}
+          </p>
+        ))}
+      </div>
+      {report.limitations.length ? (
+        <p className="text-muted-foreground text-xs">
+          Limitations: {report.limitations.join("; ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function FashionSignalList({
+  heading,
+  items,
+  runId,
+}: {
+  heading: string;
+  items: Array<{ evidenceRefs: string[]; label?: string; text: string }>;
+  runId: string;
+}) {
+  if (!items.length) return null;
+  return (
+    <div>
+      <h4 className="text-sm font-semibold">{heading}</h4>
+      <ul className="mt-2 space-y-2 text-sm">
+        {items.map((item, index) => (
+          <li key={`${heading}-${index}`}>
+            {item.label ? <strong>{item.label}: </strong> : null}
+            {item.text}{" "}
+            <EvidenceLinks references={item.evidenceRefs} runId={runId} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function EvidenceLinks({
+  references,
+  runId,
+}: {
+  references: string[];
+  runId: string;
+}) {
+  return (
+    <span className="inline-flex gap-1">
+      {references.map((reference) => (
+        <a
+          className="text-primary text-xs hover:underline"
+          href={`#${runId}-${reference}`}
+          key={reference}
+        >
+          {reference}
+        </a>
+      ))}
+    </span>
+  );
+}
+
 function Field({
   children,
   label: text,
@@ -510,4 +712,18 @@ function sourceDomain(value: string) {
   } catch {
     return "External source";
   }
+}
+
+function evidenceSourceContext(
+  evidence: MarketingExternalResearchEvidenceRow,
+  source: MarketingExternalResearchSourceRow | undefined,
+) {
+  for (const value of [
+    evidence.safe_metadata.community,
+    evidence.safe_metadata.sourceName,
+    source?.safe_metadata.community,
+    source?.safe_metadata.sourceName,
+  ])
+    if (typeof value === "string" && value.trim()) return value;
+  return null;
 }

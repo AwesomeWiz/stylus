@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(38);
+select plan(41);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000000','authenticated','authenticated','research-owner@example.test','',now(),'{}','{}',now(),now()),
@@ -29,22 +29,24 @@ select results_eq($$ select public.has_function_privilege('service_role','public
 select results_eq($$ select public.has_function_privilege('authenticated','public.record_marketing_external_research_retrieval(uuid,uuid,jsonb,jsonb,boolean,text[],integer,integer,integer,integer)','execute') $$,array[false],'browser cannot persist enriched research evidence');
 select results_eq($$ select public.has_function_privilege('authenticated','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[false],'browser cannot target a SERVERLESS claim');
 select results_eq($$ select public.has_function_privilege('service_role','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[true],'service role may target a SERVERLESS claim');
+select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel in ('reddit','fashion-editorial') order by enumlabel $$,array['fashion-editorial','reddit'],'fashion source adapters extend the enum forward');
 
 set local role service_role;
 select lives_ok($$
   select public.enqueue_marketing_external_research(
     '10000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000172',
-    '{"question":"What pain points recur for startup teams?","objective":"AUDIENCE_PAINS","queryTerms":["startup"],"hackerNewsStream":"top","rssFeedUrls":[]}'::jsonb,
+    '{"question":"What sizing pain points recur for fashion shoppers?","intent":"AUDIENCE_PAIN","queryTerms":["sizing"],"plan":{"version":"marketing-fashion-source-plan-v1","intent":"AUDIENCE_PAIN","selectedSourceFamilies":["REDDIT","EDITORIAL"],"reasonCodes":["CONSUMER_DISCUSSION_SOURCE","EDITORIAL_CONTEXT_SOURCE","EXISTING_FEED_SOURCE"],"reddit":{"communityIds":["female-fashion-advice","male-fashion-advice"],"queryVariants":["sizing"]},"editorial":{"sourceIds":["vogue-editorial","retail-dive"],"includeSearchDiscovery":false},"hackerNews":null}}'::jsonb,
     '20000000-0000-4000-8000-000000000171'
   )
 $$,'MEMBER atomically enqueues bounded external research');
 select results_eq($$ select count(*)::integer from public.marketing_external_research_runs $$,array[1]::integer[],'one research run persists');
+select results_eq($$ select requested_source_count from public.marketing_external_research_runs limit 1 $$,array[2::smallint],'persisted deterministic plan records two selected source families');
 select results_eq($$ select count(*)::integer from public.jobs where job_type='marketing.external-research.run' and capability='marketing.external-research.execute' and execution_class='SERVERLESS' $$,array[1]::integer[],'one exact SERVERLESS job persists');
 select results_eq($$ select count(*)::integer from public.marketing_external_research_runs as run join public.jobs as job on job.id=run.job_id where job.input_metadata->>'runId'=run.id::text $$,array[1]::integer[],'run and job are linked atomically');
 select results_eq($$
   select (public.enqueue_marketing_external_research(
     '10000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000172',
-    '{"question":"What pain points recur for startup teams?","objective":"AUDIENCE_PAINS","queryTerms":["startup"],"hackerNewsStream":"top","rssFeedUrls":[]}'::jsonb,
+    '{"question":"What sizing pain points recur for fashion shoppers?","intent":"AUDIENCE_PAIN","queryTerms":["sizing"],"plan":{"version":"marketing-fashion-source-plan-v1","intent":"AUDIENCE_PAIN","selectedSourceFamilies":["REDDIT","EDITORIAL"],"reasonCodes":["CONSUMER_DISCUSSION_SOURCE","EDITORIAL_CONTEXT_SOURCE","EXISTING_FEED_SOURCE"],"reddit":{"communityIds":["female-fashion-advice","male-fashion-advice"],"queryVariants":["sizing"]},"editorial":{"sourceIds":["vogue-editorial","retail-dive"],"includeSearchDiscovery":false},"hackerNews":null}}'::jsonb,
     '20000000-0000-4000-8000-000000000171'
   )->>'duplicate')::boolean
 $$,array[true],'same invocation is idempotent');
@@ -99,12 +101,12 @@ select lives_ok($$
   select public.record_marketing_external_research_retrieval(
     (select job_id from public.marketing_external_research_runs limit 1),
     (select id from public.marketing_external_research_runs limit 1),
-    '[{"sourceKey":"SRC-1","adapter":"hacker-news","status":"SUCCEEDED","nativeId":"1","canonicalUrl":"https://news.ycombinator.com/item?id=1","title":"Source","author":"founder","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","failureCategory":null,"safeMetadata":{"sourceRequest":"hacker-news:top"}}]'::jsonb,
-    '[{"evidenceId":"EVID-1","evidenceType":"HN_STORY","excerpt":"Bounded public evidence.","sourceKey":"SRC-1","nativeId":"1","parentNativeId":null,"canonicalUrl":"https://news.ycombinator.com/item?id=1","title":"Source","author":"founder","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","safeMetadata":{"score":10}}]'::jsonb,
+    '[{"sourceKey":"SRC-1","adapter":"reddit","status":"SUCCEEDED","nativeId":"post-1","canonicalUrl":"https://www.reddit.com/r/fashion/comments/post-1/","title":"Sizing","author":"shopper","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","failureCategory":null,"safeMetadata":{"sourceRequest":"reddit:fashion","community":"fashion"}}]'::jsonb,
+    '[{"evidenceId":"EVID-1","evidenceType":"REDDIT_POST","excerpt":"Sizing labels vary between brands.","sourceKey":"SRC-1","nativeId":"post-1","parentNativeId":null,"canonicalUrl":"https://www.reddit.com/r/fashion/comments/post-1/","title":"Sizing","author":"shopper","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","safeMetadata":{"score":10,"community":"fashion"}}]'::jsonb,
     false,'{}',1,0,100,24
   )
 $$,'retrieval persists source and evidence provenance');
-select results_eq($$ select evidence_type || ':' || native_id || ':' || (safe_metadata->>'score') from public.marketing_external_research_evidence limit 1 $$,array['HN_STORY:1:10'],'enriched evidence keeps its exact type and native provenance');
+select results_eq($$ select evidence_type || ':' || native_id || ':' || (safe_metadata->>'score') from public.marketing_external_research_evidence limit 1 $$,array['REDDIT_POST:post-1:10'],'Reddit evidence keeps its exact type and native provenance');
 select results_eq($$ select status::text from public.marketing_external_research_runs limit 1 $$,array['SYNTHESIZING'],'evidence advances the run to synthesis');
 select lives_ok($$
   select public.start_marketing_external_research_ai_run(
@@ -125,7 +127,7 @@ select throws_ok($$
     (select job_id from public.marketing_external_research_runs limit 1),
     (select id from public.marketing_external_research_runs limit 1),
     '30000000-0000-4000-8000-000000000171',
-    '{"findings":[{"supportedBy":["EVID-2"]}],"patterns":[],"disagreements":[],"recommendations":[]}'::jsonb
+    '{"schemaVersion":"marketing-fashion-research-report-v1","audienceSignals":[{"evidenceRefs":["EVID-2"]}],"languageSignals":[],"trendSignals":[],"objections":[],"debates":[],"contentOpportunities":[]}'::jsonb
   )
 $$,'22023',null,'invented evidence reference cannot create a report');
 select lives_ok($$
@@ -133,10 +135,11 @@ select lives_ok($$
     (select job_id from public.marketing_external_research_runs limit 1),
     (select id from public.marketing_external_research_runs limit 1),
     '30000000-0000-4000-8000-000000000171',
-    '{"summary":"Summary","findings":[{"supportedBy":["EVID-1"]}],"patterns":[],"disagreements":[],"recommendations":[]}'::jsonb
+    '{"schemaVersion":"marketing-fashion-research-report-v1","summary":"Summary","audienceSignals":[{"evidenceRefs":["EVID-1"]}],"languageSignals":[],"trendSignals":[],"objections":[],"debates":[],"contentOpportunities":[]}'::jsonb
   )
 $$,'valid evidence references create an immutable report');
 select results_eq($$ select count(*)::integer from public.marketing_external_research_reports $$,array[1]::integer[],'one immutable report persists');
+select results_eq($$ select schema_version from public.marketing_external_research_reports $$,array['marketing-fashion-research-report-v1'],'fashion report schema version persists immutably');
 select lives_ok($$
   select public.complete_job(
     (select job_id from public.marketing_external_research_runs limit 1),

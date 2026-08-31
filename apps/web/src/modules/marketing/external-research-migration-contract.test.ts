@@ -16,6 +16,13 @@ const enrichmentSql = readFileSync(
   ),
   "utf8",
 ).toLowerCase();
+const fashionSql = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825001730_fashion_marketing_intelligence.sql",
+  ),
+  "utf8",
+).toLowerCase();
 
 describe("TASK-017 migration contract", () => {
   it("atomically creates one run and its exact statically registered SERVERLESS job", () => {
@@ -75,5 +82,19 @@ describe("TASK-017 migration contract", () => {
     expect(enrichmentSql).toContain("from public,anon,authenticated");
     expect(enrichmentSql).toContain("to service_role");
     expect(enrichmentSql).not.toContain("knowledge_memories");
+  });
+
+  it("extends the applied contract forward for controlled fashion intelligence", () => {
+    expect(fashionSql).toContain("add value if not exists 'reddit'");
+    expect(fashionSql).toContain("add value if not exists 'fashion-editorial'");
+    expect(fashionSql).toContain("'reddit_post', 'reddit_comment'");
+    expect(fashionSql).toContain("marketing-fashion-research-report-v1");
+    expect(fashionSql).toContain("marketing-fashion-source-plan-v1");
+    expect(fashionSql).toContain("'fashion_tech'");
+    expect(fashionSql).toContain("interval '1 hour'");
+    expect(fashionSql).toContain("security definer set search_path = ''");
+    expect(fashionSql).toContain("to service_role");
+    expect(fashionSql).not.toContain("knowledge_memories");
+    expect(fashionSql).not.toContain("drop table");
   });
 });

@@ -4,14 +4,14 @@ Last Updated: 2026-08-31
 
 ## Overall Status
 
-TASK-017B COMPLETE / READY FOR MERGE
+TASK-017C COMPLETE / HOSTED ACCEPTANCE PASSED
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
-durable external-research system over Hacker News and explicit RSS/Atom feeds.
-TASK-017B adds substantive HN text, bounded discussion and safely extracted
-linked-article evidence. TASK-016's exact five-stage Strategic Review remains
-intact.
+durable fashion-marketing research system. TASK-017C adds deterministic intent
+planning, approved-configuration Reddit support, curated editorial retrieval,
+typed fashion signals and evidence-backed content opportunity candidates while
+preserving TASK-017B enrichment and TASK-016's exact Strategic Review.
 
 ---
 
@@ -19,17 +19,16 @@ intact.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017B COMPLETE / READY FOR MERGE
+Status: TASK-017C COMPLETE / HOSTED ACCEPTANCE PASSED
 
 ---
 
 ## Current Objective
 
-Await the user-managed TASK-017B merge. Hosted acceptance has verified HN story,
-discussion and linked-article evidence plus one immutable, evidence-grounded
-report through the existing Hobby execution path. Preserve
-source-to-evidence-to-finding provenance, organization isolation and unchanged
-TASK-015/TASK-016 behavior. TASK-017C, TASK-018 and TASK-020 remain unstarted.
+TASK-017C hosted acceptance is complete. Preserve
+source-plan-to-evidence-to-opportunity provenance, organization isolation, the
+single synthesis-call maximum and unchanged TASK-015/TASK-016 behavior.
+TASK-017D, TASK-018 and TASK-020 remain unstarted.
 
 ---
 
@@ -1407,3 +1406,72 @@ Its single `remote-default` structured attempt finished with `stop`, validated
 the exact per-run evidence enum including cited `EVID-14`, and created exactly
 one immutable version-1 Research Report. No retry, repair, additional model
 call, memory write or downstream Council workflow occurred.
+
+### TASK-017C Fashion Marketing Intelligence
+
+TASK-017C extends the merged durable research job without changing its enqueue,
+immediate hosted execution, daily recovery, claim/lease, authorization or AI
+policy boundaries. One server-derived intent produces an inspectable controlled
+source plan. Reddit is selected for consumer discussion/language intents,
+curated editorial feeds support fashion and retail context, and Hacker News is
+selected only for `FASHION_TECH`.
+
+Reddit uses application-only OAuth against fixed official hosts only when the
+operator has explicit Reddit approval and enables complete server-only
+configuration. The code-owned Marketing registry selects at most two relevant
+communities and two query variants. Missing approval/configuration is a safe
+unavailable source; there is no HTML, cookie, browser-session or anti-bot
+fallback. Curated Vogue and Retail Dive feeds and their allowlisted articles use
+the existing pinned-DNS HTTPS boundary. A narrow optional search-provider
+interface exists, but no paid provider is required or configured.
+
+The immutable evidence contract adds `REDDIT_POST` and `REDDIT_COMMENT` while
+retaining all TASK-017B types. One maximum ModelGateway call classifies bounded
+fashion signals and produces strategic Content Opportunity Candidates, never
+finished hooks, scripts, shots, CTAs, captions or Council decisions. Every
+signal and opportunity has one to three exact current-run EVID references; the
+application and database independently reject foreign references. Deterministic
+source coverage exposes family diversity, failures and unavailability.
+
+Forward migration
+`20260825001730_fashion_marketing_intelligence.sql` extends adapter/evidence and
+report-version checks, replaces only the enqueue/completion functions, and
+retains the existing RLS, immutable-history triggers, one-active-run constraint,
+five-runs/hour limit and service-role-only lifecycle. No Council, memory,
+TASK-018 or TASK-020 execution was added. TASK-017D remains future social/visual
+source discovery.
+
+Verification completed on 2026-08-31: 9 focused files / 77 tests and the full
+135-file / 700-test web suite passed; repository lint, worker/web typechecks,
+the web production build, scoped TASK-017C formatting and npm audit passed with
+zero vulnerabilities. The linked Supabase dry run confirmed only
+`20260825001730_fashion_marketing_intelligence.sql` is pending and applied
+nothing. Local pgTAP remains a hosted-verification item because Docker/Podman is
+not installed on this machine.
+
+Hosted QA then found that the shared token matcher accepted two unrelated Vogue
+items because each explicit multi-word term contained the generic token
+`fashion`. TASK-017C now applies a dedicated deterministic editorial relevance
+profile: meaningful explicit-term concepts take precedence, generic
+fashion/request vocabulary cannot establish relevance, and meaningful question
+concepts are only a fallback when the explicit terms contain no usable topic.
+Feed metadata is gated before article fetching and safely extracted article
+content is checked independently before it can become evidence. The two hosted
+oversize diagnostics were confirmed as Vogue article bodies correctly rejected
+by the unchanged 512 KiB limit. Corrective verification passed 7 focused files /
+52 tests, the complete 136-file / 708-test web suite, scoped formatting, lint,
+web typecheck and the production web build. No migration was required.
+
+Final hosted acceptance passed after corrective commit
+`9bbe02a7b23cd74f06b3b09025201c32ec6c382f`. Initial hosted QA had retained
+unrelated Vogue evidence because generic `fashion` overlap was accepted. An
+intermediate 15:58 UTC run persisted `AUDIENCE_PAIN` because that intent was
+selected by the operator; it was not an intent-propagation defect. The final
+deliberate `TREND_SIGNAL` run
+`d49b4df5-bc5e-4f1b-9571-bc1706915a39`, backed by job
+`671777c3-b743-411f-952c-178323c9924f`, checked 30 Vogue and 10 Retail Dive
+candidates, retained zero matches, and safely failed retrieval while Reddit was
+unavailable by policy. Hacker News was not selected. It persisted zero evidence
+and reports and created zero AI runs, Council invocations or memory writes; no
+TASK-017D, TASK-018 or TASK-020 behavior ran. Refusing to synthesize unsupported
+sustainable-fashion claims is the correct zero-evidence outcome.

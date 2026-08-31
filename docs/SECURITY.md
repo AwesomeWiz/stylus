@@ -462,3 +462,32 @@ Maintain security tests for:
   service-only enqueue. The browser cannot select a job, executor, tenant or
   handler. Immediate and daily recovery execution share atomic database claims,
   leases, attempt limits, concurrency locking and the static job registry.
+
+### TASK-017C source security
+
+- browser input contains no organization, actor, domain, URL, community,
+  provider, model, registry or credential authority;
+- the handler recomputes the deterministic plan against server registries;
+- Reddit uses only `www.reddit.com/api/v1/access_token` and
+  `oauth.reddit.com`, application-only OAuth, a declared User-Agent, redirect
+  rejection, JSON/content/size/time validation and streaming body bounds;
+- `STYLUS_REDDIT_CLIENT_SECRET` and bearer tokens never enter browser props,
+  persisted diagnostics, logs, evidence or worker code;
+- Reddit has no HTML/JSON-suffix scraping, cookies, logged-in browser session or
+  anti-bot bypass fallback;
+- editorial sources are registry allowlisted and every feed/article uses the
+  centralized HTTPS-only pinned-DNS boundary, including redirect revalidation,
+  public-address checks, SNI/hostname verification and byte/time limits;
+- optional search-provider candidates must map to a registered source/domain
+  before pinned fetching;
+- Reddit remains disabled until the operator has approval for the exact use
+  case. Reddit's current official guidance says Data API access is for approved
+  developers and identifies Reddit for Researchers as the official research
+  route; its Data API terms also govern retention and commercial use.
+
+The official operational references are [Developer Platform & Accessing Reddit
+Data](https://support.reddithelp.com/hc/en-us/articles/14945211791892-Developer-Platform-Accessing-Reddit-Data)
+and the [Reddit Data API Terms](https://redditinc.com/policies/data-api-terms).
+Approval and retention/removal obligations must be resolved before enabling
+production Reddit retrieval. Default-disabled behavior avoids unauthorized
+collection.

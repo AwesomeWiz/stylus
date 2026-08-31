@@ -8,6 +8,8 @@ export const externalResearchLimits = Object.freeze({
   commentsPerRun: 10,
   completionReserveMs: 5_000,
   concurrentRequests: 3,
+  editorialFeedsPerRun: 2,
+  editorialItemsPerFeed: 2,
   enrichmentConcurrency: 2,
   enrichedItemCharacters: 12_000,
   enrichedHackerNewsStories: 2,
@@ -17,18 +19,26 @@ export const externalResearchLimits = Object.freeze({
   hackerNewsCommentDepth: 1,
   hackerNewsTopLevelComments: 5,
   maxRedirects: 3,
-  modelOutputTokens: 1_600,
+  modelOutputTokens: 3_200,
   normalizedItemCharacters: 1_500,
   normalizedTextCharacters: 24_000,
   queryTermCharacters: 80,
   queryTerms: 5,
   questionCharacters: 500,
+  redditCandidatePostsPerQuery: 8,
+  redditCommentCharacters: 1_500,
+  redditCommentDepth: 1,
+  redditCommentsPerPost: 2,
+  redditCommentsPerRun: 8,
+  redditCommunitiesPerRun: 2,
+  redditPostsPerRun: 4,
+  redditQueryVariants: 2,
   responseBytes: 1024 * 1024,
   retainedItemsPerSource: 10,
   retainedItemsPerRun: 20,
   retrievalTimeoutMs: 20_000,
   rssFeeds: 2,
-  sourceRequests: 3,
+  sourceFamilies: 3,
   sourceObservations: 30,
   sourceTimeoutMs: 8_000,
   synthesisContextCharacters: 40_000,
@@ -38,21 +48,154 @@ export const externalResearchLimits = Object.freeze({
   workflowTimeoutMs: 55_000,
 });
 
-export const externalResearchSynthesisLimits = Object.freeze({
-  disagreementItems: 1,
-  findingItems: 4,
-  freshnessCharacters: 140,
-  inferenceItems: 2,
-  listItemCharacters: 100,
-  listItems: 3,
-  patternItems: 2,
-  recommendationItems: 2,
-  statementCharacters: 140,
-  statementEvidenceReferences: 3,
-  summaryCharacters: 350,
-});
+export const marketingResearchIntents = [
+  "AUDIENCE_PAIN",
+  "AUDIENCE_DESIRE",
+  "AUDIENCE_LANGUAGE",
+  "PURCHASE_OBJECTION",
+  "QUESTION_DEMAND",
+  "BELIEF_OR_MISCONCEPTION",
+  "CONTROVERSY_OR_DEBATE",
+  "TREND_SIGNAL",
+  "COMPETITOR_SIGNAL",
+  "FASHION_TECH",
+] as const;
+export const marketingResearchIntentSchema = z.enum(marketingResearchIntents);
+export type MarketingResearchIntent = z.infer<
+  typeof marketingResearchIntentSchema
+>;
 
-export const externalResearchObjectives = [
+export const researchSourceFamilies = [
+  "REDDIT",
+  "EDITORIAL",
+  "HACKER_NEWS",
+] as const;
+export const researchSourceFamilySchema = z.enum(researchSourceFamilies);
+export type ResearchSourceFamily = z.infer<typeof researchSourceFamilySchema>;
+export type FashionResearchPlanPreview = {
+  intent: MarketingResearchIntent;
+  reasonCodes: string[];
+  sources: Array<{
+    available: boolean;
+    family: ResearchSourceFamily;
+    labels: string[];
+  }>;
+};
+
+export const researchPlanReasonCodes = [
+  "CONSUMER_LANGUAGE_SOURCE",
+  "CONSUMER_DISCUSSION_SOURCE",
+  "EDITORIAL_TREND_SOURCE",
+  "EDITORIAL_CONTEXT_SOURCE",
+  "PUBLIC_COMPETITOR_SOURCE",
+  "TECHNICAL_DISCUSSION_SOURCE",
+  "EXISTING_FEED_SOURCE",
+] as const;
+export const researchPlanReasonCodeSchema = z.enum(researchPlanReasonCodes);
+
+export const hackerNewsStreams = ["top", "new", "ask"] as const;
+export const hackerNewsStreamSchema = z.enum(hackerNewsStreams);
+
+export const fashionResearchSourcePlanSchema = z
+  .object({
+    editorial: z
+      .object({
+        includeSearchDiscovery: z.boolean(),
+        sourceIds: z
+          .array(z.string().regex(/^[a-z0-9-]{2,64}$/))
+          .max(externalResearchLimits.editorialFeedsPerRun),
+      })
+      .strict(),
+    hackerNews: z
+      .object({ stream: hackerNewsStreamSchema })
+      .strict()
+      .nullable(),
+    intent: marketingResearchIntentSchema,
+    reasonCodes: z.array(researchPlanReasonCodeSchema).min(1).max(7),
+    reddit: z
+      .object({
+        communityIds: z
+          .array(z.string().regex(/^[a-z0-9-]{2,64}$/))
+          .max(externalResearchLimits.redditCommunitiesPerRun),
+        queryVariants: z
+          .array(
+            z
+              .string()
+              .trim()
+              .min(1)
+              .max(externalResearchLimits.queryTermCharacters),
+          )
+          .max(externalResearchLimits.redditQueryVariants),
+      })
+      .strict(),
+    selectedSourceFamilies: z
+      .array(researchSourceFamilySchema)
+      .min(1)
+      .max(externalResearchLimits.sourceFamilies),
+    version: z.literal("marketing-fashion-source-plan-v1"),
+  })
+  .strict();
+export type FashionResearchSourcePlan = z.infer<
+  typeof fashionResearchSourcePlanSchema
+>;
+
+const queryTermsSchema = z
+  .array(
+    z.string().trim().min(1).max(externalResearchLimits.queryTermCharacters),
+  )
+  .min(1)
+  .max(externalResearchLimits.queryTerms)
+  .transform((terms) => [
+    ...new Set(terms.map((term) => term.toLocaleLowerCase("en-US"))),
+  ]);
+
+export const externalResearchSubmissionSchema = z
+  .object({
+    hackerNewsStream: hackerNewsStreamSchema.nullable(),
+    intent: marketingResearchIntentSchema,
+    queryTerms: queryTermsSchema,
+    question: z
+      .string()
+      .trim()
+      .min(10)
+      .max(externalResearchLimits.questionCharacters),
+  })
+  .strict()
+  .superRefine((request, context) => {
+    if (request.intent !== "FASHION_TECH" && request.hackerNewsStream)
+      context.addIssue({
+        code: "custom",
+        message:
+          "Hacker News is available only for fashion technology research.",
+        path: ["hackerNewsStream"],
+      });
+  });
+
+export const externalResearchRequestSchema = z
+  .object({
+    intent: marketingResearchIntentSchema,
+    plan: fashionResearchSourcePlanSchema,
+    queryTerms: queryTermsSchema,
+    question: z
+      .string()
+      .trim()
+      .min(10)
+      .max(externalResearchLimits.questionCharacters),
+  })
+  .strict()
+  .superRefine((request, context) => {
+    if (request.intent !== request.plan.intent)
+      context.addIssue({
+        code: "custom",
+        message: "Research intent and source plan must match.",
+        path: ["plan", "intent"],
+      });
+  });
+export type ExternalResearchRequest = z.infer<
+  typeof externalResearchRequestSchema
+>;
+
+export const legacyExternalResearchObjectives = [
   "AUDIENCE_PAINS",
   "AUDIENCE_LANGUAGE",
   "RECURRING_QUESTIONS",
@@ -61,90 +204,251 @@ export const externalResearchObjectives = [
   "CONTENT_OBSERVATIONS",
   "COMPETITOR_PUBLIC",
 ] as const;
-export const externalResearchObjectiveSchema = z.enum(
-  externalResearchObjectives,
-);
-
-export const hackerNewsStreams = ["top", "new", "ask"] as const;
-export const hackerNewsStreamSchema = z.enum(hackerNewsStreams);
-
-const rssFeedUrlSchema = z
-  .url()
-  .max(500)
-  .refine((value) => value.startsWith("https://"), "Use a public HTTPS feed.");
-
-export const externalResearchRequestSchema = z
+const legacyRequestSchema = z
   .object({
     hackerNewsStream: hackerNewsStreamSchema.nullable(),
-    objective: externalResearchObjectiveSchema,
-    queryTerms: z
-      .array(
-        z
-          .string()
-          .trim()
-          .min(1)
-          .max(externalResearchLimits.queryTermCharacters),
-      )
-      .min(1)
-      .max(externalResearchLimits.queryTerms)
-      .transform((terms) => [
-        ...new Set(terms.map((term) => term.toLowerCase())),
-      ]),
+    objective: z.enum(legacyExternalResearchObjectives),
+    queryTerms: queryTermsSchema,
     question: z
       .string()
       .trim()
       .min(10)
       .max(externalResearchLimits.questionCharacters),
-    rssFeedUrls: z
-      .array(rssFeedUrlSchema)
-      .max(externalResearchLimits.rssFeeds)
-      .transform((urls) => [...new Set(urls)]),
+    rssFeedUrls: z.array(z.url().max(500)).max(2),
   })
-  .strict()
-  .superRefine((request, context) => {
-    if (!request.hackerNewsStream && request.rssFeedUrls.length === 0)
-      context.addIssue({
-        code: "custom",
-        message: "Select Hacker News or provide an RSS/Atom feed.",
-        path: ["hackerNewsStream"],
-      });
-    if (
-      Number(Boolean(request.hackerNewsStream)) + request.rssFeedUrls.length >
-      externalResearchLimits.sourceRequests
-    )
-      context.addIssue({
-        code: "custom",
-        message: "A research run supports at most three source requests.",
-        path: ["rssFeedUrls"],
-      });
-  });
+  .strict();
 
-export type ExternalResearchRequest = z.infer<
-  typeof externalResearchRequestSchema
+export const externalResearchRequestSnapshotSchema = z.union([
+  externalResearchRequestSchema,
+  legacyRequestSchema,
+]);
+export type ExternalResearchRequestSnapshot = z.infer<
+  typeof externalResearchRequestSnapshotSchema
 >;
 
 export const externalResearchJobInputSchema = z
   .object({ runId: z.uuid() })
   .strict();
 
+export const fashionSignalTypes = [
+  "PAIN",
+  "DESIRE",
+  "QUESTION",
+  "OBJECTION",
+  "LANGUAGE",
+  "MISCONCEPTION",
+  "DEBATE",
+  "TREND",
+  "COMPETITOR",
+  "TECH",
+] as const;
+export const fashionSignalTypeSchema = z.enum(fashionSignalTypes);
+
+export const contentOpportunityTypes = [
+  "RELATABLE_PAIN",
+  "EDUCATIONAL",
+  "MYTH_BUSTING",
+  "DEBATE",
+  "TREND_EXPLAINER",
+  "BUYING_OBJECTION",
+  "IDENTITY_ASPIRATION",
+  "QUESTION_ANSWER",
+  "BRAND_TRUST",
+  "PRODUCT_CONTEXT",
+] as const;
+export const contentOpportunityTypeSchema = z.enum(contentOpportunityTypes);
+
 const confidenceSchema = z.enum(["LOW", "MEDIUM", "HIGH"]);
 const evidenceReferenceSchema = z.string().regex(/^EVID-(?:[1-9]|1\d|20)$/);
-const supportedStatementSchema = z
+
+export const fashionResearchSynthesisLimits = Object.freeze({
+  audienceSignals: 4,
+  caveatCharacters: 90,
+  caveats: 2,
+  contentOpportunities: 4,
+  debates: 1,
+  evidenceReferences: 3,
+  freshnessCharacters: 90,
+  languageSignals: 3,
+  limitations: 3,
+  objections: 2,
+  phraseCharacters: 80,
+  statementCharacters: 130,
+  summaryCharacters: 320,
+  titleCharacters: 80,
+  trendSignals: 2,
+});
+
+function createFashionInterpretationSchema(
+  referenceSchema: z.ZodType<string> = evidenceReferenceSchema,
+) {
+  const references = z
+    .array(referenceSchema)
+    .min(1)
+    .max(fashionResearchSynthesisLimits.evidenceReferences);
+  const statement = z
+    .string()
+    .trim()
+    .min(1)
+    .max(fashionResearchSynthesisLimits.statementCharacters);
+  return z
+    .object({
+      audienceSignals: z
+        .array(
+          z
+            .object({
+              confidence: confidenceSchema,
+              evidenceRefs: references,
+              signalType: fashionSignalTypeSchema,
+              statement,
+            })
+            .strict(),
+        )
+        .max(fashionResearchSynthesisLimits.audienceSignals),
+      contentOpportunities: z
+        .array(
+          z
+            .object({
+              audienceTension: statement,
+              caveats: z
+                .array(
+                  z
+                    .string()
+                    .trim()
+                    .min(1)
+                    .max(fashionResearchSynthesisLimits.caveatCharacters),
+                )
+                .max(fashionResearchSynthesisLimits.caveats),
+              confidence: confidenceSchema,
+              evidenceRefs: references,
+              freshness: z
+                .string()
+                .trim()
+                .min(1)
+                .max(fashionResearchSynthesisLimits.freshnessCharacters),
+              opportunityType: contentOpportunityTypeSchema,
+              suggestedAngle: statement,
+              title: z
+                .string()
+                .trim()
+                .min(1)
+                .max(fashionResearchSynthesisLimits.titleCharacters),
+              whyItMatters: statement,
+            })
+            .strict(),
+        )
+        .max(fashionResearchSynthesisLimits.contentOpportunities),
+      debates: z
+        .array(
+          z
+            .object({ evidenceRefs: references, positionSummary: statement })
+            .strict(),
+        )
+        .max(fashionResearchSynthesisLimits.debates),
+      languageSignals: z
+        .array(
+          z
+            .object({
+              evidenceRefs: references,
+              interpretation: statement,
+              phraseOrPattern: z
+                .string()
+                .trim()
+                .min(1)
+                .max(fashionResearchSynthesisLimits.phraseCharacters),
+            })
+            .strict(),
+        )
+        .max(fashionResearchSynthesisLimits.languageSignals),
+      limitations: z
+        .array(
+          z
+            .string()
+            .trim()
+            .min(1)
+            .max(fashionResearchSynthesisLimits.statementCharacters),
+        )
+        .max(fashionResearchSynthesisLimits.limitations),
+      objections: z
+        .array(
+          z.object({ evidenceRefs: references, objection: statement }).strict(),
+        )
+        .max(fashionResearchSynthesisLimits.objections),
+      summary: z
+        .string()
+        .trim()
+        .min(1)
+        .max(fashionResearchSynthesisLimits.summaryCharacters),
+      trendSignals: z
+        .array(
+          z
+            .object({
+              confidence: confidenceSchema,
+              evidenceRefs: references,
+              statement,
+            })
+            .strict(),
+        )
+        .max(fashionResearchSynthesisLimits.trendSignals),
+    })
+    .strict();
+}
+
+export const fashionResearchInterpretationSchema =
+  createFashionInterpretationSchema();
+export type FashionResearchInterpretation = z.infer<
+  typeof fashionResearchInterpretationSchema
+>;
+
+const sourceCoverageSchema = z
+  .object({
+    evidenceCount: z.number().int().min(0).max(20),
+    failedRequestCount: z.number().int().min(0).max(30),
+    family: researchSourceFamilySchema,
+    sourceLabels: z.array(z.string().trim().min(1).max(80)).max(4),
+    status: z.enum(["SUCCEEDED", "PARTIAL", "FAILED", "UNAVAILABLE"]),
+  })
+  .strict();
+
+export const fashionResearchReportSchema = fashionResearchInterpretationSchema
+  .extend({
+    schemaVersion: z.literal("marketing-fashion-research-report-v1"),
+    sourceCoverage: z.array(sourceCoverageSchema).min(1).max(3),
+    sourceDiversity: z
+      .object({
+        evidenceByType: z.record(z.string(), z.number().int().min(0).max(20)),
+        sourceFamilyCount: z.number().int().min(1).max(3),
+        sourcesRepresented: z.array(z.string().min(1).max(80)).max(12),
+      })
+      .strict(),
+  })
+  .strict();
+export type FashionResearchReport = z.infer<typeof fashionResearchReportSchema>;
+
+export function createFashionResearchSynthesisSchema(
+  evidenceIds: readonly string[],
+) {
+  const uniqueEvidenceIds = validateSynthesisEvidenceIds(evidenceIds);
+  return createFashionInterpretationSchema(
+    z.enum([uniqueEvidenceIds[0]!, ...uniqueEvidenceIds.slice(1)]),
+  );
+}
+
+const legacySupportedStatementSchema = z
   .object({
     confidence: confidenceSchema,
     statement: z.string().trim().min(1).max(1_000),
     supportedBy: z.array(evidenceReferenceSchema).min(1).max(10),
   })
   .strict();
-
-export const externalResearchReportSchema = z
+export const legacyExternalResearchReportSchema = z
   .object({
     confidence: confidenceSchema,
-    disagreements: z.array(supportedStatementSchema).max(5),
+    disagreements: z.array(legacySupportedStatementSchema).max(5),
     findings: z
       .array(
-        supportedStatementSchema.extend({
-          id: z.string().regex(/^F-(?:[1-9]|1\d|20)$/),
+        legacySupportedStatementSchema.extend({
+          id: z.string().min(1).max(20),
         }),
       )
       .max(20),
@@ -152,25 +456,57 @@ export const externalResearchReportSchema = z
     inferences: z
       .array(
         z
-          .object({
-            confidence: confidenceSchema,
-            statement: z.string().trim().min(1).max(1_000),
-          })
+          .object({ confidence: confidenceSchema, statement: z.string() })
           .strict(),
       )
       .max(8),
-    limitations: z.array(z.string().trim().min(1).max(500)).max(10),
-    partialFailureWarnings: z.array(z.string().trim().min(1).max(500)).max(10),
-    patterns: z.array(supportedStatementSchema).max(10),
-    recommendations: z.array(supportedStatementSchema).max(8),
+    limitations: z.array(z.string()).max(10),
+    partialFailureWarnings: z.array(z.string()).max(10),
+    patterns: z.array(legacySupportedStatementSchema).max(10),
+    recommendations: z.array(legacySupportedStatementSchema).max(8),
     summary: z.string().trim().min(1).max(2_000),
-    unresolvedQuestions: z.array(z.string().trim().min(1).max(500)).max(10),
+    unresolvedQuestions: z.array(z.string()).max(10),
   })
   .strict();
+export const externalResearchReportSchema = z.union([
+  fashionResearchReportSchema,
+  legacyExternalResearchReportSchema,
+]);
+export type ExternalResearchReport = z.infer<
+  typeof externalResearchReportSchema
+>;
 
-export function createExternalResearchSynthesisSchema(
-  evidenceIds: readonly string[],
+export type ExternalResearchActionState = {
+  message?: string;
+  runId?: string;
+  status: "idle" | "error" | "success";
+};
+export const initialExternalResearchActionState: ExternalResearchActionState = {
+  status: "idle",
+};
+
+export function validateFashionEvidenceReferences(
+  report: FashionResearchInterpretation,
+  evidenceIds: Iterable<string>,
 ) {
+  const available = new Set(evidenceIds);
+  const referenced = [
+    ...report.audienceSignals,
+    ...report.languageSignals,
+    ...report.trendSignals,
+    ...report.objections,
+    ...report.debates,
+    ...report.contentOpportunities,
+  ];
+  if (
+    referenced.some((item) =>
+      item.evidenceRefs.some((evidenceId) => !available.has(evidenceId)),
+    )
+  )
+    throw new Error("Research report contains an invalid evidence reference.");
+}
+
+function validateSynthesisEvidenceIds(evidenceIds: readonly string[]) {
   const uniqueEvidenceIds = [...new Set(evidenceIds)];
   if (
     uniqueEvidenceIds.length === 0 ||
@@ -181,113 +517,7 @@ export function createExternalResearchSynthesisSchema(
     )
   )
     throw new Error("Synthesis evidence identifiers are invalid.");
-
-  const firstEvidenceId = uniqueEvidenceIds[0]!;
-  const exactEvidenceReferenceSchema = z.enum([
-    firstEvidenceId,
-    ...uniqueEvidenceIds.slice(1),
-  ]);
-  const conciseSupportedStatementSchema = z
-    .object({
-      confidence: confidenceSchema,
-      statement: z
-        .string()
-        .trim()
-        .min(1)
-        .max(externalResearchSynthesisLimits.statementCharacters),
-      supportedBy: z
-        .array(exactEvidenceReferenceSchema)
-        .min(1)
-        .max(
-          Math.min(
-            externalResearchSynthesisLimits.statementEvidenceReferences,
-            uniqueEvidenceIds.length,
-          ),
-        ),
-    })
-    .strict();
-  const conciseText = (maximum: number) =>
-    z.string().trim().min(1).max(maximum);
-
-  return z
-    .object({
-      confidence: confidenceSchema,
-      disagreements: z
-        .array(conciseSupportedStatementSchema)
-        .max(externalResearchSynthesisLimits.disagreementItems),
-      findings: z
-        .array(
-          conciseSupportedStatementSchema.extend({
-            id: z.string().regex(/^F-(?:[1-9]|1\d|20)$/),
-          }),
-        )
-        .max(externalResearchSynthesisLimits.findingItems),
-      freshnessAssessment: conciseText(
-        externalResearchSynthesisLimits.freshnessCharacters,
-      ),
-      inferences: z
-        .array(
-          z
-            .object({
-              confidence: confidenceSchema,
-              statement: conciseText(
-                externalResearchSynthesisLimits.statementCharacters,
-              ),
-            })
-            .strict(),
-        )
-        .max(externalResearchSynthesisLimits.inferenceItems),
-      limitations: z
-        .array(conciseText(externalResearchSynthesisLimits.listItemCharacters))
-        .max(externalResearchSynthesisLimits.listItems),
-      partialFailureWarnings: z
-        .array(conciseText(externalResearchSynthesisLimits.listItemCharacters))
-        .max(externalResearchSynthesisLimits.listItems),
-      patterns: z
-        .array(conciseSupportedStatementSchema)
-        .max(externalResearchSynthesisLimits.patternItems),
-      recommendations: z
-        .array(conciseSupportedStatementSchema)
-        .max(externalResearchSynthesisLimits.recommendationItems),
-      summary: conciseText(externalResearchSynthesisLimits.summaryCharacters),
-      unresolvedQuestions: z
-        .array(conciseText(externalResearchSynthesisLimits.listItemCharacters))
-        .max(externalResearchSynthesisLimits.listItems),
-    })
-    .strict();
-}
-
-export type ExternalResearchReport = z.infer<
-  typeof externalResearchReportSchema
->;
-
-export type ExternalResearchActionState = {
-  message?: string;
-  runId?: string;
-  status: "idle" | "error" | "success";
-};
-
-export const initialExternalResearchActionState: ExternalResearchActionState = {
-  status: "idle",
-};
-
-export function validateEvidenceReferences(
-  report: ExternalResearchReport,
-  evidenceIds: Iterable<string>,
-) {
-  const available = new Set(evidenceIds);
-  const supported = [
-    ...report.findings,
-    ...report.patterns,
-    ...report.disagreements,
-    ...report.recommendations,
-  ];
-  if (
-    supported.some((item) =>
-      item.supportedBy.some((evidenceId) => !available.has(evidenceId)),
-    )
-  )
-    throw new Error("Research report contains an invalid evidence reference.");
+  return uniqueEvidenceIds;
 }
 
 export function projectExternalResearchEvidence(input: {

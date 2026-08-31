@@ -4,6 +4,22 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added TASK-017C Fashion Marketing Intelligence with deterministic intent-based
+  source planning, opt-in approved Reddit OAuth, curated fashion/editorial
+  feeds and articles, typed Reddit evidence, fashion signals, and immutable
+  evidence-backed content opportunity candidates.
+- Hacker News is now conditional on fashion-technology research in the new UI;
+  browser users cannot submit source domains, communities, provider settings,
+  organization provenance, or credentials.
+- Fixed fashion-editorial relevance so a registered source or generic words
+  such as `fashion` cannot make an unrelated feed/article candidate eligible.
+  Explicit topic concepts now gate feed metadata before article fetch and gate
+  extracted article content again before evidence persistence.
+- Completed TASK-017C hosted acceptance: a deliberate sustainable-fashion
+  `TREND_SIGNAL` run rejected all 40 unrelated editorial candidates, retained
+  zero evidence, made no AI call, and safely produced no unsupported report
+  while Reddit remained unavailable by policy.
+
 - Fixed TASK-017B pinned article retrieval on Node runtimes that request the
   custom DNS lookup result with `all: true`; the same validated address remains
   pinned and transport-contract failures now receive a safe specific diagnostic.

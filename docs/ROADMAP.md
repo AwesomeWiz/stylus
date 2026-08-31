@@ -284,12 +284,19 @@ workflow. TASK-020 remains the unimplemented conversational product.
 - [x] TASK-017B native HN text and typed story evidence
 - [x] TASK-017B bounded top-level/one-level HN discussion evidence
 - [x] TASK-017B matched-story article safe fetch and deterministic extraction
-- [ ] TASK-017C Reddit research
-- [ ] TASK-017C bounded web and fashion-editorial discovery
+- [x] TASK-017C deterministic fashion research intent/source planning
+- [x] TASK-017C approved-configuration bounded Reddit research
+- [x] TASK-017C curated web/fashion-editorial discovery and article extraction
+- [x] TASK-017C evidence-backed Marketing content opportunity candidates
+- [ ] TASK-017D authorized Fashion Social Intelligence discovery
 - [ ] social-platform intelligence (separate future media/platform phase)
 
-TASK-017B implementation and hosted acceptance are complete; it is ready for
-the user-managed merge.
+TASK-017B implementation and hosted acceptance are complete and merged.
+TASK-017C implementation and hosted acceptance are complete on its task branch
+and await the user-managed merge. The final deliberate `TREND_SIGNAL` scenario
+correctly retained zero evidence and produced no report rather than synthesizing
+unsupported claims. It adds no Instagram, TikTok, YouTube or Pinterest ingestion;
+those remain TASK-017D discovery. TASK-018 remains Performance Learning.
 
 ---
 

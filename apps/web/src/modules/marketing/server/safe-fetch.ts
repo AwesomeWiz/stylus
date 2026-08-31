@@ -31,6 +31,8 @@ export type SourceDiagnosticCategory =
   | "malformed_payload"
   | "extraction_failed"
   | "empty_content"
+  | "source_unavailable"
+  | "source_not_allowlisted"
   | "zero_candidates"
   | "zero_matching_candidates";
 

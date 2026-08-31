@@ -339,3 +339,28 @@ Disable recovery safely by pausing/removing the Vercel Cron schedule or
 rotating/removing `CRON_SECRET`; queued jobs remain durable. Immediate execution
 continues only after an authorized hosted enqueue. Disabling Marketing or
 removing execution membership prevents new work and trusted AI continuation.
+
+### TASK-017C optional Reddit configuration
+
+Reddit is optional and disabled by default. First obtain Reddit approval for the
+exact production/Preview use case and confirm applicable research, commercial,
+retention, attribution and removal requirements. Then configure server-only
+values independently in each intended Vercel environment:
+
+```text
+STYLUS_REDDIT_API_ENABLED=true
+STYLUS_REDDIT_CLIENT_ID=<approved confidential client id>
+STYLUS_REDDIT_CLIENT_SECRET=<approved confidential client secret>
+STYLUS_REDDIT_USER_AGENT=<approved descriptive user agent>
+STYLUS_REDDIT_COMMUNITY_IDS=<optional comma-separated registry IDs>
+```
+
+Never prefix them with `NEXT_PUBLIC`. An incomplete or disabled configuration
+returns a safe unavailable Reddit source. Other planned sources may still
+produce a partial report; a Reddit-only intent safely fails if no evidence
+exists. Preview deployments need their own explicit secret configuration.
+
+No search-provider variable is required in TASK-017C. The interface is present
+for a future terms-compliant optional provider, while curated Vogue and Retail
+Dive feeds run without a paid search service. Apply
+`20260825001730_fashion_marketing_intelligence.sql` before hosted QA.
