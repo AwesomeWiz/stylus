@@ -163,13 +163,16 @@ describe("external research job handler", () => {
     expect(mocks.generate).toHaveBeenCalledOnce();
     const options = mocks.generate.mock.calls[0]?.[0].options;
     expect(options.messages[0]?.content).toContain("untrusted quoted data");
+    expect(options.messages[0]?.content).toContain(
+      "no more than four findings, two patterns, two recommendations, one disagreement, and two inferences",
+    );
     expect(options.messages[1]?.content).toContain("Ignore prior instructions");
     expect(options.maxOutputTokens).toBe(1_600);
     expect(options.timeoutMs).toBe(35_000);
     expect(options).not.toHaveProperty("tools");
   });
 
-  it("synthesizes the hosted 12-item enriched shape with exact dynamic references", async () => {
+  it("synthesizes the hosted 13-item enriched shape with exact dynamic references", async () => {
     mocks.retrieve.mockResolvedValue({
       failures: [],
       items: [hostedEnrichedItem()],
@@ -181,7 +184,7 @@ describe("external research job handler", () => {
           confidence: "MEDIUM",
           id: "F-1",
           statement: "Article and discussion evidence align.",
-          supportedBy: ["EVID-2", "EVID-12"],
+          supportedBy: ["EVID-2", "EVID-13"],
         },
       ],
     };
@@ -191,7 +194,7 @@ describe("external research job handler", () => {
         input.schema.safeParse({
           ...enrichedReport,
           findings: [
-            { ...enrichedReport.findings[0], supportedBy: ["EVID-13"] },
+            { ...enrichedReport.findings[0], supportedBy: ["EVID-14"] },
           ],
         }).success,
       ).toBe(false);
@@ -206,7 +209,7 @@ describe("external research job handler", () => {
       jobContext(),
     );
 
-    expect(result).toMatchObject({ evidenceCount: 12 });
+    expect(result).toMatchObject({ evidenceCount: 13 });
     expect(mocks.generate).toHaveBeenCalledOnce();
     const generation = mocks.generate.mock.calls[0]![0];
     const context = JSON.parse(generation.options.messages[1]!.content);
@@ -214,7 +217,7 @@ describe("external research job handler", () => {
       context.evidence.map(
         (evidence: { evidenceId: string }) => evidence.evidenceId,
       ),
-    ).toEqual(Array.from({ length: 12 }, (_, index) => `EVID-${index + 1}`));
+    ).toEqual(Array.from({ length: 13 }, (_, index) => `EVID-${index + 1}`));
     expect(
       context.evidence.map(
         (evidence: { evidenceType: string }) => evidence.evidenceType,
@@ -222,7 +225,7 @@ describe("external research job handler", () => {
     ).toEqual([
       "HN_STORY",
       "ARTICLE_CONTENT",
-      ...Array(8).fill("HN_COMMENT"),
+      ...Array(9).fill("HN_COMMENT"),
       "ARTICLE_CONTENT",
       "ARTICLE_CONTENT",
     ]);
@@ -454,7 +457,7 @@ function hostedEnrichedItem(): NormalizedResearchItem {
         nativeId: `1:article:${index + 1}`,
         title: "Article",
       })),
-      ...Array.from({ length: 8 }, (_, index) => ({
+      ...Array.from({ length: 9 }, (_, index) => ({
         ...common,
         canonicalUrl: `https://news.ycombinator.com/item?id=${index + 2}`,
         evidenceType: "HN_COMMENT" as const,

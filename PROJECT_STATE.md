@@ -1337,3 +1337,25 @@ Synthesis corrective verification passed 4 focused files / 31 tests and the
 complete web suite at 132 files / 659 tests. Targeted formatting, web lint,
 web typecheck and the web production build passed. Worker code was unaffected,
 so its suite/build were not rerun. No migration was added or changed.
+
+A final hosted `Creepy Crawlies` run proved the complete enrichment path with
+13 immutable evidence rows, including three `ARTICLE_CONTENT` chunks. Its one
+AI attempt returned 1,598 tokens with finish reason `length`; the durable
+diagnostic was again `structured_output_truncated`, so JSON validation could
+not produce typed data and report persistence was not reached. This was not a
+provider timeout: the AI run completed in 32,288 ms inside the 35-second limit.
+
+The remaining defect was a mismatch between the 1,600-token ceiling and the
+synthesis schema's still-permissive maximum response: the prose requested
+conciseness, but the schema allowed six findings, four patterns, four
+recommendations and substantially longer text. Synthesis-only hard limits now
+match the prompt at four findings, two patterns, two recommendations, one
+disagreement and two inferences, with shorter field and citation bounds. All
+13 input evidence records remain available, the exact per-run EVID enum and
+post-validation remain intact, and the one-call/35-second/provider-policy
+contracts are unchanged. No migration is required; hosted retest remains.
+
+Final response-bounds corrective verification passed 4 focused files / 32
+tests and the complete suites at 132 web files / 660 tests plus 5 worker files
+/ 32 tests (692 tests total). Targeted formatting, repository lint, worker/web
+typechecks and both production builds passed. No migration was added or changed.

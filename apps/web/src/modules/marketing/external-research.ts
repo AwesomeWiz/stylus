@@ -38,6 +38,20 @@ export const externalResearchLimits = Object.freeze({
   workflowTimeoutMs: 55_000,
 });
 
+export const externalResearchSynthesisLimits = Object.freeze({
+  disagreementItems: 1,
+  findingItems: 4,
+  freshnessCharacters: 140,
+  inferenceItems: 2,
+  listItemCharacters: 100,
+  listItems: 3,
+  patternItems: 2,
+  recommendationItems: 2,
+  statementCharacters: 140,
+  statementEvidenceReferences: 3,
+  summaryCharacters: 350,
+});
+
 export const externalResearchObjectives = [
   "AUDIENCE_PAINS",
   "AUDIENCE_LANGUAGE",
@@ -176,11 +190,20 @@ export function createExternalResearchSynthesisSchema(
   const conciseSupportedStatementSchema = z
     .object({
       confidence: confidenceSchema,
-      statement: z.string().trim().min(1).max(600),
+      statement: z
+        .string()
+        .trim()
+        .min(1)
+        .max(externalResearchSynthesisLimits.statementCharacters),
       supportedBy: z
         .array(exactEvidenceReferenceSchema)
         .min(1)
-        .max(Math.min(6, uniqueEvidenceIds.length)),
+        .max(
+          Math.min(
+            externalResearchSynthesisLimits.statementEvidenceReferences,
+            uniqueEvidenceIds.length,
+          ),
+        ),
     })
     .strict();
   const conciseText = (maximum: number) =>
@@ -189,31 +212,47 @@ export function createExternalResearchSynthesisSchema(
   return z
     .object({
       confidence: confidenceSchema,
-      disagreements: z.array(conciseSupportedStatementSchema).max(2),
+      disagreements: z
+        .array(conciseSupportedStatementSchema)
+        .max(externalResearchSynthesisLimits.disagreementItems),
       findings: z
         .array(
           conciseSupportedStatementSchema.extend({
             id: z.string().regex(/^F-(?:[1-9]|1\d|20)$/),
           }),
         )
-        .max(6),
-      freshnessAssessment: conciseText(500),
+        .max(externalResearchSynthesisLimits.findingItems),
+      freshnessAssessment: conciseText(
+        externalResearchSynthesisLimits.freshnessCharacters,
+      ),
       inferences: z
         .array(
           z
             .object({
               confidence: confidenceSchema,
-              statement: conciseText(600),
+              statement: conciseText(
+                externalResearchSynthesisLimits.statementCharacters,
+              ),
             })
             .strict(),
         )
-        .max(3),
-      limitations: z.array(conciseText(300)).max(5),
-      partialFailureWarnings: z.array(conciseText(300)).max(5),
-      patterns: z.array(conciseSupportedStatementSchema).max(4),
-      recommendations: z.array(conciseSupportedStatementSchema).max(4),
-      summary: conciseText(1_000),
-      unresolvedQuestions: z.array(conciseText(300)).max(5),
+        .max(externalResearchSynthesisLimits.inferenceItems),
+      limitations: z
+        .array(conciseText(externalResearchSynthesisLimits.listItemCharacters))
+        .max(externalResearchSynthesisLimits.listItems),
+      partialFailureWarnings: z
+        .array(conciseText(externalResearchSynthesisLimits.listItemCharacters))
+        .max(externalResearchSynthesisLimits.listItems),
+      patterns: z
+        .array(conciseSupportedStatementSchema)
+        .max(externalResearchSynthesisLimits.patternItems),
+      recommendations: z
+        .array(conciseSupportedStatementSchema)
+        .max(externalResearchSynthesisLimits.recommendationItems),
+      summary: conciseText(externalResearchSynthesisLimits.summaryCharacters),
+      unresolvedQuestions: z
+        .array(conciseText(externalResearchSynthesisLimits.listItemCharacters))
+        .max(externalResearchSynthesisLimits.listItems),
     })
     .strict();
 }

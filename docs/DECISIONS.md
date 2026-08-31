@@ -638,8 +638,10 @@ run/source record; legacy evidence remains valid.
 
 Retrieval is bounded to 20 seconds and synthesis to 35 seconds inside a
 55-second workflow with a five-second completion reserve. The synthesis schema
-uses the exact per-run EVID set and concise report cardinalities while retaining
-defense-in-depth reference validation. Partial enrichment
+uses the exact per-run EVID set and hard response cardinality/text limits sized
+for the fixed 1,600-token ceiling while retaining defense-in-depth reference
+validation. These output limits do not discard or reduce the persisted evidence
+provided as synthesis input. Partial enrichment
 failures retain useful story/article/comment evidence. One trusted ModelGateway
 synthesis remains the maximum and treats every external field as untrusted
 quoted data with no tool, memory or autonomous-retrieval authority. TASK-017C,

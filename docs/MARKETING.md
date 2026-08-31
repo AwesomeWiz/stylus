@@ -521,13 +521,17 @@ Runs retain at most 20 evidence items/24,000 persisted evidence characters.
 Synthesis deterministically shares 18,000 excerpt characters across those
 records inside a 40,000-character serialized context. The strict synthesis
 schema permits only the exact EVID identifiers in that context and bounds report
-breadth for the unchanged 1,600-token output ceiling. Retrieval gets 20
-seconds, synthesis at most 35 seconds, and the 55-second application workflow
-reserves five seconds for completion under the Hobby 60-second function
-ceiling. Each retained comment is limited to 1,500 characters; enrichment
-concurrency is two inside the existing three-request gate; redirects are
-limited to three; and the run-wide fetched body budget remains 4 MiB. Article or
-comment failure records a safe diagnostic and preserves usable HN evidence.
+breadth for the unchanged 1,600-token output ceiling: at most four findings,
+two patterns, two recommendations, one disagreement and two inferences, with
+short bounded statements and at most three EVID references per supported
+statement. These response limits do not remove any retained evidence from the
+synthesis input. Retrieval gets 20 seconds, synthesis at most 35 seconds, and
+the 55-second application workflow reserves five seconds for completion under
+the Hobby 60-second function ceiling. Each retained comment is limited to 1,500
+characters; enrichment concurrency is two inside the existing three-request
+gate; redirects are limited to three; and the run-wide fetched body budget
+remains 4 MiB. Article or comment failure records a safe diagnostic and
+preserves usable HN evidence.
 
 TASK-017B still has no Reddit, general web discovery, recursive crawling,
 social scraping, automatic Council execution or memory promotion. TASK-017C is

@@ -11,6 +11,10 @@ All notable user-facing changes to Stylus will be documented here.
   evidence references to the exact per-run EVID set, bounding report breadth,
   and using 35 seconds of the existing 55-second workflow budget. Evidence now
   displays in numeric EVID order.
+- Tightened the enriched research report's hard structured-output cardinality
+  and text bounds after hosted evidence showed the prior concise schema could
+  still exhaust its 1,600-token ceiling. All retained input evidence and exact
+  EVID provenance checks remain unchanged.
 
 ### Added
 

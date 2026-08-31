@@ -25,6 +25,14 @@ uses an exact per-run evidence-reference enum, concise report bounds and a
 35-second window inside the unchanged 55-second workflow reserve. UI evidence
 ordering is numeric; stable persisted IDs are unchanged. Hosted retest remains.
 
+The final hosted enrichment run persisted 13 evidence rows, including three
+article chunks, but exposed a second 1,598-token `length` completion. The
+synthesis schema still permitted more response content than its 1,600-token
+ceiling despite the concise prompt. Its hard response cardinality, text and
+per-statement citation limits now fit that ceiling without removing input
+evidence or changing provenance, policy, timeout, retry or one-call behavior.
+Hosted structured-synthesis/report-persistence retest remains.
+
 ---
 
 # Completed

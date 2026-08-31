@@ -4,6 +4,7 @@ import {
   createExternalResearchSynthesisSchema,
   externalResearchReportSchema,
   externalResearchRequestSchema,
+  externalResearchSynthesisLimits,
   projectExternalResearchEvidence,
   validateEvidenceReferences,
 } from "./external-research";
@@ -95,7 +96,7 @@ describe("external research contracts", () => {
     expect(
       schema.safeParse({
         ...reportWithReference("EVID-1"),
-        findings: Array.from({ length: 7 }, (_, index) => ({
+        findings: Array.from({ length: 5 }, (_, index) => ({
           confidence: "MEDIUM",
           id: `F-${index + 1}`,
           statement: `Finding ${index + 1}`,
@@ -106,6 +107,77 @@ describe("external research contracts", () => {
     expect(() =>
       createExternalResearchSynthesisSchema(["EVID-1", "EVID-1"]),
     ).toThrow("identifiers are invalid");
+  });
+
+  it("keeps the maximum synthesis response bounded below the provider output ceiling", () => {
+    const schema = createExternalResearchSynthesisSchema([
+      "EVID-1",
+      "EVID-2",
+      "EVID-3",
+    ]);
+    const statement = () => ({
+      confidence: "MEDIUM",
+      statement: "x".repeat(
+        externalResearchSynthesisLimits.statementCharacters,
+      ),
+      supportedBy: ["EVID-1", "EVID-2", "EVID-3"],
+    });
+    const list = Array.from(
+      { length: externalResearchSynthesisLimits.listItems },
+      () => "x".repeat(externalResearchSynthesisLimits.listItemCharacters),
+    );
+    const maximumReport = {
+      confidence: "MEDIUM",
+      disagreements: Array.from(
+        { length: externalResearchSynthesisLimits.disagreementItems },
+        statement,
+      ),
+      findings: Array.from(
+        { length: externalResearchSynthesisLimits.findingItems },
+        (_, index) => ({ ...statement(), id: `F-${index + 1}` }),
+      ),
+      freshnessAssessment: "x".repeat(
+        externalResearchSynthesisLimits.freshnessCharacters,
+      ),
+      inferences: Array.from(
+        { length: externalResearchSynthesisLimits.inferenceItems },
+        () => ({
+          confidence: "MEDIUM",
+          statement: "x".repeat(
+            externalResearchSynthesisLimits.statementCharacters,
+          ),
+        }),
+      ),
+      limitations: list,
+      partialFailureWarnings: list,
+      patterns: Array.from(
+        { length: externalResearchSynthesisLimits.patternItems },
+        statement,
+      ),
+      recommendations: Array.from(
+        { length: externalResearchSynthesisLimits.recommendationItems },
+        statement,
+      ),
+      summary: "x".repeat(externalResearchSynthesisLimits.summaryCharacters),
+      unresolvedQuestions: list,
+    };
+
+    expect(schema.safeParse(maximumReport).success).toBe(true);
+    expect(JSON.stringify(maximumReport).length).toBeLessThan(4_500);
+    expect(
+      schema.safeParse({
+        ...maximumReport,
+        findings: [...maximumReport.findings, { ...statement(), id: "F-5" }],
+      }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({
+        ...maximumReport,
+        summary: "x".repeat(
+          externalResearchSynthesisLimits.summaryCharacters + 1,
+        ),
+      }).success,
+    ).toBe(false);
   });
 
   it("keeps future Council projection explicit, selected, and bounded", () => {
