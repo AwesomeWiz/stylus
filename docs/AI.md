@@ -425,3 +425,24 @@ history remains. Retrieved text is explicitly untrusted data in a bounded user
 message. Structured findings must cite run-local evidence; unsupported
 interpretation is separately labeled as inference. No prompt, raw provider
 response or chain-of-thought is persisted.
+
+### TASK-017C fashion interpretation
+
+Planning, registry selection, retrieval, filtering, hashing, deduplication,
+source diversity and EVID assignment are deterministic. A run with zero usable
+evidence performs zero AI calls. Otherwise the handler makes exactly one
+`generateAIStructuredForTrustedJob` call using the existing Marketing capability,
+organization policy, budget, AI-run trace and logical `BALANCED` tier.
+
+The dynamic JSON Schema contains the exact persisted EVID enum and closed,
+bounded objects for up to four audience signals, three language signals, two
+trends, two objections, one debate, four opportunity candidates and three
+limitations. Per-claim citations are capped at three. Worst-legal serialized
+output is tested below 10,000 characters and the ceiling is 3,200 output tokens,
+avoiding TASK-017B's former 1,600-token mismatch. No second model, repair model,
+per-evidence classifier, embedding or application-level synthesis retry exists.
+
+External text is explicitly quoted as untrusted evidence. It has no tools and
+no authority over routing, providers, sources, credentials, memory, Council,
+campaigns or application actions. Raw prompts, responses and chain-of-thought
+are not persisted.

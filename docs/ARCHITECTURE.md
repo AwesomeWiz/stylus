@@ -576,3 +576,38 @@ identifiers included in that run's bounded context. Concise report cardinality
 limits keep the strict response within the fixed output ceiling; application
 post-validation repeats the same reference-set check before immutable report
 persistence.
+
+## TASK-017C Fashion Intelligence Flow
+
+The browser submits only question, controlled intent, bounded terms and—only
+for `FASHION_TECH`—an HN stream. The Server Action derives actor/organization,
+rebuilds a static plan from Marketing registries and atomically persists that
+snapshot with the existing SERVERLESS job. The handler recomputes and compares
+the plan before retrieval, so a forged or stale snapshot cannot broaden sources.
+
+```text
+authorized Marketing request
+  -> deterministic intent/source planner
+  -> atomic run + durable SERVERLESS job
+  -> bounded static adapter registry
+     -> approved Reddit OAuth (optional)
+     -> curated RSS + pinned-DNS article enrichment
+     -> HN only for FASHION_TECH
+  -> deterministic normalize/dedupe/EVID persistence
+  -> zero or one ModelGateway structured synthesis
+  -> deterministic coverage + immutable fashion report
+```
+
+Worst-path ceilings remain inside the 20-second retrieval phase of the existing
+55-second job (35-second synthesis plus five-second completion reserve):
+
+| Source family | Maximum network requests/run | Maximum retained evidence contribution | Timeout contribution |
+| --- | ---: | ---: | ---: |
+| Reddit | 1 OAuth + 4 search + 4 comment-thread requests | 4 posts + 8 comments | shared 20 s retrieval / 8 s request |
+| Editorial | 2 feeds + 2 articles; optional provider call only for competitor intent | 2 feed items/source + article chunks, under global 20 | shared 20 s retrieval / 8 s request |
+| Hacker News | existing fixed-host bounded stream/item/comment/article work | existing TASK-017B bounds | shared 20 s retrieval / 8 s request |
+
+All families share concurrency three, a four-MiB byte budget, 20 immutable
+evidence rows and 24,000 normalized characters. Concurrent hosted/cron execution
+still relies on the same atomic job claim. No Windows worker, Redis, VPS or new
+execution class is introduced.

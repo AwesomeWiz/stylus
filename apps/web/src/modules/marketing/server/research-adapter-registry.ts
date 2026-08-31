@@ -5,6 +5,8 @@ import type {
   ResearchSourceAdapter,
 } from "./research-sources";
 import { createHackerNewsAdapter } from "./hacker-news-adapter";
+import { createFashionEditorialAdapter } from "./fashion-editorial-adapter";
+import { createRedditAdapter } from "./reddit-adapter";
 import { createRssAtomAdapter } from "./rss-atom-adapter";
 
 export class ResearchSourceAdapterRegistry {
@@ -36,4 +38,6 @@ export class ResearchSourceAdapterRegistry {
 export const researchSourceAdapterRegistry = new ResearchSourceAdapterRegistry([
   createHackerNewsAdapter() as ResearchSourceAdapter<unknown>,
   createRssAtomAdapter() as ResearchSourceAdapter<unknown>,
+  createRedditAdapter() as ResearchSourceAdapter<unknown>,
+  createFashionEditorialAdapter() as ResearchSourceAdapter<unknown>,
 ]);

@@ -664,3 +664,28 @@ provider content. Production structured workflows should configure a concrete
 model that advertises both `response_format` and `structured_outputs`; the model
 registry's capability flag is an operator declaration rather than runtime
 provider discovery.
+
+## ADR-033 — Fashion intelligence uses deterministic source planning
+
+Status: ACCEPTED
+
+TASK-017C preserves one durable Marketing research workflow and separates
+retrieval from intelligence and future creative generation. One controlled
+fashion-marketing intent maps in code to at most three source families with
+controlled reason codes. HN is conditional on fashion technology. Reddit and
+editorial communities/domains are registry-owned; browser input cannot broaden
+them.
+
+Reddit transport is default-disabled and uses only approved application-only
+OAuth on fixed official hosts. No scraping fallback exists. Curated feed and
+article retrieval reuses the pinned-DNS HTTPS boundary; optional general search
+is only a narrow provider interface and is not mandatory. This trades source
+breadth for terms compliance, SSRF safety, predictable cost and the Vercel Hobby
+execution window.
+
+The intelligence layer makes zero or one structured ModelGateway call and
+persists one immutable `marketing-fashion-research-report-v1` artifact. Signals
+and strategic Content Opportunity Candidates cite exact current-run evidence.
+They are not hooks, scripts or Reel Briefs and trigger no Council, memory,
+performance-learning or social-platform workflow. TASK-017D owns future
+Instagram/TikTok/YouTube/Pinterest discovery.

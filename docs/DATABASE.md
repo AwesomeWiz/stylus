@@ -547,3 +547,23 @@ enablement and current membership checks. Execute remains revoked from browser
 roles and granted only to `service_role`. Evidence/source organization foreign
 keys, SELECT-only RLS, 20-row/24,000-character bounds and immutable report
 references are unchanged.
+
+### TASK-017C forward extension
+
+`20260825001730_fashion_marketing_intelligence.sql` adds `reddit` and
+`fashion-editorial` adapter enum values, permits `REDDIT_POST` and
+`REDDIT_COMMENT`, and allows the new
+`marketing-fashion-research-report-v1` schema alongside legacy reports. The
+source plan is stored in the already-bounded immutable request snapshot; no
+separate opportunity table is introduced because candidates have no independent
+V1 lifecycle.
+
+The forward migration replaces the existing service-role-only enqueue and
+completion functions. Enqueue validates the controlled intent/plan envelope and
+still uses the same advisory lock, idempotency key, one-active-run index and
+five-runs/hour count. Completion validates every new report section's EVID
+references against evidence from the same run before inserting one immutable
+report. Adapter observations can reach the existing 30-source ceiling, while
+the selected family count remains capped at three. RLS policies, authenticated
+read-only grants, organization/plugin checks and immutable-history triggers are
+unchanged.

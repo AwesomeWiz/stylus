@@ -46,6 +46,35 @@ describe("external research architecture boundaries", () => {
     expect(safeFetch).not.toMatch(/headers:\s*\{[\s\S]*?cookie/i);
   });
 
+  it("keeps Reddit official, server-only, bounded, and free of HTML fallback", () => {
+    const reddit = source("src/modules/marketing/server/reddit-adapter.ts");
+    const config = source(
+      "src/modules/marketing/server/reddit-configuration.ts",
+    );
+    expect(reddit).toContain('const REDDIT_API = "https://oauth.reddit.com"');
+    expect(reddit).toContain(
+      'const REDDIT_TOKEN = "https://www.reddit.com/api/v1/access_token"',
+    );
+    expect(reddit).toContain('redirect: "error"');
+    expect(reddit).not.toMatch(/\.json\b|old\.reddit|cookie/i);
+    expect(config).toContain("STYLUS_REDDIT_API_ENABLED");
+    expect(config).toContain("STYLUS_REDDIT_CLIENT_SECRET");
+  });
+
+  it("routes editorial articles through centralized pinned-DNS safe fetch", () => {
+    const editorial = source(
+      "src/modules/marketing/server/fashion-editorial-adapter.ts",
+    );
+    const registry = source(
+      "src/modules/marketing/server/fashion-research-source-registry.ts",
+    );
+    expect(editorial).toContain("safeFetchArticle(");
+    expect(editorial).toContain("createRssAtomAdapter(");
+    expect(editorial).not.toMatch(/fetch\(/);
+    expect(registry).toContain("canonicalDomain");
+    expect(registry).toContain("articleFetchPermitted");
+  });
+
   it("does not wire external research into Council, memory, or the Windows worker", () => {
     const council = source(
       "src/modules/marketing/server/creative-council-orchestrator.ts",

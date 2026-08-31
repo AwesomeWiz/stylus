@@ -23,6 +23,35 @@ const base = {
   reports: [],
   role: "MEMBER" as const,
   runs: [],
+  sourcePlanPreviews: [
+    {
+      intent: "AUDIENCE_PAIN" as const,
+      reasonCodes: ["CONSUMER_DISCUSSION_SOURCE"],
+      sources: [
+        {
+          available: false,
+          family: "REDDIT" as const,
+          labels: ["Female Fashion Advice"],
+        },
+        {
+          available: true,
+          family: "EDITORIAL" as const,
+          labels: ["Retail Dive"],
+        },
+      ],
+    },
+    {
+      intent: "FASHION_TECH" as const,
+      reasonCodes: ["TECHNICAL_DISCUSSION_SOURCE"],
+      sources: [
+        {
+          available: true,
+          family: "HACKER_NEWS" as const,
+          labels: ["Hacker News"],
+        },
+      ],
+    },
+  ],
   sources: [],
 };
 
@@ -32,19 +61,33 @@ describe("External Research workspace", () => {
     vi.clearAllMocks();
   });
 
-  it("shows bounded sources without arbitrary prompt or generic URL controls", () => {
+  it("shows the deterministic source plan without arbitrary URL controls", () => {
     render(<ExternalResearchWorkspace {...base} />);
     expect(screen.getByLabelText("Research question")).toHaveAttribute(
       "maxlength",
       "500",
     );
-    expect(screen.getByLabelText("Hacker News stream")).toBeInTheDocument();
     expect(
-      screen.getAllByPlaceholderText("https://example.com/feed.xml"),
-    ).toHaveLength(2);
+      screen.queryByLabelText("Hacker News stream"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Female Fashion Advice/)).toHaveTextContent(
+      "configuration required",
+    );
+    expect(
+      screen.queryByRole("textbox", { name: /url|feed/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByLabelText(/provider|model|organization/i),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows the bounded HN stream only for fashion technology", () => {
+    render(<ExternalResearchWorkspace {...base} />);
+    fireEvent.change(screen.getByLabelText("Primary marketing intent"), {
+      target: { value: "FASHION_TECH" },
+    });
+    expect(screen.getByLabelText("Hacker News stream")).toBeInTheDocument();
+    expect(screen.getAllByText(/Hacker News/).length).toBeGreaterThan(0);
   });
 
   it("keeps VIEWER read-only", () => {
@@ -151,6 +194,39 @@ describe("External Research workspace", () => {
     expect(screen.getByRole("link", { name: /Open source/ })).toHaveAttribute(
       "href",
       "https://news.ycombinator.com/item?id=1",
+    );
+  });
+
+  it("renders fashion signals, opportunities, source coverage, and citations", () => {
+    render(
+      <ExternalResearchWorkspace
+        {...base}
+        evidence={[{ ...evidenceRow("EVID-1"), evidence_type: "REDDIT_POST" }]}
+        reports={[
+          {
+            created_at: "2026-08-31T00:01:00.000Z",
+            created_by: "actor",
+            id: "fashion-report",
+            organization_id: "org",
+            run_id: "run",
+            schema_version: "marketing-fashion-research-report-v1",
+            structured_report: fashionReport,
+            version_number: 1,
+          },
+        ]}
+        runs={[run]}
+      />,
+    );
+    expect(screen.getByText("Sizing trust gap")).toBeInTheDocument();
+    expect(
+      screen.getByText("Content opportunity candidates"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Reddit · Succeeded · 1 evidence/),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("EVID-1")[0]).toHaveAttribute(
+      "href",
+      "#run-EVID-1",
     );
   });
 
@@ -278,4 +354,49 @@ const report = {
   recommendations: [],
   summary: "Summary",
   unresolvedQuestions: [],
+};
+
+const fashionReport = {
+  audienceSignals: [
+    {
+      confidence: "MEDIUM",
+      evidenceRefs: ["EVID-1"],
+      signalType: "PAIN",
+      statement: "Shoppers cannot predict fit from size labels.",
+    },
+  ],
+  contentOpportunities: [
+    {
+      audienceTension: "A familiar size label still feels uncertain.",
+      caveats: ["One bounded community sample."],
+      confidence: "MEDIUM",
+      evidenceRefs: ["EVID-1"],
+      freshness: "Current at retrieval.",
+      opportunityType: "RELATABLE_PAIN",
+      suggestedAngle: "Explain why the same size varies between brands.",
+      title: "Sizing trust gap",
+      whyItMatters: "Fit uncertainty can delay purchase decisions.",
+    },
+  ],
+  debates: [],
+  languageSignals: [],
+  limitations: ["Small bounded sample."],
+  objections: [],
+  schemaVersion: "marketing-fashion-research-report-v1",
+  sourceCoverage: [
+    {
+      evidenceCount: 1,
+      failedRequestCount: 0,
+      family: "REDDIT",
+      sourceLabels: ["Female Fashion Advice"],
+      status: "SUCCEEDED",
+    },
+  ],
+  sourceDiversity: {
+    evidenceByType: { REDDIT_POST: 1 },
+    sourceFamilyCount: 1,
+    sourcesRepresented: ["Female Fashion Advice"],
+  },
+  summary: "Fit uncertainty is a recurring consumer tension.",
+  trendSignals: [],
 };

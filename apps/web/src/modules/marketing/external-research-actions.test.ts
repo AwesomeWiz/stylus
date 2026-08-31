@@ -62,9 +62,18 @@ describe("external research Server Action", () => {
         expect.objectContaining({
           p_actor_id: "00000000-0000-4000-8000-000000000002",
           p_organization_id: "00000000-0000-4000-8000-000000000001",
+          p_request_snapshot: expect.objectContaining({
+            intent: "AUDIENCE_PAIN",
+            plan: expect.objectContaining({
+              selectedSourceFamilies: ["REDDIT", "EDITORIAL"],
+            }),
+          }),
         }),
       );
       expect(JSON.stringify(mocks.rpc.mock.calls[0])).not.toMatch(/forged/);
+      const persisted = mocks.rpc.mock.calls[0]?.[1].p_request_snapshot;
+      expect(persisted).not.toHaveProperty("sourceIds");
+      expect(persisted).not.toHaveProperty("providerUrl");
     },
   );
 
@@ -80,10 +89,9 @@ describe("external research Server Action", () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
-  it("rejects invalid sources before resolving trusted context", async () => {
+  it("rejects HN source selection outside fashion tech before trusted context", async () => {
     const value = form();
-    value.set("rssFeedUrl", "http://127.0.0.1/private");
-    value.set("hackerNewsStream", "");
+    value.set("hackerNewsStream", "top");
     await expect(
       enqueueExternalResearchAction(initialExternalResearchActionState, value),
     ).resolves.toMatchObject({ status: "error" });
@@ -134,12 +142,14 @@ describe("external research Server Action", () => {
 function form() {
   const value = new FormData();
   value.set("invocationKey", "00000000-0000-4000-8000-000000000004");
-  value.set("objective", "AUDIENCE_PAINS");
-  value.set("question", "What pain points recur for startup teams?");
-  value.set("hackerNewsStream", "top");
-  value.set("queryTerm", "startup");
+  value.set("intent", "AUDIENCE_PAIN");
+  value.set("question", "What sizing pain points recur for fashion shoppers?");
+  value.set("queryTerm", "sizing");
   value.set("organizationId", "forged-organization");
   value.set("actorId", "forged-actor");
   value.set("jobId", "forged-job");
+  value.set("sourceIds", "forged-source");
+  value.set("communityIds", "forged-community");
+  value.set("providerUrl", "https://forged.example.test");
   return value;
 }

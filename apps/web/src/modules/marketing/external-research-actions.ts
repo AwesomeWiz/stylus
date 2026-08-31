@@ -14,9 +14,10 @@ import { getCurrentOrganizationContext } from "@/modules/organizations/server/co
 
 import { assertCanMutateMarketing } from "./authorization";
 import {
-  externalResearchRequestSchema,
+  externalResearchSubmissionSchema,
   type ExternalResearchActionState,
 } from "./external-research";
+import { planFashionResearch } from "./server/fashion-research-planner";
 
 const enqueueResultSchema = z
   .object({
@@ -31,21 +32,22 @@ export async function enqueueExternalResearchAction(
   form: FormData,
 ): Promise<ExternalResearchActionState> {
   try {
-    const request = externalResearchRequestSchema.parse({
+    const submission = externalResearchSubmissionSchema.parse({
       hackerNewsStream: form.get("hackerNewsStream") || null,
-      objective: form.get("objective"),
+      intent: form.get("intent"),
       queryTerms: form
         .getAll("queryTerm")
         .map(String)
         .map((term) => term.trim())
         .filter(Boolean),
       question: form.get("question"),
-      rssFeedUrls: form
-        .getAll("rssFeedUrl")
-        .map(String)
-        .map((url) => url.trim())
-        .filter(Boolean),
     });
+    const request = {
+      intent: submission.intent,
+      plan: planFashionResearch(submission),
+      queryTerms: submission.queryTerms,
+      question: submission.question,
+    };
     const invocationKey = String(form.get("invocationKey") ?? "");
     if (!/^[0-9a-f-]{36}$/i.test(invocationKey))
       throw new Error("invalid_request");

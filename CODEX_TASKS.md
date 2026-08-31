@@ -2,57 +2,33 @@
 
 # Current
 
-## TASK-017B — External Research Content Enrichment
+## TASK-017C — Fashion Marketing Intelligence
 
-Status: COMPLETE / READY FOR MERGE
+Status: COMPLETE / READY FOR MANUAL QA
 
-The existing TASK-017 durable SERVERLESS path now enriches only matched HN
-stories with native text, bounded top-level/one-level discussion and bounded
-linked-article text through the pinned-DNS safe-fetch boundary. Immutable
-evidence distinguishes HN story, HN text, HN comment and article content with
-per-item provenance and hashes. Deterministic extraction/preprocessing still
-permits at most one trusted ModelGateway synthesis and fits the Vercel Hobby
-window. Hosted evidence confirms that
-`20260825001720_external_research_content_enrichment.sql` is applied. Manual
-notes and TASK-015/TASK-016 remain unchanged.
-TASK-017C, TASK-018 and TASK-020 have not started.
+The existing TASK-017 durable SERVERLESS path now plans source families from one
+controlled Marketing intent before retrieval. Ordinary fashion-consumer intents
+use approved-configuration Reddit and/or curated fashion editorial sources;
+Hacker News is selected only for `FASHION_TECH`. Immutable evidence adds Reddit
+post/comment provenance, and the versioned fashion report produces bounded
+signals plus strategic content opportunity candidates with exact EVID
+citations. Retrieval remains deterministic and final interpretation makes zero
+or one trusted ModelGateway call. TASK-015/TASK-016 are not invoked. TASK-017D,
+TASK-018 and TASK-020 have not started.
 
-Hosted article QA identified and verified a Node 24 custom-lookup compatibility
-correction while preserving the single validated address and all SSRF/TLS
-limits. Follow-up durable traces separated a 1,598-token truncated structured
-response from a later single-attempt 25-second provider timeout. Synthesis now
-uses an exact per-run evidence-reference enum, concise report bounds and a
-35-second window inside the unchanged 55-second workflow reserve. UI evidence
-ordering is numeric; stable persisted IDs are unchanged. Hosted retest remains.
+Reddit is disabled by default. Enabling its fixed-host OAuth adapter requires
+Reddit approval for the exact deployment/use case plus complete server-only
+configuration. No HTML scraping or fallback exists. Curated Vogue and Retail
+Dive feeds remain available through centralized pinned-DNS safe fetch; optional
+search discovery has a narrow interface but no mandatory paid provider.
 
-The final hosted enrichment run persisted 13 evidence rows, including three
-article chunks, but exposed a second 1,598-token `length` completion. The
-synthesis schema still permitted more response content than its 1,600-token
-ceiling despite the concise prompt. Its hard response cardinality, text and
-per-statement citation limits now fit that ceiling without removing input
-evidence or changing provenance, policy, timeout, retry or one-call behavior.
-Hosted structured-synthesis/report-persistence retest remains.
-
-Two later independent hosted attempts returned HTTP-success JSON that failed
-the OpenAI-compatible envelope before `message.content` extraction. The adapter
-still rejects those responses, but its safe trace now adds bounded Zod issue
-codes and schema paths without retaining provider values or bodies.
-
-The next deployed CDLM attempt passed the provider envelope and returned usage
-plus `finishReason=stop`, then failed because `message.content` was malformed
-JSON. Investigation confirmed that the generated strict schema is closed and
-contains the exact per-run EVID enum, while the configured `openrouter/free`
-alias can select different free models. OpenRouter structured requests now set
-`provider.require_parameters=true`; hosted production guidance requires a
-concrete model advertising structured outputs rather than the random free
-router. The final acceptance result is recorded below.
-
-Final hosted acceptance passed with the TASK-017B executor. The accepted run
-persisted one typed HN story, ten bounded comments and three article chunks,
-then completed one structured `remote-default` attempt and one immutable
-version-1 report. All cited references, including `EVID-14`, belonged to the
-run's exact persisted evidence set. No retry, repair, extra model call, memory
-write or automatic Council invocation occurred.
+Verification passed with 9 focused files / 77 tests and the full 135-file /
+700-test web suite. Repository lint, worker/web typechecks, the web production
+build, scoped formatting and npm audit also passed. The linked non-applying
+Supabase dry run reports only
+`20260825001730_fashion_marketing_intelligence.sql` pending. Local pgTAP could
+not run because Docker/Podman is unavailable; the migration and hosted source
+paths remain for manual QA.
 
 ---
 
@@ -586,14 +562,13 @@ social scraping, automatic Council research or automatic memory promotion.
 
 ---
 
-## TASK-017C — Fashion Research Source Expansion
+## TASK-017D — Fashion Social Intelligence
 
 Status: FUTURE / NOT STARTED
 
-Planned discovery should prioritize Reddit plus bounded web/fashion-editorial
-source discovery while reusing TASK-017B evidence, provenance, safe-fetch and
-partial-failure contracts. Instagram, TikTok, Pinterest and YouTube intelligence
-remain a separate future media/platform capability.
+Future discovery may evaluate feasible, authorized Instagram, TikTok, YouTube
+and Pinterest visual/social signals. TASK-017D must not be inferred from the
+text/RSS/Reddit boundaries implemented by TASK-017C.
 
 ---
 

@@ -6,6 +6,7 @@ import {
   listMarketingResearch,
 } from "@/modules/marketing/server/data";
 import { requireEnabledPlugin } from "@/modules/plugins/server/guard";
+import { getFashionResearchPlanPreviews } from "@/modules/marketing/server/fashion-research-planner";
 
 export const maxDuration = 60;
 
@@ -32,6 +33,7 @@ export default async function Page({
           {...externalResearch}
           initialInvocationKey={crypto.randomUUID()}
           role={context.membership.role}
+          sourcePlanPreviews={getFashionResearchPlanPreviews()}
         />
         <section
           aria-labelledby="manual-research-heading"

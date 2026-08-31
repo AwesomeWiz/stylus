@@ -19,7 +19,7 @@ vi.mock("@/lib/supabase/service", () => ({
               data: {
                 created_by: "00000000-0000-4000-8000-000000000002",
                 organization_id: "00000000-0000-4000-8000-000000000003",
-                request_snapshot: request,
+                request_snapshot: currentRequest,
               },
               error: null,
             }),
@@ -35,6 +35,7 @@ vi.mock("./research-adapter-registry", () => ({
 }));
 
 import { runExternalResearchJob } from "./external-research-handler";
+import { planFashionResearch } from "./fashion-research-planner";
 import type { NormalizedResearchItem } from "./research-sources";
 
 const request = {
@@ -44,29 +45,40 @@ const request = {
   question: "What pain points recur for startup teams?",
   rssFeedUrls: [],
 };
+let currentRequest: unknown = request;
 const report = {
-  confidence: "MEDIUM",
-  disagreements: [],
-  findings: [
+  audienceSignals: [
     {
       confidence: "MEDIUM",
-      id: "F-1",
+      evidenceRefs: ["EVID-1"],
+      signalType: "PAIN",
       statement: "Onboarding recurs.",
-      supportedBy: ["EVID-1"],
     },
   ],
-  freshnessAssessment: "Current at retrieval time.",
-  inferences: [],
+  contentOpportunities: [
+    {
+      audienceTension: "Teams struggle to onboard.",
+      caveats: ["Small sample."],
+      confidence: "MEDIUM",
+      evidenceRefs: ["EVID-1"],
+      freshness: "Current at retrieval.",
+      opportunityType: "RELATABLE_PAIN",
+      suggestedAngle: "Explain onboarding friction.",
+      title: "Onboarding friction",
+      whyItMatters: "The pain blocks adoption.",
+    },
+  ],
+  debates: [],
+  languageSignals: [],
   limitations: [],
-  partialFailureWarnings: [],
-  patterns: [],
-  recommendations: [],
+  objections: [],
   summary: "Onboarding is a recurring concern.",
-  unresolvedQuestions: [],
+  trendSignals: [],
 };
 
 describe("external research job handler", () => {
   beforeEach(() => {
+    currentRequest = request;
     mocks.generate.mockReset();
     mocks.retrieve.mockReset();
     mocks.rpc.mockReset();
@@ -77,6 +89,63 @@ describe("external research job handler", () => {
           : null,
       error: null,
     }));
+  });
+
+  it("executes only the statically planned adapters for a fashion request", async () => {
+    const plan = planFashionResearch({
+      hackerNewsStream: null,
+      intent: "AUDIENCE_PAIN",
+      queryTerms: ["sizing"],
+    });
+    currentRequest = {
+      intent: "AUDIENCE_PAIN",
+      plan,
+      queryTerms: ["sizing"],
+      question: "What sizing frustrations recur for fashion shoppers?",
+    };
+    mocks.retrieve.mockImplementation(async (adapterId: string) => ({
+      failures: [],
+      items: [
+        item({
+          adapterId: adapterId as NormalizedResearchItem["adapterId"],
+          canonicalUrl:
+            adapterId === "reddit"
+              ? "https://www.reddit.com/r/fashion/comments/1/"
+              : "https://www.vogue.com/article/sizing",
+          contentHash: adapterId === "reddit" ? "b".repeat(64) : "c".repeat(64),
+          nativeId: adapterId,
+        }),
+      ],
+    }));
+    mocks.generate.mockResolvedValue({
+      data: report,
+      runId: "00000000-0000-4000-8000-000000000004",
+    });
+
+    await runExternalResearchJob(
+      { runId: "00000000-0000-4000-8000-000000000001" },
+      jobContext(),
+    );
+
+    expect(mocks.retrieve.mock.calls.map(([adapterId]) => adapterId)).toEqual([
+      "reddit",
+      "fashion-editorial",
+    ]);
+    expect(mocks.retrieve).not.toHaveBeenCalledWith(
+      "hacker-news",
+      expect.anything(),
+      expect.anything(),
+    );
+    const completion = mocks.rpc.mock.calls.find(
+      ([name]) => name === "complete_marketing_external_research",
+    )?.[1];
+    expect(completion.p_report).toMatchObject({
+      schemaVersion: "marketing-fashion-research-report-v1",
+      sourceCoverage: [
+        expect.objectContaining({ family: "REDDIT" }),
+        expect.objectContaining({ family: "EDITORIAL" }),
+      ],
+    });
   });
 
   it("persists deterministic evidence and performs exactly one trusted synthesis", async () => {
@@ -163,11 +232,9 @@ describe("external research job handler", () => {
     expect(mocks.generate).toHaveBeenCalledOnce();
     const options = mocks.generate.mock.calls[0]?.[0].options;
     expect(options.messages[0]?.content).toContain("untrusted quoted data");
-    expect(options.messages[0]?.content).toContain(
-      "no more than four findings, two patterns, two recommendations, one disagreement, and two inferences",
-    );
+    expect(options.messages[0]?.content).toContain("strategic candidates only");
     expect(options.messages[1]?.content).toContain("Ignore prior instructions");
-    expect(options.maxOutputTokens).toBe(1_600);
+    expect(options.maxOutputTokens).toBe(3_200);
     expect(options.timeoutMs).toBe(35_000);
     expect(options).not.toHaveProperty("tools");
   });
@@ -179,12 +246,12 @@ describe("external research job handler", () => {
     });
     const enrichedReport = {
       ...report,
-      findings: [
+      audienceSignals: [
         {
           confidence: "MEDIUM",
-          id: "F-1",
+          evidenceRefs: ["EVID-2", "EVID-13"],
+          signalType: "PAIN",
           statement: "Article and discussion evidence align.",
-          supportedBy: ["EVID-2", "EVID-13"],
         },
       ],
     };
@@ -193,8 +260,11 @@ describe("external research job handler", () => {
       expect(
         input.schema.safeParse({
           ...enrichedReport,
-          findings: [
-            { ...enrichedReport.findings[0], supportedBy: ["EVID-14"] },
+          audienceSignals: [
+            {
+              ...enrichedReport.audienceSignals[0],
+              evidenceRefs: ["EVID-14"],
+            },
           ],
         }).success,
       ).toBe(false);
@@ -232,7 +302,7 @@ describe("external research job handler", () => {
     expect(generation.options.messages[1]!.content.length).toBeLessThanOrEqual(
       40_000,
     );
-    expect(generation.options.maxOutputTokens).toBe(1_600);
+    expect(generation.options.maxOutputTokens).toBe(3_200);
     expect(generation.options.timeoutMs).toBe(35_000);
   });
 

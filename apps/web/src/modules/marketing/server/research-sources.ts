@@ -18,6 +18,8 @@ export const researchEvidenceKinds = [
   "HN_TEXT",
   "HN_COMMENT",
   "ARTICLE_CONTENT",
+  "REDDIT_POST",
+  "REDDIT_COMMENT",
 ] as const;
 
 export type ResearchEvidenceKind = (typeof researchEvidenceKinds)[number];
@@ -36,7 +38,7 @@ export type ResearchEvidenceDraft = {
 };
 
 export type NormalizedResearchItem = {
-  adapterId: "hacker-news" | "rss-atom";
+  adapterId: "hacker-news" | "rss-atom" | "reddit" | "fashion-editorial";
   author: string | null;
   canonicalUrl: string | null;
   contentHash: string;

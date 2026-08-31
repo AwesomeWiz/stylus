@@ -541,3 +541,42 @@ intelligence remains separate because it requires richer media and platform
 handling. A future authorized workflow can request an explicit report plus
 selected evidence through a server-only bounded projection; no existing Council
 path consumes it automatically.
+
+## TASK-017C Fashion Marketing Intelligence
+
+TASK-017C keeps External Research inside the Marketing Research workspace and
+turns evidence into bounded strategic opportunity candidates. Each request has
+exactly one controlled intent: `AUDIENCE_PAIN`, `AUDIENCE_DESIRE`,
+`AUDIENCE_LANGUAGE`, `PURCHASE_OBJECTION`, `QUESTION_DEMAND`,
+`BELIEF_OR_MISCONCEPTION`, `CONTROVERSY_OR_DEBATE`, `TREND_SIGNAL`,
+`COMPETITOR_SIGNAL` or `FASHION_TECH`.
+
+A deterministic planner, never a model, selects `REDDIT`, `EDITORIAL` and/or
+`HACKER_NEWS` with controlled reason codes. HN is used only for
+`FASHION_TECH`. Source IDs, domains, communities, search-provider identity and
+credentials are server-owned and cannot be supplied by the browser. The UI
+previews the selected families and configured source labels.
+
+The code-owned V1 registry includes bounded fashion advice, fashion, durability,
+ethical-fashion and streetwear communities plus Vogue and Retail Dive editorial
+feeds. Community priority varies by intent and selects at most two. Reddit is
+disabled unless the operator explicitly enables an approved OAuth use case.
+Editorial article candidates must match the registry domain and pass the shared
+pinned-DNS safe fetcher. Optional search discovery is an interface only; known
+feeds work without a paid provider.
+
+The `marketing-fashion-research-report-v1` artifact contains a concise summary,
+audience, language and trend signals, objections, debates, deterministic source
+coverage/diversity and at most four Content Opportunity Candidates. Signal
+types are `PAIN`, `DESIRE`, `QUESTION`, `OBJECTION`, `LANGUAGE`,
+`MISCONCEPTION`, `DEBATE`, `TREND`, `COMPETITOR` and `TECH`. Opportunity types
+are `RELATABLE_PAIN`, `EDUCATIONAL`, `MYTH_BUSTING`, `DEBATE`,
+`TREND_EXPLAINER`, `BUYING_OBJECTION`, `IDENTITY_ASPIRATION`,
+`QUESTION_ANSWER`, `BRAND_TRUST` and `PRODUCT_CONTEXT`.
+
+Opportunities are evidence-backed strategic angles, not completed creative.
+They contain no finished hook, script, shot list, storyboard, CTA, caption,
+visual treatment or Council judgment. Every signal and opportunity cites one to
+three exact current-run EVID identifiers. TASK-017C invokes no Council workflow,
+writes no memory and implements no performance learning. Instagram, TikTok,
+YouTube and Pinterest remain TASK-017D discovery.
