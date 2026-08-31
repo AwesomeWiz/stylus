@@ -4,7 +4,7 @@ Last Updated: 2026-08-31
 
 ## Overall Status
 
-TASK-017C COMPLETE / READY FOR MANUAL QA
+TASK-017C COMPLETE / HOSTED ACCEPTANCE PASSED
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
@@ -19,16 +19,16 @@ preserving TASK-017B enrichment and TASK-016's exact Strategic Review.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017C COMPLETE / READY FOR MANUAL QA
+Status: TASK-017C COMPLETE / HOSTED ACCEPTANCE PASSED
 
 ---
 
 ## Current Objective
 
-Apply the forward TASK-017C migration and perform one bounded hosted QA scenario.
-Preserve source-plan-to-evidence-to-opportunity provenance, organization
-isolation, the single synthesis-call maximum and unchanged TASK-015/TASK-016
-behavior. TASK-017D, TASK-018 and TASK-020 remain unstarted.
+TASK-017C hosted acceptance is complete. Preserve
+source-plan-to-evidence-to-opportunity provenance, organization isolation, the
+single synthesis-call maximum and unchanged TASK-015/TASK-016 behavior.
+TASK-017D, TASK-018 and TASK-020 remain unstarted.
 
 ---
 
@@ -1461,3 +1461,17 @@ oversize diagnostics were confirmed as Vogue article bodies correctly rejected
 by the unchanged 512 KiB limit. Corrective verification passed 7 focused files /
 52 tests, the complete 136-file / 708-test web suite, scoped formatting, lint,
 web typecheck and the production web build. No migration was required.
+
+Final hosted acceptance passed after corrective commit
+`9bbe02a7b23cd74f06b3b09025201c32ec6c382f`. Initial hosted QA had retained
+unrelated Vogue evidence because generic `fashion` overlap was accepted. An
+intermediate 15:58 UTC run persisted `AUDIENCE_PAIN` because that intent was
+selected by the operator; it was not an intent-propagation defect. The final
+deliberate `TREND_SIGNAL` run
+`d49b4df5-bc5e-4f1b-9571-bc1706915a39`, backed by job
+`671777c3-b743-411f-952c-178323c9924f`, checked 30 Vogue and 10 Retail Dive
+candidates, retained zero matches, and safely failed retrieval while Reddit was
+unavailable by policy. Hacker News was not selected. It persisted zero evidence
+and reports and created zero AI runs, Council invocations or memory writes; no
+TASK-017D, TASK-018 or TASK-020 behavior ran. Refusing to synthesize unsupported
+sustainable-fashion claims is the correct zero-evidence outcome.

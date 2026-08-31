@@ -292,10 +292,11 @@ workflow. TASK-020 remains the unimplemented conversational product.
 - [ ] social-platform intelligence (separate future media/platform phase)
 
 TASK-017B implementation and hosted acceptance are complete and merged.
-TASK-017C implementation is verified on its task branch and awaits hosted manual
-QA and the user-managed merge. It adds no Instagram, TikTok, YouTube or Pinterest
-ingestion; those remain TASK-017D discovery. TASK-018 remains Performance
-Learning.
+TASK-017C implementation and hosted acceptance are complete on its task branch
+and await the user-managed merge. The final deliberate `TREND_SIGNAL` scenario
+correctly retained zero evidence and produced no report rather than synthesizing
+unsupported claims. It adds no Instagram, TikTok, YouTube or Pinterest ingestion;
+those remain TASK-017D discovery. TASK-018 remains Performance Learning.
 
 ---
 

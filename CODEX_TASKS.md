@@ -4,7 +4,7 @@
 
 ## TASK-017C — Fashion Marketing Intelligence
 
-Status: COMPLETE / READY FOR MANUAL QA
+Status: COMPLETE / HOSTED ACCEPTANCE PASSED / READY FOR USER-MANAGED MERGE
 
 The existing TASK-017 durable SERVERLESS path now plans source families from one
 controlled Marketing intent before retrieval. Ordinary fashion-consumer intents
@@ -39,6 +39,15 @@ oversize records were Vogue article responses correctly stopped by the existing
 512 KiB limit, which remains unchanged. Corrective verification passed 7 focused
 files / 52 tests and the full 136-file / 708-test web suite plus formatting,
 lint, web typecheck and production build. No corrective migration is needed.
+
+Hosted acceptance passed after corrective commit
+`9bbe02a7b23cd74f06b3b09025201c32ec6c382f`. Initial QA exposed unrelated Vogue
+evidence admitted by generic `fashion` overlap. A later 15:58 UTC
+`AUDIENCE_PAIN` run reflected operator selection, not an intent-persistence
+defect. The final deliberate `TREND_SIGNAL` run checked 30 Vogue and 10 Retail
+Dive candidates, retained zero evidence, made zero synthesis calls, created no
+report, and failed safely with Reddit unavailable by policy. This zero-evidence
+result is accepted because unsupported marketing claims must not be synthesized.
 
 ---
 

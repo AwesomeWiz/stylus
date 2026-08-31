@@ -15,6 +15,10 @@ All notable user-facing changes to Stylus will be documented here.
   such as `fashion` cannot make an unrelated feed/article candidate eligible.
   Explicit topic concepts now gate feed metadata before article fetch and gate
   extracted article content again before evidence persistence.
+- Completed TASK-017C hosted acceptance: a deliberate sustainable-fashion
+  `TREND_SIGNAL` run rejected all 40 unrelated editorial candidates, retained
+  zero evidence, made no AI call, and safely produced no unsupported report
+  while Reddit remained unavailable by policy.
 
 - Fixed TASK-017B pinned article retrieval on Node runtimes that request the
   custom DNS lookup result with `all: true`; the same validated address remains
