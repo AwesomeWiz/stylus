@@ -627,15 +627,18 @@ search snippet. Retained `WEB_PAGE` evidence comes only from an independent
 robots-aware centralized pinned-DNS fetch and deterministic extraction. The
 forward migration is
 `20260825001750_fashion_web_consumer_evidence.sql`. TASK-017E remains current
-until full verification, linked dry-run and one hosted acceptance run pass.
+until one hosted acceptance run passes.
 
 Local verification passes: 10 focused files / 125 tests, 141 full web files /
 791 tests, 5 worker files / 32 tests, lint, worker/web typechecks, worker/web
 production builds, scoped formatting, migration contracts and npm audit with
-zero vulnerabilities. The linked non-applying dry run reports only migration
-`20260825001750_fashion_web_consumer_evidence.sql` pending. Local pgTAP is
-unavailable because Docker/Podman is not installed. Hosted provider execution
-remains required before completion.
+zero vulnerabilities. The linked dry run reported only migration
+`20260825001750_fashion_web_consumer_evidence.sql`. Its first apply exposed an
+inline PL/pgSQL `CASE` parser ambiguity; the still-unapplied migration was
+corrected to use a typed source-count-limit variable, PostgreSQL accepted it,
+and the linked ledger now records `01750` applied. Local pgTAP is unavailable
+because Docker/Podman is not installed. Hosted provider execution remains
+required before completion.
 
 ---
 

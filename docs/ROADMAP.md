@@ -292,8 +292,8 @@ workflow. TASK-020 remains the unimplemented conversational product.
   fail-closed platform capability discovery
 - [x] TASK-017E bounded public-web discovery, independent safe page retrieval
   and typed consumer/fashion web evidence implementation
-- [ ] TASK-017E hosted migration/configuration and one deliberate acceptance
-  run
+- [x] TASK-017E hosted forward migration
+- [ ] TASK-017E hosted provider configuration and one deliberate acceptance run
 - [ ] activate approved official social transports with compliant token and
   retention/deletion lifecycles
 

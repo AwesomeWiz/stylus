@@ -53,6 +53,7 @@ declare
   v_run_id uuid := gen_random_uuid();
   v_job_id uuid := gen_random_uuid();
   v_source_count integer;
+  v_source_count_limit integer;
   v_is_fashion boolean;
   v_plan_version text;
 begin
@@ -243,7 +244,8 @@ begin
     end if;
   end if;
 
-  if v_source_count not between 1 and case when v_is_fashion then 4 else 3 end then
+  v_source_count_limit := case when v_is_fashion then 4 else 3 end;
+  if v_source_count not between 1 and v_source_count_limit then
     raise exception 'External research sources invalid' using errcode = '22023';
   end if;
 

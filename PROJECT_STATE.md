@@ -24,9 +24,9 @@ Status: TASK-017E IMPLEMENTED / HOSTED ACCEPTANCE PENDING
 
 ## Current Objective
 
-Finish TASK-017E verification, apply its forward migration and server-only
-discovery credential in a hosted preview, then perform one deliberate hosted
-acceptance run. TASK-018 Performance Learning remains next and unstarted.
+Confirm the TASK-017E server-only discovery credential in the hosted preview,
+then perform one deliberate hosted acceptance run. TASK-018 Performance
+Learning remains next and unstarted.
 Preserve source-plan-to-evidence-to-opportunity provenance, organization
 isolation and the zero/one synthesis-call invariant.
 
@@ -1545,13 +1545,16 @@ The forward migration is
 adapter/evidence/report contract and forward-replaces the service-role enqueue
 and completion validation functions. Existing RLS, one-active-run,
 five-runs/hour, immutable history and organization/plugin boundaries remain.
-Do not mark TASK-017E complete or merge-ready until linked migration dry-run,
-full verification and one deliberate hosted acceptance are recorded.
+Do not mark TASK-017E complete or merge-ready until one deliberate hosted
+acceptance run is recorded.
 
 Local verification passed on 2026-09-01: 10 focused files / 125 tests, the full
 141-file / 791-test web suite, 5 worker files / 32 tests, repository lint,
 worker/web typechecks, both production builds, scoped formatting, migration
-contracts and npm audit with zero vulnerabilities. The linked dry run reports
-only `20260825001750_fashion_web_consumer_evidence.sql` pending and applies
-nothing. Local pgTAP could not run because Docker/Podman is unavailable. Hosted
-acceptance remains the only completion gate.
+contracts and npm audit with zero vulnerabilities. The linked dry run reported
+only `20260825001750_fashion_web_consumer_evidence.sql`. Its first apply exposed
+an ambiguous inline `CASE` parser boundary in the enqueue function; the
+unapplied migration was corrected to compute the source-count limit in a typed
+local variable. PostgreSQL then accepted the migration and the linked ledger
+now records `01750` applied. Local pgTAP could not run because Docker/Podman is
+unavailable. Hosted acceptance remains the only completion gate.

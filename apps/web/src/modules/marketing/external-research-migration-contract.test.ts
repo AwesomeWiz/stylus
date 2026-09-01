@@ -161,6 +161,15 @@ describe("TASK-017 migration contract", () => {
     expect(webSql).toContain("marketing-fashion-web-research-report-v1");
     expect(webSql).toContain("requested_source_count between 1 and 4");
     expect(webSql).toContain(
+      "v_source_count_limit := case when v_is_fashion then 4 else 3 end",
+    );
+    expect(webSql).toContain(
+      "v_source_count not between 1 and v_source_count_limit",
+    );
+    expect(webSql).not.toContain(
+      "v_source_count not between 1 and case when v_is_fashion",
+    );
+    expect(webSql).toContain(
       "jsonb_array_length(p_request_snapshot->'plan'->'web'->'queryvariants') > 3",
     );
     expect(webSql).toContain("security definer set search_path = ''");

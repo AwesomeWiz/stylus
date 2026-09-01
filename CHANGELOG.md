@@ -4,6 +4,10 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Corrected the still-unapplied TASK-017E enqueue migration to compute its
+  fashion/legacy source-count limit in a typed PL/pgSQL variable, then applied
+  `20260825001750_fashion_web_consumer_evidence.sql` successfully to the linked
+  hosted database without changing validation or authorization behavior.
 - Added TASK-017E bounded fashion web discovery with deterministic intent-aware
   queries, fixed-host Tavily candidate discovery and independently fetched
   `WEB_PAGE` evidence with source-class and full-page provenance.
