@@ -237,3 +237,10 @@ invoke Marketing internals outside the registry. A slow/blocked article or
 comment becomes bounded partial failure when story evidence remains. Platform
 interruption leaves the durable job lifecycle authoritative rather than adding
 an untracked fire-and-forget path.
+
+TASK-017D adds no job type, child job or execution class. Social planning and
+safe unavailable observations execute inside the same exact
+`marketing.external-research.run` SERVERLESS handler, atomic claim and one
+attempt. A future approved social transport must fit the existing 20-second
+retrieval, 55-second application and 60-second Vercel Hobby ceilings. Ordinary
+social research never silently starts TASK-014's EXTERNAL_WORKER media flow.

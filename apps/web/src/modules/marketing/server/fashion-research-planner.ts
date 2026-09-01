@@ -12,10 +12,13 @@ import {
   listRedditCommunitySources,
 } from "./fashion-research-source-registry";
 import { getRedditConfiguration } from "./reddit-configuration";
+import { listSocialPlatformCapabilities } from "./social-platform-registry";
 
 type PlanInput = {
+  enabledYouTubeChannelIds?: string[];
   hackerNewsStream: "top" | "new" | "ask" | null;
   intent: MarketingResearchIntent;
+  planVersion?: FashionResearchSourcePlan["version"];
   queryTerms: string[];
 };
 
@@ -32,6 +35,22 @@ const sourceFamiliesByIntent: Record<
   CONTROVERSY_OR_DEBATE: ["REDDIT", "EDITORIAL"],
   TREND_SIGNAL: ["EDITORIAL", "REDDIT"],
   COMPETITOR_SIGNAL: ["EDITORIAL"],
+  FASHION_TECH: ["HACKER_NEWS", "EDITORIAL", "REDDIT"],
+};
+
+const socialSourceFamiliesByIntent: Record<
+  MarketingResearchIntent,
+  readonly ResearchSourceFamily[]
+> = {
+  AUDIENCE_PAIN: ["REDDIT", "EDITORIAL", "SOCIAL"],
+  AUDIENCE_DESIRE: ["REDDIT", "EDITORIAL", "SOCIAL"],
+  AUDIENCE_LANGUAGE: ["REDDIT", "SOCIAL"],
+  PURCHASE_OBJECTION: ["REDDIT", "EDITORIAL", "SOCIAL"],
+  QUESTION_DEMAND: ["REDDIT", "EDITORIAL", "SOCIAL"],
+  BELIEF_OR_MISCONCEPTION: ["REDDIT", "EDITORIAL", "SOCIAL"],
+  CONTROVERSY_OR_DEBATE: ["REDDIT", "EDITORIAL", "SOCIAL"],
+  TREND_SIGNAL: ["EDITORIAL", "REDDIT", "SOCIAL"],
+  COMPETITOR_SIGNAL: ["EDITORIAL", "SOCIAL"],
   FASHION_TECH: ["HACKER_NEWS", "EDITORIAL", "REDDIT"],
 };
 
@@ -54,7 +73,13 @@ const redditCommunityPriority: Record<
 export function planFashionResearch(
   input: PlanInput,
 ): FashionResearchSourcePlan {
-  const selectedSourceFamilies = [...sourceFamiliesByIntent[input.intent]];
+  const version =
+    input.planVersion ?? "marketing-fashion-social-source-plan-v1";
+  const selectedSourceFamilies = [
+    ...(version === "marketing-fashion-source-plan-v1"
+      ? sourceFamiliesByIntent[input.intent]
+      : socialSourceFamiliesByIntent[input.intent]),
+  ];
   const redditById = new Map(
     listRedditCommunitySources()
       .filter((source) => source.relevantIntents.includes(input.intent))
@@ -95,6 +120,12 @@ export function planFashionResearch(
   }
   if (selectedSourceFamilies.includes("HACKER_NEWS"))
     reasonCodes.add("TECHNICAL_DISCUSSION_SOURCE");
+  if (selectedSourceFamilies.includes("SOCIAL"))
+    reasonCodes.add(
+      input.intent === "COMPETITOR_SIGNAL"
+        ? "COMPETITOR_SOCIAL_SOURCE"
+        : "OFFICIAL_SOCIAL_DISCOVERY_SOURCE",
+    );
 
   return fashionResearchSourcePlanSchema.parse({
     editorial: {
@@ -113,18 +144,30 @@ export function planFashionResearch(
         externalResearchLimits.redditQueryVariants,
       ),
     },
+    social: {
+      selectedPlatforms: selectedSourceFamilies.includes("SOCIAL")
+        ? (["YOUTUBE"] as const)
+        : [],
+      youtubeChannelIds:
+        input.intent === "COMPETITOR_SIGNAL"
+          ? [...new Set(input.enabledYouTubeChannelIds ?? [])]
+              .sort()
+              .slice(0, externalResearchLimits.youtubeChannelIdsPerRun)
+          : [],
+    },
     selectedSourceFamilies,
-    version: "marketing-fashion-source-plan-v1",
+    version,
   });
 }
 
 export function assertFashionResearchPlan(
   plan: FashionResearchSourcePlan,
-  input: Omit<PlanInput, "hackerNewsStream">,
+  input: Omit<PlanInput, "hackerNewsStream" | "planVersion">,
 ) {
   const expected = planFashionResearch({
     ...input,
     hackerNewsStream: plan.hackerNews?.stream ?? null,
+    planVersion: plan.version,
   });
   if (JSON.stringify(expected) !== JSON.stringify(plan))
     throw new Error("Persisted research source plan is invalid.");
@@ -145,6 +188,7 @@ export function getFashionResearchPlanPreviews() {
     const redditNames = new Map(
       listRedditCommunitySources().map((source) => [source.id, source.name]),
     );
+    const socialCapabilities = listSocialPlatformCapabilities();
     return {
       intent: typedIntent,
       reasonCodes: plan.reasonCodes,
@@ -178,6 +222,29 @@ export function getFashionResearchPlanPreviews() {
                 available: true,
                 family: "HACKER_NEWS" as const,
                 labels: ["Hacker News"],
+              },
+            ]
+          : []),
+        ...(plan.selectedSourceFamilies.includes("SOCIAL")
+          ? [
+              {
+                available: plan.social.selectedPlatforms.some(
+                  (platform) =>
+                    socialCapabilities.find(
+                      (capability) => capability.platform === platform,
+                    )?.status === "AVAILABLE",
+                ),
+                family: "SOCIAL" as const,
+                labels: plan.social.selectedPlatforms.map(
+                  (platform) =>
+                    socialCapabilities.find(
+                      (capability) => capability.platform === platform,
+                    )?.name ?? platform,
+                ),
+                statuses: socialCapabilities.map((capability) => ({
+                  platform: capability.platform,
+                  status: capability.status,
+                })),
               },
             ]
           : []),

@@ -4,14 +4,14 @@ Last Updated: 2026-08-31
 
 ## Overall Status
 
-TASK-017C COMPLETE / HOSTED ACCEPTANCE PASSED
+TASK-017D IMPLEMENTED / HOSTED ACCEPTANCE PENDING
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
-durable fashion-marketing research system. TASK-017C adds deterministic intent
-planning, approved-configuration Reddit support, curated editorial retrieval,
-typed fashion signals and evidence-backed content opportunity candidates while
-preserving TASK-017B enrichment and TASK-016's exact Strategic Review.
+durable fashion-marketing research system. TASK-017D adds a compliant,
+fail-closed social-intelligence boundary, platform/modality provenance,
+competitor social identities and evidence-backed content-pattern fields while
+preserving TASK-017C relevance and TASK-016's exact Strategic Review.
 
 ---
 
@@ -19,16 +19,16 @@ preserving TASK-017B enrichment and TASK-016's exact Strategic Review.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017C COMPLETE / HOSTED ACCEPTANCE PASSED
+Status: TASK-017D IMPLEMENTED / HOSTED ACCEPTANCE PENDING
 
 ---
 
 ## Current Objective
 
-TASK-017C hosted acceptance is complete. Preserve
-source-plan-to-evidence-to-opportunity provenance, organization isolation, the
-single synthesis-call maximum and unchanged TASK-015/TASK-016 behavior.
-TASK-017D, TASK-018 and TASK-020 remain unstarted.
+Complete TASK-017D hosted acceptance after applying its forward migration and
+deploying the task branch. Preserve source-plan-to-evidence-to-opportunity
+provenance, organization isolation, the zero/one synthesis-call invariant and
+unchanged TASK-015/TASK-016 behavior. TASK-018 and TASK-020 remain unstarted.
 
 ---
 
@@ -1475,3 +1475,35 @@ unavailable by policy. Hacker News was not selected. It persisted zero evidence
 and reports and created zero AI runs, Council invocations or memory writes; no
 TASK-017D, TASK-018 or TASK-020 behavior ran. Refusing to synthesize unsupported
 sustainable-fashion claims is the correct zero-evidence outcome.
+
+### TASK-017D Fashion Social Intelligence
+
+TASK-017D extends the existing durable External Research workflow with a common
+`SOCIAL` adapter boundary and first-class Instagram, TikTok, YouTube and
+Pinterest capability states. Official-policy review intentionally activates no
+production transport in V1: Meta professional/public-content access requires
+approval and an account authorization lifecycle; TikTok Research Tools exclude
+commercial product use; YouTube public discovery conflicts with the current
+immutable evidence lifecycle's 30-day refresh/deletion obligations; and
+Pinterest has no configured arbitrary public-listening path. Selected social
+sources therefore return bounded `source_unavailable` observations and never
+fall back to scraping, private APIs, browser automation or consumer sessions.
+
+The deterministic planner adds social only to relevant consumer/competitor
+intents and leaves `FASHION_TECH` unchanged. Browser input cannot select a
+platform, profile, competitor, organization, actor, provider or model.
+Organization-scoped competitor identities reuse `marketing_competitors` and are
+validated by RLS plus the service-only enqueue function. Typed immutable social
+evidence preserves platform, native/parent IDs, public account context,
+retrieval/publication times, modality, deterministic hashes and bounded metrics.
+Comment authors are not retained. Caption/comment/metadata evidence cannot
+support visual claims, and competitor claims require configured competitor
+provenance.
+
+Ordinary research still performs deterministic retrieval/filtering/deduplication
+and exactly zero or one trusted ModelGateway synthesis. It invokes no media
+worker, Council, Reel Brief, memory, posting, TASK-018 or TASK-020 path. The
+forward migration is `20260825001740_fashion_social_intelligence.sql`; the linked
+dry run reports exactly that migration pending and applies nothing. Hosted
+acceptance remains blocked until the migration and branch are deployed. Local
+pgTAP remains unavailable because Docker/Podman is not installed.

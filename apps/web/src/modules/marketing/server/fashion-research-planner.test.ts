@@ -47,6 +47,37 @@ describe("deterministic fashion research source planner", () => {
     expect(plan.reddit.queryVariants).toEqual(["AI fashion", "shopping tools"]);
   });
 
+  it.each([
+    "TREND_SIGNAL",
+    "AUDIENCE_LANGUAGE",
+    "QUESTION_DEMAND",
+    "PURCHASE_OBJECTION",
+    "COMPETITOR_SIGNAL",
+  ] as const)("selects bounded social research for %s", (intent) => {
+    const plan = planFashionResearch({
+      enabledYouTubeChannelIds:
+        intent === "COMPETITOR_SIGNAL" ? ["UC1234567890123456789012"] : [],
+      hackerNewsStream: null,
+      intent,
+      queryTerms: ["sizing"],
+    });
+    expect(plan.selectedSourceFamilies).toContain("SOCIAL");
+    expect(plan.social.selectedPlatforms).toEqual(["YOUTUBE"]);
+    expect(plan.social.youtubeChannelIds).toEqual(
+      intent === "COMPETITOR_SIGNAL" ? ["UC1234567890123456789012"] : [],
+    );
+  });
+
+  it("does not fan social platforms into fashion technology research", () => {
+    const plan = planFashionResearch({
+      hackerNewsStream: "new",
+      intent: "FASHION_TECH",
+      queryTerms: ["wearable technology"],
+    });
+    expect(plan.selectedSourceFamilies).not.toContain("SOCIAL");
+    expect(plan.social.selectedPlatforms).toEqual([]);
+  });
+
   it("rejects persisted source selections that differ from server planning", () => {
     const plan = planFashionResearch({
       hackerNewsStream: null,

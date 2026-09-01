@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   MarketingCampaignRow,
   MarketingCompetitorRow,
+  MarketingCompetitorSocialProfileRow,
   MarketingCompetitorReelAnalysisRow,
   MarketingCompetitorReelRow,
   MarketingCompetitorReelTranscriptRow,
@@ -48,6 +49,42 @@ export async function listMarketingCompetitors(
     ).order("updated_at", { ascending: false }),
     "Marketing competitors could not be loaded.",
   );
+}
+
+export async function listMarketingCompetitorSocialProfiles(
+  organizationId: string,
+) {
+  const db = await createServerSupabaseClient();
+  return rows<MarketingCompetitorSocialProfileRow>(
+    db
+      .from("marketing_competitor_social_profiles")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .is("archived_at", null)
+      .order("platform")
+      .order("native_account_id"),
+    "Competitor social profiles could not be loaded.",
+  );
+}
+
+export async function listEnabledYouTubeCompetitorChannelIds(
+  organizationId: string,
+) {
+  const [profiles, competitors] = await Promise.all([
+    listMarketingCompetitorSocialProfiles(organizationId),
+    listMarketingCompetitors(organizationId),
+  ]);
+  const activeCompetitorIds = new Set(
+    competitors.map((competitor) => competitor.id),
+  );
+  return profiles
+    .filter(
+      (profile) =>
+        profile.platform === "YOUTUBE" &&
+        profile.status === "AVAILABLE" &&
+        activeCompetitorIds.has(profile.marketing_competitor_id),
+    )
+    .map((profile) => profile.native_account_id);
 }
 
 export async function getMarketingCompetitorDetail(

@@ -583,11 +583,22 @@ social scraping, automatic Council research or automatic memory promotion.
 
 ## TASK-017D — Fashion Social Intelligence
 
-Status: FUTURE / NOT STARTED
+Status: IMPLEMENTED / HOSTED ACCEPTANCE PENDING
 
-Future discovery may evaluate feasible, authorized Instagram, TikTok, YouTube
-and Pinterest visual/social signals. TASK-017D must not be inferred from the
-text/RSS/Reddit boundaries implemented by TASK-017C.
+Implementation adds a deterministic `SOCIAL` source family, a common official
+transport boundary, first-class capability/status records for Instagram,
+TikTok, YouTube and Pinterest, typed immutable social evidence, modality-aware
+social/content/competitor report fields and an organization-scoped competitor
+social-profile registry. No platform is activated in V1 because its current
+official approval, intended-use or retention/deletion contract is not yet
+compatible with the deployed immutable evidence lifecycle. Selected social
+sources fail closed with safe observations; no scraper or unofficial fallback
+exists. TASK-017C relevance, exact-EVID, RLS, zero/one ModelGateway synthesis,
+partial-source semantics and durable SERVERLESS execution remain authoritative.
+
+Hosted acceptance requires applying
+`20260825001740_fashion_social_intelligence.sql` and deploying this branch. Do
+not start TASK-018 from this implementation state until acceptance is recorded.
 
 ---
 

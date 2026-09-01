@@ -697,3 +697,44 @@ concepts take precedence, and meaningful question concepts are only a fallback
 for generic-only explicit terms. Metadata is gated before article fetch and
 extracted article text is gated again. This avoids both irrelevant evidence and
 an extra model/embedding call while preserving the existing safe-fetch limits.
+
+## ADR-034 — Social intelligence is official-only and fail-closed
+
+Status: ACCEPTED
+
+TASK-017D extends the existing durable Marketing research job with one common
+`SOCIAL` adapter and explicit Instagram, TikTok, YouTube and Pinterest
+capabilities. It does not scrape platform HTML, automate consumer accounts,
+reuse cookies, evade anti-bot controls, or call reverse-engineered APIs. A
+platform without a compliant configured transport returns a bounded unavailable
+observation; no fallback transport exists.
+
+| Platform | Official capability relevant to Stylus | V1 status | Reason |
+| --- | --- | --- | --- |
+| Instagram | Professional-account API with approved permissions; public/hashtag access is review-gated | `APPROVAL_REQUIRED` | No approved Meta app, professional-account OAuth lifecycle or public-content authorization is configured |
+| TikTok | Research Tools expose public research data to qualifying researchers | `UNSUPPORTED_FOR_DISCOVERY` | TikTok states commercial users are not eligible for Research Tools |
+| YouTube | Data API supports public search, video metadata and comments | `POLICY_DENIED` | Non-authorized API data must be refreshed or deleted under the 30-day policy; immutable Stylus evidence has no compliant lifecycle yet |
+| Pinterest | Approved business OAuth and account-scoped API | `APPROVAL_REQUIRED` | No approved arbitrary public-listening/discovery path is configured |
+
+Primary references reviewed on 2026-08-31 were Meta's official
+[Instagram API collection](https://www.postman.com/meta/instagram/documentation/6yqw8pt/instagram-api),
+TikTok's [Research API overview](https://developers.tiktok.com/docs/en/about-research-api)
+and [eligibility FAQ](https://developers.tiktok.com/docs/en/research-api-faq),
+YouTube's [search](https://developers.google.com/youtube/v3/docs/search/list),
+[videos](https://developers.google.com/youtube/v3/docs/videos/list) and
+[developer policies](https://developers.google.com/youtube/terms/developer-policies),
+and Pinterest's [access tiers](https://developers.pinterest.com/docs/key-concepts/access-tiers/)
+and [authentication](https://developers.pinterest.com/docs/getting-started/set-up-authentication-and-authorization/).
+
+The browser supplies only controlled intent, question and terms. The server
+derives platform and organization-scoped competitor identities, and the
+service-only enqueue validates the persisted plan against active profiles.
+Social records retain only bounded public provenance; comment authors are not
+stored. Modality validation prevents caption/comment/metadata evidence from
+supporting visual claims, and competitor observations require a configured
+competitor association.
+
+Ordinary research remains deterministic through evidence persistence and makes
+exactly zero or one trusted ModelGateway synthesis call. Media acquisition is
+disabled; TASK-014 is not invoked implicitly. No social write permission,
+Council workflow, Reel Brief, memory write, TASK-018 or TASK-020 path is added.

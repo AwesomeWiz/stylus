@@ -38,6 +38,26 @@ const base = {
           family: "EDITORIAL" as const,
           labels: ["Retail Dive"],
         },
+        {
+          available: false,
+          family: "SOCIAL" as const,
+          labels: ["YouTube"],
+          statuses: [
+            {
+              platform: "INSTAGRAM" as const,
+              status: "APPROVAL_REQUIRED" as const,
+            },
+            {
+              platform: "TIKTOK" as const,
+              status: "UNSUPPORTED_FOR_DISCOVERY" as const,
+            },
+            { platform: "YOUTUBE" as const, status: "POLICY_DENIED" as const },
+            {
+              platform: "PINTEREST" as const,
+              status: "APPROVAL_REQUIRED" as const,
+            },
+          ],
+        },
       ],
     },
     {
@@ -72,6 +92,9 @@ describe("External Research workspace", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText(/Female Fashion Advice/)).toHaveTextContent(
       "configuration required",
+    );
+    expect(screen.getByText(/YouTube · unavailable/)).toHaveTextContent(
+      "Youtube: Policy denied",
     );
     expect(
       screen.queryByRole("textbox", { name: /url|feed/i }),
@@ -228,6 +251,74 @@ describe("External Research workspace", () => {
       "href",
       "#run-EVID-1",
     );
+  });
+
+  it("shows social modality, content patterns, and independent-source scope", () => {
+    render(
+      <ExternalResearchWorkspace
+        {...base}
+        evidence={[
+          {
+            ...evidenceRow("EVID-1"),
+            canonical_url: "https://www.youtube.com/watch?v=video-1",
+            evidence_type: "SOCIAL_CAPTION",
+            native_id: "video-1",
+            parent_native_id: null,
+            safe_metadata: {
+              accountId: "UC1234567890123456789012",
+              modality: "CAPTION",
+              platform: "YOUTUBE",
+            },
+          },
+        ]}
+        reports={[
+          {
+            created_at: "2026-08-31T00:01:00.000Z",
+            created_by: "actor",
+            id: "social-report",
+            organization_id: "org",
+            run_id: "run",
+            schema_version: "marketing-fashion-social-research-report-v1",
+            structured_report: {
+              ...fashionReport,
+              contentPatterns: [
+                {
+                  confidence: "LOW",
+                  evidenceRefs: ["EVID-1"],
+                  pattern: "Fit explanation appears in one public caption.",
+                },
+              ],
+              schemaVersion: "marketing-fashion-social-research-report-v1",
+              sourceCoverage: [
+                {
+                  evidenceCount: 1,
+                  failedRequestCount: 0,
+                  family: "SOCIAL",
+                  sourceLabels: ["YouTube"],
+                  status: "SUCCEEDED",
+                },
+              ],
+              sourceDiversity: {
+                evidenceByType: { SOCIAL_CAPTION: 1 },
+                socialAccountCount: 1,
+                socialCommentThreadCount: 0,
+                socialIndependentContentCount: 1,
+                socialPlatformCount: 1,
+                sourceFamilyCount: 1,
+                sourcesRepresented: ["YouTube"],
+              },
+            },
+            version_number: 1,
+          },
+        ]}
+        runs={[run]}
+      />,
+    );
+    expect(
+      screen.getByText("Fit explanation appears in one public caption."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Youtube · Caption")).toBeInTheDocument();
+    expect(screen.getByText(/1 independent item/)).toBeInTheDocument();
   });
 
   it("distinguishes successful zero matches from a source retrieval failure", () => {

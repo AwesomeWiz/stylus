@@ -567,3 +567,25 @@ report. Adapter observations can reach the existing 30-source ceiling, while
 the selected family count remains capped at three. RLS policies, authenticated
 read-only grants, organization/plugin checks and immutable-history triggers are
 unchanged.
+
+### TASK-017D forward extension
+
+`20260825001740_fashion_social_intelligence.sql` adds the `social` adapter enum,
+five platform-independent social evidence types and
+`marketing-fashion-social-research-report-v1`. It creates only one new table:
+`marketing_competitor_social_profiles`, an organization-scoped child of the
+existing Marketing competitor with controlled platform, native account ID,
+canonical platform URL, capability status, audit fields and soft archival.
+
+Authenticated OWNER/ADMIN/MEMBER access is controlled by the existing Marketing
+RLS helpers; VIEWER remains read-only and no DELETE grant exists. Same-org
+foreign keys bind competitor and actor provenance. The service-only enqueue
+validates new plans, active competitors/profiles, family/platform/channel
+ceilings, one active run and five runs/hour. The completion function validates
+all social report EVID references while retaining the exact legacy fashion and
+legacy research completion contracts. Both functions use `SECURITY DEFINER`, an
+empty search path and service-role-only execute grants.
+
+Evidence/report tables remain immutable and no existing migration is rewritten.
+The new profile table stores public identifiers and provenance only—never OAuth
+tokens or a crawler target authorization.

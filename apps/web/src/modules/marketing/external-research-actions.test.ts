@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   after: vi.fn(),
+  channels: vi.fn(),
   context: vi.fn(),
   hosted: vi.fn(),
   revalidate: vi.fn(),
@@ -21,6 +22,9 @@ vi.mock("@/modules/jobs/server/hosted-serverless-execution", () => ({
   isHostedServerlessExecutionEnabled: mocks.hosted,
   runOneHostedServerlessJob: mocks.runOne,
 }));
+vi.mock("./server/data", () => ({
+  listEnabledYouTubeCompetitorChannelIds: mocks.channels,
+}));
 
 import { initialExternalResearchActionState } from "./external-research";
 import { enqueueExternalResearchAction } from "./external-research-actions";
@@ -29,6 +33,7 @@ describe("external research Server Action", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.hosted.mockReturnValue(false);
+    mocks.channels.mockResolvedValue([]);
     mocks.context.mockResolvedValue({
       membership: { role: "MEMBER" },
       organization: { id: "00000000-0000-4000-8000-000000000001" },
@@ -65,7 +70,7 @@ describe("external research Server Action", () => {
           p_request_snapshot: expect.objectContaining({
             intent: "AUDIENCE_PAIN",
             plan: expect.objectContaining({
-              selectedSourceFamilies: ["REDDIT", "EDITORIAL"],
+              selectedSourceFamilies: ["REDDIT", "EDITORIAL", "SOCIAL"],
             }),
           }),
         }),
@@ -74,6 +79,8 @@ describe("external research Server Action", () => {
       const persisted = mocks.rpc.mock.calls[0]?.[1].p_request_snapshot;
       expect(persisted).not.toHaveProperty("sourceIds");
       expect(persisted).not.toHaveProperty("providerUrl");
+      expect(JSON.stringify(persisted)).not.toContain("forged-platform");
+      expect(JSON.stringify(persisted)).not.toContain("forged-competitor");
     },
   );
 
@@ -87,6 +94,31 @@ describe("external research Server Action", () => {
       enqueueExternalResearchAction(initialExternalResearchActionState, form()),
     ).resolves.toMatchObject({ status: "error" });
     expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("derives competitor social channels from the current organization", async () => {
+    mocks.channels.mockResolvedValue(["UC1234567890123456789012"]);
+    const value = form();
+    value.set("intent", "COMPETITOR_SIGNAL");
+    value.set(
+      "question",
+      "What content patterns recur for configured fashion competitors?",
+    );
+    value.set("queryTerm", "styling tutorial");
+
+    await enqueueExternalResearchAction(
+      initialExternalResearchActionState,
+      value,
+    );
+
+    expect(mocks.channels).toHaveBeenCalledExactlyOnceWith(
+      "00000000-0000-4000-8000-000000000001",
+    );
+    const snapshot = mocks.rpc.mock.calls[0]?.[1].p_request_snapshot;
+    expect(snapshot.plan.social.youtubeChannelIds).toEqual([
+      "UC1234567890123456789012",
+    ]);
+    expect(JSON.stringify(snapshot)).not.toContain("forged-social-profile");
   });
 
   it("rejects HN source selection outside fashion tech before trusted context", async () => {
@@ -151,5 +183,8 @@ function form() {
   value.set("sourceIds", "forged-source");
   value.set("communityIds", "forged-community");
   value.set("providerUrl", "https://forged.example.test");
+  value.set("platform", "forged-platform");
+  value.set("competitorId", "forged-competitor");
+  value.set("socialProfileId", "forged-social-profile");
   return value;
 }

@@ -611,3 +611,38 @@ All families share concurrency three, a four-MiB byte budget, 20 immutable
 evidence rows and 24,000 normalized characters. Concurrent hosted/cron execution
 still relies on the same atomic job claim. No Windows worker, Redis, VPS or new
 execution class is introduced.
+
+## TASK-017D Social Intelligence Flow
+
+```text
+authorized Marketing research request
+  -> server-derived intent plan + active organization competitor profiles
+  -> existing atomic run + durable SERVERLESS job
+  -> common SOCIAL adapter
+     -> official configured transport, when policy permits
+     -> otherwise safe source_unavailable observation
+  -> deterministic relevance, normalization, hash/dedupe and typed EVID rows
+  -> zero evidence: zero AI calls and safe failure
+  -> usable evidence: one maximum trusted structured ModelGateway synthesis
+  -> modality/exact-EVID validation -> immutable social-fashion report
+```
+
+Instagram, TikTok, YouTube and Pinterest are first-class capabilities, but V1
+registers no production transport. This is deliberate policy, not a hidden
+configuration error. An injected transport interface supports fixture testing
+and a future approved official adapter without changing planning or the job
+boundary. It cannot be selected by browser input.
+
+Social evidence is platform-independent (`SOCIAL_POST`, `SOCIAL_VIDEO`,
+`SOCIAL_CAPTION`, `SOCIAL_COMMENT`, `SOCIAL_METADATA`) with platform, native and
+parent identity, public account context, timestamps, modality, bounded metrics,
+hash and optional competitor provenance. Current V1 can normalize only official
+transport records supplied through that boundary; it downloads no media and
+therefore produces no visual evidence. TASK-014 remains an explicitly requested
+separate EXTERNAL_WORKER workflow.
+
+The planner selects `SOCIAL` only for relevant audience, trend and competitor
+intents; `FASHION_TECH` remains HN/editorial/Reddit. Unselected platform
+capabilities never affect run status. Source diversity separately counts
+platforms, public accounts, independent content items and comment threads so
+several comments on one item do not become several independent sources.

@@ -590,3 +590,39 @@ forms such as sustainable/ethical/circular/resale, sizing and pricing. Feed
 title/summary text must pass before article fetch; already fetched article text
 must independently pass before `ARTICLE_CONTENT` can persist. No embeddings or
 model relevance call is used.
+
+## TASK-017D Fashion Social Intelligence
+
+The Research workspace retains the same controlled intents and adds an
+inspectable `SOCIAL` plan family. Instagram, TikTok, YouTube and Pinterest each
+display their honest capability state. No V1 transport is active: Instagram and
+Pinterest require approved application/account authorization, TikTok's research
+access excludes this commercial product use, and YouTube is policy-denied until
+Stylus has a compliant 30-day refresh/deletion lifecycle for API data.
+
+The common adapter accepts only server-planned platforms and server-derived
+active competitor channel IDs. Competitor identities reuse the existing
+Marketing competitor row through `marketing_competitor_social_profiles`; a
+profile URL is validated provenance and never a generic crawler target. The UI
+does not expose a developer console or provider credentials.
+
+When a future approved official transport is activated, normalization retains
+at most six social content items, enriches comments for at most three items,
+keeps at most five comments per item and twelve per run, and limits each comment
+to 1,500 characters. At most two social platforms and three configured YouTube
+channel IDs can enter one plan. Global research ceilings remain 20 evidence
+rows, 24,000 characters, concurrency three, four MiB fetched bytes, a 20-second
+retrieval phase, 35-second synthesis and 55-second overall application budget.
+
+Engagement counts are optional timestamped source metadata, never comparable
+cross-platform probabilities. Comment author identifiers are discarded.
+Platform, native content, parent item, public account, publication/retrieval
+times and modality preserve provenance. The report adds up to three content
+patterns, three competitor signals and three visual patterns. Visual patterns
+are rejected unless cited evidence has `IMAGE`, `VIDEO` or `TRANSCRIPT`
+modality; current caption/comment/metadata-only V1 cannot produce them.
+
+The result remains strategic evidence and Content Opportunity Candidates—not a
+finished hook, script, shot list, CTA, caption, visual direction or Reel Brief.
+There is no social posting, Creative Council invocation, memory promotion,
+performance learning or Ask Council behavior.

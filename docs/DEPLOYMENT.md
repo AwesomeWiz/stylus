@@ -364,3 +364,25 @@ No search-provider variable is required in TASK-017C. The interface is present
 for a future terms-compliant optional provider, while curated Vogue and Retail
 Dive feeds run without a paid search service. Apply
 `20260825001730_fashion_marketing_intelligence.sql` before hosted QA.
+
+### TASK-017D social intelligence deployment
+
+Apply `20260825001740_fashion_social_intelligence.sql` after TASK-017C and run
+the updated `supabase/tests/database/external_research_rls.test.sql`. No new
+environment variable is required because V1 intentionally enables no production
+social transport.
+
+Do not add social credentials merely to bypass the capability status. Before a
+future activation, obtain the platform's approval for the exact commercial use,
+design a secure server-only token lifecycle, document quotas and retention/
+deletion obligations, and add fixture plus hosted tests. YouTube additionally
+requires a lifecycle that refreshes or deletes stored non-authorized API data at
+least every 30 days; the current immutable evidence contract cannot claim that
+compliance.
+
+For hosted TASK-017D acceptance with no approved platform, deploy the migration
+and branch, submit one controlled social-relevant intent, and verify the
+persisted plan selects `SOCIAL`, its source observation is safely unavailable,
+no social evidence or unsupported social claim exists, and zero AI calls occur
+when no other family retains usable evidence. Do not repeat runs merely to
+consume the five-runs/hour organization quota.
