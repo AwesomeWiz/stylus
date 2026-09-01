@@ -646,3 +646,32 @@ intents; `FASHION_TECH` remains HN/editorial/Reddit. Unselected platform
 capabilities never affect run status. Source diversity separately counts
 platforms, public accounts, independent content items and comment threads so
 several comments on one item do not become several independent sources.
+
+## TASK-017E Web & Consumer Evidence Flow
+
+```text
+authorized bounded research input
+  -> deterministic server query planner (zero to three variants)
+  -> fixed-host Tavily Search candidate metadata
+  -> URL policy + metadata relevance + deterministic dedupe
+  -> per-origin robots policy
+  -> centralized pinned-DNS HTTPS page fetch + redirect revalidation
+  -> htmlparser2 extraction + content relevance
+  -> typed FULL_PAGE WEB_PAGE chunks with source class/provenance
+  -> existing immutable EVID persistence
+  -> zero evidence: zero AI calls / safe failure
+  -> evidence: one maximum trusted ModelGateway synthesis
+```
+
+Search and content retrieval are separate trust boundaries. The provider cannot
+select an adapter, organization, actor, model, prompt or bypass fetch policy.
+Provider snippets and answers never enter evidence or synthesis. All adapters
+share the existing request gate, byte budget, retrieval deadline, deterministic
+dedupe and durable job claim.
+
+Web-specific ceilings are three queries, eight results/query, twelve unique
+candidates, six attempted page fetches, four retained pages, two chunks/page,
+1,500 characters/chunk and eight retained web evidence rows. The global limits
+remain concurrency three, four MiB, twenty evidence rows, 24,000 normalized
+characters, twenty seconds retrieval, thirty-five seconds synthesis and
+fifty-five seconds overall beneath the Vercel Hobby sixty-second limit.

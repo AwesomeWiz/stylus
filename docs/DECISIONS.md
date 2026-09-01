@@ -738,3 +738,38 @@ Ordinary research remains deterministic through evidence persistence and makes
 exactly zero or one trusted ModelGateway synthesis call. Media acquisition is
 disabled; TASK-014 is not invoked implicitly. No social write permission,
 Council workflow, Reel Brief, memory write, TASK-018 or TASK-020 path is added.
+
+## ADR-035 — Separate web discovery from evidence retrieval
+
+Status: ACCEPTED
+
+TASK-017E uses Tavily Search as a fixed-host, server-only candidate-discovery
+provider. The choice was reviewed against current official materials on
+2026-09-01. Tavily supports a direct Search API, basic search costs one credit,
+and the published free tier includes 1,000 credits per month. Its terms permit
+API integration with customer applications for internal business purposes.
+Google Custom Search is closed to new customers and ends for existing users on
+2027-01-01. Brave is technically suitable, but its standard terms restrict
+search-result storage unless the selected plan grants explicit storage rights.
+
+References: [Tavily Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search),
+[Tavily credits](https://docs.tavily.com/documentation/api-credits),
+[Tavily terms](https://www.tavily.com/terms),
+[Brave Search API](https://brave.com/search/api/), and
+[Google Custom Search status](https://developers.google.com/custom-search/v1/overview).
+
+Provider ranking content, snippets, answers and raw content are never persisted
+or accepted as evidence. Stylus requests no answer/raw content and retains only
+transient title/URL/publication metadata long enough to perform deterministic
+candidate relevance and URL policy checks. A selected URL then becomes a new,
+independent request through the centralized pinned-DNS HTTPS fetch boundary.
+Publisher robots policy, response type/size/time, redirects, extraction and
+fashion relevance all fail closed. This design avoids treating a search vendor
+as a content license or SSRF authority.
+
+Only public, non-sensitive concepts derived from the bounded research question
+and terms are sent to search. Operators must re-review Tavily terms and obtain
+an appropriate agreement before exposing this provider in a customer-facing
+commercial deployment beyond the documented internal use. A provider change
+must preserve the same fixed-host interface, no-snippet-evidence rule and
+independent page-fetch boundary.

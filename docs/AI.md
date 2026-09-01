@@ -463,3 +463,17 @@ image/video/transcript modality and competitor claims lacking configured
 competitor provenance. Social text is quoted evidence only and has no authority
 to alter routing, providers, tools, credentials, Council, memory or application
 actions.
+
+### TASK-017E web evidence interpretation
+
+Web query planning, provider candidate selection, URL policy, robots handling,
+page fetching, extraction, relevance, hashing, dedupe, source classification and
+EVID assignment are deterministic and make no model call. Search-provider
+snippets/answers are excluded from synthesis. With zero usable evidence the run
+makes zero AI calls; otherwise the existing workflow makes exactly one maximum
+`generateAIStructuredForTrustedJob()` call.
+
+Every page title, URL, metadata field and extracted chunk is explicitly quoted
+as untrusted data. The model has no tools or URL-fetch authority and cannot
+change routing, memory, Council or application state. Exact dynamic EVID
+validation and existing cardinality/output limits remain unchanged.

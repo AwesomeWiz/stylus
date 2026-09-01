@@ -9,6 +9,7 @@ import { createFashionEditorialAdapter } from "./fashion-editorial-adapter";
 import { createRedditAdapter } from "./reddit-adapter";
 import { createRssAtomAdapter } from "./rss-atom-adapter";
 import { createSocialAdapter } from "./social-adapter";
+import { createWebDiscoveryAdapter } from "./web-discovery-adapter";
 
 export class ResearchSourceAdapterRegistry {
   readonly #adapters = new Map<string, ResearchSourceAdapter<unknown>>();
@@ -42,4 +43,5 @@ export const researchSourceAdapterRegistry = new ResearchSourceAdapterRegistry([
   createRedditAdapter() as ResearchSourceAdapter<unknown>,
   createFashionEditorialAdapter() as ResearchSourceAdapter<unknown>,
   createSocialAdapter() as ResearchSourceAdapter<unknown>,
+  createWebDiscoveryAdapter() as ResearchSourceAdapter<unknown>,
 ]);

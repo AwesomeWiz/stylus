@@ -27,6 +27,7 @@ const serverEnvironmentSchema = z.object({
   STYLUS_AI_OPENAI_COMPATIBLE_MODEL: optionalString,
   STYLUS_AI_REMOTE_INPUT_USD_PER_MILLION: optionalNonnegativeNumber,
   STYLUS_AI_REMOTE_OUTPUT_USD_PER_MILLION: optionalNonnegativeNumber,
+  STYLUS_WEB_DISCOVERY_TAVILY_API_KEY: optionalString,
   SUPABASE_SERVICE_ROLE_KEY: optionalString,
 });
 
@@ -51,6 +52,8 @@ export const serverEnv = {
       process.env.STYLUS_AI_REMOTE_INPUT_USD_PER_MILLION,
     STYLUS_AI_REMOTE_OUTPUT_USD_PER_MILLION:
       process.env.STYLUS_AI_REMOTE_OUTPUT_USD_PER_MILLION,
+    STYLUS_WEB_DISCOVERY_TAVILY_API_KEY:
+      process.env.STYLUS_WEB_DISCOVERY_TAVILY_API_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   }),
 };

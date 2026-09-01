@@ -626,3 +626,26 @@ The result remains strategic evidence and Content Opportunity Candidates—not a
 finished hook, script, shot list, CTA, caption, visual direction or Reel Brief.
 There is no social posting, Creative Council invocation, memory promotion,
 performance learning or Ask Council behavior.
+
+## TASK-017E Fashion Web & Consumer Evidence
+
+Applicable audience pain/language, purchase objection, question demand,
+competitor and fashion-technology intents can add a `WEB` source when meaningful
+server-built query variants exist. The UI shows provider availability and later
+shows the source domain, source class, full-page evidence quality and exact
+evidence citation. It exposes no arbitrary URL, provider, credential or crawler
+control.
+
+Tavily supplies discovery metadata only. Stylus ignores search snippets,
+answers and raw provider content. Candidate metadata must pass topic relevance
+and URL policy; each retained page is then independently robots-checked,
+pinned-DNS fetched, extracted and relevance-checked. Evidence is typed
+`WEB_PAGE` and classified as fashion editorial, brand content, retail content,
+consumer discussion, forum/Q&A, product review, buying guide, news/analysis or
+other public web. Multiple chunks from one canonical page count as one source,
+not independent corroboration.
+
+The result remains evidence-backed marketing intelligence and strategic Content
+Opportunity Candidates, not a hook, script, visual claim or Reel Brief. There
+is no Council invocation, memory promotion, worker dependency, performance
+learning or Ask Council execution.

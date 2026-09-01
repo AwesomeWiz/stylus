@@ -70,7 +70,10 @@ describe("external research Server Action", () => {
           p_request_snapshot: expect.objectContaining({
             intent: "AUDIENCE_PAIN",
             plan: expect.objectContaining({
-              selectedSourceFamilies: ["REDDIT", "EDITORIAL", "SOCIAL"],
+              selectedSourceFamilies: ["REDDIT", "EDITORIAL", "SOCIAL", "WEB"],
+              web: expect.objectContaining({
+                queryVariants: expect.any(Array),
+              }),
             }),
           }),
         }),

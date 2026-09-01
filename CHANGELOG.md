@@ -4,6 +4,18 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added TASK-017E bounded fashion web discovery with deterministic intent-aware
+  queries, fixed-host Tavily candidate discovery and independently fetched
+  `WEB_PAGE` evidence with source-class and full-page provenance.
+- Search snippets, answers and raw provider content are not evidence or stored.
+  Every retained page passes HTTPS/URL policy, robots policy, pinned-DNS and
+  redirect validation, byte/type/time limits, deterministic extraction and
+  fashion relevance before immutable persistence.
+- Web enrichment remains in the existing durable SERVERLESS research job and
+  zero/one ModelGateway synthesis lifecycle; it adds no generic crawler,
+  browser automation, Windows worker, Council, memory, TASK-018 or TASK-020
+  behavior. Hosted acceptance remains pending.
+
 - Added TASK-017D Fashion Social Intelligence with deterministic social-source
   planning, first-class Instagram/TikTok/YouTube/Pinterest capability states,
   organization-scoped competitor social identities, typed platform/modality

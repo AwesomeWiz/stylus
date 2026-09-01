@@ -31,7 +31,7 @@ describe("deterministic fashion research source planner", () => {
     expect(plan.hackerNews).toBeNull();
   });
 
-  it("selects HN, editorial, and Reddit only for fashion technology", () => {
+  it("selects HN, editorial, Reddit, and bounded web for fashion technology", () => {
     const plan = planFashionResearch({
       hackerNewsStream: "new",
       intent: "FASHION_TECH",
@@ -41,10 +41,12 @@ describe("deterministic fashion research source planner", () => {
       "HACKER_NEWS",
       "EDITORIAL",
       "REDDIT",
+      "WEB",
     ]);
     expect(plan.hackerNews).toEqual({ stream: "new" });
     expect(plan.reddit.communityIds.length).toBeLessThanOrEqual(2);
     expect(plan.reddit.queryVariants).toEqual(["AI fashion", "shopping tools"]);
+    expect(plan.web.queryVariants).toHaveLength(3);
   });
 
   it.each([
@@ -76,6 +78,54 @@ describe("deterministic fashion research source planner", () => {
     });
     expect(plan.selectedSourceFamilies).not.toContain("SOCIAL");
     expect(plan.social.selectedPlatforms).toEqual([]);
+    expect(plan.selectedSourceFamilies).toContain("WEB");
+  });
+
+  it.each([
+    "AUDIENCE_PAIN",
+    "AUDIENCE_LANGUAGE",
+    "PURCHASE_OBJECTION",
+    "QUESTION_DEMAND",
+    "COMPETITOR_SIGNAL",
+    "FASHION_TECH",
+  ] as const)("adds bounded deterministic web discovery for %s", (intent) => {
+    const plan = planFashionResearch({
+      hackerNewsStream: intent === "FASHION_TECH" ? "new" : null,
+      intent,
+      queryTerms: ["inclusive sizing", "fit frustration"],
+      question: "What inclusive sizing and fit frustrations recur?",
+    });
+    expect(plan.selectedSourceFamilies).toContain("WEB");
+    expect(plan.web.queryVariants.length).toBeGreaterThan(0);
+    expect(plan.web.queryVariants.length).toBeLessThanOrEqual(3);
+    expect(plan.reasonCodes).toContain("BOUNDED_WEB_DISCOVERY_SOURCE");
+  });
+
+  it.each([
+    "AUDIENCE_DESIRE",
+    "BELIEF_OR_MISCONCEPTION",
+    "CONTROVERSY_OR_DEBATE",
+    "TREND_SIGNAL",
+  ] as const)("does not add open-web discovery for %s", (intent) => {
+    const plan = planFashionResearch({
+      hackerNewsStream: null,
+      intent,
+      queryTerms: ["sustainable materials"],
+      question: "What sustainable material evidence is available?",
+    });
+    expect(plan.selectedSourceFamilies).not.toContain("WEB");
+    expect(plan.web.queryVariants).toEqual([]);
+  });
+
+  it("omits WEB when generic-only inputs cannot produce a meaningful query", () => {
+    const plan = planFashionResearch({
+      hackerNewsStream: null,
+      intent: "AUDIENCE_PAIN",
+      queryTerms: ["fashion", "clothing"],
+      question: "What fashion trends show interest?",
+    });
+    expect(plan.selectedSourceFamilies).not.toContain("WEB");
+    expect(plan.web.queryVariants).toEqual([]);
   });
 
   it("rejects persisted source selections that differ from server planning", () => {

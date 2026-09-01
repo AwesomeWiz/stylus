@@ -39,6 +39,14 @@ export const externalResearchLimits = Object.freeze({
   socialItemsForComments: 3,
   socialPlatformsPerRun: 2,
   socialVideosPerRun: 6,
+  webCandidateUrlsPerRun: 12,
+  webEvidenceItemsPerRun: 8,
+  webPagesPerRun: 4,
+  webQueriesPerRun: 3,
+  webResultsPerQuery: 8,
+  webRobotsResponseBytes: 64 * 1024,
+  webSearchResponseBytes: 256 * 1024,
+  webUrlsFetchedPerRun: 6,
   youtubeChannelIdsPerRun: 3,
   youtubeRequestsPerRun: 5,
   responseBytes: 1024 * 1024,
@@ -46,7 +54,7 @@ export const externalResearchLimits = Object.freeze({
   retainedItemsPerRun: 20,
   retrievalTimeoutMs: 20_000,
   rssFeeds: 2,
-  sourceFamilies: 3,
+  sourceFamilies: 4,
   sourceObservations: 30,
   sourceTimeoutMs: 8_000,
   synthesisContextCharacters: 40_000,
@@ -78,6 +86,7 @@ export const researchSourceFamilies = [
   "EDITORIAL",
   "HACKER_NEWS",
   "SOCIAL",
+  "WEB",
 ] as const;
 export const researchSourceFamilySchema = z.enum(researchSourceFamilies);
 export type ResearchSourceFamily = z.infer<typeof researchSourceFamilySchema>;
@@ -88,6 +97,7 @@ export type FashionResearchPlanPreview = {
     available: boolean;
     family: ResearchSourceFamily;
     labels: string[];
+    providerStatus?: "AVAILABLE" | "UNCONFIGURED";
     statuses?: Array<{
       platform: SocialPlatform;
       status: SocialPlatformStatus;
@@ -126,6 +136,8 @@ export const researchPlanReasonCodes = [
   "EXISTING_FEED_SOURCE",
   "OFFICIAL_SOCIAL_DISCOVERY_SOURCE",
   "COMPETITOR_SOCIAL_SOURCE",
+  "BOUNDED_WEB_DISCOVERY_SOURCE",
+  "CONSUMER_WEB_SOURCE",
 ] as const;
 export const researchPlanReasonCodeSchema = z.enum(researchPlanReasonCodes);
 
@@ -176,6 +188,15 @@ export const fashionResearchSourcePlanSchema = z
       .strict()
       .optional()
       .default({ selectedPlatforms: [], youtubeChannelIds: [] }),
+    web: z
+      .object({
+        queryVariants: z
+          .array(z.string().trim().min(1).max(160))
+          .max(externalResearchLimits.webQueriesPerRun),
+      })
+      .strict()
+      .optional()
+      .default({ queryVariants: [] }),
     selectedSourceFamilies: z
       .array(researchSourceFamilySchema)
       .min(1)
@@ -183,6 +204,7 @@ export const fashionResearchSourcePlanSchema = z
     version: z.enum([
       "marketing-fashion-source-plan-v1",
       "marketing-fashion-social-source-plan-v1",
+      "marketing-fashion-web-source-plan-v1",
     ]),
   })
   .strict();
@@ -517,8 +539,9 @@ export const fashionResearchReportSchema = fashionResearchInterpretationSchema
     schemaVersion: z.enum([
       "marketing-fashion-research-report-v1",
       "marketing-fashion-social-research-report-v1",
+      "marketing-fashion-web-research-report-v1",
     ]),
-    sourceCoverage: z.array(sourceCoverageSchema).min(1).max(3),
+    sourceCoverage: z.array(sourceCoverageSchema).min(1).max(4),
     sourceDiversity: z
       .object({
         evidenceByType: z.record(z.string(), z.number().int().min(0).max(20)),
@@ -531,8 +554,11 @@ export const fashionResearchReportSchema = fashionResearchInterpretationSchema
           .max(20)
           .default(0),
         socialPlatformCount: z.number().int().min(0).max(4).default(0),
-        sourceFamilyCount: z.number().int().min(1).max(3),
+        snippetEvidenceCount: z.number().int().min(0).max(20).default(0),
+        sourceClassCount: z.number().int().min(0).max(9).default(0),
+        sourceFamilyCount: z.number().int().min(1).max(4),
         sourcesRepresented: z.array(z.string().min(1).max(80)).max(12),
+        uniqueSourceCount: z.number().int().min(1).max(20).default(1),
       })
       .strict(),
   })

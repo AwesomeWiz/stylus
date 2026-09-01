@@ -513,3 +513,29 @@ collection.
   payloads and tokens are never persisted, logged or sent to synthesis.
 - Media acquisition and social write operations are absent. No post, upload,
   comment, like, follow, message or engagement automation is possible.
+
+### TASK-017E web discovery security
+
+- `STYLUS_WEB_DISCOVERY_TAVILY_API_KEY` is parsed only by the server environment
+  module. Browser input cannot supply a key, provider, endpoint, URL, adapter,
+  organization, actor, model or prompt.
+- Search calls use one fixed HTTPS endpoint, bounded deterministic public-topic
+  queries, basic depth, no answer, no raw content, at most eight results and a
+  streaming 256-KiB response ceiling. Credentials and provider bodies are not
+  logged or persisted.
+- Provider title/URL metadata is untrusted discovery data, never evidence.
+  Prohibited IP/localhost/credentialed/non-HTTPS, authentication, commerce,
+  archive/binary, social and selected marketplace URLs are rejected before DNS.
+- Every retained page independently passes the existing public-address DNS
+  validation, pinned connection, TLS hostname/SNI, redirect revalidation,
+  textual content type, eight-second request timeout, 512-KiB page limit and
+  four-MiB run budget.
+- Robots policy is retrieved once per origin through the same safe-fetch
+  boundary. Explicit denial and unavailable/malformed robots policy fail closed;
+  404/410 means no published robots policy.
+- Extracted page content is checked again for meaningful fashion relevance.
+  Prompt-like text remains inert quoted evidence. The synthesis has no tools,
+  cannot fetch URLs and uses exact current-run EVID validation.
+- No cookies, browser automation, login, CAPTCHA/anti-bot bypass, recursive
+  crawling, site search scraping, private data collection or PII enrichment is
+  present. Publisher terms and copyright remain operator obligations.

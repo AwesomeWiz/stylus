@@ -111,7 +111,9 @@ describe("external research job handler", () => {
           canonicalUrl:
             adapterId === "reddit"
               ? "https://www.reddit.com/r/fashion/comments/1/"
-              : "https://www.vogue.com/article/sizing",
+              : adapterId === "web-discovery"
+                ? "https://example.com/research/sizing"
+                : "https://www.vogue.com/article/sizing",
           contentHash: adapterId === "reddit" ? "b".repeat(64) : "c".repeat(64),
           nativeId: adapterId,
         }),
@@ -131,6 +133,7 @@ describe("external research job handler", () => {
       "reddit",
       "fashion-editorial",
       "social",
+      "web-discovery",
     ]);
     expect(mocks.retrieve).toHaveBeenCalledWith(
       "fashion-editorial",
@@ -148,11 +151,12 @@ describe("external research job handler", () => {
       ([name]) => name === "complete_marketing_external_research",
     )?.[1];
     expect(completion.p_report).toMatchObject({
-      schemaVersion: "marketing-fashion-social-research-report-v1",
+      schemaVersion: "marketing-fashion-web-research-report-v1",
       sourceCoverage: [
         expect.objectContaining({ family: "REDDIT" }),
         expect.objectContaining({ family: "EDITORIAL" }),
         expect.objectContaining({ family: "SOCIAL" }),
+        expect.objectContaining({ family: "WEB" }),
       ],
     });
   });
@@ -218,7 +222,7 @@ describe("external research job handler", () => {
       ([name]) => name === "complete_marketing_external_research",
     )?.[1];
     expect(completion.p_report).toMatchObject({
-      schemaVersion: "marketing-fashion-social-research-report-v1",
+      schemaVersion: "marketing-fashion-web-research-report-v1",
       sourceDiversity: {
         socialAccountCount: 1,
         socialCommentThreadCount: 1,

@@ -4,14 +4,13 @@ Last Updated: 2026-09-01
 
 ## Overall Status
 
-TASK-017D COMPLETE / HOSTED ACCEPTANCE PASSED
+TASK-017E IMPLEMENTED / HOSTED ACCEPTANCE PENDING
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
-durable fashion-marketing research system. TASK-017D adds a compliant,
-fail-closed social-intelligence boundary, platform/modality provenance,
-competitor social identities and evidence-backed content-pattern fields while
-preserving TASK-017C relevance and TASK-016's exact Strategic Review.
+durable fashion-marketing research system. TASK-017E adds deterministic,
+bounded public-web discovery for fashion and consumer evidence while keeping
+search discovery separate from independently validated page retrieval.
 
 ---
 
@@ -19,16 +18,17 @@ preserving TASK-017C relevance and TASK-016's exact Strategic Review.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017D COMPLETE / HOSTED ACCEPTANCE PASSED
+Status: TASK-017E IMPLEMENTED / HOSTED ACCEPTANCE PENDING
 
 ---
 
 ## Current Objective
 
-TASK-017D is ready for user-managed merge. After merge, TASK-018 Performance
-Learning is the next roadmap task. Preserve source-plan-to-evidence-to-
-opportunity provenance, organization isolation, the zero/one synthesis-call
-invariant and unchanged TASK-015/TASK-016 behavior. TASK-020 remains unstarted.
+Finish TASK-017E verification, apply its forward migration and server-only
+discovery credential in a hosted preview, then perform one deliberate hosted
+acceptance run. TASK-018 Performance Learning remains next and unstarted.
+Preserve source-plan-to-evidence-to-opportunity provenance, organization
+isolation and the zero/one synthesis-call invariant.
 
 ---
 
@@ -1519,3 +1519,39 @@ The bounded execution window also contained zero Creative Council or Strategic
 Review runs, zero memory writes, and no downstream job other than this External
 Research job; TASK-018 and TASK-020 did not execute. This fail-closed result is
 the correct V1 acceptance behavior and produced no unsupported social claims.
+
+### TASK-017E Fashion Web & Consumer Evidence Expansion
+
+TASK-017E implementation is complete locally and hosted acceptance is pending.
+The deterministic fashion planner can add a `WEB` family only for applicable
+intents and only when bounded server-built query variants contain meaningful
+concepts. Tavily Search is the fixed-host discovery provider; its response is
+transient candidate metadata, not evidence. Stylus requests no answer or raw
+content and persists no provider snippet. Every retained URL independently
+passes public-HTTPS policy, robots policy, pinned-DNS safe fetch with redirect
+revalidation, deterministic article extraction and the existing fashion
+relevance gate before immutable `WEB_PAGE` evidence is created.
+
+Per run, the implementation permits at most three search queries, eight search
+results per query, twelve unique candidates, six attempted page fetches, four
+retained pages, two 1,500-character chunks per page and eight web evidence rows,
+under the existing concurrency-three, four-MiB, 20-evidence, 20-second
+retrieval, 35-second synthesis and 55-second workflow ceilings. A run still
+makes exactly zero or one trusted ModelGateway call and invokes no Creative
+Council, memory, worker, TASK-018 or TASK-020 path.
+
+The forward migration is
+`20260825001750_fashion_web_consumer_evidence.sql`. It adds only the controlled
+adapter/evidence/report contract and forward-replaces the service-role enqueue
+and completion validation functions. Existing RLS, one-active-run,
+five-runs/hour, immutable history and organization/plugin boundaries remain.
+Do not mark TASK-017E complete or merge-ready until linked migration dry-run,
+full verification and one deliberate hosted acceptance are recorded.
+
+Local verification passed on 2026-09-01: 10 focused files / 125 tests, the full
+141-file / 791-test web suite, 5 worker files / 32 tests, repository lint,
+worker/web typechecks, both production builds, scoped formatting, migration
+contracts and npm audit with zero vulnerabilities. The linked dry run reports
+only `20260825001750_fashion_web_consumer_evidence.sql` pending and applies
+nothing. Local pgTAP could not run because Docker/Podman is unavailable. Hosted
+acceptance remains the only completion gate.

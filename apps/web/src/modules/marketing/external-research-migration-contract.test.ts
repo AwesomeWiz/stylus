@@ -30,6 +30,13 @@ const socialSql = readFileSync(
   ),
   "utf8",
 ).toLowerCase();
+const webSql = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825001750_fashion_web_consumer_evidence.sql",
+  ),
+  "utf8",
+).toLowerCase();
 
 describe("TASK-017 migration contract", () => {
   it("atomically creates one run and its exact statically registered SERVERLESS job", () => {
@@ -145,5 +152,43 @@ describe("TASK-017 migration contract", () => {
     expect(socialSql).toContain(
       "where profile.organization_id = p_organization_id",
     );
+  });
+
+  it("extends the applied contract forward for bounded typed web evidence", () => {
+    expect(webSql).toContain("add value if not exists 'web-discovery'");
+    expect(webSql).toContain("'web_page'");
+    expect(webSql).toContain("marketing-fashion-web-source-plan-v1");
+    expect(webSql).toContain("marketing-fashion-web-research-report-v1");
+    expect(webSql).toContain("requested_source_count between 1 and 4");
+    expect(webSql).toContain(
+      "jsonb_array_length(p_request_snapshot->'plan'->'web'->'queryvariants') > 3",
+    );
+    expect(webSql).toContain("security definer set search_path = ''");
+    expect(webSql).toContain("to service_role");
+    expect(webSql).not.toContain("knowledge_memories");
+    expect(webSql).not.toMatch(/pg_net|http_|cron\.schedule/);
+    expect(webSql).not.toContain("drop table");
+    expect(webSql).not.toContain("alter table public.ai_runs");
+  });
+
+  it("keeps legacy plans from forging WEB and validates all web report sections", () => {
+    expect(webSql).toContain(
+      "v_plan_version <> 'marketing-fashion-web-source-plan-v1'",
+    );
+    expect(webSql).toContain(
+      "and p_request_snapshot->'plan'->'selectedsourcefamilies' @> '[\"web\"]'::jsonb",
+    );
+    for (const section of [
+      "audiencesignals",
+      "languagesignals",
+      "trendsignals",
+      "objections",
+      "debates",
+      "contentopportunities",
+      "contentpatterns",
+      "competitorsignals",
+      "visualpatterns",
+    ])
+      expect(webSql).toContain(section);
   });
 });
