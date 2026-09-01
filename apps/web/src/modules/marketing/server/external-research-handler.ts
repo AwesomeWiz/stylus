@@ -278,7 +278,17 @@ export async function runExternalResearchJob(
       },
       organizationId: context.organizationId,
       pluginId: "marketing",
-      schema: createFashionResearchSynthesisSchema(synthesisEvidenceIds),
+      schema: createFashionResearchSynthesisSchema(synthesisEvidenceIds, {
+        competitor: evidenceForSynthesis.some(
+          (item) => item.competitorId !== null,
+        ),
+        visual: evidenceForSynthesis.some(
+          (item) =>
+            item.modality === "IMAGE" ||
+            item.modality === "VIDEO" ||
+            item.modality === "TRANSCRIPT",
+        ),
+      }),
       schemaName:
         "plan" in request && request.plan.selectedSourceFamilies.includes("WEB")
           ? "marketing_fashion_web_research_report_v1"

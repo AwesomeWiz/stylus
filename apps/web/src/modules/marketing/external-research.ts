@@ -359,6 +359,13 @@ export const fashionResearchSynthesisLimits = Object.freeze({
 
 function createFashionInterpretationSchema(
   referenceSchema: z.ZodType<string> = evidenceReferenceSchema,
+  claimLimits: {
+    competitorSignals: number;
+    visualPatterns: number;
+  } = {
+    competitorSignals: fashionResearchSynthesisLimits.competitorSignals,
+    visualPatterns: fashionResearchSynthesisLimits.visualPatterns,
+  },
 ) {
   const references = z
     .array(referenceSchema)
@@ -438,7 +445,7 @@ function createFashionInterpretationSchema(
             })
             .strict(),
         )
-        .max(fashionResearchSynthesisLimits.competitorSignals)
+        .max(claimLimits.competitorSignals)
         .default([]),
       debates: z
         .array(
@@ -502,7 +509,7 @@ function createFashionInterpretationSchema(
             })
             .strict(),
         )
-        .max(fashionResearchSynthesisLimits.visualPatterns)
+        .max(claimLimits.visualPatterns)
         .default([]),
     })
     .strict();
@@ -567,10 +574,22 @@ export type FashionResearchReport = z.infer<typeof fashionResearchReportSchema>;
 
 export function createFashionResearchSynthesisSchema(
   evidenceIds: readonly string[],
+  evidenceCapabilities: {
+    competitor: boolean;
+    visual: boolean;
+  } = { competitor: true, visual: true },
 ) {
   const uniqueEvidenceIds = validateSynthesisEvidenceIds(evidenceIds);
   return createFashionInterpretationSchema(
     z.enum([uniqueEvidenceIds[0]!, ...uniqueEvidenceIds.slice(1)]),
+    {
+      competitorSignals: evidenceCapabilities.competitor
+        ? fashionResearchSynthesisLimits.competitorSignals
+        : 0,
+      visualPatterns: evidenceCapabilities.visual
+        ? fashionResearchSynthesisLimits.visualPatterns
+        : 0,
+    },
   );
 }
 

@@ -341,9 +341,36 @@ describe("external research job handler", () => {
       failures: [],
       items: adapterId === "web-discovery" ? [webPageItem()] : [],
     }));
-    mocks.generate.mockResolvedValue({
-      data: report,
-      runId: "00000000-0000-4000-8000-000000000004",
+    mocks.generate.mockImplementation(async (input) => {
+      expect(input.schema.safeParse(report).success).toBe(true);
+      expect(
+        input.schema.safeParse({
+          ...report,
+          competitorSignals: [
+            {
+              confidence: "MEDIUM",
+              evidenceRefs: ["EVID-1"],
+              statement: "A competitor repeats this pattern.",
+            },
+          ],
+        }).success,
+      ).toBe(false);
+      expect(
+        input.schema.safeParse({
+          ...report,
+          visualPatterns: [
+            {
+              confidence: "MEDIUM",
+              evidenceRefs: ["EVID-1"],
+              pattern: "A visual treatment recurs.",
+            },
+          ],
+        }).success,
+      ).toBe(false);
+      return {
+        data: report,
+        runId: "00000000-0000-4000-8000-000000000004",
+      };
     });
 
     const result = await runExternalResearchJob(

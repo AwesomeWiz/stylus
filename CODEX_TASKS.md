@@ -649,6 +649,18 @@ regression and adapter suite pass 2 files / 17 tests; the updated full web suite
 passes 141 files / 792 tests, plus lint, web typecheck and production build.
 One additional deployed acceptance run must pass before completion.
 
+The second hosted run (`197b9fc3-e7c3-4907-91e1-e4255b7db5ce`) retained five
+`WEB_PAGE` rows from three independently fetched full pages, confirming the
+persistence correction. Its one AI run succeeded, then application-side
+semantic validation rejected an output shape that the provider schema had
+allowed despite the absence of visual or configured-competitor evidence. The
+provider schema now derives visual/competitor section limits from the exact
+current-run evidence while the existing defensive validator remains in place.
+The corrective focused suite passes 2 files / 22 tests and the complete web
+suite passes 141 files / 793 tests; lint, worker/web typechecks and both
+production builds also pass. Deploy this correction and run one final hosted
+acceptance retest before marking TASK-017E complete.
+
 ---
 
 ## TASK-018 — Marketing Performance Learning

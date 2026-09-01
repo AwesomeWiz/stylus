@@ -24,9 +24,9 @@ Status: TASK-017E IMPLEMENTED / HOSTED ACCEPTANCE PENDING
 
 ## Current Objective
 
-Confirm the TASK-017E server-only discovery credential in the hosted preview,
-then perform one deliberate hosted acceptance run. TASK-018 Performance
-Learning remains next and unstarted.
+Deploy the post-gateway synthesis-contract correction, then perform one final
+TASK-017E hosted acceptance retest. TASK-018 Performance Learning remains next
+and unstarted.
 Preserve source-plan-to-evidence-to-opportunity provenance, organization
 isolation and the zero/one synthesis-call invariant.
 
@@ -1570,5 +1570,19 @@ observations but zero evidence, AI runs or reports and failed safely. The
 handler now prioritizes `WEB_PAGE` drafts, with a regression proving exact
 `EVID-1` persistence and one trusted synthesis. Focused verification passes 2
 files / 17 tests; the complete web suite passes 141 files / 792 tests together
-with lint, web typecheck, scoped formatting and the production web build. One
-new deployed acceptance run remains required; the failed run is immutable.
+with lint, web typecheck, scoped formatting and the production web build. The
+failed run is immutable.
+
+The second deployed run `197b9fc3-e7c3-4907-91e1-e4255b7db5ce` (job
+`fef4a84b-b675-45c9-93c6-2ab1f40337c0`) proves the retrieval correction: three
+independently fetched pages produced five immutable `WEB_PAGE` evidence rows.
+Its single ModelGateway run succeeded, but the workflow then failed during
+application-side semantic validation because the provider schema still
+permitted competitor or visual sections that text-only, non-competitor web
+evidence could not support. The synthesis schema now derives those two section
+limits from current-run evidence capability, preventing unsupported claims
+before generation while retaining the defensive post-gateway validator.
+Focused verification passes 2 files / 22 tests and the complete web suite
+passes 141 files / 793 tests, plus lint, worker/web typechecks and both
+production builds. One final deployed retest remains required; both prior runs
+remain immutable.

@@ -19,6 +19,12 @@ All notable user-facing changes to Stylus will be documented here.
   validated `WEB_PAGE` drafts. The first hosted acceptance had recorded three
   successfully fetched, extracted and relevant pages as sources but discarded
   their evidence before synthesis.
+- Constrained External Research structured generation to the capabilities of
+  its exact current-run evidence. Text-only evidence cannot request visual
+  patterns, and evidence without configured competitor provenance cannot
+  request competitor signals; defensive post-gateway validation remains.
+  This fixes the second hosted run's failure after five web evidence rows and
+  one otherwise successful ModelGateway call.
 - Web enrichment remains in the existing durable SERVERLESS research job and
   zero/one ModelGateway synthesis lifecycle; it adds no generic crawler,
   browser automation, Windows worker, Council, memory, TASK-018 or TASK-020
