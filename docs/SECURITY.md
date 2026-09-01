@@ -491,3 +491,25 @@ and the [Reddit Data API Terms](https://redditinc.com/policies/data-api-terms).
 Approval and retention/removal obligations must be resolved before enabling
 production Reddit retrieval. Default-disabled behavior avoids unauthorized
 collection.
+
+### TASK-017D social source security
+
+- Production registers no unofficial social transport. There is no platform
+  HTML scraping, browser automation, login/session cookie use, CAPTCHA or
+  anti-bot bypass, proxy rotation, private API or authenticated-page crawling.
+- Instagram, TikTok, YouTube and Pinterest status comes from a code-owned
+  capability registry. Browser values cannot choose platform, profile,
+  competitor, organization, actor, provider, model, URL or credential.
+- Competitor social profiles are same-organization children of existing
+  competitors. RLS repeats Marketing enablement and role checks; service-only
+  enqueue additionally requires an active matching profile and competitor.
+- Canonical profile/content URLs must use the platform's exact HTTPS host.
+  Profile URLs are provenance only, never crawler authorization.
+- Social captions/comments are untrusted bounded evidence. Comment author
+  identifiers are dropped; sensitive attributes, facial recognition and private
+  individual profiles are never inferred.
+- Metrics are stored only when an official transport supplies them, with
+  platform and retrieval time. Credentials, authorization headers, raw provider
+  payloads and tokens are never persisted, logged or sent to synthesis.
+- Media acquisition and social write operations are absent. No post, upload,
+  comment, like, follow, message or engagement automation is possible.

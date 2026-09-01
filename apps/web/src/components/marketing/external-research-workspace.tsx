@@ -174,7 +174,19 @@ export function ExternalResearchWorkspace({
                   key={source.family}
                 >
                   {label(source.family)} · {source.labels.join(", ")}
-                  {!source.available ? " · configuration required" : ""}
+                  {!source.available
+                    ? source.family === "SOCIAL"
+                      ? " · unavailable"
+                      : " · configuration required"
+                    : ""}
+                  {source.statuses?.length
+                    ? ` · ${source.statuses
+                        .map(
+                          (status) =>
+                            `${label(status.platform)}: ${label(status.status)}`,
+                        )
+                        .join("; ")}`
+                    : ""}
                 </span>
               ))}
             </div>
@@ -303,6 +315,11 @@ function ResearchHistory({
                           {contextLabel ? (
                             <span className="text-muted-foreground text-xs">
                               {contextLabel}
+                            </span>
+                          ) : null}
+                          {evidenceMetadataLabel(item) ? (
+                            <span className="text-muted-foreground text-xs">
+                              {evidenceMetadataLabel(item)}
                             </span>
                           ) : null}
                           {canonicalUrl ? (
@@ -520,6 +537,33 @@ function FashionReport({
         runId={runId}
       />
       <FashionSignalList
+        heading="Content patterns"
+        items={report.contentPatterns.map((item) => ({
+          evidenceRefs: item.evidenceRefs,
+          label: label(item.confidence),
+          text: item.pattern,
+        }))}
+        runId={runId}
+      />
+      <FashionSignalList
+        heading="Visual patterns"
+        items={report.visualPatterns.map((item) => ({
+          evidenceRefs: item.evidenceRefs,
+          label: label(item.confidence),
+          text: item.pattern,
+        }))}
+        runId={runId}
+      />
+      <FashionSignalList
+        heading="Competitor signals"
+        items={report.competitorSignals.map((item) => ({
+          evidenceRefs: item.evidenceRefs,
+          label: label(item.confidence),
+          text: item.statement,
+        }))}
+        runId={runId}
+      />
+      <FashionSignalList
         heading="Purchase objections"
         items={report.objections.map((item) => ({
           evidenceRefs: item.evidenceRefs,
@@ -588,6 +632,15 @@ function FashionReport({
             {coverage.sourceLabels.join(", ") || "No retained source"}
           </p>
         ))}
+        {report.sourceDiversity.socialPlatformCount ? (
+          <p className="text-muted-foreground">
+            Social scope · {report.sourceDiversity.socialPlatformCount}{" "}
+            platform(s) · {report.sourceDiversity.socialAccountCount} public
+            account(s) · {report.sourceDiversity.socialIndependentContentCount}{" "}
+            independent item(s) ·{" "}
+            {report.sourceDiversity.socialCommentThreadCount} comment thread(s)
+          </p>
+        ) : null}
       </div>
       {report.limitations.length ? (
         <p className="text-muted-foreground text-xs">
@@ -726,4 +779,13 @@ function evidenceSourceContext(
   ])
     if (typeof value === "string" && value.trim()) return value;
   return null;
+}
+
+function evidenceMetadataLabel(evidence: MarketingExternalResearchEvidenceRow) {
+  const platform = evidence.safe_metadata.platform;
+  const modality = evidence.safe_metadata.modality;
+  const values = [platform, modality].filter(
+    (value): value is string => typeof value === "string" && Boolean(value),
+  );
+  return values.length ? values.map(label).join(" · ") : null;
 }

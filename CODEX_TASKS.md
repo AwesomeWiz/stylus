@@ -583,11 +583,28 @@ social scraping, automatic Council research or automatic memory promotion.
 
 ## TASK-017D — Fashion Social Intelligence
 
-Status: FUTURE / NOT STARTED
+Status: COMPLETE / HOSTED ACCEPTANCE PASSED / READY FOR USER-MANAGED MERGE
 
-Future discovery may evaluate feasible, authorized Instagram, TikTok, YouTube
-and Pinterest visual/social signals. TASK-017D must not be inferred from the
-text/RSS/Reddit boundaries implemented by TASK-017C.
+Implementation adds a deterministic `SOCIAL` source family, a common official
+transport boundary, first-class capability/status records for Instagram,
+TikTok, YouTube and Pinterest, typed immutable social evidence, modality-aware
+social/content/competitor report fields and an organization-scoped competitor
+social-profile registry. No platform is activated in V1 because its current
+official approval, intended-use or retention/deletion contract is not yet
+compatible with the deployed immutable evidence lifecycle. Selected social
+sources fail closed with safe observations; no scraper or unofficial fallback
+exists. TASK-017C relevance, exact-EVID, RLS, zero/one ModelGateway synthesis,
+partial-source semantics and durable SERVERLESS execution remain authoritative.
+
+Hosted acceptance passed on 2026-09-01. Run
+`823ef89e-bfae-4dda-9e53-11a61bd23f72` and SERVERLESS job
+`b7e064d4-868c-44dc-811c-eacbb9f0a3b0` persisted the deterministic
+`REDDIT` + `SOCIAL` plan. Social resolved to `YOUTUBE`; both selected sources
+failed closed as `POLICY_DENIED` / `source_unavailable`. The run persisted zero
+evidence and reports, made zero AI calls, and created no Council, Strategic
+Review, memory, TASK-018 or TASK-020 side effect. Migration
+`20260825001740_fashion_social_intelligence.sql` is present in the hosted
+ledger. TASK-017D is ready for user-managed merge; TASK-018 is next after merge.
 
 ---
 

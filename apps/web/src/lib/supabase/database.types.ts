@@ -138,7 +138,7 @@ export type MarketingStrategicReviewStageStatus = "SUCCEEDED" | "FAILED";
 export type MarketingExternalResearchStatus =
   "QUEUED" | "RUNNING" | "SYNTHESIZING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
 export type MarketingExternalResearchAdapter =
-  "hacker-news" | "rss-atom" | "reddit" | "fashion-editorial";
+  "hacker-news" | "rss-atom" | "reddit" | "fashion-editorial" | "social";
 export type MarketingExternalResearchSourceStatus = "SUCCEEDED" | "FAILED";
 export type MarketingExternalResearchSourceFailure =
   | "invalid_source"
@@ -168,6 +168,18 @@ export type MarketingCompetitorRow = MarketingAuditRow & {
   name: string;
   notes: string | null;
   website_url: string | null;
+};
+export type MarketingCompetitorSocialProfileRow = MarketingAuditRow & {
+  canonical_url: string;
+  marketing_competitor_id: string;
+  native_account_id: string;
+  platform: "INSTAGRAM" | "TIKTOK" | "YOUTUBE" | "PINTEREST";
+  status:
+    | "AVAILABLE"
+    | "UNCONFIGURED"
+    | "APPROVAL_REQUIRED"
+    | "UNSUPPORTED_FOR_DISCOVERY"
+    | "POLICY_DENIED";
 };
 export type MarketingCampaignRow = MarketingAuditRow & {
   ends_on: string | null;
@@ -404,7 +416,12 @@ export type MarketingExternalResearchEvidenceRow = {
     | "HN_COMMENT"
     | "ARTICLE_CONTENT"
     | "REDDIT_POST"
-    | "REDDIT_COMMENT";
+    | "REDDIT_COMMENT"
+    | "SOCIAL_POST"
+    | "SOCIAL_VIDEO"
+    | "SOCIAL_CAPTION"
+    | "SOCIAL_COMMENT"
+    | "SOCIAL_METADATA";
   excerpt: string;
   fetched_at: string | null;
   id: string;
@@ -425,7 +442,8 @@ export type MarketingExternalResearchReportRow = {
   run_id: string;
   schema_version:
     | "marketing-external-research-report-v1"
-    | "marketing-fashion-research-report-v1";
+    | "marketing-fashion-research-report-v1"
+    | "marketing-fashion-social-research-report-v1";
   structured_report: unknown;
   version_number: 1;
 };
@@ -1018,6 +1036,12 @@ export type Database = {
         Row: MarketingCompetitorRow;
         Insert: MarketingInsert<MarketingCompetitorRow>;
         Update: MarketingUpdate<MarketingCompetitorRow>;
+        Relationships: [];
+      };
+      marketing_competitor_social_profiles: {
+        Row: MarketingCompetitorSocialProfileRow;
+        Insert: MarketingInsert<MarketingCompetitorSocialProfileRow>;
+        Update: MarketingUpdate<MarketingCompetitorSocialProfileRow>;
         Relationships: [];
       };
       marketing_campaigns: {

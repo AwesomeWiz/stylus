@@ -218,3 +218,10 @@ Marketing service's three provider-neutral structured calls; it does not create
 a plugin tool, dynamic agent registration, job handler, or memory permission.
 Plugin disablement denies new execution and normal historical reads while
 retaining every run and Reel Brief row.
+
+TASK-017D remains inside the existing Marketing research capability and static
+SERVERLESS job. It does not add a Core social subsystem, generic plugin crawler,
+tool, write capability or memory permission. The common social transport
+interface is server-only; a future platform adapter must be explicitly
+registered by Marketing after official approval and cannot be chosen or
+configured by arbitrary plugin/browser input.

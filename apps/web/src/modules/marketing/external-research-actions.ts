@@ -18,6 +18,7 @@ import {
   type ExternalResearchActionState,
 } from "./external-research";
 import { planFashionResearch } from "./server/fashion-research-planner";
+import { listEnabledYouTubeCompetitorChannelIds } from "./server/data";
 
 const enqueueResultSchema = z
   .object({
@@ -42,18 +43,25 @@ export async function enqueueExternalResearchAction(
         .filter(Boolean),
       question: form.get("question"),
     });
-    const request = {
-      intent: submission.intent,
-      plan: planFashionResearch(submission),
-      queryTerms: submission.queryTerms,
-      question: submission.question,
-    };
     const invocationKey = String(form.get("invocationKey") ?? "");
     if (!/^[0-9a-f-]{36}$/i.test(invocationKey))
       throw new Error("invalid_request");
     const current = await getCurrentOrganizationContext();
     if (!current) throw new Error("not_authorized");
     assertCanMutateMarketing(current.membership.role);
+    const enabledYouTubeChannelIds =
+      submission.intent === "COMPETITOR_SIGNAL"
+        ? await listEnabledYouTubeCompetitorChannelIds(current.organization.id)
+        : [];
+    const request = {
+      intent: submission.intent,
+      plan: planFashionResearch({
+        ...submission,
+        enabledYouTubeChannelIds,
+      }),
+      queryTerms: submission.queryTerms,
+      question: submission.question,
+    };
     const { data, error } = await createServiceSupabaseClient().rpc(
       "enqueue_marketing_external_research",
       {

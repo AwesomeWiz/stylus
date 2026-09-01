@@ -130,6 +130,7 @@ describe("external research job handler", () => {
     expect(mocks.retrieve.mock.calls.map(([adapterId]) => adapterId)).toEqual([
       "reddit",
       "fashion-editorial",
+      "social",
     ]);
     expect(mocks.retrieve).toHaveBeenCalledWith(
       "fashion-editorial",
@@ -147,12 +148,138 @@ describe("external research job handler", () => {
       ([name]) => name === "complete_marketing_external_research",
     )?.[1];
     expect(completion.p_report).toMatchObject({
-      schemaVersion: "marketing-fashion-research-report-v1",
+      schemaVersion: "marketing-fashion-social-research-report-v1",
       sourceCoverage: [
         expect.objectContaining({ family: "REDDIT" }),
         expect.objectContaining({ family: "EDITORIAL" }),
+        expect.objectContaining({ family: "SOCIAL" }),
       ],
     });
+  });
+
+  it("preserves social modality and item lineage through one trusted synthesis", async () => {
+    currentRequest = {
+      intent: "AUDIENCE_LANGUAGE",
+      plan: planFashionResearch({
+        hackerNewsStream: null,
+        intent: "AUDIENCE_LANGUAGE",
+        queryTerms: ["sizing"],
+      }),
+      queryTerms: ["sizing"],
+      question: "What sizing language do fashion audiences use repeatedly?",
+    };
+    mocks.retrieve.mockImplementation(async (adapterId: string) => ({
+      failures: [],
+      items: adapterId === "social" ? [socialItem()] : [],
+    }));
+    mocks.generate.mockResolvedValue({
+      data: {
+        ...report,
+        contentPatterns: [
+          {
+            confidence: "LOW",
+            evidenceRefs: ["EVID-1", "EVID-2"],
+            pattern:
+              "Sizing explanations and fit questions recur in one thread.",
+          },
+        ],
+      },
+      runId: "00000000-0000-4000-8000-000000000004",
+    });
+
+    await runExternalResearchJob(
+      { runId: "00000000-0000-4000-8000-000000000001" },
+      jobContext(),
+    );
+
+    expect(mocks.generate).toHaveBeenCalledOnce();
+    const modelContext = JSON.parse(
+      mocks.generate.mock.calls[0]?.[0].options.messages[1]?.content,
+    );
+    expect(modelContext.evidence).toEqual([
+      expect.objectContaining({
+        accountId: "UC1234567890123456789012",
+        evidenceId: "EVID-1",
+        modality: "CAPTION",
+        nativeId: "video-1",
+        parentNativeId: null,
+        platform: "YOUTUBE",
+      }),
+      expect.objectContaining({
+        accountId: "UC1234567890123456789012",
+        evidenceId: "EVID-2",
+        modality: "COMMENT",
+        nativeId: "comment-1",
+        parentNativeId: "video-1",
+        platform: "YOUTUBE",
+      }),
+    ]);
+    const completion = mocks.rpc.mock.calls.find(
+      ([name]) => name === "complete_marketing_external_research",
+    )?.[1];
+    expect(completion.p_report).toMatchObject({
+      schemaVersion: "marketing-fashion-social-research-report-v1",
+      sourceDiversity: {
+        socialAccountCount: 1,
+        socialCommentThreadCount: 1,
+        socialIndependentContentCount: 1,
+        socialPlatformCount: 1,
+      },
+    });
+  });
+
+  it("fails safely with zero AI calls when the selected social source is unavailable", async () => {
+    currentRequest = {
+      intent: "AUDIENCE_LANGUAGE",
+      plan: planFashionResearch({
+        hackerNewsStream: null,
+        intent: "AUDIENCE_LANGUAGE",
+        queryTerms: ["sizing"],
+      }),
+      queryTerms: ["sizing"],
+      question: "What sizing language do fashion audiences use repeatedly?",
+    };
+    mocks.retrieve.mockImplementation(async (adapterId: string) =>
+      adapterId === "social"
+        ? {
+            failures: [
+              {
+                adapterId: "social",
+                canonicalUrl: "https://www.youtube.com",
+                category: "policy_denied",
+                diagnosticCategory: "source_unavailable",
+                metadata: {
+                  platform: "YOUTUBE",
+                  platformStatus: "POLICY_DENIED",
+                },
+              },
+            ],
+            items: [],
+          }
+        : { failures: [], items: [] },
+    );
+
+    await expect(
+      runExternalResearchJob(
+        { runId: "00000000-0000-4000-8000-000000000001" },
+        jobContext(),
+      ),
+    ).rejects.toMatchObject({ category: "permanent_failure" });
+    expect(mocks.generate).not.toHaveBeenCalled();
+    const retrieval = mocks.rpc.mock.calls.find(
+      ([name]) => name === "record_marketing_external_research_retrieval",
+    )?.[1];
+    expect(retrieval.p_sources).toEqual([
+      expect.objectContaining({
+        adapter: "social",
+        failureCategory: "policy_denied",
+        safeMetadata: expect.objectContaining({
+          diagnosticCategory: "source_unavailable",
+          platform: "YOUTUBE",
+          platformStatus: "POLICY_DENIED",
+        }),
+      }),
+    ]);
   });
 
   it("persists deterministic evidence and performs exactly one trusted synthesis", async () => {
@@ -544,6 +671,58 @@ function hostedEnrichedItem(): NormalizedResearchItem {
       })),
     ],
     normalizedText: "Hosted enriched evidence",
+  };
+}
+
+function socialItem(): NormalizedResearchItem {
+  const common = {
+    canonicalUrl: "https://www.youtube.com/watch?v=video-1",
+    fetchedAt: "2026-08-31T16:00:00.000Z",
+    metadata: {
+      accountId: "UC1234567890123456789012",
+      platform: "YOUTUBE",
+    },
+    publishedAt: "2026-08-31T12:00:00.000Z",
+  };
+  return {
+    adapterId: "social",
+    author: "Public fashion channel",
+    canonicalUrl: common.canonicalUrl,
+    contentHash: "d".repeat(64),
+    evidence: [
+      {
+        ...common,
+        author: "Public fashion channel",
+        evidenceType: "SOCIAL_CAPTION",
+        excerpt: "Why clothing sizing and fit frustrate shoppers.",
+        metadata: { ...common.metadata, modality: "CAPTION" },
+        nativeId: "video-1",
+        parentNativeId: null,
+        title: "Sizing problems",
+      },
+      {
+        ...common,
+        author: null,
+        evidenceType: "SOCIAL_COMMENT",
+        excerpt: "Sizing changes between every brand.",
+        metadata: { ...common.metadata, depth: 0, modality: "COMMENT" },
+        nativeId: "comment-1",
+        parentNativeId: "video-1",
+        title: null,
+      },
+    ],
+    fetchedAt: common.fetchedAt,
+    metadata: {
+      accountId: "UC1234567890123456789012",
+      platform: "YOUTUBE",
+      retainedComments: 1,
+      sourceRequest: "social:YOUTUBE",
+    },
+    nativeId: "YOUTUBE:video-1",
+    normalizedText:
+      "Why clothing sizing and fit frustrate shoppers. Sizing changes between every brand.",
+    publishedAt: common.publishedAt,
+    title: "Sizing problems",
   };
 }
 

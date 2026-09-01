@@ -33,6 +33,14 @@ export const externalResearchLimits = Object.freeze({
   redditCommunitiesPerRun: 2,
   redditPostsPerRun: 4,
   redditQueryVariants: 2,
+  socialCommentsPerItem: 5,
+  socialCommentCharacters: 1_500,
+  socialCommentsPerRun: 12,
+  socialItemsForComments: 3,
+  socialPlatformsPerRun: 2,
+  socialVideosPerRun: 6,
+  youtubeChannelIdsPerRun: 3,
+  youtubeRequestsPerRun: 5,
   responseBytes: 1024 * 1024,
   retainedItemsPerSource: 10,
   retainedItemsPerRun: 20,
@@ -69,6 +77,7 @@ export const researchSourceFamilies = [
   "REDDIT",
   "EDITORIAL",
   "HACKER_NEWS",
+  "SOCIAL",
 ] as const;
 export const researchSourceFamilySchema = z.enum(researchSourceFamilies);
 export type ResearchSourceFamily = z.infer<typeof researchSourceFamilySchema>;
@@ -79,8 +88,33 @@ export type FashionResearchPlanPreview = {
     available: boolean;
     family: ResearchSourceFamily;
     labels: string[];
+    statuses?: Array<{
+      platform: SocialPlatform;
+      status: SocialPlatformStatus;
+    }>;
   }>;
 };
+
+export const socialPlatforms = [
+  "INSTAGRAM",
+  "TIKTOK",
+  "YOUTUBE",
+  "PINTEREST",
+] as const;
+export const socialPlatformSchema = z.enum(socialPlatforms);
+export type SocialPlatform = z.infer<typeof socialPlatformSchema>;
+
+export const socialPlatformStatuses = [
+  "AVAILABLE",
+  "UNCONFIGURED",
+  "APPROVAL_REQUIRED",
+  "UNSUPPORTED_FOR_DISCOVERY",
+  "POLICY_DENIED",
+  "RATE_LIMITED",
+  "TEMPORARILY_UNAVAILABLE",
+] as const;
+export const socialPlatformStatusSchema = z.enum(socialPlatformStatuses);
+export type SocialPlatformStatus = z.infer<typeof socialPlatformStatusSchema>;
 
 export const researchPlanReasonCodes = [
   "CONSUMER_LANGUAGE_SOURCE",
@@ -90,6 +124,8 @@ export const researchPlanReasonCodes = [
   "PUBLIC_COMPETITOR_SOURCE",
   "TECHNICAL_DISCUSSION_SOURCE",
   "EXISTING_FEED_SOURCE",
+  "OFFICIAL_SOCIAL_DISCOVERY_SOURCE",
+  "COMPETITOR_SOCIAL_SOURCE",
 ] as const;
 export const researchPlanReasonCodeSchema = z.enum(researchPlanReasonCodes);
 
@@ -128,11 +164,26 @@ export const fashionResearchSourcePlanSchema = z
           .max(externalResearchLimits.redditQueryVariants),
       })
       .strict(),
+    social: z
+      .object({
+        selectedPlatforms: z
+          .array(socialPlatformSchema)
+          .max(externalResearchLimits.socialPlatformsPerRun),
+        youtubeChannelIds: z
+          .array(z.string().regex(/^UC[A-Za-z0-9_-]{20,30}$/))
+          .max(externalResearchLimits.youtubeChannelIdsPerRun),
+      })
+      .strict()
+      .optional()
+      .default({ selectedPlatforms: [], youtubeChannelIds: [] }),
     selectedSourceFamilies: z
       .array(researchSourceFamilySchema)
       .min(1)
       .max(externalResearchLimits.sourceFamilies),
-    version: z.literal("marketing-fashion-source-plan-v1"),
+    version: z.enum([
+      "marketing-fashion-source-plan-v1",
+      "marketing-fashion-social-source-plan-v1",
+    ]),
   })
   .strict();
 export type FashionResearchSourcePlan = z.infer<
@@ -241,6 +292,8 @@ export const fashionSignalTypes = [
   "TREND",
   "COMPETITOR",
   "TECH",
+  "CONTENT_PATTERN",
+  "VISUAL_PATTERN",
 ] as const;
 export const fashionSignalTypeSchema = z.enum(fashionSignalTypes);
 
@@ -266,6 +319,8 @@ export const fashionResearchSynthesisLimits = Object.freeze({
   caveatCharacters: 90,
   caveats: 2,
   contentOpportunities: 4,
+  contentPatterns: 3,
+  competitorSignals: 3,
   debates: 1,
   evidenceReferences: 3,
   freshnessCharacters: 90,
@@ -277,6 +332,7 @@ export const fashionResearchSynthesisLimits = Object.freeze({
   summaryCharacters: 320,
   titleCharacters: 80,
   trendSignals: 2,
+  visualPatterns: 3,
 });
 
 function createFashionInterpretationSchema(
@@ -338,6 +394,30 @@ function createFashionInterpretationSchema(
             .strict(),
         )
         .max(fashionResearchSynthesisLimits.contentOpportunities),
+      contentPatterns: z
+        .array(
+          z
+            .object({
+              confidence: confidenceSchema,
+              evidenceRefs: references,
+              pattern: statement,
+            })
+            .strict(),
+        )
+        .max(fashionResearchSynthesisLimits.contentPatterns)
+        .default([]),
+      competitorSignals: z
+        .array(
+          z
+            .object({
+              confidence: confidenceSchema,
+              evidenceRefs: references,
+              statement,
+            })
+            .strict(),
+        )
+        .max(fashionResearchSynthesisLimits.competitorSignals)
+        .default([]),
       debates: z
         .array(
           z
@@ -390,6 +470,18 @@ function createFashionInterpretationSchema(
             .strict(),
         )
         .max(fashionResearchSynthesisLimits.trendSignals),
+      visualPatterns: z
+        .array(
+          z
+            .object({
+              confidence: confidenceSchema,
+              evidenceRefs: references,
+              pattern: statement,
+            })
+            .strict(),
+        )
+        .max(fashionResearchSynthesisLimits.visualPatterns)
+        .default([]),
     })
     .strict();
 }
@@ -399,6 +491,16 @@ export const fashionResearchInterpretationSchema =
 export type FashionResearchInterpretation = z.infer<
   typeof fashionResearchInterpretationSchema
 >;
+type VerifiableFashionInterpretation = Omit<
+  FashionResearchInterpretation,
+  "contentPatterns" | "competitorSignals" | "visualPatterns"
+> &
+  Partial<
+    Pick<
+      FashionResearchInterpretation,
+      "contentPatterns" | "competitorSignals" | "visualPatterns"
+    >
+  >;
 
 const sourceCoverageSchema = z
   .object({
@@ -412,11 +514,23 @@ const sourceCoverageSchema = z
 
 export const fashionResearchReportSchema = fashionResearchInterpretationSchema
   .extend({
-    schemaVersion: z.literal("marketing-fashion-research-report-v1"),
+    schemaVersion: z.enum([
+      "marketing-fashion-research-report-v1",
+      "marketing-fashion-social-research-report-v1",
+    ]),
     sourceCoverage: z.array(sourceCoverageSchema).min(1).max(3),
     sourceDiversity: z
       .object({
         evidenceByType: z.record(z.string(), z.number().int().min(0).max(20)),
+        socialAccountCount: z.number().int().min(0).max(20).default(0),
+        socialCommentThreadCount: z.number().int().min(0).max(20).default(0),
+        socialIndependentContentCount: z
+          .number()
+          .int()
+          .min(0)
+          .max(20)
+          .default(0),
+        socialPlatformCount: z.number().int().min(0).max(4).default(0),
         sourceFamilyCount: z.number().int().min(1).max(3),
         sourcesRepresented: z.array(z.string().min(1).max(80)).max(12),
       })
@@ -486,7 +600,7 @@ export const initialExternalResearchActionState: ExternalResearchActionState = {
 };
 
 export function validateFashionEvidenceReferences(
-  report: FashionResearchInterpretation,
+  report: VerifiableFashionInterpretation,
   evidenceIds: Iterable<string>,
 ) {
   const available = new Set(evidenceIds);
@@ -497,6 +611,9 @@ export function validateFashionEvidenceReferences(
     ...report.objections,
     ...report.debates,
     ...report.contentOpportunities,
+    ...(report.contentPatterns ?? []),
+    ...(report.competitorSignals ?? []),
+    ...(report.visualPatterns ?? []),
   ];
   if (
     referenced.some((item) =>
@@ -504,6 +621,39 @@ export function validateFashionEvidenceReferences(
     )
   )
     throw new Error("Research report contains an invalid evidence reference.");
+}
+
+export function validateSocialEvidenceClaims(
+  report: VerifiableFashionInterpretation,
+  evidence: Array<{
+    evidenceId: string;
+    safeMetadata: Record<string, unknown>;
+  }>,
+) {
+  const byId = new Map(evidence.map((item) => [item.evidenceId, item]));
+  const supportsVisual = (evidenceId: string) => {
+    const modality = byId.get(evidenceId)?.safeMetadata.modality;
+    return (
+      modality === "IMAGE" || modality === "VIDEO" || modality === "TRANSCRIPT"
+    );
+  };
+  if (
+    (report.visualPatterns ?? []).some((pattern) =>
+      pattern.evidenceRefs.some((reference) => !supportsVisual(reference)),
+    )
+  )
+    throw new Error("Visual pattern is not supported by visual evidence.");
+  if (
+    (report.competitorSignals ?? []).some((signal) =>
+      signal.evidenceRefs.some(
+        (reference) =>
+          typeof byId.get(reference)?.safeMetadata.competitorId !== "string",
+      ),
+    )
+  )
+    throw new Error(
+      "Competitor signal is not supported by competitor evidence.",
+    );
 }
 
 function validateSynthesisEvidenceIds(evidenceIds: readonly string[]) {

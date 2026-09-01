@@ -9,6 +9,7 @@ import {
   fashionResearchSynthesisLimits,
   projectExternalResearchEvidence,
   validateFashionEvidenceReferences,
+  validateSocialEvidenceClaims,
 } from "./external-research";
 import {
   deduplicateResearchItems,
@@ -134,6 +135,18 @@ describe("fashion external research contracts", () => {
           whyItMatters: statement,
         }),
       ),
+      contentPatterns: Array.from(
+        { length: fashionResearchSynthesisLimits.contentPatterns },
+        () => ({
+          confidence: "MEDIUM",
+          evidenceRefs: reference,
+          pattern: statement,
+        }),
+      ),
+      competitorSignals: Array.from(
+        { length: fashionResearchSynthesisLimits.competitorSignals },
+        () => supported,
+      ),
       debates: [{ evidenceRefs: reference, positionSummary: statement }],
       languageSignals: Array.from(
         { length: fashionResearchSynthesisLimits.languageSignals },
@@ -158,6 +171,14 @@ describe("fashion external research contracts", () => {
         { length: fashionResearchSynthesisLimits.trendSignals },
         () => supported,
       ),
+      visualPatterns: Array.from(
+        { length: fashionResearchSynthesisLimits.visualPatterns },
+        () => ({
+          confidence: "MEDIUM",
+          evidenceRefs: reference,
+          pattern: statement,
+        }),
+      ),
     };
     const schema = createFashionResearchSynthesisSchema(reference);
     expect(schema.safeParse(maximum).success).toBe(true);
@@ -165,6 +186,81 @@ describe("fashion external research contracts", () => {
     expect(externalResearchLimits.modelOutputTokens).toBeGreaterThanOrEqual(
       3_000,
     );
+  });
+
+  it("rejects social claims unsupported by evidence modality or competitor provenance", () => {
+    const base = interpretation("EVID-1");
+    expect(() =>
+      validateSocialEvidenceClaims(
+        {
+          ...base,
+          visualPatterns: [
+            {
+              confidence: "MEDIUM",
+              evidenceRefs: ["EVID-1"],
+              pattern: "Fast visual cuts recur.",
+            },
+          ],
+        },
+        [
+          {
+            evidenceId: "EVID-1",
+            safeMetadata: { modality: "CAPTION", platform: "YOUTUBE" },
+          },
+        ],
+      ),
+    ).toThrow("visual evidence");
+    expect(() =>
+      validateSocialEvidenceClaims(
+        {
+          ...base,
+          competitorSignals: [
+            {
+              confidence: "MEDIUM",
+              evidenceRefs: ["EVID-1"],
+              statement: "A competitor repeats this pattern.",
+            },
+          ],
+        },
+        [
+          {
+            evidenceId: "EVID-1",
+            safeMetadata: { modality: "CAPTION", platform: "YOUTUBE" },
+          },
+        ],
+      ),
+    ).toThrow("competitor evidence");
+    expect(() =>
+      validateSocialEvidenceClaims(
+        {
+          ...base,
+          competitorSignals: [
+            {
+              confidence: "MEDIUM",
+              evidenceRefs: ["EVID-1"],
+              statement: "A configured competitor repeats this pattern.",
+            },
+          ],
+          visualPatterns: [
+            {
+              confidence: "MEDIUM",
+              evidenceRefs: ["EVID-1"],
+              pattern: "A product demonstration is visible.",
+            },
+          ],
+        },
+        [
+          {
+            evidenceId: "EVID-1",
+            safeMetadata: {
+              competitorId: "00000000-0000-4000-8000-000000000010",
+              modality: "VIDEO",
+              platform: "YOUTUBE",
+            },
+          },
+        ],
+      ),
+    ).not.toThrow();
   });
 
   it("deduplicates and caps retained evidence deterministically", () => {

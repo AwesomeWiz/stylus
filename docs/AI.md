@@ -446,3 +446,20 @@ External text is explicitly quoted as untrusted evidence. It has no tools and
 no authority over routing, providers, sources, credentials, memory, Council,
 campaigns or application actions. Raw prompts, responses and chain-of-thought
 are not persisted.
+
+### TASK-017D social interpretation
+
+Social planning, availability, retrieval, relevance, deduplication, modality,
+source diversity and EVID assignment remain deterministic. A run with no usable
+evidence makes zero AI calls. A run with evidence makes the same single maximum
+`generateAIStructuredForTrustedJob()` call; there is no per-platform, per-post,
+per-comment, repair or fallback call.
+
+The social report version adds at most three content patterns, three competitor
+signals and three visual patterns while retaining the existing bounded fashion
+sections and 3,200-token ceiling. Every claim references the dynamic exact
+current-run EVID enum. Application validation rejects visual claims lacking
+image/video/transcript modality and competitor claims lacking configured
+competitor provenance. Social text is quoted evidence only and has no authority
+to alter routing, providers, tools, credentials, Council, memory or application
+actions.

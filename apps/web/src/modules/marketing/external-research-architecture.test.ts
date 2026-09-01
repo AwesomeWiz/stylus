@@ -75,6 +75,27 @@ describe("external research architecture boundaries", () => {
     expect(registry).toContain("articleFetchPermitted");
   });
 
+  it("keeps social platforms official, fail-closed, read-only, and transport-neutral", () => {
+    const social = source("src/modules/marketing/server/social-adapter.ts");
+    const capabilities = source(
+      "src/modules/marketing/server/social-platform-registry.ts",
+    );
+    const handler = source(
+      "src/modules/marketing/server/external-research-handler.ts",
+    );
+    for (const platform of ["INSTAGRAM", "TIKTOK", "YOUTUBE", "PINTEREST"])
+      expect(capabilities).toContain(`platform: "${platform}"`);
+    expect(capabilities).toContain('status: "APPROVAL_REQUIRED"');
+    expect(capabilities).toContain('status: "UNSUPPORTED_FOR_DISCOVERY"');
+    expect(capabilities).toContain('status: "POLICY_DENIED"');
+    expect(social).not.toMatch(/fetch\(|playwright|puppeteer|cookie|captcha/i);
+    expect(social).not.toMatch(/method:\s*["'](?:post|put|patch|delete)["']/i);
+    expect(
+      handler.match(/generateAIStructuredForTrustedJob\(/g) ?? [],
+    ).toHaveLength(1);
+    expect(handler).not.toMatch(/creativeCouncil|knowledge_memories/i);
+  });
+
   it("does not wire external research into Council, memory, or the Windows worker", () => {
     const council = source(
       "src/modules/marketing/server/creative-council-orchestrator.ts",

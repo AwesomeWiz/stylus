@@ -4,6 +4,23 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added TASK-017D Fashion Social Intelligence with deterministic social-source
+  planning, first-class Instagram/TikTok/YouTube/Pinterest capability states,
+  organization-scoped competitor social identities, typed platform/modality
+  provenance, and evidence-backed content/competitor/visual pattern contracts.
+- Social retrieval now fails closed when official approval, intended-use or
+  retention requirements are unmet. V1 activates no platform transport and has
+  no scraping, browser automation, private-API, consumer-session or posting
+  fallback.
+- Added deterministic social source-diversity counts so comments from one item
+  remain one discussion thread rather than masquerading as independent market
+  evidence. Caption/comment/metadata evidence cannot support a visual claim.
+- Completed TASK-017D hosted acceptance through the deployed durable SERVERLESS
+  path. A deterministic Reddit + YouTube social plan failed closed when both
+  official transports were policy-denied, persisting zero evidence and reports,
+  making zero AI calls and producing no unsupported social claims or downstream
+  Council, memory, TASK-018 or TASK-020 side effects.
+
 - Added TASK-017C Fashion Marketing Intelligence with deterministic intent-based
   source planning, opt-in approved Reddit OAuth, curated fashion/editorial
   feeds and articles, typed Reddit evidence, fashion signals, and immutable

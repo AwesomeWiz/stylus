@@ -1,17 +1,17 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-31
+Last Updated: 2026-09-01
 
 ## Overall Status
 
-TASK-017C COMPLETE / HOSTED ACCEPTANCE PASSED
+TASK-017D COMPLETE / HOSTED ACCEPTANCE PASSED
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
-durable fashion-marketing research system. TASK-017C adds deterministic intent
-planning, approved-configuration Reddit support, curated editorial retrieval,
-typed fashion signals and evidence-backed content opportunity candidates while
-preserving TASK-017B enrichment and TASK-016's exact Strategic Review.
+durable fashion-marketing research system. TASK-017D adds a compliant,
+fail-closed social-intelligence boundary, platform/modality provenance,
+competitor social identities and evidence-backed content-pattern fields while
+preserving TASK-017C relevance and TASK-016's exact Strategic Review.
 
 ---
 
@@ -19,16 +19,16 @@ preserving TASK-017B enrichment and TASK-016's exact Strategic Review.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017C COMPLETE / HOSTED ACCEPTANCE PASSED
+Status: TASK-017D COMPLETE / HOSTED ACCEPTANCE PASSED
 
 ---
 
 ## Current Objective
 
-TASK-017C hosted acceptance is complete. Preserve
-source-plan-to-evidence-to-opportunity provenance, organization isolation, the
-single synthesis-call maximum and unchanged TASK-015/TASK-016 behavior.
-TASK-017D, TASK-018 and TASK-020 remain unstarted.
+TASK-017D is ready for user-managed merge. After merge, TASK-018 Performance
+Learning is the next roadmap task. Preserve source-plan-to-evidence-to-
+opportunity provenance, organization isolation, the zero/one synthesis-call
+invariant and unchanged TASK-015/TASK-016 behavior. TASK-020 remains unstarted.
 
 ---
 
@@ -1475,3 +1475,47 @@ unavailable by policy. Hacker News was not selected. It persisted zero evidence
 and reports and created zero AI runs, Council invocations or memory writes; no
 TASK-017D, TASK-018 or TASK-020 behavior ran. Refusing to synthesize unsupported
 sustainable-fashion claims is the correct zero-evidence outcome.
+
+### TASK-017D Fashion Social Intelligence
+
+TASK-017D extends the existing durable External Research workflow with a common
+`SOCIAL` adapter boundary and first-class Instagram, TikTok, YouTube and
+Pinterest capability states. Official-policy review intentionally activates no
+production transport in V1: Meta professional/public-content access requires
+approval and an account authorization lifecycle; TikTok Research Tools exclude
+commercial product use; YouTube public discovery conflicts with the current
+immutable evidence lifecycle's 30-day refresh/deletion obligations; and
+Pinterest has no configured arbitrary public-listening path. Selected social
+sources therefore return bounded `source_unavailable` observations and never
+fall back to scraping, private APIs, browser automation or consumer sessions.
+
+The deterministic planner adds social only to relevant consumer/competitor
+intents and leaves `FASHION_TECH` unchanged. Browser input cannot select a
+platform, profile, competitor, organization, actor, provider or model.
+Organization-scoped competitor identities reuse `marketing_competitors` and are
+validated by RLS plus the service-only enqueue function. Typed immutable social
+evidence preserves platform, native/parent IDs, public account context,
+retrieval/publication times, modality, deterministic hashes and bounded metrics.
+Comment authors are not retained. Caption/comment/metadata evidence cannot
+support visual claims, and competitor claims require configured competitor
+provenance.
+
+Ordinary research still performs deterministic retrieval/filtering/deduplication
+and exactly zero or one trusted ModelGateway synthesis. It invokes no media
+worker, Council, Reel Brief, memory, posting, TASK-018 or TASK-020 path. The
+forward migration is `20260825001740_fashion_social_intelligence.sql`; the
+predeployment linked dry run reported exactly that migration pending and
+applied nothing. The hosted migration ledger now contains the same migration.
+Local pgTAP remains unavailable because Docker/Podman is not installed.
+
+Hosted acceptance passed on 2026-09-01 with `AUDIENCE_LANGUAGE` run
+`823ef89e-bfae-4dda-9e53-11a61bd23f72` and durable SERVERLESS job
+`b7e064d4-868c-44dc-811c-eacbb9f0a3b0`. The persisted deterministic plan
+selected `REDDIT` plus `SOCIAL`; the social adapter resolved to `YOUTUBE` and
+recorded `POLICY_DENIED` / `source_unavailable`, while Reddit recorded the same
+safe unavailable outcome. The run and job failed safely with zero evidence,
+zero reports, a null `synthesis_ai_run_id`, and zero attributable `ai_runs`.
+The bounded execution window also contained zero Creative Council or Strategic
+Review runs, zero memory writes, and no downstream job other than this External
+Research job; TASK-018 and TASK-020 did not execute. This fail-closed result is
+the correct V1 acceptance behavior and produced no unsupported social claims.

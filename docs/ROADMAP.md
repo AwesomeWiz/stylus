@@ -288,15 +288,22 @@ workflow. TASK-020 remains the unimplemented conversational product.
 - [x] TASK-017C approved-configuration bounded Reddit research
 - [x] TASK-017C curated web/fashion-editorial discovery and article extraction
 - [x] TASK-017C evidence-backed Marketing content opportunity candidates
-- [ ] TASK-017D authorized Fashion Social Intelligence discovery
-- [ ] social-platform intelligence (separate future media/platform phase)
+- [x] TASK-017D compliant Fashion Social Intelligence architecture and
+  fail-closed platform capability discovery
+- [ ] activate approved official social transports with compliant token and
+  retention/deletion lifecycles
 
 TASK-017B implementation and hosted acceptance are complete and merged.
-TASK-017C implementation and hosted acceptance are complete on its task branch
-and await the user-managed merge. The final deliberate `TREND_SIGNAL` scenario
+TASK-017C implementation and hosted acceptance are merged. The final deliberate
+`TREND_SIGNAL` scenario
 correctly retained zero evidence and produced no report rather than synthesizing
 unsupported claims. It adds no Instagram, TikTok, YouTube or Pinterest ingestion;
-those remain TASK-017D discovery. TASK-018 remains Performance Learning.
+TASK-017D now provides their common controlled boundary, but activates none
+until official access and retention obligations are satisfied. TASK-017D hosted
+acceptance passed with a deterministic `REDDIT` + `SOCIAL` plan: Reddit was
+unavailable, Social resolved to policy-denied YouTube, and the durable workflow
+failed closed with zero evidence, reports, AI calls or downstream side effects.
+TASK-018 remains Performance Learning and is the next task after merge.
 
 ---
 

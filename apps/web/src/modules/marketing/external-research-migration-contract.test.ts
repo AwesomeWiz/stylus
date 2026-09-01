@@ -23,6 +23,13 @@ const fashionSql = readFileSync(
   ),
   "utf8",
 ).toLowerCase();
+const socialSql = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825001740_fashion_social_intelligence.sql",
+  ),
+  "utf8",
+).toLowerCase();
 
 describe("TASK-017 migration contract", () => {
   it("atomically creates one run and its exact statically registered SERVERLESS job", () => {
@@ -96,5 +103,47 @@ describe("TASK-017 migration contract", () => {
     expect(fashionSql).toContain("to service_role");
     expect(fashionSql).not.toContain("knowledge_memories");
     expect(fashionSql).not.toContain("drop table");
+  });
+
+  it("extends the applied contract forward for organization-scoped social provenance", () => {
+    expect(socialSql).toContain("add value if not exists 'social'");
+    expect(socialSql).toContain("'social_caption', 'social_comment'");
+    expect(socialSql).toContain("marketing-fashion-social-research-report-v1");
+    expect(socialSql).toContain("marketing-fashion-social-source-plan-v1");
+    expect(socialSql).toContain(
+      "create table public.marketing_competitor_social_profiles",
+    );
+    expect(socialSql).toContain(
+      "foreign key (organization_id, marketing_competitor_id)",
+    );
+    expect(socialSql).toContain(
+      "private.marketing_plugin_available(organization_id)",
+    );
+    expect(socialSql).toContain(
+      "private.marketing_plugin_writable(organization_id)",
+    );
+    expect(socialSql).toContain("security definer set search_path = ''");
+    expect(socialSql).toContain("to service_role");
+    expect(socialSql).not.toContain("knowledge_memories");
+    expect(socialSql).not.toMatch(/pg_net|http_|cron\.schedule/);
+    expect(socialSql).not.toContain("drop table");
+  });
+
+  it("preserves legacy fashion completion while validating every social section", () => {
+    expect(socialSql).toContain(
+      "if v_schema_version = 'marketing-fashion-social-research-report-v1'",
+    );
+    expect(socialSql).toContain(
+      "elsif v_schema_version = 'marketing-fashion-research-report-v1'",
+    );
+    for (const section of [
+      "contentpatterns",
+      "competitorsignals",
+      "visualpatterns",
+    ])
+      expect(socialSql).toContain(section);
+    expect(socialSql).toContain(
+      "where profile.organization_id = p_organization_id",
+    );
   });
 });

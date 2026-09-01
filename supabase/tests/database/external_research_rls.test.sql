@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(41);
+select plan(51);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000000','authenticated','authenticated','research-owner@example.test','',now(),'{}','{}',now(),now()),
@@ -22,6 +22,62 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000171'
 select public.set_organization_plugin_enabled('10000000-0000-0000-0000-000000000171','marketing',true);
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000174',true);
 select public.set_organization_plugin_enabled('10000000-0000-0000-0000-000000000172','marketing',true);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000171',true);
+select lives_ok($$
+  insert into public.marketing_competitors(
+    id,organization_id,name,created_by,updated_by
+  ) values(
+    '40000000-0000-4000-8000-000000000171',
+    '10000000-0000-0000-0000-000000000171','Research competitor',
+    '00000000-0000-0000-0000-000000000171',
+    '00000000-0000-0000-0000-000000000171'
+  )
+$$,'OWNER may create the existing competitor parent');
+select lives_ok($$
+  insert into public.marketing_competitor_social_profiles(
+    id,organization_id,marketing_competitor_id,platform,native_account_id,
+    canonical_url,status,created_by,updated_by
+  ) values(
+    '41000000-0000-4000-8000-000000000171',
+    '10000000-0000-0000-0000-000000000171',
+    '40000000-0000-4000-8000-000000000171','YOUTUBE',
+    'UC1234567890123456789012',
+    'https://www.youtube.com/channel/UC1234567890123456789012',
+    'AVAILABLE','00000000-0000-0000-0000-000000000171',
+    '00000000-0000-0000-0000-000000000171'
+  )
+$$,'OWNER may associate a bounded public social identity');
+select results_eq($$
+  select organization_id::text || ':' || platform || ':' || native_account_id
+  from public.marketing_competitor_social_profiles
+$$,array['10000000-0000-0000-0000-000000000171:YOUTUBE:UC1234567890123456789012'],
+'social profile retains exact tenant, platform, and native identity');
+select throws_ok($$
+  insert into public.marketing_competitor_social_profiles(
+    organization_id,marketing_competitor_id,platform,native_account_id,
+    canonical_url,status,created_by,updated_by
+  ) values(
+    '10000000-0000-0000-0000-000000000171',
+    '40000000-0000-4000-8000-000000000171','INSTAGRAM','safe-account',
+    'https://attacker.example/safe-account','APPROVAL_REQUIRED',
+    '00000000-0000-0000-0000-000000000171',
+    '00000000-0000-0000-0000-000000000171'
+  )
+$$,'23514',null,'non-platform canonical provenance URL is rejected');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000173',true);
+select results_eq($$
+  select count(*)::integer from public.marketing_competitor_social_profiles
+$$,array[1]::integer[],'VIEWER reads social profiles for the enabled organization');
+select throws_ok($$
+  update public.marketing_competitor_social_profiles set status='POLICY_DENIED'
+$$,'42501',null,'VIEWER cannot modify social profiles');
+select throws_ok($$
+  delete from public.marketing_competitor_social_profiles
+$$,'42501',null,'authenticated users receive no social-profile hard-delete grant');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000174',true);
+select results_eq($$
+  select count(*)::integer from public.marketing_competitor_social_profiles
+$$,array[0]::integer[],'cross-organization social profiles are isolated');
 reset role;
 
 select results_eq($$ select public.has_function_privilege('authenticated','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[false],'browser cannot invoke atomic research enqueue');
@@ -30,6 +86,8 @@ select results_eq($$ select public.has_function_privilege('authenticated','publi
 select results_eq($$ select public.has_function_privilege('authenticated','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[false],'browser cannot target a SERVERLESS claim');
 select results_eq($$ select public.has_function_privilege('service_role','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[true],'service role may target a SERVERLESS claim');
 select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel in ('reddit','fashion-editorial') order by enumlabel $$,array['fashion-editorial','reddit'],'fashion source adapters extend the enum forward');
+select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='social' $$,array['social'],'social adapter extends the enum forward');
+select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000171' $$,array[0]::integer[],'social-profile setup writes no durable memory');
 
 set local role service_role;
 select lives_ok($$
