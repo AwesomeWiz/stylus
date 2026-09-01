@@ -773,3 +773,36 @@ an appropriate agreement before exposing this provider in a customer-facing
 commercial deployment beyond the documented internal use. A provider change
 must preserve the same fixed-host interface, no-snippet-evidence rule and
 independent page-fetch boundary.
+
+## ADR-036 — Performance learning is deterministic, local and append-only
+
+Status: ACCEPTED
+
+TASK-018 records manual Instagram Reel publications separately from immutable
+observations. Missing metrics remain NULL and supplied zero remains zero.
+Derived values are calculated from unrounded raw observations with explicit
+denominators; zero or unavailable denominators produce no rate. Observation age
+is classified as EARLY [0,24h), SHORT_TERM [24h,72h), SEVEN_DAY [72h,8d), or
+MATURE [8d,+∞), and only same-organization, same-platform, same-horizon values
+are comparable.
+
+V1 uses the latest eligible snapshot per content/horizon and the organization
+median `SAVE_RATE_BY_REACH`. A baseline needs five content items and a segment
+needs three. Segment evidence strength is WEAK for 3–4, MODERATE for 5–9, and
+STRONG for 10 or more; these labels are descriptive, not statistical
+significance. Derivation is capped at 100 content rows, 500 snapshots and 20
+new immutable learning artifacts.
+
+The segment dimension is the existing TASK-017C Content Opportunity taxonomy,
+selected explicitly on publication registration. It is never inferred from
+free text, research or a model; an absent value stays unclassified. Exact Reel
+Brief version linkage remains independent and relational. Learning history
+stores the exact supporting content/snapshot/brief references and algorithm
+`marketing-performance-learning-v1`; identical evidence is idempotent and new
+evidence creates a new artifact.
+
+No AI call or automatic Council, Strategic Review, research, memory or Ask
+Council side effect occurs. An official future platform adapter may submit only
+a normalized snapshot draft through the same validation/persistence boundary.
+Future Council work must deliberately retrieve selected learnings through a
+separate authorized bounded projection.

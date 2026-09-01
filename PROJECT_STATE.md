@@ -4,31 +4,30 @@ Last Updated: 2026-09-01
 
 ## Overall Status
 
-TASK-017E IMPLEMENTED / HOSTED ACCEPTANCE PENDING
+TASK-018 LOCAL IMPLEMENTATION / HOSTED ACCEPTANCE PENDING
 
-Stylus now has its first organization-enableable business plugin. Marketing
-provides guarded manual workspaces, bounded Creative Council workflows, and a
-durable fashion-marketing research system. TASK-017E adds deterministic,
-bounded public-web discovery for fashion and consumer evidence while keeping
-search discovery separate from independently validated page retrieval.
+Stylus Marketing now extends its evidence-to-creative pipeline with the first
+explicit performance feedback layer. TASK-018 records published Instagram
+Reels and immutable manual metric snapshots, calculates deterministic
+comparable metrics, and creates bounded organization-local Performance
+Learnings without AI or automatic downstream mutation.
 
 ---
 
 ## Current Phase
 
-Phase 14 — External Marketing Research
+Phase 15 — Performance Learning
 
-Status: TASK-017E IMPLEMENTED / HOSTED ACCEPTANCE PENDING
+Status: TASK-018 LOCAL IMPLEMENTATION / HOSTED ACCEPTANCE PENDING
 
 ---
 
 ## Current Objective
 
-Deploy the post-gateway synthesis-contract correction, then perform one final
-TASK-017E hosted acceptance retest. TASK-018 Performance Learning remains next
-and unstarted.
-Preserve source-plan-to-evidence-to-opportunity provenance, organization
-isolation and the zero/one synthesis-call invariant.
+Complete TASK-018 local verification, apply its forward migration in a hosted
+preview, and perform the documented manual six-Reel acceptance scenario.
+Preserve append-only observations, exact learning provenance, organization
+isolation, and the zero-ModelGateway-call invariant.
 
 ---
 
@@ -1586,3 +1585,56 @@ Focused verification passes 2 files / 22 tests and the complete web suite
 passes 141 files / 793 tests, plus lint, worker/web typechecks and both
 production builds. One final deployed retest remains required; both prior runs
 remain immutable.
+
+### TASK-018 Performance Learning
+
+TASK-018 adds `/apps/marketing/performance` and forward migration
+`20260825001800_performance_learning.sql`. Authorized OWNER, ADMIN and MEMBER
+roles can manually register an Instagram Reel, optionally bind it to one exact
+same-organization immutable Reel Brief version, and append timestamped manual
+performance snapshots. VIEWER remains read-only. Publication identity is
+archived/restored rather than hard-deleted; snapshots, learnings and their
+evidence joins reject update and delete at the database boundary.
+
+Every raw metric is nullable, so unavailable remains distinct from a supplied
+zero. Counts are nonnegative and capped below JavaScript's unsafe-integer
+boundary; time values are nonnegative decimals and completion rate is stored on
+the normalized 0–1 scale. Deterministic read-time calculations use explicit
+reach/view denominators and return unavailable for missing or zero
+denominators. UTC observation age maps to `EARLY` [0,24h), `SHORT_TERM`
+[24h,72h), `SEVEN_DAY` [72h,8d), or `MATURE` [8d,+∞).
+
+Learning derivation is synchronous and bounded to 100 publications, 500
+snapshots and 20 new artifacts. It selects the latest snapshot per publication
+and horizon, then compares a segment's median `SAVE_RATE_BY_REACH` with the
+same-organization Instagram/horizon median. The baseline requires at least five
+publications and an explicitly classified segment requires at least three.
+Strength is `WEAK` for 3–4 segment items, `MODERATE` for 5–9 and `STRONG` for
+10 or more; labels are descriptive rather than statistical significance.
+
+The optional publication classification reuses the exact TASK-017C controlled
+Content Opportunity taxonomy. It is selected explicitly, never inferred from
+Reel Brief text, research or AI; missing stays NULL and cannot enter a segment.
+Each immutable learning stores sample counts, unrounded numeric medians,
+difference, strength, caveats, algorithm `marketing-performance-learning-v1`,
+and exact content/snapshot/Reel-Brief provenance. A content-identical derivation
+is idempotent; changed evidence creates a new historical artifact.
+
+No ModelGateway, Creative Council, Strategic Review, External Research, memory,
+durable job or TASK-020 path executes. Future official platform adapters may
+only produce a validated normalized snapshot draft and must pass the same
+organization, metric, timestamp, provenance and immutability boundary. Future
+Council work may retrieve explicitly selected learnings through a new
+authorized bounded projection; TASK-018 does not add that integration.
+
+Final local verification passes 5 focused files / 46 tests, the worker suite at
+5 files / 32 tests and the web suite at 146 files / 839 tests (151 files / 871
+tests total). TASK-018 scoped formatting, repository lint, worker/web
+typechecks, both production builds and npm audit (zero vulnerabilities) pass.
+The linked non-applying Supabase dry run reports only
+`20260825001800_performance_learning.sql` pending. Docker and Podman are not
+installed locally, so pgTAP was not run and must not be represented as passed.
+The repository-wide Prettier check still reports 118 unrelated baseline files;
+they were not normalized or included. Hosted migration application and the
+documented six-Reel manual acceptance scenario remain required before TASK-018
+is merge-ready.

@@ -649,3 +649,42 @@ The result remains evidence-backed marketing intelligence and strategic Content
 Opportunity Candidates, not a hook, script, visual claim or Reel Brief. There
 is no Council invocation, memory promotion, worker dependency, performance
 learning or Ask Council execution.
+
+## TASK-018 Performance Learning
+
+The Performance area manually registers published Instagram Reels and keeps
+each later observation as a new immutable snapshot. A publication may reference
+one exact immutable Reel Brief version and may explicitly select the existing
+TASK-017C Content Opportunity type. Those are independent fields: classification
+is never inferred from brief text, research or AI, and an omitted value remains
+unavailable.
+
+Raw snapshot inputs are nullable. Blank means unavailable; a typed zero means a
+known zero. Counts, watch times and normalized 0–1 completion rate are validated
+without speculative relationships such as likes being no greater than views.
+Read-time deterministic metrics use explicit names and denominators, including
+engagement/save/share/comment/like rates by reach and views, follow and profile
+conversion by reach, and watch percentage when duration is available. A zero or
+missing denominator yields unavailable.
+
+UTC age from publication to observation defines EARLY [0,24h), SHORT_TERM
+[24h,72h), SEVEN_DAY [72h,8d) and MATURE [8d,+∞). V1 selects the latest
+eligible snapshot per content/horizon. Within one organization, platform and
+horizon, it calculates the overall median save rate by reach and compares each
+explicit opportunity segment with at least three items when the total baseline
+has at least five. Strength is WEAK for 3–4, MODERATE for 5–9 and STRONG for
+10+ segment items. These are descriptive evidence labels, not statistical
+significance or causal claims.
+
+Each learning is immutable and stores unrounded medians, difference, counts,
+caveats, exact content/snapshot/brief provenance and
+`marketing-performance-learning-v1`. One request considers at most 100 content
+records, 500 snapshots and 20 new learnings. Unchanged evidence is idempotent;
+insufficient evidence creates nothing.
+
+TASK-018 makes zero AI calls and invokes no Council, Strategic Review, External
+Research or memory workflow. A future official platform adapter may transform
+an authorized provider response into the existing normalized snapshot draft,
+but it cannot bypass tenant validation, metric semantics, observation time or
+immutability. Future Council context must deliberately select authorized
+learnings and retain their provenance; this integration is not implemented.
