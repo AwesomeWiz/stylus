@@ -4,6 +4,20 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added TASK-018 manual Instagram Reel publication records, append-only
+  performance snapshots, deterministic derived metrics and immutable,
+  evidence-linked organization-local Performance Learnings.
+- Performance comparisons use explicit observation horizons, latest eligible
+  snapshots, median save rate by reach, minimum sample safeguards and the
+  versioned `marketing-performance-learning-v1` algorithm. Missing metrics and
+  missing creative classification remain unavailable rather than becoming
+  zero or a synthetic category.
+- Added the Marketing Performance workspace with exact Reel Brief-version
+  linkage, raw/derived history, explicit TASK-017C opportunity classification,
+  read-only Viewer behavior and inspectable learning provenance. The feature
+  performs no AI, Council, Strategic Review, research, memory or Ask Council
+  execution.
+
 - Corrected the still-unapplied TASK-017E enqueue migration to compute its
   fashion/legacy source-count limit in a typed PL/pgSQL variable, then applied
   `20260825001750_fashion_web_consumer_evidence.sql` successfully to the linked

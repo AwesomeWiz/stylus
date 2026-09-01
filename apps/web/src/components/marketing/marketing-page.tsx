@@ -15,6 +15,7 @@ const links = [
   ["Creative Studio", "/apps/marketing/creative-studio"],
   ["Campaigns", "/apps/marketing/campaigns"],
   ["Research", "/apps/marketing/research"],
+  ["Performance", "/apps/marketing/performance"],
   ["Creative Briefs", "/apps/marketing/creative-briefs"],
 ] as const;
 

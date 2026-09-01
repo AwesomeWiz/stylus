@@ -308,23 +308,25 @@ until official access and retention obligations are satisfied. TASK-017D hosted
 acceptance passed with a deterministic `REDDIT` + `SOCIAL` plan: Reddit was
 unavailable, Social resolved to policy-denied YouTube, and the durable workflow
 failed closed with zero evidence, reports, AI calls or downstream side effects.
-TASK-018 remains Performance Learning and is the next task after merge.
-TASK-017E is the current task: implementation is locally complete but hosted
-acceptance must pass before it is marked complete or merge-ready. Hosted
-retrieval now retains five bounded web-evidence chunks from three independent
-pages; the remaining retest verifies the corrected evidence-capability-aware
-synthesis schema through report completion. It does not start TASK-018 or
-TASK-020.
+TASK-017E is complete and merged. TASK-018 Performance Learning is the current
+task; its deterministic local implementation awaits final local quality gates
+and hosted manual acceptance. It does not start TASK-020.
 
 ---
 
 ## Phase 15 — Performance Learning
 
-- [ ] published content records
-- [ ] performance snapshots
+- [x] published content records
+- [x] performance snapshots
 - [ ] experiments
-- [ ] lessons
+- [x] deterministic immutable Performance Learnings
 - [ ] feedback into Creative Council
+
+TASK-018 V1 deliberately leaves experiments and automatic Creative Council
+feedback unimplemented. It uses manual publication/snapshot entry, exact
+same-organization provenance, explicit comparability horizons, conservative
+sample thresholds and zero ModelGateway calls. Future Council consumption must
+be an explicit authorized context-selection feature.
 
 ---
 

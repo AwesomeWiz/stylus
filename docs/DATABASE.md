@@ -605,3 +605,31 @@ and five-runs/hour checks. Completion validates all exact-EVID report sections.
 Both functions retain an empty `search_path`, service-role-only execute grants
 and no dynamic SQL. No table, evidence, report, social profile or history is
 deleted or rewritten; existing RLS and immutable triggers remain unchanged.
+
+## Performance Learning V1
+
+`20260825001800_performance_learning.sql` adds normalized
+`marketing_published_content`, `marketing_performance_snapshots`,
+`marketing_performance_learnings` and
+`marketing_performance_learning_evidence` tables. Composite foreign keys bind
+publication-to-brief, snapshot-to-publication and learning evidence to exact
+same-organization records. Authenticated clients receive SELECT only through
+Marketing-enabled RLS. Guarded registration, archive and snapshot functions
+derive `auth.uid()` and permit active OWNER/ADMIN/MEMBER roles; validated
+learning persistence is service-role-only and independently rechecks the actor,
+plugin, evidence organization, platform, horizon, raw metric availability and
+minimum sample counts.
+
+All raw metrics are nullable. Counts are bigint with 0–9 quadrillion bounds,
+watch times are nonnegative numeric seconds, and completion rate is numeric on
+the 0–1 scale. A snapshot requires at least one supplied metric and cannot
+precede publication. Snapshot, learning and evidence-join update/delete are
+blocked by an immutable-history trigger. Publication supports soft archival
+only. Learning medians and differences are numeric, while display rounding is
+an application concern.
+
+Each learning has one SHA-256 generation key per organization and exact evidence
+set. Repeating derivation over unchanged evidence is idempotent; a later evidence
+set creates a new immutable record under its stored algorithm version. The
+evidence join carries every exact content/snapshot and nullable source Reel
+Brief version reference used by the baseline.

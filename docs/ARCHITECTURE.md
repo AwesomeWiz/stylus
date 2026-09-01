@@ -675,3 +675,23 @@ candidates, six attempted page fetches, four retained pages, two chunks/page,
 remain concurrency three, four MiB, twenty evidence rows, 24,000 normalized
 characters, twenty seconds retrieval, thirty-five seconds synthesis and
 fifty-five seconds overall beneath the Vercel Hobby sixty-second limit.
+
+## TASK-018 Performance Learning Flow
+
+```text
+authorized manual publication registration
+  -> exact same-organization Reel Brief link + optional explicit TASK-017C type
+  -> append-only manual metric snapshots
+  -> deterministic explicit-denominator metrics
+  -> deterministic observation horizon
+  -> latest snapshot per content/horizon
+  -> organization/platform/horizon median baseline
+  -> minimum baseline/segment thresholds
+  -> immutable versioned Performance Learning + exact evidence joins
+```
+
+The request is synchronous and bounded; it does not use the durable job system.
+PostgreSQL is the final mutation boundary for role, plugin, tenant, evidence,
+horizon and sample validation. Repeating an unchanged exact evidence set is
+idempotent, while changed evidence creates a new historical learning. No AI,
+Council, Strategic Review, research, memory or Ask Council edge exists.

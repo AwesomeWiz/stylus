@@ -2,52 +2,34 @@
 
 # Current
 
-## TASK-017C — Fashion Marketing Intelligence
+## TASK-018 — Marketing Performance Learning
 
-Status: COMPLETE / HOSTED ACCEPTANCE PASSED / READY FOR USER-MANAGED MERGE
+Status: LOCAL IMPLEMENTATION / HOSTED ACCEPTANCE PENDING
 
-The existing TASK-017 durable SERVERLESS path now plans source families from one
-controlled Marketing intent before retrieval. Ordinary fashion-consumer intents
-use approved-configuration Reddit and/or curated fashion editorial sources;
-Hacker News is selected only for `FASHION_TECH`. Immutable evidence adds Reddit
-post/comment provenance, and the versioned fashion report produces bounded
-signals plus strategic content opportunity candidates with exact EVID
-citations. Retrieval remains deterministic and final interpretation makes zero
-or one trusted ModelGateway call. TASK-015/TASK-016 are not invoked. TASK-017D,
-TASK-018 and TASK-020 have not started.
+TASK-018 adds manual, organization-scoped Instagram Reel publication records,
+append-only performance snapshots, deterministic derived metrics and bounded
+organization-local Performance Learnings. The implementation preserves exact
+immutable Reel Brief-version provenance and optionally reuses the existing
+TASK-017C Content Opportunity taxonomy only when a user explicitly selects it;
+unclassified publications remain valid and NULL never becomes a category.
 
-Reddit is disabled by default. Enabling its fixed-host OAuth adapter requires
-Reddit approval for the exact deployment/use case plus complete server-only
-configuration. No HTML scraping or fallback exists. Curated Vogue and Retail
-Dive feeds remain available through centralized pinned-DNS safe fetch; optional
-search discovery has a narrow interface but no mandatory paid provider.
+Learning derivation is synchronous, deterministic and bounded. It uses the
+latest eligible snapshot per publication/horizon, a five-item platform/horizon
+median baseline and an explicitly classified three-item minimum segment. Every
+learning stores exact evidence, deterministic values, caveats and algorithm
+version `marketing-performance-learning-v1`. Snapshots, learnings and evidence
+are immutable at the database boundary.
 
-Verification passed with 9 focused files / 77 tests and the full 135-file /
-700-test web suite. Repository lint, worker/web typechecks, the web production
-build, scoped formatting and npm audit also passed. The linked non-applying
-Supabase dry run reports only
-`20260825001730_fashion_marketing_intelligence.sql` pending. Local pgTAP could
-not run because Docker/Podman is unavailable; the migration and hosted source
-paths remain for manual QA.
-
-Hosted relevance hardening rejects editorial candidates whose only overlap is
-generic vocabulary such as `fashion`, `style` or `trend`. Meaningful explicit
-terms are authoritative; question concepts are a deterministic fallback only
-when those terms are generic. Feed metadata is checked before article retrieval
-and extracted article text is checked again before persistence. The hosted
-oversize records were Vogue article responses correctly stopped by the existing
-512 KiB limit, which remains unchanged. Corrective verification passed 7 focused
-files / 52 tests and the full 136-file / 708-test web suite plus formatting,
-lint, web typecheck and production build. No corrective migration is needed.
-
-Hosted acceptance passed after corrective commit
-`9bbe02a7b23cd74f06b3b09025201c32ec6c382f`. Initial QA exposed unrelated Vogue
-evidence admitted by generic `fashion` overlap. A later 15:58 UTC
-`AUDIENCE_PAIN` run reflected operator selection, not an intent-persistence
-defect. The final deliberate `TREND_SIGNAL` run checked 30 Vogue and 10 Retail
-Dive candidates, retained zero evidence, made zero synthesis calls, created no
-report, and failed safely with Reddit unavailable by policy. This zero-evidence
-result is accepted because unsupported marketing claims must not be synthesized.
+TASK-018 makes zero ModelGateway calls and invokes no Creative Council,
+Strategic Review, External Research, memory or TASK-020 path. Final local
+quality gates pass: 5 focused files / 46 tests, 5 worker files / 32 tests and
+146 web files / 839 tests, plus TASK-018 scoped formatting, lint, both
+typechecks, both production builds and an audit with zero vulnerabilities. The
+repository-wide Prettier check continues to report 118 unrelated baseline
+files, which were not normalized. The linked dry run reports only
+`20260825001800_performance_learning.sql` pending. Local pgTAP is unavailable
+because Docker/Podman is not installed. Hosted migration application and manual
+acceptance remain before merge readiness.
 
 ---
 
@@ -665,13 +647,32 @@ acceptance retest before marking TASK-017E complete.
 
 ## TASK-018 — Marketing Performance Learning
 
-Planned scope:
+Status: LOCAL IMPLEMENTATION / HOSTED ACCEPTANCE PENDING
 
-- published Reel records
-- performance snapshots
-- experiments
-- learnings
-- feedback into future Creative Council workflows
+Implemented scope:
+
+- manually registered organization-scoped Instagram Reel publications with
+  optional exact Reel Brief version linkage and optional explicit reuse of the
+  TASK-017C Content Opportunity taxonomy;
+- append-only manual performance snapshots with nullable raw metrics,
+  nonnegative bounds and UTC observation provenance;
+- deterministic explicit-denominator derived metrics and four observation-age
+  horizons;
+- latest-per-content/horizon, organization-local median baseline comparison;
+- five-item baseline and three-item segment safeguards with deterministic
+  WEAK/MODERATE/STRONG descriptive evidence labels;
+- immutable, idempotent, exact-content/snapshot/Reel-Brief Performance
+  Learnings under `marketing-performance-learning-v1`;
+- protected `/apps/marketing/performance` UI and O/A/M write, VIEWER read-only
+  behavior; and
+- database RLS, same-organization foreign keys, service-only learning
+  persistence, immutable-history triggers and bounded activity events.
+
+Deliberately excluded: experiments, automatic Instagram/API ingestion,
+scraping, AI interpretation, automatic Council or Strategic Review execution,
+External Research execution, memory promotion, predictive scoring,
+cross-organization benchmarks and TASK-020. Future Council consumption remains
+an explicit later authorized integration, not TASK-018 behavior.
 
 ---
 

@@ -117,6 +117,15 @@ export type MarketingCampaignStatus =
 export type MarketingResearchCategory =
   "CUSTOMER" | "COMPETITOR" | "TREND" | "CONTENT" | "OTHER";
 export type MarketingBriefStatus = "DRAFT" | "READY" | "APPROVED";
+export type MarketingPerformancePlatform = "INSTAGRAM";
+export type MarketingPerformanceContentType = "REEL";
+export type MarketingPerformanceSnapshotSource = "MANUAL";
+export type MarketingPerformanceHorizon =
+  "EARLY" | "SHORT_TERM" | "SEVEN_DAY" | "MATURE";
+export type MarketingPerformanceMetric = "SAVE_RATE_BY_REACH";
+export type MarketingPerformanceEvidenceStrength =
+  "WEAK" | "MODERATE" | "STRONG";
+export type MarketingPerformanceEvidenceRole = "BASELINE" | "SEGMENT";
 export type MarketingReelProcessingStatus =
   | "UPLOADING"
   | "UPLOADED"
@@ -453,6 +462,78 @@ export type MarketingExternalResearchReportRow = {
     | "marketing-fashion-web-research-report-v1";
   structured_report: unknown;
   version_number: 1;
+};
+export type MarketingPublishedContentRow = {
+  archived_at: string | null;
+  canonical_url: string | null;
+  content_opportunity_type: string | null;
+  content_type: MarketingPerformanceContentType;
+  created_at: string;
+  created_by: string;
+  duration_seconds: number | null;
+  id: string;
+  internal_label: string;
+  organization_id: string;
+  platform: MarketingPerformancePlatform;
+  platform_native_id: string | null;
+  published_at: string;
+  source_reel_brief_version_id: string | null;
+  updated_at: string;
+  updated_by: string;
+};
+export type MarketingPerformanceSnapshotRow = {
+  average_watch_time_seconds: number | null;
+  comments: number | null;
+  completion_rate: number | null;
+  created_at: string;
+  entered_by: string;
+  follows: number | null;
+  id: string;
+  likes: number | null;
+  link_clicks: number | null;
+  notes: string | null;
+  observed_at: string;
+  organization_id: string;
+  profile_visits: number | null;
+  published_content_id: string;
+  reach: number | null;
+  saves: number | null;
+  shares: number | null;
+  source_label: string | null;
+  source_type: MarketingPerformanceSnapshotSource;
+  total_watch_time_seconds: number | null;
+  views: number | null;
+};
+export type MarketingPerformanceLearningRow = {
+  algorithm_version: "marketing-performance-learning-v1";
+  baseline_sample_count: number;
+  baseline_value: number;
+  caveats: string[];
+  comparison_dimension: "CONTENT_OPPORTUNITY_TYPE";
+  content_type: MarketingPerformanceContentType;
+  created_at: string;
+  created_by: string;
+  difference: number;
+  evidence_strength: MarketingPerformanceEvidenceStrength;
+  generation_key: string;
+  id: string;
+  metric: MarketingPerformanceMetric;
+  observation_horizon: MarketingPerformanceHorizon;
+  organization_id: string;
+  platform: MarketingPerformancePlatform;
+  sample_count: number;
+  segment_value: number;
+  subject_value: string;
+  summary: string;
+};
+export type MarketingPerformanceLearningEvidenceRow = {
+  created_at: string;
+  evidence_role: MarketingPerformanceEvidenceRole;
+  learning_id: string;
+  organization_id: string;
+  published_content_id: string;
+  snapshot_id: string;
+  source_reel_brief_version_id: string | null;
 };
 export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
 
@@ -1159,6 +1240,30 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      marketing_published_content: {
+        Row: MarketingPublishedContentRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_performance_snapshots: {
+        Row: MarketingPerformanceSnapshotRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_performance_learnings: {
+        Row: MarketingPerformanceLearningRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_performance_learning_evidence: {
+        Row: MarketingPerformanceLearningEvidenceRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       organization_invitations: {
         Row: OrganizationInvitationRow;
         Insert: never;
@@ -1275,6 +1380,64 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      register_marketing_published_content: {
+        Args: {
+          p_canonical_url?: string | null;
+          p_content_opportunity_type?: string | null;
+          p_duration_seconds?: number | null;
+          p_internal_label: string;
+          p_organization_id: string;
+          p_platform_native_id?: string | null;
+          p_published_at: string;
+          p_source_reel_brief_version_id?: string | null;
+        };
+        Returns: MarketingPublishedContentRow;
+      };
+      set_marketing_published_content_archived: {
+        Args: {
+          p_archived: boolean;
+          p_content_id: string;
+          p_organization_id: string;
+        };
+        Returns: MarketingPublishedContentRow;
+      };
+      add_marketing_performance_snapshot: {
+        Args: {
+          p_average_watch_time_seconds?: number | null;
+          p_comments?: number | null;
+          p_completion_rate?: number | null;
+          p_follows?: number | null;
+          p_likes?: number | null;
+          p_link_clicks?: number | null;
+          p_notes?: string | null;
+          p_observed_at: string;
+          p_organization_id: string;
+          p_profile_visits?: number | null;
+          p_published_content_id: string;
+          p_reach?: number | null;
+          p_saves?: number | null;
+          p_shares?: number | null;
+          p_source_label?: string | null;
+          p_total_watch_time_seconds?: number | null;
+          p_views?: number | null;
+        };
+        Returns: MarketingPerformanceSnapshotRow;
+      };
+      create_marketing_performance_learning: {
+        Args: {
+          p_actor_id: string;
+          p_caveats: string[];
+          p_content_type: MarketingPerformanceContentType;
+          p_evidence: unknown[];
+          p_horizon: MarketingPerformanceHorizon;
+          p_metric: MarketingPerformanceMetric;
+          p_organization_id: string;
+          p_platform: MarketingPerformancePlatform;
+          p_subject_value: string;
+          p_summary: string;
+        };
+        Returns: string | null;
+      };
       start_marketing_creative_council_run: {
         Args: {
           p_actor_id: string;
@@ -1826,6 +1989,13 @@ export type Database = {
       marketing_external_research_source_failure: MarketingExternalResearchSourceFailure;
       marketing_reel_idea_status: MarketingReelIdeaStatus;
       marketing_research_category: MarketingResearchCategory;
+      marketing_performance_platform: MarketingPerformancePlatform;
+      marketing_performance_content_type: MarketingPerformanceContentType;
+      marketing_performance_snapshot_source: MarketingPerformanceSnapshotSource;
+      marketing_performance_horizon: MarketingPerformanceHorizon;
+      marketing_performance_metric: MarketingPerformanceMetric;
+      marketing_performance_evidence_strength: MarketingPerformanceEvidenceStrength;
+      marketing_performance_evidence_role: MarketingPerformanceEvidenceRole;
       job_error_category: JobErrorCategory;
       job_execution_class: JobExecutionClass;
       job_status: JobStatus;

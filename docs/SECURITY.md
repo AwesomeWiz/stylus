@@ -539,3 +539,24 @@ collection.
 - No cookies, browser automation, login, CAPTCHA/anti-bot bypass, recursive
   crawling, site search scraping, private data collection or PII enrichment is
   present. Publisher terms and copyright remain operator obligations.
+
+## Performance Learning Security
+
+- `/apps/marketing/performance` requires an enabled Marketing plugin and active
+  organization membership. Server Actions derive organization and actor from
+  trusted session context; browser-supplied provenance is ignored.
+- OWNER, ADMIN and MEMBER may register/archive content, append snapshots and
+  request bounded derivation. VIEWER is read-only. PostgreSQL repeats active
+  membership, role and plugin checks.
+- Exact same-organization composite foreign keys prevent forged Reel Brief,
+  publication, snapshot and learning-evidence relationships. Authenticated
+  users have no direct INSERT/UPDATE/DELETE privilege on snapshot or learning
+  history; service-only learning persistence validates exact evidence again.
+- Snapshot and learning update/delete fail in database triggers. Publication
+  archival preserves its dependent history, and no hard-delete surface exists.
+- Metrics, notes and activity metadata are bounded. Activity records only the
+  record kind, safe label/metric and IDs; it excludes raw forms, private keys,
+  prompts and provider data.
+- TASK-018 imports no ModelGateway, Council, Strategic Review, research, memory,
+  job, worker or network executor. It performs no automatic platform access,
+  scraping, memory promotion or Ask Council behavior.
