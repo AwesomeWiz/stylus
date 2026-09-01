@@ -1,10 +1,10 @@
 # Stylus — Project State
 
-Last Updated: 2026-08-31
+Last Updated: 2026-09-01
 
 ## Overall Status
 
-TASK-017D IMPLEMENTED / HOSTED ACCEPTANCE PENDING
+TASK-017D COMPLETE / HOSTED ACCEPTANCE PASSED
 
 Stylus now has its first organization-enableable business plugin. Marketing
 provides guarded manual workspaces, bounded Creative Council workflows, and a
@@ -19,16 +19,16 @@ preserving TASK-017C relevance and TASK-016's exact Strategic Review.
 
 Phase 14 — External Marketing Research
 
-Status: TASK-017D IMPLEMENTED / HOSTED ACCEPTANCE PENDING
+Status: TASK-017D COMPLETE / HOSTED ACCEPTANCE PASSED
 
 ---
 
 ## Current Objective
 
-Complete TASK-017D hosted acceptance after applying its forward migration and
-deploying the task branch. Preserve source-plan-to-evidence-to-opportunity
-provenance, organization isolation, the zero/one synthesis-call invariant and
-unchanged TASK-015/TASK-016 behavior. TASK-018 and TASK-020 remain unstarted.
+TASK-017D is ready for user-managed merge. After merge, TASK-018 Performance
+Learning is the next roadmap task. Preserve source-plan-to-evidence-to-
+opportunity provenance, organization isolation, the zero/one synthesis-call
+invariant and unchanged TASK-015/TASK-016 behavior. TASK-020 remains unstarted.
 
 ---
 
@@ -1503,7 +1503,19 @@ provenance.
 Ordinary research still performs deterministic retrieval/filtering/deduplication
 and exactly zero or one trusted ModelGateway synthesis. It invokes no media
 worker, Council, Reel Brief, memory, posting, TASK-018 or TASK-020 path. The
-forward migration is `20260825001740_fashion_social_intelligence.sql`; the linked
-dry run reports exactly that migration pending and applies nothing. Hosted
-acceptance remains blocked until the migration and branch are deployed. Local
-pgTAP remains unavailable because Docker/Podman is not installed.
+forward migration is `20260825001740_fashion_social_intelligence.sql`; the
+predeployment linked dry run reported exactly that migration pending and
+applied nothing. The hosted migration ledger now contains the same migration.
+Local pgTAP remains unavailable because Docker/Podman is not installed.
+
+Hosted acceptance passed on 2026-09-01 with `AUDIENCE_LANGUAGE` run
+`823ef89e-bfae-4dda-9e53-11a61bd23f72` and durable SERVERLESS job
+`b7e064d4-868c-44dc-811c-eacbb9f0a3b0`. The persisted deterministic plan
+selected `REDDIT` plus `SOCIAL`; the social adapter resolved to `YOUTUBE` and
+recorded `POLICY_DENIED` / `source_unavailable`, while Reddit recorded the same
+safe unavailable outcome. The run and job failed safely with zero evidence,
+zero reports, a null `synthesis_ai_run_id`, and zero attributable `ai_runs`.
+The bounded execution window also contained zero Creative Council or Strategic
+Review runs, zero memory writes, and no downstream job other than this External
+Research job; TASK-018 and TASK-020 did not execute. This fail-closed result is
+the correct V1 acceptance behavior and produced no unsupported social claims.

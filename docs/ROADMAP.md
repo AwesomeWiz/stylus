@@ -300,7 +300,10 @@ correctly retained zero evidence and produced no report rather than synthesizing
 unsupported claims. It adds no Instagram, TikTok, YouTube or Pinterest ingestion;
 TASK-017D now provides their common controlled boundary, but activates none
 until official access and retention obligations are satisfied. TASK-017D hosted
-acceptance remains pending deployment. TASK-018 remains Performance Learning.
+acceptance passed with a deterministic `REDDIT` + `SOCIAL` plan: Reddit was
+unavailable, Social resolved to policy-denied YouTube, and the durable workflow
+failed closed with zero evidence, reports, AI calls or downstream side effects.
+TASK-018 remains Performance Learning and is the next task after merge.
 
 ---
 
