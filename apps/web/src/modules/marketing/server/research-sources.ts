@@ -25,6 +25,7 @@ export const researchEvidenceKinds = [
   "SOCIAL_CAPTION",
   "SOCIAL_COMMENT",
   "SOCIAL_METADATA",
+  "WEB_PAGE",
 ] as const;
 
 export type ResearchEvidenceKind = (typeof researchEvidenceKinds)[number];
@@ -44,7 +45,12 @@ export type ResearchEvidenceDraft = {
 
 export type NormalizedResearchItem = {
   adapterId:
-    "hacker-news" | "rss-atom" | "reddit" | "fashion-editorial" | "social";
+    | "hacker-news"
+    | "rss-atom"
+    | "reddit"
+    | "fashion-editorial"
+    | "social"
+    | "web-discovery";
   author: string | null;
   canonicalUrl: string | null;
   contentHash: string;

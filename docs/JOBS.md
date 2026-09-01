@@ -244,3 +244,10 @@ safe unavailable observations execute inside the same exact
 attempt. A future approved social transport must fit the existing 20-second
 retrieval, 55-second application and 60-second Vercel Hobby ceilings. Ordinary
 social research never silently starts TASK-014's EXTERNAL_WORKER media flow.
+
+TASK-017E also adds no job type, child job or execution class. Web discovery and
+independent page enrichment execute inside the same registered
+`marketing.external-research.run` SERVERLESS handler, atomic claim and one
+attempt. Search and page requests share concurrency three, the four-MiB byte
+budget and twenty-second retrieval controller. Daily Cron remains recovery only;
+the Windows worker, Redis, Celery and a VPS are not involved.

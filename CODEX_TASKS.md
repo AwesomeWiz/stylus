@@ -608,6 +608,61 @@ ledger. TASK-017D is ready for user-managed merge; TASK-018 is next after merge.
 
 ---
 
+## TASK-017E — Fashion Web & Consumer Evidence Expansion
+
+Status: LOCAL VERIFICATION PASS / HOSTED ACCEPTANCE PENDING
+
+Extend the existing durable External Research workflow with deterministic,
+intent-aware bounded public-web discovery for fashion and consumer evidence.
+Discovery and fetch remain separate trust boundaries: provider results are
+transient untrusted candidates, while every retained page must independently
+pass URL policy, centralized pinned-DNS safe-fetch, deterministic extraction,
+fashion relevance, normalization and deduplication. Ordinary research remains
+bounded to zero or one ModelGateway synthesis call and invokes no Council,
+memory, TASK-018 or TASK-020 path.
+
+The implementation uses fixed-host Tavily Search only for transient candidate
+URL/title metadata. It requests no provider answer/raw content and persists no
+search snippet. Retained `WEB_PAGE` evidence comes only from an independent
+robots-aware centralized pinned-DNS fetch and deterministic extraction. The
+forward migration is
+`20260825001750_fashion_web_consumer_evidence.sql`. TASK-017E remains current
+until one hosted acceptance run passes.
+
+Local verification passes: 10 focused files / 125 tests, 141 full web files /
+791 tests, 5 worker files / 32 tests, lint, worker/web typechecks, worker/web
+production builds, scoped formatting, migration contracts and npm audit with
+zero vulnerabilities. The linked dry run reported only migration
+`20260825001750_fashion_web_consumer_evidence.sql`. Its first apply exposed an
+inline PL/pgSQL `CASE` parser ambiguity; the still-unapplied migration was
+corrected to use a typed source-count-limit variable, PostgreSQL accepted it,
+and the linked ledger now records `01750` applied. Local pgTAP is unavailable
+because Docker/Podman is not installed. Hosted provider execution remains
+required before completion.
+
+The first hosted acceptance run reached Tavily and independently retrieved
+three relevant full pages, but failed safely with zero evidence because the
+shared persistence priority list omitted the new `WEB_PAGE` type. The narrow
+correction includes `WEB_PAGE` in deterministic evidence selection without
+changing discovery, SSRF, robots, extraction or relevance behavior. Its
+regression and adapter suite pass 2 files / 17 tests; the updated full web suite
+passes 141 files / 792 tests, plus lint, web typecheck and production build.
+One additional deployed acceptance run must pass before completion.
+
+The second hosted run (`197b9fc3-e7c3-4907-91e1-e4255b7db5ce`) retained five
+`WEB_PAGE` rows from three independently fetched full pages, confirming the
+persistence correction. Its one AI run succeeded, then application-side
+semantic validation rejected an output shape that the provider schema had
+allowed despite the absence of visual or configured-competitor evidence. The
+provider schema now derives visual/competitor section limits from the exact
+current-run evidence while the existing defensive validator remains in place.
+The corrective focused suite passes 2 files / 22 tests and the complete web
+suite passes 141 files / 793 tests; lint, worker/web typechecks and both
+production builds also pass. Deploy this correction and run one final hosted
+acceptance retest before marking TASK-017E complete.
+
+---
+
 ## TASK-018 — Marketing Performance Learning
 
 Planned scope:

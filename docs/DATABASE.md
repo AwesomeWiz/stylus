@@ -589,3 +589,19 @@ empty search path and service-role-only execute grants.
 Evidence/report tables remain immutable and no existing migration is rewritten.
 The new profile table stores public identifiers and provenance only—never OAuth
 tokens or a crawler target authorization.
+
+### TASK-017E forward extension
+
+`20260825001750_fashion_web_consumer_evidence.sql` adds `web-discovery` to the
+controlled adapter enum, `WEB_PAGE` to the immutable evidence contract and
+`marketing-fashion-web-research-report-v1` to report versions. Selected source
+families increase from three to four so the existing deterministic plan can add
+WEB without displacing required sources.
+
+The migration forward-replaces only the existing enqueue and completion
+functions. Enqueue validates plan/version/family/query ceilings while retaining
+membership, Marketing enablement, idempotency, advisory locking, one-active-run
+and five-runs/hour checks. Completion validates all exact-EVID report sections.
+Both functions retain an empty `search_path`, service-role-only execute grants
+and no dynamic SQL. No table, evidence, report, social profile or history is
+deleted or rewritten; existing RLS and immutable triggers remain unchanged.

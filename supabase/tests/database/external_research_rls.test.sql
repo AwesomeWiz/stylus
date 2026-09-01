@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(51);
+select plan(52);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000000','authenticated','authenticated','research-owner@example.test','',now(),'{}','{}',now(),now()),
@@ -87,6 +87,7 @@ select results_eq($$ select public.has_function_privilege('authenticated','publi
 select results_eq($$ select public.has_function_privilege('service_role','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[true],'service role may target a SERVERLESS claim');
 select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel in ('reddit','fashion-editorial') order by enumlabel $$,array['fashion-editorial','reddit'],'fashion source adapters extend the enum forward');
 select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='social' $$,array['social'],'social adapter extends the enum forward');
+select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='web-discovery' $$,array['web-discovery'],'web discovery adapter extends the enum forward');
 select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000171' $$,array[0]::integer[],'social-profile setup writes no durable memory');
 
 set local role service_role;

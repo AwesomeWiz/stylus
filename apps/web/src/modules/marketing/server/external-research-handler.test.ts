@@ -111,7 +111,9 @@ describe("external research job handler", () => {
           canonicalUrl:
             adapterId === "reddit"
               ? "https://www.reddit.com/r/fashion/comments/1/"
-              : "https://www.vogue.com/article/sizing",
+              : adapterId === "web-discovery"
+                ? "https://example.com/research/sizing"
+                : "https://www.vogue.com/article/sizing",
           contentHash: adapterId === "reddit" ? "b".repeat(64) : "c".repeat(64),
           nativeId: adapterId,
         }),
@@ -131,6 +133,7 @@ describe("external research job handler", () => {
       "reddit",
       "fashion-editorial",
       "social",
+      "web-discovery",
     ]);
     expect(mocks.retrieve).toHaveBeenCalledWith(
       "fashion-editorial",
@@ -148,11 +151,12 @@ describe("external research job handler", () => {
       ([name]) => name === "complete_marketing_external_research",
     )?.[1];
     expect(completion.p_report).toMatchObject({
-      schemaVersion: "marketing-fashion-social-research-report-v1",
+      schemaVersion: "marketing-fashion-web-research-report-v1",
       sourceCoverage: [
         expect.objectContaining({ family: "REDDIT" }),
         expect.objectContaining({ family: "EDITORIAL" }),
         expect.objectContaining({ family: "SOCIAL" }),
+        expect.objectContaining({ family: "WEB" }),
       ],
     });
   });
@@ -218,7 +222,7 @@ describe("external research job handler", () => {
       ([name]) => name === "complete_marketing_external_research",
     )?.[1];
     expect(completion.p_report).toMatchObject({
-      schemaVersion: "marketing-fashion-social-research-report-v1",
+      schemaVersion: "marketing-fashion-web-research-report-v1",
       sourceDiversity: {
         socialAccountCount: 1,
         socialCommentThreadCount: 1,
@@ -317,6 +321,81 @@ describe("external research job handler", () => {
         sourceKey: "SRC-1",
       }),
     ]);
+  });
+
+  it("persists independently fetched WEB_PAGE evidence before trusted synthesis", async () => {
+    currentRequest = {
+      intent: "AUDIENCE_PAIN",
+      plan: planFashionResearch({
+        hackerNewsStream: null,
+        intent: "AUDIENCE_PAIN",
+        queryTerms: ["women's jeans sizing", "fit inconsistency"],
+        question:
+          "What language do shoppers use when describing inconsistent women's jeans sizing and fit?",
+      }),
+      queryTerms: ["women's jeans sizing", "fit inconsistency"],
+      question:
+        "What language do shoppers use when describing inconsistent women's jeans sizing and fit?",
+    };
+    mocks.retrieve.mockImplementation(async (adapterId: string) => ({
+      failures: [],
+      items: adapterId === "web-discovery" ? [webPageItem()] : [],
+    }));
+    mocks.generate.mockImplementation(async (input) => {
+      expect(input.schema.safeParse(report).success).toBe(true);
+      expect(
+        input.schema.safeParse({
+          ...report,
+          competitorSignals: [
+            {
+              confidence: "MEDIUM",
+              evidenceRefs: ["EVID-1"],
+              statement: "A competitor repeats this pattern.",
+            },
+          ],
+        }).success,
+      ).toBe(false);
+      expect(
+        input.schema.safeParse({
+          ...report,
+          visualPatterns: [
+            {
+              confidence: "MEDIUM",
+              evidenceRefs: ["EVID-1"],
+              pattern: "A visual treatment recurs.",
+            },
+          ],
+        }).success,
+      ).toBe(false);
+      return {
+        data: report,
+        runId: "00000000-0000-4000-8000-000000000004",
+      };
+    });
+
+    const result = await runExternalResearchJob(
+      { runId: "00000000-0000-4000-8000-000000000001" },
+      jobContext(),
+    );
+
+    expect(result).toMatchObject({ evidenceCount: 1 });
+    const retrieval = mocks.rpc.mock.calls.find(
+      ([name]) => name === "record_marketing_external_research_retrieval",
+    )?.[1];
+    expect(retrieval.p_evidence).toEqual([
+      expect.objectContaining({
+        canonicalUrl: "https://example.com/research/jeans-sizing",
+        evidenceId: "EVID-1",
+        evidenceType: "WEB_PAGE",
+        safeMetadata: expect.objectContaining({
+          evidenceQuality: "FULL_PAGE",
+          providerId: "tavily",
+          queryVariantId: "WEB-Q1",
+        }),
+        sourceKey: "SRC-1",
+      }),
+    ]);
+    expect(mocks.generate).toHaveBeenCalledOnce();
   });
 
   it("records partial source failure while synthesizing retained evidence once", async () => {
@@ -723,6 +802,49 @@ function socialItem(): NormalizedResearchItem {
       "Why clothing sizing and fit frustrate shoppers. Sizing changes between every brand.",
     publishedAt: common.publishedAt,
     title: "Sizing problems",
+  };
+}
+
+function webPageItem(): NormalizedResearchItem {
+  const canonicalUrl = "https://example.com/research/jeans-sizing";
+  const fetchedAt = "2026-09-01T08:00:48.569Z";
+  const metadata = {
+    evidenceQuality: "FULL_PAGE",
+    providerId: "tavily",
+    queryVariantId: "WEB-Q1",
+    sourceClass: "NEWS_OR_ANALYSIS",
+    sourceDomain: "example.com",
+  };
+  return {
+    adapterId: "web-discovery",
+    author: null,
+    canonicalUrl,
+    contentHash: "e".repeat(64),
+    evidence: [
+      {
+        author: null,
+        canonicalUrl,
+        evidenceType: "WEB_PAGE",
+        excerpt:
+          "Shoppers describe inconsistent women's jeans sizing and fit between brands.",
+        fetchedAt,
+        metadata,
+        nativeId: "web-page-1",
+        parentNativeId: null,
+        publishedAt: null,
+        title: "Why women's jeans sizing varies",
+      },
+    ],
+    fetchedAt,
+    metadata: {
+      ...metadata,
+      sourceRequest: "web-discovery:tavily:WEB-Q1",
+    },
+    nativeId: "web-page",
+    normalizedText:
+      "Shoppers describe inconsistent women's jeans sizing and fit between brands.",
+    publishedAt: null,
+    title: "Why women's jeans sizing varies",
   };
 }
 

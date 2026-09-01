@@ -93,8 +93,9 @@ export function ExternalResearchWorkspace({
           External research
         </h2>
         <p className="text-muted-foreground mt-1 max-w-3xl text-sm">
-          Turn bounded consumer and editorial evidence into fashion-marketing
-          signals and strategic content opportunity candidates.
+          Turn bounded consumer, editorial, and public-web evidence into
+          fashion-marketing signals and strategic content opportunity
+          candidates.
         </p>
       </div>
       {editable ? (
@@ -177,7 +178,9 @@ export function ExternalResearchWorkspace({
                   {!source.available
                     ? source.family === "SOCIAL"
                       ? " · unavailable"
-                      : " · configuration required"
+                      : source.family === "WEB"
+                        ? ` · ${label(source.providerStatus ?? "UNCONFIGURED")}`
+                        : " · configuration required"
                     : ""}
                   {source.statuses?.length
                     ? ` · ${source.statuses
@@ -395,6 +398,12 @@ function SourceHistory({
               : ""}
             {candidateCount(source) !== null
               ? ` · ${candidateCount(source)} candidates checked`
+              : ""}
+            {source.safe_metadata.providerId
+              ? ` · provider ${label(String(source.safe_metadata.providerId))}`
+              : ""}
+            {source.safe_metadata.sourceClass
+              ? ` · ${label(String(source.safe_metadata.sourceClass))}`
               : ""}
             {source.published_at
               ? ` · published ${formatDate(source.published_at)}`
@@ -641,6 +650,14 @@ function FashionReport({
             {report.sourceDiversity.socialCommentThreadCount} comment thread(s)
           </p>
         ) : null}
+        {report.sourceDiversity.sourceClassCount ? (
+          <p className="text-muted-foreground">
+            Web scope · {report.sourceDiversity.uniqueSourceCount} unique
+            source(s) · {report.sourceDiversity.sourceClassCount} source
+            class(es) · {report.sourceDiversity.snippetEvidenceCount}{" "}
+            snippet-only item(s)
+          </p>
+        ) : null}
       </div>
       {report.limitations.length ? (
         <p className="text-muted-foreground text-xs">
@@ -784,7 +801,9 @@ function evidenceSourceContext(
 function evidenceMetadataLabel(evidence: MarketingExternalResearchEvidenceRow) {
   const platform = evidence.safe_metadata.platform;
   const modality = evidence.safe_metadata.modality;
-  const values = [platform, modality].filter(
+  const sourceClass = evidence.safe_metadata.sourceClass;
+  const evidenceQuality = evidence.safe_metadata.evidenceQuality;
+  const values = [platform, modality, sourceClass, evidenceQuality].filter(
     (value): value is string => typeof value === "string" && Boolean(value),
   );
   return values.length ? values.map(label).join(" · ") : null;

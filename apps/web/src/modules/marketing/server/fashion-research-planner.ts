@@ -13,6 +13,8 @@ import {
 } from "./fashion-research-source-registry";
 import { getRedditConfiguration } from "./reddit-configuration";
 import { listSocialPlatformCapabilities } from "./social-platform-registry";
+import { buildWebDiscoveryQueries } from "./web-discovery-query";
+import { getWebDiscoveryProviderCapability } from "./web-discovery-provider";
 
 type PlanInput = {
   enabledYouTubeChannelIds?: string[];
@@ -20,6 +22,7 @@ type PlanInput = {
   intent: MarketingResearchIntent;
   planVersion?: FashionResearchSourcePlan["version"];
   queryTerms: string[];
+  question?: string;
 };
 
 const sourceFamiliesByIntent: Record<
@@ -54,6 +57,15 @@ const socialSourceFamiliesByIntent: Record<
   FASHION_TECH: ["HACKER_NEWS", "EDITORIAL", "REDDIT"],
 };
 
+const webDiscoveryIntents = new Set<MarketingResearchIntent>([
+  "AUDIENCE_PAIN",
+  "AUDIENCE_LANGUAGE",
+  "PURCHASE_OBJECTION",
+  "QUESTION_DEMAND",
+  "COMPETITOR_SIGNAL",
+  "FASHION_TECH",
+]);
+
 const redditCommunityPriority: Record<
   MarketingResearchIntent,
   readonly string[]
@@ -73,13 +85,26 @@ const redditCommunityPriority: Record<
 export function planFashionResearch(
   input: PlanInput,
 ): FashionResearchSourcePlan {
-  const version =
-    input.planVersion ?? "marketing-fashion-social-source-plan-v1";
+  const version = input.planVersion ?? "marketing-fashion-web-source-plan-v1";
+  const webQueryVariants =
+    version === "marketing-fashion-web-source-plan-v1" &&
+    webDiscoveryIntents.has(input.intent)
+      ? buildWebDiscoveryQueries({
+          intent: input.intent,
+          queryTerms: input.queryTerms,
+          question: input.question ?? input.queryTerms.join(" "),
+        })
+      : [];
   const selectedSourceFamilies = [
     ...(version === "marketing-fashion-source-plan-v1"
       ? sourceFamiliesByIntent[input.intent]
       : socialSourceFamiliesByIntent[input.intent]),
   ];
+  if (
+    version === "marketing-fashion-web-source-plan-v1" &&
+    webQueryVariants.length > 0
+  )
+    selectedSourceFamilies.push("WEB");
   const redditById = new Map(
     listRedditCommunitySources()
       .filter((source) => source.relevantIntents.includes(input.intent))
@@ -126,6 +151,18 @@ export function planFashionResearch(
         ? "COMPETITOR_SOCIAL_SOURCE"
         : "OFFICIAL_SOCIAL_DISCOVERY_SOURCE",
     );
+  if (selectedSourceFamilies.includes("WEB")) {
+    reasonCodes.add("BOUNDED_WEB_DISCOVERY_SOURCE");
+    if (
+      [
+        "AUDIENCE_PAIN",
+        "AUDIENCE_LANGUAGE",
+        "PURCHASE_OBJECTION",
+        "QUESTION_DEMAND",
+      ].includes(input.intent)
+    )
+      reasonCodes.add("CONSUMER_WEB_SOURCE");
+  }
 
   return fashionResearchSourcePlanSchema.parse({
     editorial: {
@@ -155,6 +192,11 @@ export function planFashionResearch(
               .slice(0, externalResearchLimits.youtubeChannelIdsPerRun)
           : [],
     },
+    web: {
+      queryVariants: selectedSourceFamilies.includes("WEB")
+        ? webQueryVariants
+        : [],
+    },
     selectedSourceFamilies,
     version,
   });
@@ -181,6 +223,7 @@ export function getFashionResearchPlanPreviews() {
       hackerNewsStream: null,
       intent: typedIntent,
       queryTerms: ["fashion"],
+      question: "What fashion evidence supports this marketing research?",
     });
     const editorialNames = new Map(
       listFashionEditorialSources().map((source) => [source.id, source.name]),
@@ -189,6 +232,7 @@ export function getFashionResearchPlanPreviews() {
       listRedditCommunitySources().map((source) => [source.id, source.name]),
     );
     const socialCapabilities = listSocialPlatformCapabilities();
+    const webCapability = getWebDiscoveryProviderCapability();
     return {
       intent: typedIntent,
       reasonCodes: plan.reasonCodes,
@@ -245,6 +289,16 @@ export function getFashionResearchPlanPreviews() {
                   platform: capability.platform,
                   status: capability.status,
                 })),
+              },
+            ]
+          : []),
+        ...(plan.selectedSourceFamilies.includes("WEB")
+          ? [
+              {
+                available: webCapability.status === "AVAILABLE",
+                family: "WEB" as const,
+                labels: ["Tavily Web Search"],
+                providerStatus: webCapability.status,
               },
             ]
           : []),

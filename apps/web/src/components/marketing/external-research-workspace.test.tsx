@@ -58,6 +58,12 @@ const base = {
             },
           ],
         },
+        {
+          available: false,
+          family: "WEB" as const,
+          labels: ["Tavily Web Search"],
+          providerStatus: "UNCONFIGURED" as const,
+        },
       ],
     },
     {
@@ -95,6 +101,9 @@ describe("External Research workspace", () => {
     );
     expect(screen.getByText(/YouTube · unavailable/)).toHaveTextContent(
       "Youtube: Policy denied",
+    );
+    expect(screen.getByText(/Tavily Web Search/)).toHaveTextContent(
+      "Unconfigured",
     );
     expect(
       screen.queryByRole("textbox", { name: /url|feed/i }),

@@ -290,6 +290,11 @@ workflow. TASK-020 remains the unimplemented conversational product.
 - [x] TASK-017C evidence-backed Marketing content opportunity candidates
 - [x] TASK-017D compliant Fashion Social Intelligence architecture and
   fail-closed platform capability discovery
+- [x] TASK-017E bounded public-web discovery, independent safe page retrieval
+  and typed consumer/fashion web evidence implementation
+- [x] TASK-017E hosted forward migration
+- [ ] TASK-017E final hosted end-to-end acceptance after retrieval and
+  synthesis-contract corrections
 - [ ] activate approved official social transports with compliant token and
   retention/deletion lifecycles
 
@@ -304,6 +309,12 @@ acceptance passed with a deterministic `REDDIT` + `SOCIAL` plan: Reddit was
 unavailable, Social resolved to policy-denied YouTube, and the durable workflow
 failed closed with zero evidence, reports, AI calls or downstream side effects.
 TASK-018 remains Performance Learning and is the next task after merge.
+TASK-017E is the current task: implementation is locally complete but hosted
+acceptance must pass before it is marked complete or merge-ready. Hosted
+retrieval now retains five bounded web-evidence chunks from three independent
+pages; the remaining retest verifies the corrected evidence-capability-aware
+synthesis schema through report completion. It does not start TASK-018 or
+TASK-020.
 
 ---
 

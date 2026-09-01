@@ -92,6 +92,37 @@ describe("Marketing architecture boundary", () => {
       /name=["'](?:organization_id|organizationId|created_by|createdBy|updated_by|updatedBy)["']/,
     );
   });
+  it("keeps web discovery credentials and arbitrary provider routing server-only", () => {
+    const action = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/modules/marketing/external-research-actions.ts",
+      ),
+      "utf8",
+    );
+    const workspace = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/components/marketing/external-research-workspace.tsx",
+      ),
+      "utf8",
+    );
+    const provider = readFileSync(
+      resolve(
+        process.cwd(),
+        "src/modules/marketing/server/web-discovery-provider.ts",
+      ),
+      "utf8",
+    );
+    expect(provider).toContain('import "server-only"');
+    expect(provider).toContain(
+      'const TAVILY_SEARCH_URL = "https://api.tavily.com/search"',
+    );
+    expect(provider).toContain("STYLUS_WEB_DISCOVERY_TAVILY_API_KEY");
+    expect(`${action}\n${workspace}`).not.toMatch(
+      /STYLUS_WEB_DISCOVERY_TAVILY_API_KEY|api\.tavily\.com|name=["'](?:providerUrl|providerId|searchEndpoint|apiKey)["']/,
+    );
+  });
   it("keeps competitor media distinct from our Reel ideas", () => {
     const source = readFileSync(
       resolve(process.cwd(), "src/modules/marketing/reel-actions.ts"),

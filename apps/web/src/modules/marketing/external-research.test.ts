@@ -101,6 +101,40 @@ describe("fashion external research contracts", () => {
     expect(references.items.enum).toEqual(["EVID-1", "EVID-2"]);
   });
 
+  it("prevents unsupported visual and competitor claims in the provider schema", () => {
+    const base = interpretation("EVID-1");
+    const schema = createFashionResearchSynthesisSchema(["EVID-1"], {
+      competitor: false,
+      visual: false,
+    });
+
+    expect(schema.safeParse(base).success).toBe(true);
+    expect(
+      schema.safeParse({
+        ...base,
+        competitorSignals: [
+          {
+            confidence: "MEDIUM",
+            evidenceRefs: ["EVID-1"],
+            statement: "A competitor repeats this pattern.",
+          },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({
+        ...base,
+        visualPatterns: [
+          {
+            confidence: "MEDIUM",
+            evidenceRefs: ["EVID-1"],
+            pattern: "A visual treatment recurs.",
+          },
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
   it("keeps the worst legal fashion output comfortably bounded", () => {
     const reference = ["EVID-1", "EVID-2", "EVID-3"];
     const statement = "x".repeat(

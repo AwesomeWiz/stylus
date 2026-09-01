@@ -34,7 +34,14 @@ export type SourceDiagnosticCategory =
   | "source_unavailable"
   | "source_not_allowlisted"
   | "zero_candidates"
-  | "zero_matching_candidates";
+  | "zero_matching_candidates"
+  | "provider_authentication_failed"
+  | "provider_rate_limited"
+  | "provider_timeout"
+  | "provider_malformed_response"
+  | "url_policy_rejected"
+  | "robots_denied"
+  | "robots_unavailable";
 
 export type SourceDiagnosticMetadata = Record<
   string,
@@ -147,6 +154,26 @@ export async function safeFetchArticle(
         "text/plain",
       ]),
       maximumBytes: externalResearchLimits.articleResponseBytes,
+    },
+    dependencies,
+    signal,
+  );
+}
+
+export async function safeFetchRobots(
+  rawUrl: string,
+  budget: Pick<RunByteBudget, "consume">,
+  dependencies: SafeFetchDependencies = defaults,
+  signal?: AbortSignal,
+) {
+  const origin = validatePublicHttpsUrl(rawUrl).origin;
+  return safeFetchTextualResource(
+    `${origin}/robots.txt`,
+    budget,
+    {
+      accept: "text/plain",
+      contentTypes: new Set(["text/plain"]),
+      maximumBytes: externalResearchLimits.webRobotsResponseBytes,
     },
     dependencies,
     signal,

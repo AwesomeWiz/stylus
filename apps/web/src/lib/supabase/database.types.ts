@@ -138,7 +138,12 @@ export type MarketingStrategicReviewStageStatus = "SUCCEEDED" | "FAILED";
 export type MarketingExternalResearchStatus =
   "QUEUED" | "RUNNING" | "SYNTHESIZING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
 export type MarketingExternalResearchAdapter =
-  "hacker-news" | "rss-atom" | "reddit" | "fashion-editorial" | "social";
+  | "hacker-news"
+  | "rss-atom"
+  | "reddit"
+  | "fashion-editorial"
+  | "social"
+  | "web-discovery";
 export type MarketingExternalResearchSourceStatus = "SUCCEEDED" | "FAILED";
 export type MarketingExternalResearchSourceFailure =
   | "invalid_source"
@@ -421,7 +426,8 @@ export type MarketingExternalResearchEvidenceRow = {
     | "SOCIAL_VIDEO"
     | "SOCIAL_CAPTION"
     | "SOCIAL_COMMENT"
-    | "SOCIAL_METADATA";
+    | "SOCIAL_METADATA"
+    | "WEB_PAGE";
   excerpt: string;
   fetched_at: string | null;
   id: string;
@@ -443,7 +449,8 @@ export type MarketingExternalResearchReportRow = {
   schema_version:
     | "marketing-external-research-report-v1"
     | "marketing-fashion-research-report-v1"
-    | "marketing-fashion-social-research-report-v1";
+    | "marketing-fashion-social-research-report-v1"
+    | "marketing-fashion-web-research-report-v1";
   structured_report: unknown;
   version_number: 1;
 };

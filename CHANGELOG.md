@@ -4,6 +4,32 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Corrected the still-unapplied TASK-017E enqueue migration to compute its
+  fashion/legacy source-count limit in a typed PL/pgSQL variable, then applied
+  `20260825001750_fashion_web_consumer_evidence.sql` successfully to the linked
+  hosted database without changing validation or authorization behavior.
+- Added TASK-017E bounded fashion web discovery with deterministic intent-aware
+  queries, fixed-host Tavily candidate discovery and independently fetched
+  `WEB_PAGE` evidence with source-class and full-page provenance.
+- Search snippets, answers and raw provider content are not evidence or stored.
+  Every retained page passes HTTPS/URL policy, robots policy, pinned-DNS and
+  redirect validation, byte/type/time limits, deterministic extraction and
+  fashion relevance before immutable persistence.
+- Fixed the shared research persistence priority list to retain independently
+  validated `WEB_PAGE` drafts. The first hosted acceptance had recorded three
+  successfully fetched, extracted and relevant pages as sources but discarded
+  their evidence before synthesis.
+- Constrained External Research structured generation to the capabilities of
+  its exact current-run evidence. Text-only evidence cannot request visual
+  patterns, and evidence without configured competitor provenance cannot
+  request competitor signals; defensive post-gateway validation remains.
+  This fixes the second hosted run's failure after five web evidence rows and
+  one otherwise successful ModelGateway call.
+- Web enrichment remains in the existing durable SERVERLESS research job and
+  zero/one ModelGateway synthesis lifecycle; it adds no generic crawler,
+  browser automation, Windows worker, Council, memory, TASK-018 or TASK-020
+  behavior. Hosted acceptance remains pending.
+
 - Added TASK-017D Fashion Social Intelligence with deterministic social-source
   planning, first-class Instagram/TikTok/YouTube/Pinterest capability states,
   organization-scoped competitor social identities, typed platform/modality

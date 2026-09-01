@@ -386,3 +386,21 @@ persisted plan selects `SOCIAL`, its source observation is safely unavailable,
 no social evidence or unsupported social claim exists, and zero AI calls occur
 when no other family retains usable evidence. Do not repeat runs merely to
 consume the five-runs/hour organization quota.
+
+### TASK-017E web evidence deployment
+
+Apply `20260825001750_fashion_web_consumer_evidence.sql` after TASK-017D. Set
+`STYLUS_WEB_DISCOVERY_TAVILY_API_KEY` as a server-only secret in the exact hosted
+environment and redeploy; never expose it as `NEXT_PUBLIC_*` or configure it on
+the Windows worker. Without the key, applicable WEB observations fail closed as
+unconfigured while other selected sources retain existing partial-source
+semantics.
+
+Before production use, confirm the selected Tavily plan/terms cover the deployed
+internal application and publisher access remains compliant. For hosted
+acceptance, use one deliberate consumer-pain or question-demand run with narrow
+meaningful terms. Verify a WEB plan, bounded search calls, independently fetched
+`FULL_PAGE`/`WEB_PAGE` evidence when permitted, zero snippet evidence, source
+class/domain provenance, zero/one AI trace, and no Council/memory/TASK-018/
+TASK-020 side effect. A safe zero-evidence result is valid when all discovered
+pages are irrelevant, robots-denied or otherwise policy-blocked.
