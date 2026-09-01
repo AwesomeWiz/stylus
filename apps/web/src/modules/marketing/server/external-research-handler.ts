@@ -518,6 +518,7 @@ function buildRetrievalPersistence(
     ),
     ...evidenceOfKind(items, "HN_TEXT"),
     ...evidenceOfKind(items, "ARTICLE_CONTENT", 0, 1),
+    ...evidenceOfKind(items, "WEB_PAGE"),
     ...evidenceOfKind(items, "SOCIAL_CAPTION"),
     ...evidenceOfKind(items, "SOCIAL_POST"),
     ...evidenceOfKind(items, "SOCIAL_VIDEO"),

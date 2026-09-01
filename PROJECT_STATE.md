@@ -1546,7 +1546,7 @@ adapter/evidence/report contract and forward-replaces the service-role enqueue
 and completion validation functions. Existing RLS, one-active-run,
 five-runs/hour, immutable history and organization/plugin boundaries remain.
 Do not mark TASK-017E complete or merge-ready until one deliberate hosted
-acceptance run is recorded.
+acceptance run passes.
 
 Local verification passed on 2026-09-01: 10 focused files / 125 tests, the full
 141-file / 791-test web suite, 5 worker files / 32 tests, repository lint,
@@ -1558,3 +1558,17 @@ unapplied migration was corrected to compute the source-count limit in a typed
 local variable. PostgreSQL then accepted the migration and the linked ledger
 now records `01750` applied. Local pgTAP could not run because Docker/Podman is
 unavailable. Hosted acceptance remains the only completion gate.
+
+The first deployed acceptance run
+`60e2773d-4f5e-474a-a1fa-0d90b6f43c5b` (job
+`addf9949-069c-44f2-bb8e-1d3a3cc88154`) exposed a shared persistence defect:
+three Tavily candidates independently passed URL policy, robots, safe fetch,
+extraction and fashion relevance, but `buildRetrievalPersistence` did not
+include the new `WEB_PAGE` evidence type in its deterministic priority list.
+The durable run therefore recorded three successful full-page source
+observations but zero evidence, AI runs or reports and failed safely. The
+handler now prioritizes `WEB_PAGE` drafts, with a regression proving exact
+`EVID-1` persistence and one trusted synthesis. Focused verification passes 2
+files / 17 tests; the complete web suite passes 141 files / 792 tests together
+with lint, web typecheck, scoped formatting and the production web build. One
+new deployed acceptance run remains required; the failed run is immutable.

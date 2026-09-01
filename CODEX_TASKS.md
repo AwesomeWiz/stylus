@@ -640,6 +640,15 @@ and the linked ledger now records `01750` applied. Local pgTAP is unavailable
 because Docker/Podman is not installed. Hosted provider execution remains
 required before completion.
 
+The first hosted acceptance run reached Tavily and independently retrieved
+three relevant full pages, but failed safely with zero evidence because the
+shared persistence priority list omitted the new `WEB_PAGE` type. The narrow
+correction includes `WEB_PAGE` in deterministic evidence selection without
+changing discovery, SSRF, robots, extraction or relevance behavior. Its
+regression and adapter suite pass 2 files / 17 tests; the updated full web suite
+passes 141 files / 792 tests, plus lint, web typecheck and production build.
+One additional deployed acceptance run must pass before completion.
+
 ---
 
 ## TASK-018 — Marketing Performance Learning

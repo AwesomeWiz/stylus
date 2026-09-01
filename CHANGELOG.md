@@ -15,6 +15,10 @@ All notable user-facing changes to Stylus will be documented here.
   Every retained page passes HTTPS/URL policy, robots policy, pinned-DNS and
   redirect validation, byte/type/time limits, deterministic extraction and
   fashion relevance before immutable persistence.
+- Fixed the shared research persistence priority list to retain independently
+  validated `WEB_PAGE` drafts. The first hosted acceptance had recorded three
+  successfully fetched, extracted and relevant pages as sources but discarded
+  their evidence before synthesis.
 - Web enrichment remains in the existing durable SERVERLESS research job and
   zero/one ModelGateway synthesis lifecycle; it adds no generic crawler,
   browser automation, Windows worker, Council, memory, TASK-018 or TASK-020
