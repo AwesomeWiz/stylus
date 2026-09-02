@@ -6,6 +6,8 @@ export const ASK_COUNCIL_ROUTING_VERSION =
   "marketing-ask-council-routing-v1" as const;
 export const ASK_COUNCIL_CONTEXT_VERSION =
   "marketing-ask-council-context-v1" as const;
+export const ASK_COUNCIL_RESEARCH_SELECTION_VERSION =
+  "marketing-ask-council-research-relevance-v2" as const;
 export const ASK_COUNCIL_WORKFLOW_VERSION = "marketing-ask-council-v1" as const;
 export const ASK_COUNCIL_SCHEMA_VERSION =
   "marketing-ask-council-answer-v1" as const;

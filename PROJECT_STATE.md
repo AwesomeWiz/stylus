@@ -4,7 +4,7 @@ Last Updated: 2026-09-02
 
 ## Overall Status
 
-TASK-020 LOCAL IMPLEMENTATION VERIFIED / HOSTED ACCEPTANCE PENDING
+TASK-020 CONTEXT RELEVANCE FIX VERIFIED / HOSTED RETEST PENDING
 
 Stylus Marketing now includes Ask Council, a bounded conversational advisor
 that reads authorized company, research, Performance Learning and exact
@@ -19,16 +19,17 @@ derivation, memory or Web Agency behavior.
 
 Phase 17 — Ask Council
 
-Status: TASK-020 LOCAL IMPLEMENTATION VERIFIED / HOSTED ACCEPTANCE PENDING
+Status: TASK-020 CONTEXT RELEVANCE FIX VERIFIED / HOSTED RETEST PENDING
 
 ---
 
 ## Current Objective
 
-Apply the verified TASK-020 forward migration in a hosted preview and run the
-bounded three-question acceptance scenario. Preserve the four-call maximum,
-exact context/AI-run provenance, organization isolation, read-only Viewer role,
-prompt-injection boundary and zero downstream side effects.
+Deploy the verified TASK-020 research-relevance correction and resume the
+bounded hosted acceptance conversation. Confirm an anaphoric sizing follow-up
+retains the relevant sizing report while rejecting unrelated bug-blindness and
+autocomplete reports, with the four-call maximum and all security boundaries
+unchanged.
 
 ---
 
@@ -1686,3 +1687,22 @@ The linked Supabase dry run applied nothing and reported exactly
 `20260825002000_ask_council.sql` pending. Docker and Podman are unavailable, so
 the 35-assertion TASK-020 pgTAP suite could not run locally and remains a hosted
 database acceptance check.
+
+Hosted acceptance then exposed an automatic Research context relevance defect:
+the V1 selector considered only the literal current question, accepted one weak
+substring match and used recency next, so an unrelated recent bug-blindness
+report could fill unused context capacity on an anaphoric sizing follow-up. The
+corrective selector is recorded as
+`marketing-ask-council-research-relevance-v2`. It uses exact normalized
+meaningful concepts from the current question or, when the question is
+anaphoric, the most recent user message inside the existing six-message window.
+Generic Marketing/Research/Reel terms cannot establish relevance, at least two
+meaningful concepts must match, and recency is only a tie-breaker after that
+threshold. Explicit report selection still bypasses automatic relevance.
+Report and evidence rows are deduplicated by canonical persisted ID with stable
+ordering and run association; no passing report means zero automatic Research
+context. The correction adds no model call, migration, retrieval, memory or
+downstream workflow behavior. Focused corrective verification passes 8 files /
+52 tests and the complete web suite passes 153 files / 889 tests. Repository
+lint, web typecheck, scoped formatting, the web production build and diff checks
+also pass. The existing `02000` migration and database contract are unchanged.

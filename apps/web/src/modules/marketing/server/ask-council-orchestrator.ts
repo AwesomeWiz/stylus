@@ -7,6 +7,7 @@ import { AIError, normalizeAIError } from "@/modules/ai/errors";
 
 import {
   ASK_COUNCIL_CONTEXT_VERSION,
+  ASK_COUNCIL_RESEARCH_SELECTION_VERSION,
   ASK_COUNCIL_ROUTING_VERSION,
   ASK_COUNCIL_SCHEMA_VERSION,
   ASK_COUNCIL_WORKFLOW_VERSION,
@@ -234,6 +235,7 @@ export async function runAskCouncil(
         researchReports: selected.context.research.length,
       },
       contextVersion: ASK_COUNCIL_CONTEXT_VERSION,
+      researchSelectionVersion: ASK_COUNCIL_RESEARCH_SELECTION_VERSION,
       routingVersion: ASK_COUNCIL_ROUTING_VERSION,
       schemaVersion: ASK_COUNCIL_SCHEMA_VERSION,
       workflowVersion: ASK_COUNCIL_WORKFLOW_VERSION,

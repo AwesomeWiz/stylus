@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AIError } from "@/modules/ai/errors";
 
+import { ASK_COUNCIL_RESEARCH_SELECTION_VERSION } from "../ask-council";
 import type { AskCouncilDependencies } from "./ask-council-orchestrator";
 import { runAskCouncil } from "./ask-council-orchestrator";
 
@@ -128,6 +129,13 @@ describe("Ask Council orchestration", () => {
         ([call]) => call.schemaName === "marketing_ask_council_answer_v1",
       ),
     ).toHaveLength(1);
+    expect(fixture.store.start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contextSnapshot: expect.objectContaining({
+          researchSelectionVersion: ASK_COUNCIL_RESEARCH_SELECTION_VERSION,
+        }),
+      }),
+    );
     expect(fixture.store.recordSpecialist).toHaveBeenCalledTimes(2);
     expect(fixture.store.complete).toHaveBeenCalledTimes(1);
     expect(fixture.store.fail).not.toHaveBeenCalled();

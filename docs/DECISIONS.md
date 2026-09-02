@@ -819,12 +819,17 @@ all succeed. The request hard limit is four calls and 55 seconds. Any specialist
 failure stops synthesis; synthesis failure creates no assistant answer.
 
 Context selection prefers explicit attachments, then structured relevance, and
-uses recency only as a tie-breaker. Canonical Company context, existing
-Research/EVID, persisted Performance Learnings and exact selected creative
-artifacts are bounded before model execution. Models use safe request-local
-references, while real UUIDs are stored in typed same-organization provenance.
-External content is untrusted data and Performance Learning sample, strength,
-caveat and algorithm fields remain intact.
+uses recency only as a tie-breaker. Automatic Research selection fails closed:
+generic domain/action words establish no relevance, at least two exact
+normalized meaningful concepts must match, and an anaphoric follow-up may use
+only its most recent user message inside the already bounded history window.
+Reports and evidence are deduplicated by persisted identity. Canonical Company
+context, existing Research/EVID, persisted Performance Learnings and exact
+selected creative artifacts are bounded before model execution. Models use safe
+request-local references, while real UUIDs are stored in typed
+same-organization provenance. External content is untrusted data and
+Performance Learning sample, strength, caveat and algorithm fields remain
+intact.
 
 Ask Council has no tools, live retrieval, memory retrieval/write, automatic
 artifact creation, Strategic Review, performance derivation, job or Web Agency

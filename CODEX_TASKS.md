@@ -4,7 +4,7 @@
 
 ## TASK-020 — Ask Council
 
-Status: LOCAL IMPLEMENTATION / HOSTED ACCEPTANCE PENDING
+Status: CONTEXT RELEVANCE FIX VERIFIED / HOSTED RETEST PENDING
 
 TASK-020 adds the bounded `/apps/marketing/council` advisory workspace. A
 server-derived organization/actor context and controlled intent feed a
@@ -34,6 +34,19 @@ vulnerabilities. The linked dry run reports only the TASK-020 migration
 pending and applies nothing. Docker/Podman is unavailable, so the 35-assertion
 pgTAP suite remains a hosted database check. Hosted acceptance remains before
 merge readiness.
+
+Hosted acceptance found that automatic Research selection used the literal
+follow-up question, accepted one weak substring overlap and then preferred
+recency. The corrective
+`marketing-ask-council-research-relevance-v2` selector uses exact meaningful
+concepts from the current question or the most recent bounded user turn,
+requires at least two meaningful matches, ignores generic Marketing/Research/
+Reel terms, fails closed to zero automatic reports and deduplicates report and
+evidence identities. Explicit report attachments remain authoritative. The fix
+adds zero model calls and requires no migration. Focused correction coverage
+passes 8 files / 52 tests and the complete web suite passes 153 files / 889
+tests. Lint, web typecheck, scoped formatting, the web production build and diff
+checks pass. Hosted retest remains before merge readiness.
 
 ---
 

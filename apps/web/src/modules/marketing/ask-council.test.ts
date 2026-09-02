@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ASK_COUNCIL_CONTEXT_VERSION,
+  ASK_COUNCIL_RESEARCH_SELECTION_VERSION,
   ASK_COUNCIL_ROUTING_VERSION,
   ASK_COUNCIL_SCHEMA_VERSION,
   ASK_COUNCIL_WORKFLOW_VERSION,
@@ -21,6 +22,9 @@ describe("Ask Council bounded contracts", () => {
     );
     expect(ASK_COUNCIL_CONTEXT_VERSION).toBe(
       "marketing-ask-council-context-v1",
+    );
+    expect(ASK_COUNCIL_RESEARCH_SELECTION_VERSION).toBe(
+      "marketing-ask-council-research-relevance-v2",
     );
     expect(ASK_COUNCIL_WORKFLOW_VERSION).toBe("marketing-ask-council-v1");
     expect(ASK_COUNCIL_SCHEMA_VERSION).toBe("marketing-ask-council-answer-v1");

@@ -478,11 +478,17 @@ never exposed or persisted.
 V1 context contains bounded authorized canonical Company fields, existing
 External Research reports and cited evidence, existing Performance Learnings,
 and explicitly selected exact Reel Brief/Strategic Review versions. Explicit
-selection wins; structured relevance precedes recency for automatic research
-and performance selection. Marketing memory is not retrieved, working records
-are not promoted, manifest memory domains grant no access, and agency memory is
-inaccessible. Ask Council never launches Research or derives Performance
-Learnings.
+selection wins. Automatic Research selection uses exact normalized meaningful
+concepts from the current question or, for an anaphoric follow-up, the most
+recent user message inside the bounded history window. Generic terms such as
+Marketing, Research, Fashion, Reel, current or discussion never establish
+relevance by themselves. A report needs at least two meaningful concept matches
+before recency can break a tie; otherwise automatic Research context is empty.
+Canonical report/evidence identity is deduplicated with stable run-local
+ordering. Performance selection remains bounded and structured. Marketing
+memory is not retrieved, working records are not promoted, manifest memory
+domains grant no access, and agency memory is inaccessible. Ask Council never
+launches Research or derives Performance Learnings.
 
 ### Ask Council V1 bounds and persistence
 

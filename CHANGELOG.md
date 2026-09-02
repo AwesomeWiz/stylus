@@ -4,6 +4,10 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Fixed Ask Council automatic Research context selection so anaphoric
+  follow-ups use bounded recent user concepts, generic Marketing/Research/Reel
+  terms cannot admit unrelated reports, and report/evidence identity is
+  deterministically deduplicated. Explicit report attachments remain allowed.
 - Added TASK-020 Ask Council, a bounded conversational Marketing advisor with
   deterministic intent routing, a one-to-three specialist ceiling, exactly one
   synthesis on full success and a four-ModelGateway-call maximum.

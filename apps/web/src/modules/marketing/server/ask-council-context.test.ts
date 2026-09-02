@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import { askCouncilContextSchema, askCouncilLimits } from "../ask-council";
 import {
   boundCompanyContext,
+  selectAskCouncilResearchCandidateIds,
+  selectUniqueAskCouncilEvidenceRows,
   shrinkAskCouncilContext,
 } from "./ask-council-context";
 
@@ -33,6 +35,33 @@ function baseContext() {
   };
 }
 
+const hostedResearchCandidates = [
+  {
+    createdAt: "2026-09-01T10:00:00.000Z",
+    id: "report-sizing",
+    reportText:
+      "Shoppers describe inconsistent sizing, jeans that fit differently, waist gaps, and uncertainty across women's denim sizes. RELATABLE_PAIN and MYTH_BUSTING are possible opportunity types.",
+    title:
+      "What language do shoppers use when describing inconsistent women's jeans sizing and fit?",
+  },
+  {
+    createdAt: "2026-09-02T10:00:00.000Z",
+    id: "report-bug-blindness",
+    reportText:
+      "A current discussion about software bugs, developer attention, and bug blindness. It contains marketing content ideas and research limitations.",
+    title:
+      "What can we learn from current Hacker News discussion about bug blindness?",
+  },
+  {
+    createdAt: "2026-09-02T11:00:00.000Z",
+    id: "report-autocomplete",
+    reportText:
+      "Developers discuss domain names, autocomplete indexes, large-scale search systems, and project architecture.",
+    title:
+      "What does the current Hacker News discussion about the 240M domain-name autocomplete project reveal about how developers approach large-scale search and autocomplete systems?",
+  },
+] as const;
+
 describe("Ask Council context selection", () => {
   it("scopes every artifact/history query to the server-derived organization", () => {
     expect(
@@ -49,7 +78,7 @@ describe("Ask Council context selection", () => {
 
   it("uses structured relevance before recency and keeps candidate/context counts bounded", () => {
     expect(source).toContain("right.score - left.score");
-    expect(source).toContain("candidate.score > 0");
+    expect(source).toContain("matches.size < 2");
     expect(source).toContain("Number(left.evidence_id.slice(5))");
     expect(source).toContain(".limit(input.reportId ? 1 : 8)");
     expect(askCouncilLimits.researchReports).toBe(2);
@@ -57,6 +86,128 @@ describe("Ask Council context selection", () => {
     expect(askCouncilLimits.performanceLearnings).toBe(4);
     expect(askCouncilLimits.reelBriefs).toBe(1);
     expect(askCouncilLimits.strategicReviews).toBe(1);
+  });
+
+  it("selects only sizing research for an anaphoric fashion follow-up", () => {
+    const selected = selectAskCouncilResearchCandidateIds({
+      candidates: hostedResearchCandidates,
+      explicitReportId: null,
+      history: [
+        {
+          content:
+            "Earlier we discussed domain-name autocomplete and large-scale developer search.",
+          role: "USER",
+        },
+        {
+          content:
+            "Focus now on inconsistent women's jeans sizing and fit, using RELATABLE_PAIN and MYTH_BUSTING.",
+          role: "USER",
+        },
+        {
+          content:
+            "Bug blindness was accidentally present in an earlier assistant answer.",
+          role: "ASSISTANT",
+        },
+      ],
+      question:
+        "Based on that, give me three specific fashion Reel angles we could test next. For each, explain whether it uses RELATABLE_PAIN or MYTH_BUSTING and why.",
+    });
+
+    expect(selected).toEqual(["report-sizing"]);
+  });
+
+  it("keeps explicit Research Report selection ahead of automatic relevance", () => {
+    expect(
+      selectAskCouncilResearchCandidateIds({
+        candidates: hostedResearchCandidates,
+        explicitReportId: "report-bug-blindness",
+        history: [
+          {
+            content: "We are discussing inconsistent women's jeans sizing.",
+            role: "USER",
+          },
+        ],
+        question: "Give me three sizing Reel angles.",
+      }),
+    ).toEqual(["report-bug-blindness"]);
+  });
+
+  it("fails closed when only generic words overlap available research", () => {
+    expect(
+      selectAskCouncilResearchCandidateIds({
+        candidates: hostedResearchCandidates.slice(1),
+        explicitReportId: null,
+        history: [],
+        question:
+          "What current marketing research discussion could become a fashion Reel content idea?",
+      }),
+    ).toEqual([]);
+  });
+
+  it("prefers a meaningful current topic over an unrelated prior user topic", () => {
+    expect(
+      selectAskCouncilResearchCandidateIds({
+        candidates: hostedResearchCandidates,
+        explicitReportId: null,
+        history: [
+          {
+            content:
+              "Tell me more about bug blindness and developer attention.",
+            role: "USER",
+          },
+        ],
+        question:
+          "What does the evidence say about women's jeans sizing and fit?",
+      }),
+    ).toEqual(["report-sizing"]);
+  });
+
+  it("deduplicates report identity and orders relevant reports deterministically", () => {
+    const secondSizingReport = {
+      createdAt: "2026-09-02T12:00:00.000Z",
+      id: "report-sizing-newer",
+      reportText: "Women's jeans sizing and fit remain inconsistent.",
+      title: "A newer sizing and fit report",
+    };
+    const selected = selectAskCouncilResearchCandidateIds({
+      candidates: [
+        hostedResearchCandidates[0],
+        hostedResearchCandidates[0],
+        secondSizingReport,
+      ],
+      explicitReportId: null,
+      history: [],
+      question: "Compare women's jeans sizing and fit evidence.",
+    });
+
+    expect(selected).toEqual(["report-sizing-newer", "report-sizing"]);
+    expect(new Set(selected).size).toBe(selected.length);
+  });
+
+  it("deduplicates canonical evidence identity with stable persisted ordering", () => {
+    const rows = [
+      { evidence_id: "EVID-2", id: "evidence-b", run_id: "run-sizing" },
+      { evidence_id: "EVID-1", id: "evidence-a", run_id: "run-sizing" },
+      { evidence_id: "EVID-1", id: "evidence-other", run_id: "run-other" },
+    ];
+    const seenEvidenceIds = new Set<string>();
+    const first = selectUniqueAskCouncilEvidenceRows({
+      allowedEvidenceIds: new Set(["EVID-1", "EVID-2"]),
+      limit: 6,
+      rows,
+      runId: "run-sizing",
+      seenEvidenceIds,
+    });
+    const duplicateAttempt = selectUniqueAskCouncilEvidenceRows({
+      allowedEvidenceIds: new Set(["EVID-1", "EVID-2"]),
+      limit: 6,
+      rows,
+      runId: "run-sizing",
+      seenEvidenceIds,
+    });
+
+    expect(first.map((row) => row.id)).toEqual(["evidence-a", "evidence-b"]);
+    expect(duplicateAttempt).toEqual([]);
   });
 
   it("preserves deterministic Performance Learning fields, sample sizes, WEAK strength, and caveats", () => {
@@ -145,6 +296,15 @@ describe("Ask Council context selection", () => {
       askCouncilLimits.totalContextCharacters,
     );
     expect(bounded.history.length).toBeLessThanOrEqual(context.history.length);
+    expect(
+      askCouncilContextSchema.safeParse({
+        ...baseContext(),
+        history: Array.from({ length: 7 }, () => ({
+          content: "Bounded history message",
+          role: "USER",
+        })),
+      }).success,
+    ).toBe(false);
   });
 
   it("enforces the dedicated canonical company-context character ceiling", () => {
