@@ -225,3 +225,10 @@ tool, write capability or memory permission. The common social transport
 interface is server-only; a future platform adapter must be explicitly
 registered by Marketing after official approval and cannot be chosen or
 configured by arbitrary plugin/browser input.
+
+TASK-020 declares `marketing.ask-council.execute` and contributes the guarded
+Ask Council route. The capability authorizes only the deterministic bounded
+specialist-plus-synthesis workflow through ModelGateway. It registers no tool,
+job, retriever, memory permission, provider or Web Agency adapter. Organization
+plugin disablement blocks new execution and RLS-protected reads while retaining
+immutable conversation/provenance history.

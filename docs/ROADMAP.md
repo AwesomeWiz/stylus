@@ -268,7 +268,8 @@ version. Audience Researcher -> Brand Director -> Content Strategist ->
 Challenge Reviewer -> Creative Judge performs exactly five sequential calls and
 creates an immutable Strategic Council Review. Trend, Competitor, Retention and
 Visual specialists are registered but intentionally not invoked by this
-workflow. TASK-020 remains the unimplemented conversational product.
+workflow. TASK-020 now implements the separate conversational product without
+changing this five-call contract.
 
 ---
 
@@ -308,9 +309,11 @@ until official access and retention obligations are satisfied. TASK-017D hosted
 acceptance passed with a deterministic `REDDIT` + `SOCIAL` plan: Reddit was
 unavailable, Social resolved to policy-denied YouTube, and the durable workflow
 failed closed with zero evidence, reports, AI calls or downstream side effects.
-TASK-017E is complete and merged. TASK-018 Performance Learning is the current
-task; its deterministic local implementation awaits final local quality gates
-and hosted manual acceptance. It does not start TASK-020.
+TASK-017E is complete and merged. TASK-018 Performance Learning is hosted
+accepted and merged. TASK-019 Web Agency Integration is **DEFERRED** because the
+separate `ai-web-agency` implementation is not yet mature enough for a stable
+integration contract. It is not cancelled or renumbered. TASK-020 Ask Council
+is the current local implementation awaiting hosted acceptance.
 
 ---
 
@@ -330,7 +333,7 @@ be an explicit authorized context-selection feature.
 
 ---
 
-## Phase 16 — Web Agency Integration
+## Phase 16 — Web Agency Integration (DEFERRED)
 
 - [ ] external plugin adapter
 - [ ] authentication
@@ -340,18 +343,19 @@ be an explicit authorized context-selection feature.
 
 ---
 
-## Phase 17 — Ask Creative Council
+## Phase 17 — Ask Council
 
-- [ ] conversational Marketing question contract
-- [ ] bounded intent/workflow routing
-- [ ] smallest relevant approved specialist selection
-- [ ] synthesized structured council answer
-- [ ] company-aware authorized context
-- [ ] team collaboration and bounded history decision
-- [ ] RBAC, organization, plugin, AI-policy, call, and cost limits
+- [x] conversational Marketing question contract
+- [x] bounded intent/workflow routing
+- [x] smallest relevant approved specialist selection
+- [x] synthesized structured council answer
+- [x] company-aware authorized context
+- [x] team collaboration and bounded history
+- [x] RBAC, organization, plugin, AI-policy, call, and cost limits
 
-TASK-020 is the dedicated future advisory mode. It may consume explicitly
-authorized TASK-017 research or TASK-018 performance evidence, but neither is
-implicitly activated by a question. It uses ModelGateway logical tiers and
-finite code-defined workflows; no generic chatbot, arbitrary tool use, arbitrary
-agent spawning, raw chain-of-thought, or automatic memory write is permitted.
+TASK-020 is the dedicated advisory mode. It reads bounded existing TASK-017
+research and TASK-018 Performance Learnings but never launches or mutates those
+workflows. Explicit creative-artifact selection is exact-version only. It uses
+ModelGateway logical tiers and a finite code-defined route with a four-call
+maximum; no generic chatbot, arbitrary tool use, arbitrary agent spawning, raw
+chain-of-thought, automatic memory write or TASK-019 integration is permitted.

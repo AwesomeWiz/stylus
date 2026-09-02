@@ -13,6 +13,7 @@ const links = [
   ["Competitors", "/apps/marketing/competitors"],
   ["Reel Ideas", "/apps/marketing/reel-ideas"],
   ["Creative Studio", "/apps/marketing/creative-studio"],
+  ["Ask Council", "/apps/marketing/council"],
   ["Campaigns", "/apps/marketing/campaigns"],
   ["Research", "/apps/marketing/research"],
   ["Performance", "/apps/marketing/performance"],

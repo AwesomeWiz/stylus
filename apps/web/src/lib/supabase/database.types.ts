@@ -126,6 +126,8 @@ export type MarketingPerformanceMetric = "SAVE_RATE_BY_REACH";
 export type MarketingPerformanceEvidenceStrength =
   "WEAK" | "MODERATE" | "STRONG";
 export type MarketingPerformanceEvidenceRole = "BASELINE" | "SEGMENT";
+export type MarketingAskCouncilMessageRole = "USER" | "ASSISTANT";
+export type MarketingAskCouncilTurnStatus = "PENDING" | "SUCCEEDED" | "FAILED";
 export type MarketingReelProcessingStatus =
   | "UPLOADING"
   | "UPLOADED"
@@ -534,6 +536,78 @@ export type MarketingPerformanceLearningEvidenceRow = {
   published_content_id: string;
   snapshot_id: string;
   source_reel_brief_version_id: string | null;
+};
+export type MarketingAskCouncilConversationRow = {
+  archived_at: string | null;
+  created_at: string;
+  created_by: string;
+  id: string;
+  organization_id: string;
+  title: string;
+  updated_at: string;
+  workflow_version: "marketing-ask-council-v1";
+};
+export type MarketingAskCouncilMessageRow = {
+  ai_run_id: string | null;
+  authored_by: string | null;
+  content: string;
+  conversation_id: string;
+  created_at: string;
+  id: string;
+  organization_id: string;
+  role: MarketingAskCouncilMessageRole;
+  structured_output: unknown;
+};
+export type MarketingAskCouncilTurnRow = {
+  assistant_message_id: string | null;
+  completed_at: string | null;
+  context_snapshot: unknown;
+  context_version: "marketing-ask-council-context-v1";
+  conversation_id: string;
+  created_at: string;
+  created_by: string;
+  failed_specialist_id: string | null;
+  failure_category: AIErrorCategoryRecord | null;
+  id: string;
+  idempotency_key: string;
+  intent: string;
+  organization_id: string;
+  routing_version: "marketing-ask-council-routing-v1";
+  schema_version: "marketing-ask-council-answer-v1";
+  selected_specialists: string[];
+  status: MarketingAskCouncilTurnStatus;
+  user_message_id: string;
+  workflow_version: "marketing-ask-council-v1";
+};
+export type MarketingAskCouncilSpecialistResultRow = {
+  ai_run_id: string;
+  created_at: string;
+  id: string;
+  ordinal: number;
+  organization_id: string;
+  specialist_id: string;
+  structured_output: unknown;
+  turn_id: string;
+};
+export type MarketingAskCouncilContextRefRow = {
+  created_at: string;
+  id: string;
+  label: string;
+  model_reference_id: string;
+  organization_id: string;
+  performance_learning_id: string | null;
+  reel_brief_version_id: string | null;
+  reference_type:
+    | "RESEARCH_REPORT"
+    | "RESEARCH_EVIDENCE"
+    | "PERFORMANCE_LEARNING"
+    | "REEL_BRIEF"
+    | "STRATEGIC_REVIEW";
+  research_evidence_id: string | null;
+  research_report_id: string | null;
+  snapshot: unknown;
+  strategic_review_id: string | null;
+  turn_id: string;
 };
 export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
 
@@ -1264,6 +1338,36 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      marketing_ask_council_conversations: {
+        Row: MarketingAskCouncilConversationRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_ask_council_messages: {
+        Row: MarketingAskCouncilMessageRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_ask_council_turns: {
+        Row: MarketingAskCouncilTurnRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_ask_council_specialist_results: {
+        Row: MarketingAskCouncilSpecialistResultRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_ask_council_context_refs: {
+        Row: MarketingAskCouncilContextRefRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       organization_invitations: {
         Row: OrganizationInvitationRow;
         Insert: never;
@@ -1437,6 +1541,61 @@ export type Database = {
           p_summary: string;
         };
         Returns: string | null;
+      };
+      start_marketing_ask_council_turn: {
+        Args: {
+          p_actor_id: string;
+          p_context_refs: unknown[];
+          p_context_snapshot: Record<string, unknown>;
+          p_conversation_id: string | null;
+          p_idempotency_key: string;
+          p_intent: string;
+          p_organization_id: string;
+          p_question: string;
+          p_selected_specialists: string[];
+        };
+        Returns: unknown;
+      };
+      record_marketing_ask_council_specialist: {
+        Args: {
+          p_actor_id: string;
+          p_ai_run_id: string;
+          p_ordinal: number;
+          p_organization_id: string;
+          p_specialist_id: string;
+          p_structured_output: Record<string, unknown>;
+          p_turn_id: string;
+        };
+        Returns: undefined;
+      };
+      complete_marketing_ask_council_turn: {
+        Args: {
+          p_actor_id: string;
+          p_ai_run_id: string;
+          p_answer: Record<string, unknown>;
+          p_organization_id: string;
+          p_turn_id: string;
+        };
+        Returns: unknown;
+      };
+      fail_marketing_ask_council_turn: {
+        Args: {
+          p_actor_id: string;
+          p_ai_run_id?: string | null;
+          p_failed_specialist_id?: string | null;
+          p_failure_category: AIErrorCategoryRecord;
+          p_organization_id: string;
+          p_turn_id: string;
+        };
+        Returns: undefined;
+      };
+      set_marketing_ask_council_conversation_archived: {
+        Args: {
+          p_archived: boolean;
+          p_conversation_id: string;
+          p_organization_id: string;
+        };
+        Returns: MarketingAskCouncilConversationRow;
       };
       start_marketing_creative_council_run: {
         Args: {
@@ -1996,6 +2155,8 @@ export type Database = {
       marketing_performance_metric: MarketingPerformanceMetric;
       marketing_performance_evidence_strength: MarketingPerformanceEvidenceStrength;
       marketing_performance_evidence_role: MarketingPerformanceEvidenceRole;
+      marketing_ask_council_message_role: MarketingAskCouncilMessageRole;
+      marketing_ask_council_turn_status: MarketingAskCouncilTurnStatus;
       job_error_category: JobErrorCategory;
       job_execution_class: JobExecutionClass;
       job_status: JobStatus;

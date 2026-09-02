@@ -442,10 +442,10 @@ an intentional later immutable version. TASK-015 remains exactly Hook -> Script
 9. Generate another ordinary TASK-015 Reel Brief and confirm Hook -> Script ->
    Critic still performs exactly three calls.
 
-## Approved Future Direction: Create and Ask Council
+## Create and Ask Council
 
-Creative Studio will eventually support two distinct interactions over reusable
-Creative Council infrastructure:
+Stylus supports two distinct Marketing interactions over bounded specialist
+concepts:
 
 ```text
 Create                                Ask Council
@@ -458,17 +458,16 @@ structured source                     team question
 
 Create remains production-oriented, structured, auditable, and versioned where
 appropriate. TASK-015 is its valid V1: exactly Hook Strategist, Script Writer,
-and Creative Critic produce a Reel Brief in three successful calls. Ask Council
-is a future advisory mode for questions about priorities, positioning, brand,
-audience, campaigns, content strategy, and creative improvement. It is not
-implemented by TASK-015 or TASK-016.
+and Creative Critic produce a Reel Brief in three successful calls. TASK-020 Ask
+Council is the separate advisory mode for questions about priorities,
+positioning, brand, audience, evidence, content strategy and creative
+improvement. It does not alter TASK-015 or TASK-016.
 
-Ask Council must route a question to the smallest approved code-defined finite
-workflow rather than invoke the whole council or spawn agents dynamically. For
-example, a hook question may need Hook Strategist and Creative Critic, while an
-on-brand question may eventually need Brand Director and Creative Critic. These
-examples guide bounded routing and do not freeze exact mappings before TASK-020
-discovery.
+Ask Council routes a controlled intent to the smallest approved code-defined
+finite workflow rather than invoke the whole council or spawn agents
+dynamically. V1 deterministically selects two specialists for every route, with
+a hard one-to-three specialist contract, then makes one synthesis call only
+when all specialists succeed.
 
 The result is one synthesized user-facing answer, not a transcript of internal
 agent discussion or fake specialist chat bubbles. Safe answer concepts include
@@ -476,15 +475,45 @@ recommendations, concise audience/brand/creative perspectives, evidence,
 assumptions, disagreements, risks, and confidence. Raw chain-of-thought is
 never exposed or persisted.
 
-Future context may include bounded authorized Company data and appropriate
-Marketing records: Reel Ideas, Campaigns, Creative Briefs, Research,
-Competitors, and completed competitor Reel analyses. Marketing memory requires
-a future explicit authorization/retrieval design. Working records are not
-automatically promoted, manifest memory domains grant no access, and Marketing
-never retrieves agency memory. TASK-017 research may support an explicitly
-research-enabled workflow, and TASK-018 performance learning may provide
-authorized evidence; an ordinary Ask Council question enables neither by
-default.
+V1 context contains bounded authorized canonical Company fields, existing
+External Research reports and cited evidence, existing Performance Learnings,
+and explicitly selected exact Reel Brief/Strategic Review versions. Explicit
+selection wins; structured relevance precedes recency for automatic research
+and performance selection. Marketing memory is not retrieved, working records
+are not promoted, manifest memory domains grant no access, and agency memory is
+inaccessible. Ask Council never launches Research or derives Performance
+Learnings.
+
+### Ask Council V1 bounds and persistence
+
+- deterministic intent and routing version
+  `marketing-ask-council-routing-v1`;
+- two V1 specialists, hard ceiling three, followed by exactly one synthesis on
+  full success and at most four ModelGateway calls;
+- logical `BALANCED` tier only, 900 output tokens per specialist, 1,500 for
+  synthesis and a 55-second workflow timeout;
+- 2,000-character question, six prior messages, two research reports, six
+  research evidence items, four Performance Learnings, one Reel Brief, one
+  Strategic Review and 32,000 serialized context characters;
+- fail-whole-turn specialist policy: any specialist failure prevents synthesis;
+  synthesis failure creates no assistant answer; and
+- durable organization conversations, immutable messages, immutable routing and
+  context snapshots, immutable specialist outputs, exact AI-run linkage and
+  typed relational provenance.
+
+Models see only safe context references (`CTX-COMPANY-1`, `RESEARCH-n`,
+`EVID-n`, `PERF-n`, `BRIEF-n`, `REVIEW-n`). Real UUIDs remain in separate
+same-organization provenance rows. Dynamic schemas and post-gateway validation
+reject invented or duplicate references. Research/user/artifact text is framed
+as untrusted data and has no provider, routing, tool, retrieval, memory or
+application authority. Performance sample counts, evidence strength, medians,
+caveats and algorithm version remain visible to specialists and synthesis.
+
+The final answer is primary. Specialist perspectives, exact context used,
+uncertainty, disagreement and bounded suggested next actions are secondary and
+inspectable. Suggested actions execute nothing. OWNER, ADMIN and MEMBER may
+execute; VIEWER can read history only. Archival hides a conversation without
+rewriting or deleting its history.
 
 ## External Research V1 and TASK-017B enrichment
 

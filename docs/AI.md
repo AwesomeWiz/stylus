@@ -385,30 +385,38 @@ registered for future finite workflows but do not execute in Strategic Review
 V1. Trend and Competitor contracts can interpret only explicitly supplied
 authorized evidence and never claim independent research.
 
-## Future Ask Creative Council Boundary
+## Ask Council Boundary
 
-Ask Creative Council is a separate future advisory interaction over reusable
-council contracts, not a redesign of TASK-015 and not a general-purpose agent
-chat runtime. A server-authoritative router must map each validated Marketing
-question to the smallest approved finite workflow, select only relevant
-specialists, and produce a bounded synthesized answer. It must not call the
-entire council by default, spawn arbitrary agents, or recursively continue until
-a model claims satisfaction.
+TASK-020 Ask Council is a separate advisory interaction over bounded Marketing
+specialist contracts, not a redesign of TASK-015 and not a general-purpose agent
+chat runtime. A server-authoritative deterministic router maps each validated
+intent to one to three statically registered specialists. V1 routes select two,
+execute them in parallel, and make exactly one synthesis call only after every
+specialist succeeds. There is no model router, autonomous loop, recursive
+delegation or workflow retry.
 
-Every specialist and synthesis call continues through ModelGateway using
-logical tiers and normal organization policy, provider allowlist, budget,
-timeout, trace, and structured-output enforcement. The future workflow must set
-explicit call, context, cost, latency, and stopping limits. It remains
-provider-neutral and must never bind Marketing architecture to a particular
-Ollama or hosted model.
+Every call uses `generateAIStructured` through ModelGateway with capability
+`marketing.ask-council.execute`, logical `BALANCED` tier and normal organization
+policy, provider allowlist, budget, timeout, trace and strict-output enforcement.
+The hard ceiling is three specialist calls plus one synthesis, 900 output tokens
+per specialist, 1,500 synthesis tokens, 32,000 context characters and a
+55-second workflow. Provider/model selection remains infrastructure-owned.
 
-Authorized context must be requested explicitly through bounded Core/Marketing
-interfaces. Plugin manifest `memoryDomains` remains trace metadata, agency
-memory remains inaccessible, and neither questions nor answers automatically
-become durable memory. External research is a distinct TASK-017 capability that
-only an explicitly approved research workflow may invoke. User-facing answers
-may contain concise structured perspectives and disagreement, but never raw
-chain-of-thought, provider responses, or fabricated internal-agent dialogue.
+Context selection happens before model execution and sends bounded canonical
+Company fields, existing Research/evidence, persisted Performance Learnings and
+explicit exact creative artifacts. Dynamic schemas allow only the safe
+per-request reference labels supplied to the call; real database identifiers
+remain relational provenance. External/user/history/artifact text is untrusted
+data. Specialists have empty tool and memory-domain lists and instructions
+cannot change provider, route, context allowlist or application behavior.
+
+Any specialist failure fails the whole turn without synthesis. Final synthesis
+failure creates no successful assistant message. Successful and failed provider
+runs remain in ordinary `ai_runs`; persisted turn history contains concise
+structured outputs and normalized categories, never prompts, raw responses,
+provider diagnostics or chain-of-thought. Plugin manifest `memoryDomains`
+remains trace metadata, agency memory is inaccessible, and conversation data is
+never promoted to memory. TASK-019 Web Agency Integration remains deferred.
 
 ## TASK-017 External Research Synthesis
 

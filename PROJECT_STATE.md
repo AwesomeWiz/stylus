@@ -1,33 +1,34 @@
 # Stylus — Project State
 
-Last Updated: 2026-09-01
+Last Updated: 2026-09-02
 
 ## Overall Status
 
-TASK-018 LOCAL IMPLEMENTATION / HOSTED ACCEPTANCE PENDING
+TASK-020 LOCAL IMPLEMENTATION VERIFIED / HOSTED ACCEPTANCE PENDING
 
-Stylus Marketing now extends its evidence-to-creative pipeline with the first
-explicit performance feedback layer. TASK-018 records published Instagram
-Reels and immutable manual metric snapshots, calculates deterministic
-comparable metrics, and creates bounded organization-local Performance
-Learnings without AI or automatic downstream mutation.
+Stylus Marketing now includes Ask Council, a bounded conversational advisor
+that reads authorized company, research, Performance Learning and exact
+creative-artifact context. Deterministic routing selects a small specialist set,
+then one final synthesis produces an immutable, provenance-backed advisory
+answer without invoking Create, Research, Strategic Review, performance
+derivation, memory or Web Agency behavior.
 
 ---
 
 ## Current Phase
 
-Phase 15 — Performance Learning
+Phase 17 — Ask Council
 
-Status: TASK-018 LOCAL IMPLEMENTATION / HOSTED ACCEPTANCE PENDING
+Status: TASK-020 LOCAL IMPLEMENTATION VERIFIED / HOSTED ACCEPTANCE PENDING
 
 ---
 
 ## Current Objective
 
-Complete TASK-018 local verification, apply its forward migration in a hosted
-preview, and perform the documented manual six-Reel acceptance scenario.
-Preserve append-only observations, exact learning provenance, organization
-isolation, and the zero-ModelGateway-call invariant.
+Apply the verified TASK-020 forward migration in a hosted preview and run the
+bounded three-question acceptance scenario. Preserve the four-call maximum,
+exact context/AI-run provenance, organization isolation, read-only Viewer role,
+prompt-injection boundary and zero downstream side effects.
 
 ---
 
@@ -1040,34 +1041,28 @@ Heavy jobs may remain queued until an eligible worker becomes available.
 
 # Current Work
 
-TASK-017 External Research is implemented on its task branch and awaits hosted
-migrations, pgTAP, immediate execution/daily Cron configuration and manual QA.
-TASK-016 is merged. Its
-separate five-call immutable review artifact and TASK-015's exact three-call
-Reel Brief workflow remain unchanged. TASK-018 and TASK-020 have not started.
+TASK-020 Ask Council is implemented locally on its task branch and awaits final
+verification, hosted migration and bounded manual acceptance. TASK-015 Create,
+TASK-016 Strategic Review, TASK-017 research and TASK-018 performance contracts
+remain unchanged.
 
 ---
 
 # Known Issues
 
 Database pgTAP still requires Docker/Podman or hosted execution when a local
-database is unavailable. Ask Creative Council persistence, UI, retrieval,
-routing, and execution contracts remain intentionally undefined until TASK-020
-discovery. TASK-016 expansion, TASK-017 research, and TASK-018 performance
-learning remain separate concerns. The synchronous five-call workflow also
-depends on the target server sustaining its bounded 285-second deadline; if the
-deployment cannot, it fails safely and a future execution-placement decision is
-required rather than a silent job conversion.
+database is unavailable. Ask Council's synchronous parallel-specialist workflow
+must be exercised on the target hosted AI policy/provider path before merge.
+TASK-019 remains deferred and is not an Ask Council dependency.
 
 ---
 
 # Next Recommended Action
 
-Apply the TASK-017 migrations in hosted Supabase, run its pgTAP suite, configure
-the authenticated hosted immediate executor and daily recovery Cron, then
-complete the documented HN, RSS,
-provenance, prompt-injection, partial-failure, SSRF, provider-unavailable, RBAC
-and TASK-015/TASK-016 regression QA. Do not begin TASK-018 or TASK-020.
+Finish TASK-020 local gates, apply only
+`20260825002000_ask_council.sql` in hosted Supabase, then run one bounded
+Research/Performance/combined advisory acceptance sequence and audit exact
+provenance, AI-call counts, Viewer denial and zero downstream side effects.
 
 ---
 
@@ -1085,14 +1080,13 @@ deadline. Successful stages and final versions are immutable; failures preserve
 prior stages and never fabricate a review. Trend, Competitor, Retention and
 Visual are registered but unused in V1.
 
-TASK-020 is the future Ask Creative Council product: bounded question routing to
-the smallest approved specialist workflow and one synthesized team-facing
-answer. It must preserve organization/RBAC/plugin/AI-policy boundaries,
-ModelGateway-only execution, agency-memory isolation, explicit bounded context,
-and no automatic memory writes, arbitrary tools, arbitrary spawning, or raw
-chain-of-thought. TASK-017 research and TASK-018 performance learning may later
-supply explicitly authorized evidence but are never implicit in asking a
-question.
+TASK-020 is the implemented Ask Council advisory product: deterministic bounded
+question routing to the smallest approved specialist workflow and one
+synthesized team-facing answer. It preserves organization/RBAC/plugin/AI-policy
+boundaries, ModelGateway-only execution, agency-memory isolation, explicit
+bounded context, exact provenance and no automatic memory writes, arbitrary
+tools, spawning or raw chain-of-thought. It reads existing TASK-017 research and
+TASK-018 performance evidence but never launches or mutates those workflows.
 
 ---
 
@@ -1631,10 +1625,64 @@ Final local verification passes 5 focused files / 46 tests, the worker suite at
 5 files / 32 tests and the web suite at 146 files / 839 tests (151 files / 871
 tests total). TASK-018 scoped formatting, repository lint, worker/web
 typechecks, both production builds and npm audit (zero vulnerabilities) pass.
-The linked non-applying Supabase dry run reports only
-`20260825001800_performance_learning.sql` pending. Docker and Podman are not
-installed locally, so pgTAP was not run and must not be represented as passed.
-The repository-wide Prettier check still reports 118 unrelated baseline files;
-they were not normalized or included. Hosted migration application and the
-documented six-Reel manual acceptance scenario remain required before TASK-018
-is merge-ready.
+TASK-018 subsequently passed hosted acceptance and was merged to `main` at
+`e3c14bb`. Its migration and immutable Performance Learning contract are now an
+accepted read-only input boundary for TASK-020.
+
+### TASK-019 Web Agency Integration
+
+TASK-019 is **DEFERRED**, not cancelled or renumbered. The separate
+`ai-web-agency` implementation is not yet mature enough for a stable integration
+contract. TASK-020 contains no Web Agency integration and has no agency-memory
+access.
+
+### TASK-020 Ask Council
+
+TASK-020 adds `/apps/marketing/council` and forward migration
+`20260825002000_ask_council.sql`. OWNER, ADMIN and MEMBER may ask questions;
+VIEWER can inspect organization-scoped history but cannot execute AI. The
+browser supplies only a bounded question, controlled intent, idempotency key and
+optional artifact selections. Organization, actor, specialist route, provider,
+model and provenance are trusted server concerns.
+
+Routing is deterministic under `marketing-ask-council-routing-v1`. Each intent
+selects one to three statically registered Marketing specialists; V1 mappings
+select two. Specialists execute in parallel through ModelGateway at the
+`BALANCED` tier, followed by exactly one synthesis only when every specialist
+succeeds. The workflow therefore makes at most four ModelGateway calls, has no
+workflow retry or autonomous loop and is bounded to 55 seconds, 900 output
+tokens per specialist and 1,500 synthesis output tokens. A specialist failure
+fails the turn without synthesis; synthesis failure creates no assistant
+message.
+
+Context selection prefers explicit selections, then structured relevance, with
+recency only as a tie-breaker. It includes bounded canonical company context,
+up to two existing Research Reports/six cited EVID items, four Performance
+Learnings, one exact Reel Brief version, one exact Strategic Review and six
+prior messages inside a 32,000-character context. Models see only safe reference
+labels; real UUID provenance is stored separately through same-organization
+foreign keys. Research remains untrusted data, and Performance Learning sample
+counts, strength, caveats and algorithm version are preserved.
+
+Conversations, messages, turns, selected context, specialist results and AI-run
+links are durable. Messages, context references, specialist results and turn
+routing/context provenance are immutable. Service-only workflow RPCs validate
+active execution role, Marketing enablement and exact `BALANCED`
+`marketing.ask-council.execute` AI runs; authenticated clients have SELECT-only
+table access and one guarded archival RPC. Creation and successful completion
+emit only bounded conversation activity.
+
+Ask Council is advisory. It performs no Reel Brief creation, Strategic Review,
+External Research, performance snapshot/learning derivation, Company Knowledge
+or memory write, durable job, arbitrary tool, Web Agency/TASK-019 or direct
+provider execution. Suggested next actions remain text and execute nothing.
+
+Final local verification on 2026-09-02 passed 8 focused files / 46 tests, the
+complete web suite at 153 files / 883 tests and the complete worker suite at 5
+files / 32 tests (158 files / 915 tests total). Repository lint, worker/web
+typechecks, scoped formatting, worker/web production builds, migration
+contracts, `git diff --check` and `npm audit` with zero vulnerabilities passed.
+The linked Supabase dry run applied nothing and reported exactly
+`20260825002000_ask_council.sql` pending. Docker and Podman are unavailable, so
+the 35-assertion TASK-020 pgTAP suite could not run locally and remains a hosted
+database acceptance check.

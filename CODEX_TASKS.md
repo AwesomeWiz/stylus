@@ -2,34 +2,38 @@
 
 # Current
 
-## TASK-018 — Marketing Performance Learning
+## TASK-020 — Ask Council
 
 Status: LOCAL IMPLEMENTATION / HOSTED ACCEPTANCE PENDING
 
-TASK-018 adds manual, organization-scoped Instagram Reel publication records,
-append-only performance snapshots, deterministic derived metrics and bounded
-organization-local Performance Learnings. The implementation preserves exact
-immutable Reel Brief-version provenance and optionally reuses the existing
-TASK-017C Content Opportunity taxonomy only when a user explicitly selects it;
-unclassified publications remain valid and NULL never becomes a category.
+TASK-020 adds the bounded `/apps/marketing/council` advisory workspace. A
+server-derived organization/actor context and controlled intent feed a
+deterministic versioned route to one to three approved specialists, followed by
+exactly one synthesis on full success. All calls use ModelGateway at the logical
+`BALANCED` tier; the hard request maximum is four calls and 55 seconds.
 
-Learning derivation is synchronous, deterministic and bounded. It uses the
-latest eligible snapshot per publication/horizon, a five-item platform/horizon
-median baseline and an explicitly classified three-item minimum segment. Every
-learning stores exact evidence, deterministic values, caveats and algorithm
-version `marketing-performance-learning-v1`. Snapshots, learnings and evidence
-are immutable at the database boundary.
+Context selection is explicit-first and bounded: canonical Company context, two
+existing Research Reports with six exact EVID references, four existing
+Performance Learnings, one exact Reel Brief, one exact Strategic Review and six
+prior messages inside 32,000 characters. Models receive only safe per-request
+reference labels; real artifact UUIDs persist separately in immutable,
+same-organization provenance.
 
-TASK-018 makes zero ModelGateway calls and invokes no Creative Council,
-Strategic Review, External Research, memory or TASK-020 path. Final local
-quality gates pass: 5 focused files / 46 tests, 5 worker files / 32 tests and
-146 web files / 839 tests, plus TASK-018 scoped formatting, lint, both
-typechecks, both production builds and an audit with zero vulnerabilities. The
-repository-wide Prettier check continues to report 118 unrelated baseline
-files, which were not normalized. The linked dry run reports only
-`20260825001800_performance_learning.sql` pending. Local pgTAP is unavailable
-because Docker/Podman is not installed. Hosted migration application and manual
-acceptance remain before merge readiness.
+Conversation messages, turn routing/context versions, specialist results,
+context references and AI-run linkage are durable and immutable. OWNER, ADMIN
+and MEMBER execute; VIEWER reads only. Specialist failure deterministically
+fails the turn without synthesis, and synthesis failure creates no assistant
+answer. Ask Council performs no Create, Strategic Review, Research, performance
+derivation, memory, arbitrary-tool, job or Web Agency side effect.
+
+Forward migration: `20260825002000_ask_council.sql`. Final local verification
+passes 8 focused files / 46 tests, 153 web files / 883 tests and 5 worker files /
+32 tests (158 files / 915 tests total), plus formatting, lint, both typechecks,
+both production builds, migration contracts and audit with zero
+vulnerabilities. The linked dry run reports only the TASK-020 migration
+pending and applies nothing. Docker/Podman is unavailable, so the 35-assertion
+pgTAP suite remains a hosted database check. Hosted acceptance remains before
+merge readiness.
 
 ---
 
@@ -647,7 +651,7 @@ acceptance retest before marking TASK-017E complete.
 
 ## TASK-018 — Marketing Performance Learning
 
-Status: LOCAL IMPLEMENTATION / HOSTED ACCEPTANCE PENDING
+Status: COMPLETE / MERGED
 
 Implemented scope:
 
@@ -678,35 +682,43 @@ an explicit later authorized integration, not TASK-018 behavior.
 
 ## TASK-019 — Web Agency Integration
 
-Future only.
+Status: DEFERRED
 
 Integrate the separate AI Web Agency through Stylus plugin interfaces.
 
 Agency memory must remain isolated.
 
+Deferred because the separate `ai-web-agency` implementation is not yet mature
+enough for a stable integration contract. It is not cancelled or renumbered.
+
 ---
 
-## TASK-020 — Ask Creative Council
+## TASK-020 — Ask Council
 
-Future approved direction only.
+Status: LOCAL IMPLEMENTATION VERIFIED / HOSTED ACCEPTANCE PENDING
 
-Planned scope:
+Implemented scope:
 
 - conversational Marketing questions from authorized team members
 - bounded company-aware Company and Marketing context
 - code-defined intent/workflow routing to the smallest approved specialist set
 - synthesized team-facing answers with concise perspectives, evidence,
   assumptions, disagreements, risks, and confidence where appropriate
-- bounded collaborative conversation/history persistence if justified by its
-  discovery pass
+- bounded collaborative conversation/history persistence
 - organization, role, plugin, AI-policy, and ModelGateway boundaries
 - explicit call, cost, context, and stopping limits using logical model tiers
 - optional explicit use of TASK-017 research evidence when a selected workflow
   requires research; ordinary questions do not imply web research
-- future TASK-018 performance evidence through an authorized bounded interface
+- read-only TASK-018 performance evidence through an authorized bounded
+  interface
+
+Migration `20260825002000_ask_council.sql` adds organization-scoped,
+RLS-protected conversations, immutable messages/turn provenance, typed exact
+context references and specialist/AI-run history. Workflow mutation is
+service-only; archival is guarded and history-preserving.
 
 Do not implement Ask Council as a generic chatbot, an unrestricted research
 assistant, or an autonomous swarm. It must not expose raw chain-of-thought,
 spawn arbitrary agents, invoke arbitrary tools, broaden Marketing into agency
-memory, or write durable memory automatically. Its own discovery pass must
-define persistence and implementation contracts before development begins.
+memory, or write durable memory automatically. Suggested actions are advisory
+text and execute nothing.

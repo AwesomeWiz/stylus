@@ -806,3 +806,33 @@ Council side effect occurs. An official future platform adapter may submit only
 a normalized snapshot draft through the same validation/persistence boundary.
 Future Council work must deliberately retrieve selected learnings through a
 separate authorized bounded projection.
+
+## ADR-037 — Keep Ask Council deterministic, advisory and provenance-first
+
+Status: ACCEPTED
+
+TASK-020 implements Ask Council as a separate advisory workflow rather than a
+mode inside TASK-015 Create or a general agent runtime. A controlled intent and
+versioned code map choose one to three static specialists; V1 chooses two. They
+run in parallel through ModelGateway and exactly one synthesis follows only when
+all succeed. The request hard limit is four calls and 55 seconds. Any specialist
+failure stops synthesis; synthesis failure creates no assistant answer.
+
+Context selection prefers explicit attachments, then structured relevance, and
+uses recency only as a tie-breaker. Canonical Company context, existing
+Research/EVID, persisted Performance Learnings and exact selected creative
+artifacts are bounded before model execution. Models use safe request-local
+references, while real UUIDs are stored in typed same-organization provenance.
+External content is untrusted data and Performance Learning sample, strength,
+caveat and algorithm fields remain intact.
+
+Ask Council has no tools, live retrieval, memory retrieval/write, automatic
+artifact creation, Strategic Review, performance derivation, job or Web Agency
+edge. Conversation data is not memory. This keeps Create and Ask contracts
+independently auditable and prevents a question from becoming authorization for
+another workflow.
+
+TASK-019 Web Agency Integration is DEFERRED, not cancelled or renumbered,
+because the separate `ai-web-agency` implementation is not mature enough for a
+stable integration contract. Ask Council has no agency-memory or TASK-019
+access.

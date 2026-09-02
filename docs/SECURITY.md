@@ -560,3 +560,35 @@ collection.
 - TASK-018 imports no ModelGateway, Council, Strategic Review, research, memory,
   job, worker or network executor. It performs no automatic platform access,
   scraping, memory promotion or Ask Council behavior.
+
+## Ask Council Security
+
+- `/apps/marketing/council` requires active membership and enabled Marketing.
+  OWNER, ADMIN and MEMBER execute; VIEWER reads only. Server Actions derive
+  organization and actor and accept no browser provider, model, route,
+  specialist, AI-run, prompt or system-message authority.
+- Context queries repeat the server-derived organization predicate. Explicit
+  cross-organization Report, Learning, Reel Brief or Strategic Review IDs fail
+  closed. Composite database foreign keys independently enforce the same tenant
+  on persisted context provenance.
+- Authenticated clients cannot insert messages, turns, specialist outputs or
+  context references and cannot execute workflow transition RPCs. Service-only
+  fixed-search-path functions validate active role, plugin and exact
+  `marketing.ask-council.execute` `BALANCED` AI-run provenance. No SYSTEM message
+  role exists.
+- User/assistant messages, specialist outputs and context references reject
+  update/delete. Turn routing, specialists, versions, context, actor and creation
+  provenance cannot be rewritten. Archival preserves history.
+- Models receive safe request-local references, never real artifact UUIDs as
+  citation authority. Dynamic strict schemas and post-gateway checks reject
+  invented and duplicate references.
+- Questions, prior messages, research/evidence and creative-artifact text are
+  untrusted data. They cannot change deterministic routing, provider/model
+  selection, tool availability, reference allowlists, tenant access or system
+  instructions. Specialists expose no tools or memory domains.
+- Context, history, question, output tokens, call count and total workflow time
+  are bounded. No prompt, raw provider response, hidden reasoning,
+  chain-of-thought, provider diagnostic or secret is persisted or rendered.
+- Ask Council performs no Create, Strategic Review, live Research, performance
+  derivation, memory mutation, job, worker, Web Agency/TASK-019 or direct
+  provider operation. Suggested actions are non-executing text.
