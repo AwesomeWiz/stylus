@@ -1,4 +1,4 @@
-import { Layers3 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export function Brand() {
@@ -8,9 +8,14 @@ export function Brand() {
       href="/"
       aria-label="Stylus home"
     >
-      <span className="bg-primary text-primary-foreground inline-flex size-8 items-center justify-center rounded-md">
-        <Layers3 aria-hidden="true" className="size-[18px]" strokeWidth={2.2} />
-      </span>
+      <Image
+        alt=""
+        className="size-8 object-contain"
+        height={32}
+        priority
+        src="/brand/stylus-mark.png"
+        width={32}
+      />
       <span className="text-sidebar-foreground text-[15px] font-semibold tracking-tight">
         Stylus
       </span>

@@ -20,6 +20,7 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import { SpecialistIdentity } from "@/components/marketing/specialist-visuals";
 import { StrategicReviewPanel } from "@/components/marketing/strategic-review-panel";
 import type {
   MarketingCreativeCouncilEvidenceRow,
@@ -436,11 +437,15 @@ function StageSummary({
         ) : (
           <Circle className="text-muted-foreground size-4" />
         )}
-        {stage === "HOOK"
-          ? "Hook Strategist"
-          : stage === "SCRIPT"
-            ? "Script Writer"
-            : "Creative Critic"}
+        <SpecialistIdentity
+          id={
+            stage === "HOOK"
+              ? "marketing.hook-strategist"
+              : stage === "SCRIPT"
+                ? "marketing.script-writer"
+                : "marketing.creative-critic"
+          }
+        />
       </summary>
       {value?.structured_output ? (
         <StageOutput stage={stage} value={value.structured_output} />
@@ -468,7 +473,7 @@ function StageOutput({
     const parsed = hookStrategySchema.safeParse(value);
     if (!parsed.success) return null;
     return (
-      <div className="text-muted-foreground mt-3 space-y-2 text-xs">
+      <div className="text-muted-foreground mt-3 space-y-2 text-sm leading-6">
         <p className="text-foreground font-medium">{parsed.data.primaryHook}</p>
         <p>{parsed.data.rationale}</p>
         <p>Confidence: {label(parsed.data.confidence)}</p>
@@ -479,7 +484,7 @@ function StageOutput({
     const parsed = reelScriptSchema.safeParse(value);
     if (!parsed.success) return null;
     return (
-      <div className="text-muted-foreground mt-3 space-y-2 text-xs">
+      <div className="text-muted-foreground mt-3 space-y-2 text-sm leading-6">
         <p className="text-foreground line-clamp-4 whitespace-pre-wrap">
           {parsed.data.spokenScript}
         </p>
@@ -491,7 +496,7 @@ function StageOutput({
   const parsed = creativeCritiqueSchema.safeParse(value);
   if (!parsed.success) return null;
   return (
-    <div className="text-muted-foreground mt-3 space-y-2 text-xs">
+    <div className="text-muted-foreground mt-3 space-y-2 text-sm leading-6">
       <p className="text-foreground font-medium">
         Verdict: {label(parsed.data.verdict)}
       </p>

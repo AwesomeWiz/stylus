@@ -115,7 +115,18 @@ export function TaskRowItem({
         <Clock3 aria-hidden="true" className="size-3.5" />
         {task.due_at ? formatTaskDate(task.due_at) : "No deadline"}
       </span>
-      <span className="text-muted-foreground hidden w-20 text-right text-xs lg:block">
+      <span
+        className={cn(
+          "hidden w-20 rounded-sm px-1.5 py-0.5 text-center text-xs font-medium lg:block",
+          task.priority === "URGENT"
+            ? "bg-destructive/10 text-destructive"
+            : task.priority === "HIGH"
+              ? "bg-warning-subtle text-warning"
+              : task.priority === "MEDIUM"
+                ? "bg-primary-subtle text-accent-foreground"
+                : "bg-muted text-muted-foreground",
+        )}
+      >
         {taskLabel(task.priority)}
       </span>
     </li>

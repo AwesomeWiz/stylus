@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/modules/marketing/actions", () => ({
   saveMarketingCampaignAction: vi.fn(),
@@ -15,6 +15,8 @@ vi.mock("@/modules/marketing/actions", () => ({
 }));
 
 import { MarketingWorkspace } from "./marketing-workspace";
+
+afterEach(cleanup);
 
 const competitor = {
   id: "10000000-0000-4000-8000-000000000013",
@@ -32,7 +34,12 @@ describe("Marketing workspace", () => {
       />,
     );
     expect(screen.getByText("No Reel idea records")).toBeInTheDocument();
-    expect(screen.getAllByText("Add Reel idea")).toHaveLength(2);
+    const add = screen.getByRole("button", { name: "Add Reel idea" });
+    fireEvent.click(add);
+    expect(
+      screen.getByRole("dialog", { name: "Add Reel idea" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Title")).toBeInTheDocument();
   });
   it("removes all mutation controls for VIEWER", () => {
     render(
@@ -45,10 +52,27 @@ describe("Marketing workspace", () => {
     );
     expect(screen.getByText("Acme")).toBeInTheDocument();
     expect(screen.queryByText("Add competitor")).not.toBeInTheDocument();
-    expect(screen.queryByText("Edit")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Edit/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByLabelText("Archive competitor"),
     ).not.toBeInTheDocument();
+  });
+  it("opens editing in a modal instead of expanding an inline form", () => {
+    render(
+      <MarketingWorkspace
+        area="competitors"
+        archived={false}
+        records={[competitor]}
+        role="ADMIN"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit competitor" }));
+    expect(
+      screen.getByRole("dialog", { name: "Edit competitor" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toHaveValue("Acme");
   });
   it("offers archive and restore without hard-delete controls", () => {
     const { rerender } = render(

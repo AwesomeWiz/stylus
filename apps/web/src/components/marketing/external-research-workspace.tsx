@@ -739,7 +739,15 @@ function Status({ status }: { status: string }) {
         ? TriangleAlert
         : LoaderCircle;
   return (
-    <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+    <span
+      className={`flex items-center gap-1.5 text-xs font-medium ${
+        status === "SUCCEEDED"
+          ? "text-success"
+          : status === "FAILED" || status === "CANCELLED"
+            ? "text-destructive"
+            : "text-info"
+      }`}
+    >
       <Icon
         className={`size-4 ${["QUEUED", "RUNNING", "SYNTHESIZING"].includes(status) ? "animate-spin" : ""}`}
       />

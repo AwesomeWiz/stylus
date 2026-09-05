@@ -50,7 +50,7 @@ export const coreNavigationGroups: NavigationGroup[] = [
     label: "System",
     items: [
       { label: "Team", icon: Users, href: "/team" },
-      { label: "Settings", icon: Settings, href: "#settings" },
+      { label: "Settings", icon: Settings, href: "/settings" },
     ],
   },
 ];

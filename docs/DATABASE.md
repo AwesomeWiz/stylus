@@ -670,3 +670,20 @@ Completion requires every selected specialist result in deterministic ordinal
 order before creating one assistant message. Failure creates none. Activity is
 limited to conversation creation and successful response completion and stores
 no question, prompt, response, provider content or credential.
+
+## Final production polish
+
+`20260825002010_final_production_polish.sql` adds the forward-only
+`delete_owned_organization(uuid, text)` RPC and replaces only the two existing
+whiteboard Presence policies. The deletion RPC is `SECURITY DEFINER` with an
+empty search path, locks the exact organization, requires `auth.uid()`, active
+OWNER membership and exact name confirmation, and then relies on the existing
+reviewed organization-level cascades. It is revoked from public/anon and granted
+only to authenticated users. The application separately inventories and removes
+private Storage objects because Storage is not part of the PostgreSQL
+transaction; member `auth.users` records remain intact.
+
+Presence remains non-persistent Realtime data. Its topic changes from
+`board:<board>` to `board:<organization>:<board>`. Read/write policies resolve
+that exact active board, repeat organization membership, limit the extension to
+Presence, and bind write payload `userId` to `auth.uid()`.

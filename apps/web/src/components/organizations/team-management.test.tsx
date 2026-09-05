@@ -17,6 +17,7 @@ vi.mock("@/modules/organizations/team-actions", () => ({
 
 import {
   formatTeamDate,
+  formatLastSignIn,
   InvitationCopyButton,
   TeamManagement,
 } from "./team-management";
@@ -46,6 +47,9 @@ const members = [
 describe("TeamManagement", () => {
   it("formats team dates deterministically for server and client rendering", () => {
     expect(formatTeamDate("2026-08-25T23:30:00-07:00")).toBe("Aug 26, 2026");
+    expect(formatLastSignIn("2026-09-01T08:00:00Z")).toBe(
+      "Sep 1, 2026, 8:00 AM UTC",
+    );
   });
 
   it("shows invite and member controls to an OWNER but protects OWNER role", () => {
@@ -83,6 +87,27 @@ describe("TeamManagement", () => {
     expect(
       screen.queryByRole("button", { name: /Remove/ }),
     ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Last signed in/)).not.toBeInTheDocument();
+  });
+
+  it("shows safe last-login metadata only to organization managers", () => {
+    render(
+      <TeamManagement
+        currentRole="ADMIN"
+        currentUserId="admin"
+        invitations={[]}
+        members={members.map((member, index) => ({
+          ...member,
+          lastSignInAt: index === 0 ? "2026-09-01T08:00:00Z" : null,
+        }))}
+      />,
+    );
+    expect(
+      screen.getByText("Last signed in Sep 1, 2026, 8:00 AM UTC"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Last signed in Never / unavailable"),
+    ).toBeInTheDocument();
   });
 
   it("shows copy confirmation briefly before restoring the copy icon", async () => {

@@ -8,6 +8,7 @@ import {
   ReactFlow,
   type NodeChange,
   type ReactFlowInstance,
+  type Viewport,
 } from "@xyflow/react";
 import {
   useCallback,
@@ -67,6 +68,7 @@ import {
 import { WhiteboardToolbar, type WhiteboardTool } from "./whiteboard-toolbar";
 import { WhiteboardInspector } from "./whiteboard-inspector";
 import { WhiteboardCommentsPanel } from "./whiteboard-comments-panel";
+import { WhiteboardCursors } from "./whiteboard-cursors";
 
 const nodeTypes = { whiteboard: WhiteboardNode };
 
@@ -133,8 +135,12 @@ export function WhiteboardWorkspace({
   const [presence, setPresence] = useState<BoardPresence[]>([]);
   const [connection, setConnection] =
     useState<CollaborationConnectionState>("CONNECTING");
+  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
   const [pending, startTransition] = useTransition();
   const flowRef = useRef<ReactFlowInstance<WhiteboardFlowNode> | null>(null);
+  const collaborationRef = useRef<ReturnType<
+    typeof subscribeToBoardCollaboration
+  > | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const imagePositionRef = useRef({ x: 0, y: 0 });
   const historyRef = useRef(history);
@@ -250,8 +256,9 @@ export function WhiteboardWorkspace({
 
   useEffect(() => {
     if (!currentUser.id) return;
-    return subscribeToBoardCollaboration({
+    const collaboration = subscribeToBoardCollaboration({
       boardId: board.id,
+      organizationId: board.organization_id,
       currentUser,
       members,
       onComment: (comment) =>
@@ -260,7 +267,18 @@ export function WhiteboardWorkspace({
       onElement: receiveRemoteElement,
       onPresence: setPresence,
     });
-  }, [board.id, currentUser, members, receiveRemoteElement]);
+    collaborationRef.current = collaboration;
+    return () => {
+      collaborationRef.current = null;
+      collaboration.unsubscribe();
+    };
+  }, [
+    board.id,
+    board.organization_id,
+    currentUser,
+    members,
+    receiveRemoteElement,
+  ]);
 
   const runMutation = useCallback((operation: () => Promise<void>) => {
     if (mutationLockRef.current) return;
@@ -716,7 +734,17 @@ export function WhiteboardWorkspace({
           {error}
         </div>
       ) : null}
-      <div className="relative min-h-0 flex-1" data-testid="whiteboard-canvas">
+      <div
+        className="relative min-h-0 flex-1"
+        data-testid="whiteboard-canvas"
+        onPointerMove={(event) => {
+          const position = flowRef.current?.screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          });
+          if (position) collaborationRef.current?.updateCursor(position);
+        }}
+      >
         <ReactFlow<WhiteboardFlowNode>
           deleteKeyCode={null}
           fitView
@@ -750,6 +778,7 @@ export function WhiteboardWorkspace({
           onNodesChange={(changes: NodeChange<WhiteboardFlowNode>[]) =>
             setNodes((current) => applyNodeChanges(changes, current))
           }
+          onMove={(_event, nextViewport) => setViewport(nextViewport)}
           onPaneClick={handlePaneClick}
           onSelectionChange={({ nodes: selected }) =>
             setSelectedId(selected[0]?.id ?? null)
@@ -765,6 +794,11 @@ export function WhiteboardWorkspace({
           />
           <Controls position="bottom-right" showInteractive={false} />
         </ReactFlow>
+        <WhiteboardCursors
+          currentUserId={currentUser.id}
+          presence={presence}
+          viewport={viewport}
+        />
         <div className="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2">
           <div className="pointer-events-auto">
             <WhiteboardToolbar

@@ -841,3 +841,31 @@ TASK-019 Web Agency Integration is DEFERRED, not cancelled or renumbered,
 because the separate `ai-web-agency` implementation is not mature enough for a
 stable integration contract. Ask Council has no agency-memory or TASK-019
 access.
+
+## ADR-038 — Keep production appearance local and privileged diagnostics server-derived
+
+Status: ACCEPTED
+
+The final production-experience pass treats `#0D98BA` as the canonical brand
+token and derives both light and dark semantic palettes from it. Appearance is
+a device preference (`LIGHT`, `DARK` or `SYSTEM`) applied before hydration; it
+is not organization data and therefore requires no database write.
+
+Privileged account metadata remains server-derived. Team last-sign-in values
+are projected through the Supabase Auth Admin API only after OWNER/ADMIN
+authorization and only for the current organization's exact member IDs. They
+are never exposed to MEMBER or VIEWER roles. Organization deletion uses an
+OWNER-only, exact-name-confirmed transactional database function. Private
+Storage object paths are inventoried from authorized organization records
+before deletion and removed by exact path after the database commit; a cleanup
+failure can leave an inaccessible orphan but cannot expose or restore tenant
+data. Member authentication accounts are intentionally preserved.
+
+Whiteboard pointer collaboration remains ephemeral Realtime Presence rather
+than database history. Presence topics include organization and board IDs,
+write policy binds the payload user ID to `auth.uid()`, trusted display identity
+comes from the authorized member directory, coordinates are bounded and
+throttled, and every client converts between flow and viewport space locally.
+Marketing dialogs and centralized Creative specialist visuals are presentation
+changes only; they do not alter existing RBAC, provenance, workflows or model
+call limits.

@@ -15,6 +15,10 @@ import {
 import { useActionState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  SpecialistIdentity,
+  specialistVisuals,
+} from "@/components/marketing/specialist-visuals";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   MarketingAskCouncilContextRefRow,
@@ -39,19 +43,6 @@ import {
 import { canMutateMarketing } from "@/modules/marketing/authorization";
 
 type ReportOption = MarketingExternalResearchReportRow & { question: string };
-
-const specialistLabels: Record<string, string> = {
-  "marketing.audience-researcher": "Audience Researcher",
-  "marketing.brand-director": "Brand Director",
-  "marketing.competitor-analyst": "Competitor Analyst",
-  "marketing.content-strategist": "Content Strategist",
-  "marketing.creative-critic": "Creative Critic",
-  "marketing.hook-strategist": "Hook Strategist",
-  "marketing.retention-editor": "Retention Editor",
-  "marketing.script-writer": "Script Writer",
-  "marketing.trend-researcher": "Trend Strategist",
-  "marketing.visual-director": "Visual Strategist",
-};
 
 export function AskCouncilWorkspace({
   briefs,
@@ -418,7 +409,7 @@ function Message({
       <p className="text-muted-foreground text-xs font-medium">
         {assistant ? "Ask Council" : "You"}
       </p>
-      <p className="mt-1 text-sm leading-6 whitespace-pre-wrap">
+      <p className="mt-1 text-[15px] leading-7 whitespace-pre-wrap">
         {message.content}
       </p>
       {assistant && output ? (
@@ -437,9 +428,12 @@ function Message({
             <p className="text-xs font-medium">Council consulted</p>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {turn?.selected_specialists.map((id) => (
-                <span className="bg-muted rounded px-2 py-1 text-xs" key={id}>
-                  {specialistLabels[id] ?? safeLabel(id)}
-                </span>
+                <SpecialistIdentity
+                  className="bg-muted rounded px-2 py-1 text-xs"
+                  id={id}
+                  key={id}
+                  label={specialistVisuals[id]?.label ?? safeLabel(id)}
+                />
               ))}
             </div>
           </div>
@@ -468,12 +462,19 @@ function Message({
                 {specialistResults.map((result) => {
                   const perspective = object(result.structured_output);
                   return (
-                    <div className="border-l-2 pl-3 text-sm" key={result.id}>
-                      <p className="font-medium">
-                        {specialistLabels[result.specialist_id] ??
-                          safeLabel(result.specialist_id)}
-                      </p>
-                      <p className="text-muted-foreground mt-1">
+                    <div
+                      className="border-primary-border border-l-2 pl-3 text-sm"
+                      key={result.id}
+                    >
+                      <SpecialistIdentity
+                        className="font-medium"
+                        id={result.specialist_id}
+                        label={
+                          specialistVisuals[result.specialist_id]?.label ??
+                          safeLabel(result.specialist_id)
+                        }
+                      />
+                      <p className="text-muted-foreground mt-2 leading-6">
                         {typeof perspective?.recommendation === "string"
                           ? perspective.recommendation
                           : "Perspective recorded."}

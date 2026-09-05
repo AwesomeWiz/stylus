@@ -233,11 +233,27 @@ Require:
 
 # Theme
 
-Architecture should support:
+The production theme supports:
 
 - Light
 - Dark
 - System
+
+The preference is device-local under `stylus-theme`; a pre-hydration document
+script applies the resolved class to avoid a visible incorrect-theme flash.
+System follows `prefers-color-scheme` changes.
+
+The canonical Stylus brand color is `#0D98BA`. UI code consumes semantic tokens
+(`primary`, hover/active/subtle/muted/border/foreground and ring) rather than
+hard-coding the brand throughout components. Success, warning, destructive and
+information colors are reserved for meaning and always retain text or icon
+labels. The approved mark is stored at `assets/brand/stylus-logo-source.png`;
+the optimized transparent web mark is `public/brand/stylus-mark.png`.
+
+Shared Marketing record creation/editing uses the Radix-backed Dialog at mobile
+through desktop widths. Creative surfaces use the centralized
+`specialist-visuals.tsx` Lucide mapping; icons support, but never replace,
+readable specialist names.
 
 Theme support should use design tokens/CSS variables rather than
 duplicated page styles.

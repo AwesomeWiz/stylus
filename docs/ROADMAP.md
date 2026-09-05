@@ -359,3 +359,19 @@ workflows. Explicit creative-artifact selection is exact-version only. It uses
 ModelGateway logical tiers and a finite code-defined route with a four-call
 maximum; no generic chatbot, arbitrary tool use, arbitrary agent spawning, raw
 chain-of-thought, automatic memory write or TASK-019 integration is permitted.
+
+---
+
+## Final production experience
+
+- [x] canonical Stylus branding and approved application mark
+- [x] persisted Light/Dark/System appearance
+- [x] functional Settings and permission-aware team metadata
+- [x] OWNER-only confirmed organization deletion boundary
+- [x] organization-qualified ephemeral whiteboard cursors
+- [x] responsive shared Marketing record dialogs
+- [x] shared Creative specialist identity and response readability
+
+This polish layer changes presentation and narrowly required security
+boundaries only. TASK-001 through TASK-020 behavior remains intact, and TASK-019
+Web Agency Integration remains deferred.

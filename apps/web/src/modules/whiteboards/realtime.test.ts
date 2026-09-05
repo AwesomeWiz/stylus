@@ -1,12 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Database } from "@/lib/supabase/database.types";
 
 import { subscribeToBoardCollaboration } from "./realtime";
 
+afterEach(() => vi.useRealTimers());
+
 describe("whiteboard realtime subscription", () => {
   it("scopes rows to one board, tracks presence, and cleans up", () => {
+    vi.useFakeTimers();
     const handlers: Array<{
       config: Record<string, unknown>;
       event: string;
@@ -38,8 +41,9 @@ describe("whiteboard realtime subscription", () => {
     } as unknown as SupabaseClient<Database>;
     const onConnection = vi.fn();
     const onPresence = vi.fn();
-    const cleanup = subscribeToBoardCollaboration({
+    const subscription = subscribeToBoardCollaboration({
       boardId: "board-a",
+      organizationId: "organization-a",
       currentUser: { id: "user-a" },
       members: [
         { display_name: "Alex", member_user_id: "user-a", role: "MEMBER" },
@@ -52,7 +56,7 @@ describe("whiteboard realtime subscription", () => {
     });
 
     expect(supabase.channel).toHaveBeenCalledWith(
-      "board:board-a",
+      "board:organization-a:board-a",
       expect.objectContaining({
         config: expect.objectContaining({ private: true }),
       }),
@@ -73,9 +77,19 @@ describe("whiteboard realtime subscription", () => {
     );
     handlers[2]?.callback({ new: {} });
     expect(onPresence).toHaveBeenCalledWith([
-      { displayName: "Alex", role: "MEMBER", userId: "user-a" },
+      {
+        cursor: null,
+        displayName: "Alex",
+        role: "MEMBER",
+        userId: "user-a",
+      },
     ]);
-    cleanup();
+    subscription.updateCursor({ x: 14, y: 22 });
+    vi.advanceTimersByTime(50);
+    expect(channel.track).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cursor: { x: 14, y: 22 }, userId: "user-a" }),
+    );
+    subscription.unsubscribe();
     expect(channel.untrack).toHaveBeenCalled();
     expect(supabase.removeChannel).toHaveBeenCalledWith(channel);
   });
@@ -99,6 +113,7 @@ describe("whiteboard realtime subscription", () => {
     const onConnection = vi.fn();
     subscribeToBoardCollaboration({
       boardId: "board-a",
+      organizationId: "organization-a",
       currentUser: { id: "user-a" },
       members: [],
       onComment: vi.fn(),

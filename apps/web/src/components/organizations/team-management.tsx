@@ -17,6 +17,7 @@ import type {
   OrganizationRole,
   OrganizationTeamMember,
 } from "@/lib/supabase/database.types";
+import type { OrganizationTeamMemberWithActivity } from "@/modules/organizations/server/team-data";
 import { initialTeamActionState } from "@/modules/organizations/team-schemas";
 import {
   inviteTeamMemberAction,
@@ -33,6 +34,14 @@ export function formatTeamDate(value: string) {
   }).format(new Date(value));
 }
 
+export function formatLastSignIn(value: string) {
+  return `${new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(new Date(value))} UTC`;
+}
+
 export function TeamManagement({
   currentRole,
   currentUserId,
@@ -42,7 +51,7 @@ export function TeamManagement({
   currentRole: OrganizationRole;
   currentUserId: string;
   invitations: OrganizationInvitationSummary[];
-  members: OrganizationTeamMember[];
+  members: Array<OrganizationTeamMember | OrganizationTeamMemberWithActivity>;
 }) {
   const canManage = currentRole === "OWNER" || currentRole === "ADMIN";
   return (
@@ -84,6 +93,14 @@ export function TeamManagement({
                   <p className="text-muted-foreground mt-1 text-xs">
                     Joined {formatTeamDate(member.created_at)}
                   </p>
+                  {canManage ? (
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Last signed in{" "}
+                      {"lastSignInAt" in member && member.lastSignInAt
+                        ? formatLastSignIn(member.lastSignInAt)
+                        : "Never / unavailable"}
+                    </p>
+                  ) : null}
                 </div>
                 {editable ? (
                   <div className="flex flex-wrap items-center gap-2">

@@ -6,6 +6,7 @@ import type {
   TaskMember,
 } from "@/lib/supabase/database.types";
 import {
+  boardPresenceColor,
   chooseCommittedElement,
   normalizeBoardPresence,
   reconcileBoardComment,
@@ -70,7 +71,34 @@ describe("whiteboard collaboration reconciliation", () => {
         },
         members,
       ),
-    ).toEqual([{ displayName: "Alex", role: "MEMBER", userId: "user-a" }]);
+    ).toEqual([
+      { cursor: null, displayName: "Alex", role: "MEMBER", userId: "user-a" },
+    ]);
+  });
+
+  it("accepts bounded cursor coordinates but not forged member identity", () => {
+    expect(
+      normalizeBoardPresence(
+        { one: [{ cursor: { x: 42, y: 18 }, userId: "user-b" }] },
+        members,
+      ),
+    ).toEqual([
+      {
+        cursor: { x: 42, y: 18 },
+        displayName: "Alex",
+        role: "VIEWER",
+        userId: "user-b",
+      },
+    ]);
+  });
+
+  it("drops excessive cursor coordinates from untrusted presence payloads", () => {
+    expect(
+      normalizeBoardPresence(
+        { one: [{ cursor: { x: 2_000_000, y: 18 }, userId: "user-b" }] },
+        members,
+      )[0]?.cursor,
+    ).toBeNull();
   });
 
   it("keeps duplicate display names as distinct identities", () => {
@@ -83,5 +111,10 @@ describe("whiteboard collaboration reconciliation", () => {
         members,
       ).map((person) => person.userId),
     ).toEqual(["user-a", "user-b"]);
+  });
+
+  it("assigns a stable curated color from the trusted user identifier", () => {
+    expect(boardPresenceColor("user-a")).toBe(boardPresenceColor("user-a"));
+    expect(boardPresenceColor("user-a")).toMatch(/^#[0-9A-F]{6}$/i);
   });
 });

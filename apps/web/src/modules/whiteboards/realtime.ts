@@ -17,6 +17,7 @@ export type CollaborationConnectionState =
 
 type SubscriptionOptions = {
   boardId: string;
+  organizationId: string;
   currentUser: { id: string };
   members: TaskMember[];
   onComment: (comment: BoardCommentRow) => void;
@@ -28,6 +29,7 @@ type SubscriptionOptions = {
 
 export function subscribeToBoardCollaboration({
   boardId,
+  organizationId,
   currentUser,
   members,
   onComment,
@@ -38,12 +40,24 @@ export function subscribeToBoardCollaboration({
 }: SubscriptionOptions) {
   let disposed = false;
   onConnection("CONNECTING");
-  const channel = supabase.channel(`board:${boardId}`, {
+  const channel = supabase.channel(`board:${organizationId}:${boardId}`, {
     config: {
       presence: { key: `${currentUser.id}:${crypto.randomUUID()}` },
       private: true,
     },
   });
+  let latestCursor: { x: number; y: number } | null = null;
+  let cursorTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastCursorTrackAt = 0;
+  const onlineAt = new Date().toISOString();
+  const track = () => {
+    lastCursorTrackAt = Date.now();
+    void channel.track({
+      cursor: latestCursor,
+      onlineAt,
+      userId: currentUser.id,
+    });
+  };
   channel
     .on(
       "postgres_changes",
@@ -77,18 +91,32 @@ export function subscribeToBoardCollaboration({
       if (disposed) return;
       if (status === "SUBSCRIBED") {
         onConnection("CONNECTED");
-        void channel.track({
-          onlineAt: new Date().toISOString(),
-          userId: currentUser.id,
-        });
+        track();
       } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
         onConnection("DEGRADED");
       }
     });
 
-  return () => {
-    disposed = true;
-    void channel.untrack();
-    void supabase.removeChannel(channel);
+  return {
+    unsubscribe() {
+      disposed = true;
+      if (cursorTimer) clearTimeout(cursorTimer);
+      void channel.untrack();
+      void supabase.removeChannel(channel);
+    },
+    updateCursor(cursor: { x: number; y: number }) {
+      if (disposed || !Number.isFinite(cursor.x) || !Number.isFinite(cursor.y))
+        return;
+      if (Math.abs(cursor.x) > 1_000_000 || Math.abs(cursor.y) > 1_000_000)
+        return;
+      latestCursor = cursor;
+      const wait = Math.max(0, 50 - (Date.now() - lastCursorTrackAt));
+      if (wait === 0) track();
+      else if (!cursorTimer)
+        cursorTimer = setTimeout(() => {
+          cursorTimer = null;
+          track();
+        }, wait);
+    },
   };
 }

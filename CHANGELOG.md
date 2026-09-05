@@ -4,6 +4,23 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Established `#0D98BA` as the canonical Stylus brand color with accessible
+  semantic light/dark tokens, integrated the approved logo across auth, shell
+  and icon metadata, and added persisted hydration-safe Light/Dark/System
+  appearance controls.
+- Added a production Settings page with safe account/organization summaries,
+  Team navigation and an OWNER-only typed-confirmation organization deletion
+  flow that cleans exact tenant Storage objects without deleting auth users.
+- Added OWNER/ADMIN-only server-projected team last-sign-in metadata without
+  exposing the Supabase service role or Auth Admin records to browser code.
+- Added organization-and-board-isolated ephemeral whiteboard cursors with
+  authenticated presence identity, throttled flow coordinates, deterministic
+  colors and transformed remote rendering.
+- Replaced shared Marketing inline add/edit forms with responsive accessible
+  dialogs, added restrained semantic state color, and centralized professional
+  Lucide identities/readable output styling across Creative Council, Strategic
+  Review and Ask Council without changing their workflows or model calls.
+
 - Fixed Ask Council automatic Research context selection so anaphoric
   follow-ups use bounded recent user concepts, generic Marketing/Research/Reel
   terms cannot admit unrelated reports, and report/evidence identity is

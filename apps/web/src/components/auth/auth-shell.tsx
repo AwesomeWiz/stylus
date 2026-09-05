@@ -1,4 +1,4 @@
-import { Layers3 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -10,23 +10,26 @@ interface AuthShellProps {
 
 export function AuthShell({ children, description, title }: AuthShellProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
+    <main className="bg-background relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6">
+      <div
+        aria-hidden="true"
+        className="bg-primary-subtle absolute inset-x-0 top-0 h-1"
+      />
       <div className="w-full max-w-sm">
         <Link
           aria-label="Stylus home"
           className="mb-8 inline-flex items-center gap-2.5"
           href="/"
         >
-          <span className="bg-primary text-primary-foreground inline-flex size-8 items-center justify-center rounded-md">
-            <Layers3
-              aria-hidden="true"
-              className="size-[18px]"
-              strokeWidth={2.2}
-            />
-          </span>
-          <span className="text-[15px] font-semibold tracking-tight">
-            Stylus
-          </span>
+          <Image
+            alt=""
+            className="size-10 object-contain"
+            height={40}
+            priority
+            src="/brand/stylus-mark.png"
+            width={40}
+          />
+          <span className="text-base font-semibold tracking-tight">Stylus</span>
         </Link>
 
         <header className="mb-6">

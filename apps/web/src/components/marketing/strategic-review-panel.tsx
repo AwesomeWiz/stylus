@@ -19,6 +19,7 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import { SpecialistIdentity } from "@/components/marketing/specialist-visuals";
 import type {
   MarketingReelBriefVersionRow,
   MarketingStrategicCouncilReviewVersionRow,
@@ -270,7 +271,20 @@ function ReviewStage({
         ) : (
           <Circle className="text-muted-foreground size-4" />
         )}
-        {stageName(stage)}
+        <SpecialistIdentity
+          id={
+            stage === "AUDIENCE"
+              ? "marketing.audience-researcher"
+              : stage === "BRAND"
+                ? "marketing.brand-director"
+                : stage === "STRATEGY"
+                  ? "marketing.content-strategist"
+                  : stage === "CHALLENGE"
+                    ? "strategic.challenge"
+                    : "strategic.judge"
+          }
+          label={stageName(stage)}
+        />
       </summary>
       {value?.structured_output ? (
         <ReviewStageOutput stage={stage} value={value.structured_output} />
@@ -349,7 +363,7 @@ function ReviewStageOutput({
 
 function Summary({ confidence, text }: { confidence: string; text: string }) {
   return (
-    <div className="text-muted-foreground mt-3 space-y-2 text-xs">
+    <div className="text-muted-foreground mt-3 space-y-2 text-sm leading-6">
       <p className="text-foreground line-clamp-5">{text}</p>
       <p>Confidence: {label(confidence)}</p>
     </div>

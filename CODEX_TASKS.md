@@ -2,6 +2,42 @@
 
 # Current
 
+## Final Production Polish
+
+Status: VERIFIED / MANUAL PRODUCTION QA READY
+
+The production-polish pass establishes `#0D98BA` as the canonical brand token,
+uses the approved Stylus mark in auth/shell/icon metadata, adds hydration-safe
+persisted Light/Dark/System appearance, and replaces the Settings placeholder
+with real account, organization, team and OWNER-only danger-zone controls.
+
+Team last-sign-in is projected through a server-only Supabase Auth Admin client
+only after OWNER/ADMIN authorization. Organization deletion uses exact-name
+confirmation, server-derived tenant identity, an OWNER-only transactional RPC,
+and exact private Storage inventory/cleanup; it preserves member auth accounts.
+
+Whiteboard cursors remain ephemeral Realtime Presence data, are scoped by both
+organization and board, validate the sender against `auth.uid()`, use trusted
+member-directory identity, throttled flow coordinates and deterministic colors.
+The shared Marketing record editor now uses responsive dialogs. Creative
+Council, Strategic Review and Ask Council share centralized Lucide specialist
+visual metadata and readable substantive typography; their workflows, RBAC,
+AI call counts and provenance are unchanged.
+
+Forward migration: `20260825002010_final_production_polish.sql`.
+
+Focused verification passes 17 files / 64 tests. Complete verification passes
+161 web files / 912 tests and 5 worker files / 32 tests (166 files / 944 tests
+total), repository lint, both TypeScript checks, both production builds, scoped
+formatting, migration contracts and audit with zero vulnerabilities. The linked
+dry run reports only the production-polish migration pending and applies
+nothing. Repository-wide Prettier still reports 139 pre-existing files outside
+this diff; they were deliberately not normalized. Docker/Podman and an in-app
+browser session are unavailable, so local pgTAP and automated screenshot QA
+remain unavailable; the new pgTAP suite is ready for hosted execution.
+
+---
+
 ## TASK-020 — Ask Council
 
 Status: CONTEXT RELEVANCE FIX VERIFIED / HOSTED RETEST PENDING

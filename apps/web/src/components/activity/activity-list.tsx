@@ -18,6 +18,7 @@ import type {
   ActivityEventType,
   TaskMember,
 } from "@/lib/supabase/database.types";
+import { cn } from "@/lib/utils";
 
 const icons: Record<ActivityEventType, LucideIcon> = {
   BOARD_COMMENTED: MessageSquare,
@@ -49,6 +50,16 @@ function memberName(members: TaskMember[], userId: string | null) {
     members.find((member) => member.member_user_id === userId)?.display_name ??
     "a former teammate"
   );
+}
+
+function activityIconStyle(type: ActivityEventType) {
+  if (type === "TASK_COMPLETED" || type === "MEMORY_RESTORED")
+    return "bg-success-subtle text-success";
+  if (type === "TASK_CANCELLED") return "bg-destructive/10 text-destructive";
+  if (type.includes("ARCHIVED")) return "bg-warning-subtle text-warning";
+  if (type.includes("CREATED") || type === "TASK_ASSIGNED")
+    return "bg-primary-subtle text-accent-foreground";
+  return "bg-info-subtle text-info";
 }
 
 export function activityDescription(
@@ -109,7 +120,12 @@ export function ActivityList({
         const Icon = icons[event.event_type];
         return (
           <li className="flex gap-3 py-3.5" key={event.id}>
-            <span className="bg-muted mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full">
+            <span
+              className={cn(
+                "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
+                activityIconStyle(event.event_type),
+              )}
+            >
               <Icon aria-hidden="true" className="size-4" />
             </span>
             <span className="min-w-0 flex-1">
