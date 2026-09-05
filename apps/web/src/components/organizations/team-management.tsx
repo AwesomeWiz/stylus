@@ -12,11 +12,13 @@ import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
 import type {
   OrganizationInvitationSummary,
   OrganizationRole,
   OrganizationTeamMember,
 } from "@/lib/supabase/database.types";
+import type { OrganizationTeamMemberWithActivity } from "@/modules/organizations/server/team-data";
 import { initialTeamActionState } from "@/modules/organizations/team-schemas";
 import {
   inviteTeamMemberAction,
@@ -42,7 +44,7 @@ export function TeamManagement({
   currentRole: OrganizationRole;
   currentUserId: string;
   invitations: OrganizationInvitationSummary[];
-  members: OrganizationTeamMember[];
+  members: Array<OrganizationTeamMember | OrganizationTeamMemberWithActivity>;
 }) {
   const canManage = currentRole === "OWNER" || currentRole === "ADMIN";
   return (
@@ -84,6 +86,16 @@ export function TeamManagement({
                   <p className="text-muted-foreground mt-1 text-xs">
                     Joined {formatTeamDate(member.created_at)}
                   </p>
+                  {canManage ? (
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Last signed in{" "}
+                      <ViewerLocalDateTime
+                        value={
+                          "lastSignInAt" in member ? member.lastSignInAt : null
+                        }
+                      />
+                    </p>
+                  ) : null}
                 </div>
                 {editable ? (
                   <div className="flex flex-wrap items-center gap-2">

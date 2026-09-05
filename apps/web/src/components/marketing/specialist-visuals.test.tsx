@@ -1,0 +1,42 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import {
+  specialistAccent,
+  SpecialistIdentity,
+  specialistVisuals,
+} from "./specialist-visuals";
+
+describe("marketing specialist visuals", () => {
+  it("defines the shared Creative and Ask Council specialist set", () => {
+    expect(Object.keys(specialistVisuals)).toEqual(
+      expect.arrayContaining([
+        "marketing.hook-strategist",
+        "marketing.script-writer",
+        "marketing.creative-critic",
+        "marketing.audience-researcher",
+        "marketing.brand-director",
+        "marketing.content-strategist",
+        "strategic.challenge",
+        "strategic.judge",
+      ]),
+    );
+  });
+
+  it("renders an accessible text identity with a Lucide visual", () => {
+    render(<SpecialistIdentity id="marketing.hook-strategist" />);
+    expect(screen.getByText("Hook Strategist")).toBeInTheDocument();
+    expect(screen.getByText("Hook Strategist").parentElement).toHaveAttribute(
+      "data-accent",
+      "pink",
+    );
+  });
+
+  it("keeps the same centralized visual identity across council surfaces", () => {
+    expect(specialistVisuals["marketing.audience-researcher"]?.tone).toBe(
+      "blue",
+    );
+    expect(specialistAccent("strategic.challenge").tone).toBe("coral");
+    expect(specialistAccent("strategic.judge").tone).toBe("green");
+  });
+});

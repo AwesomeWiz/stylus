@@ -92,6 +92,25 @@ describe("task workspace", () => {
     expect(screen.getByLabelText(/Assignee/)).toBeInTheDocument();
   });
 
+  it("opens the existing creation flow from an authorized Home shortcut", () => {
+    render(
+      <TaskWorkspace
+        canMutate
+        comments={[]}
+        currentUserId={members[0]!.member_user_id}
+        filters={{ view: "my" }}
+        initiallyCreating
+        members={members}
+        nextDeadlineIso={null}
+        nowIso="2026-08-25T12:00:00.000Z"
+        tasks={[task]}
+      />,
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Create task" }),
+    ).toBeInTheDocument();
+  });
+
   it("keeps VIEWER controls read-only while retaining task detail visibility", () => {
     renderWorkspace(false);
     expect(

@@ -28,7 +28,7 @@ export function Topbar({
   organization,
 }: TopbarProps) {
   return (
-    <header className="bg-background/95 sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 backdrop-blur-sm sm:px-6 lg:px-8">
+    <header className="bg-background/90 sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 backdrop-blur-md sm:px-6 lg:px-8">
       <div className="lg:hidden">
         <Sheet
           title="Main navigation"

@@ -267,7 +267,7 @@ export function MemoryWorkspace({
                     {label(memory.kind)} · Company · {label(memory.provenance)}
                   </span>
                 </div>
-                <p className="mt-2 text-sm leading-6 whitespace-pre-wrap">
+                <p className="mt-2 max-w-[52rem] text-[15px] leading-7 whitespace-pre-wrap">
                   {memory.content}
                 </p>
                 <p className="text-muted-foreground mt-2 text-xs">

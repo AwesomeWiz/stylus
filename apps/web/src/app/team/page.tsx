@@ -7,7 +7,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { logoutAction } from "@/modules/auth/actions";
 import { getNotificationSummary } from "@/modules/notifications/server/data";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
-import { getOrganizationTeamData } from "@/modules/organizations/server/team-data";
+import {
+  getOrganizationMemberLastSignIns,
+  getOrganizationTeamData,
+} from "@/modules/organizations/server/team-data";
 import { getOnboardingData } from "@/modules/onboarding/server/data";
 import { getWorkspaceRouteDecision } from "@/modules/onboarding/routing";
 
@@ -29,6 +32,12 @@ export default async function TeamPage({
     getOrganizationTeamData(context.organization.id),
     getNotificationSummary(context.organization.id, context.user.id),
   ]);
+  const members = ["OWNER", "ADMIN"].includes(context.membership.role)
+    ? await getOrganizationMemberLastSignIns(
+        context.membership.role,
+        team.members,
+      )
+    : team.members.map((member) => ({ ...member, lastSignInAt: null }));
   const query = await searchParams;
   return (
     <AppShell
@@ -59,7 +68,7 @@ export default async function TeamPage({
         currentRole={context.membership.role}
         currentUserId={context.user.id}
         invitations={team.invitations}
-        members={team.members}
+        members={members}
       />
     </AppShell>
   );

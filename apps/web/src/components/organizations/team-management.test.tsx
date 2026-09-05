@@ -44,7 +44,7 @@ const members = [
 ];
 
 describe("TeamManagement", () => {
-  it("formats team dates deterministically for server and client rendering", () => {
+  it("formats non-localized team dates deterministically", () => {
     expect(formatTeamDate("2026-08-25T23:30:00-07:00")).toBe("Aug 26, 2026");
   });
 
@@ -83,6 +83,28 @@ describe("TeamManagement", () => {
     expect(
       screen.queryByRole("button", { name: /Remove/ }),
     ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Last signed in/)).not.toBeInTheDocument();
+  });
+
+  it("shows safe last-login metadata only to organization managers", async () => {
+    render(
+      <TeamManagement
+        currentRole="ADMIN"
+        currentUserId="admin"
+        invitations={[]}
+        members={members.map((member, index) => ({
+          ...member,
+          lastSignInAt: index === 0 ? "2026-09-01T08:00:00Z" : null,
+        }))}
+      />,
+    );
+    const lastSignIn = await screen.findByText(/Sep 1, 2026/);
+    expect(lastSignIn.closest("p")).toHaveTextContent(
+      /Last signed in Sep 1, 2026/,
+    );
+    expect(
+      screen.getByText("Last signed in Never / unavailable"),
+    ).toBeInTheDocument();
   });
 
   it("shows copy confirmation briefly before restoring the copy icon", async () => {

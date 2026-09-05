@@ -2,6 +2,36 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+const productionPolishMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825002010_final_production_polish.sql",
+  ),
+  "utf8",
+);
+
+describe("organization deletion migration contract", () => {
+  it("keeps deletion owner-only, exact-confirmation, transactional, and narrowly granted", () => {
+    expect(productionPolishMigration).toMatch(/security definer/);
+    expect(productionPolishMigration).toMatch(/set search_path = ''/);
+    expect(productionPolishMigration).toMatch(
+      /membership_record\.role = 'OWNER'/,
+    );
+    expect(productionPolishMigration).toMatch(
+      /p_confirmation_name is distinct from v_name/,
+    );
+    expect(productionPolishMigration).toMatch(
+      /delete from public\.organizations/,
+    );
+    expect(productionPolishMigration).toMatch(
+      /revoke all[\s\S]*from public, anon/,
+    );
+    expect(productionPolishMigration).toMatch(
+      /grant execute[\s\S]*to authenticated/,
+    );
+  });
+});
+
 const migrationPath = resolve(
   process.cwd(),
   "../../supabase/migrations/20260825000100_auth_organizations.sql",

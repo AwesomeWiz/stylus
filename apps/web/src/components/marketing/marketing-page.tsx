@@ -55,11 +55,11 @@ export async function MarketingPage({
       <PageHeader description={description} title={title} />
       <nav
         aria-label="Marketing sections"
-        className="mb-6 flex gap-1 overflow-x-auto border-b pb-2"
+        className="mb-8 flex gap-1 overflow-x-auto border-b py-3"
       >
         {links.map(([label, href]) => (
           <Link
-            className={`shrink-0 rounded-md px-3 py-2 text-sm ${activePath === href ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground"}`}
+            className={`shrink-0 rounded-lg px-3 py-2 text-sm transition-colors ${activePath === href ? "bg-primary-subtle text-primary font-semibold" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
             href={href as Route}
             key={href}
           >

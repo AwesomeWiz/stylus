@@ -8,6 +8,7 @@ import {
   ReactFlow,
   type NodeChange,
   type ReactFlowInstance,
+  type Viewport,
 } from "@xyflow/react";
 import {
   useCallback,
@@ -17,7 +18,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Users, WifiOff } from "lucide-react";
 
 import type {
   BoardCommentRow,
@@ -48,8 +48,12 @@ import {
   undoWhiteboardHistory,
 } from "@/modules/whiteboards/history";
 import {
+  allocateBoardCollaboratorColors,
   chooseCommittedElement,
+  includeLocalBoardPresence,
   reconcileBoardComment,
+  type BoardCursorUpdate,
+  type BoardCollaboratorColorAssignments,
   type BoardPresence,
 } from "@/modules/whiteboards/collaboration";
 import {
@@ -67,6 +71,8 @@ import {
 import { WhiteboardToolbar, type WhiteboardTool } from "./whiteboard-toolbar";
 import { WhiteboardInspector } from "./whiteboard-inspector";
 import { WhiteboardCommentsPanel } from "./whiteboard-comments-panel";
+import { WhiteboardCursors } from "./whiteboard-cursors";
+import { WhiteboardCollaborators } from "./whiteboard-collaborators";
 
 const nodeTypes = { whiteboard: WhiteboardNode };
 
@@ -130,11 +136,26 @@ export function WhiteboardWorkspace({
   const [title, setTitle] = useState(board.title);
   const [renaming, setRenaming] = useState(false);
   const [comments, setComments] = useState(initialComments);
-  const [presence, setPresence] = useState<BoardPresence[]>([]);
+  const [presence, setPresence] = useState<BoardPresence[]>(() =>
+    includeLocalBoardPresence([], currentUser, members),
+  );
+  const [collaboratorColors, setCollaboratorColors] =
+    useState<BoardCollaboratorColorAssignments>(() =>
+      allocateBoardCollaboratorColors(
+        includeLocalBoardPresence([], currentUser, members).map(
+          (person) => person.userId,
+        ),
+      ),
+    );
+  const [remoteCursors, setRemoteCursors] = useState<BoardCursorUpdate[]>([]);
   const [connection, setConnection] =
     useState<CollaborationConnectionState>("CONNECTING");
+  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
   const [pending, startTransition] = useTransition();
   const flowRef = useRef<ReactFlowInstance<WhiteboardFlowNode> | null>(null);
+  const collaborationRef = useRef<ReturnType<
+    typeof subscribeToBoardCollaboration
+  > | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const imagePositionRef = useRef({ x: 0, y: 0 });
   const historyRef = useRef(history);
@@ -250,17 +271,44 @@ export function WhiteboardWorkspace({
 
   useEffect(() => {
     if (!currentUser.id) return;
-    return subscribeToBoardCollaboration({
+    const collaboration = subscribeToBoardCollaboration({
       boardId: board.id,
+      organizationId: board.organization_id,
       currentUser,
       members,
       onComment: (comment) =>
         setComments((current) => reconcileBoardComment(current, comment)),
       onConnection: setConnection,
+      onCursor: (update) =>
+        setRemoteCursors((current) => {
+          const withoutUser = current.filter(
+            (cursor) => cursor.userId !== update.userId,
+          );
+          return update.cursor ? [...withoutUser, update] : withoutUser;
+        }),
       onElement: receiveRemoteElement,
-      onPresence: setPresence,
+      onPresence: (people) => {
+        setPresence(people);
+        setCollaboratorColors((current) =>
+          allocateBoardCollaboratorColors(
+            people.map((person) => person.userId),
+            current,
+          ),
+        );
+      },
     });
-  }, [board.id, currentUser, members, receiveRemoteElement]);
+    collaborationRef.current = collaboration;
+    return () => {
+      collaborationRef.current = null;
+      collaboration.unsubscribe();
+    };
+  }, [
+    board.id,
+    board.organization_id,
+    currentUser,
+    members,
+    receiveRemoteElement,
+  ]);
 
   const runMutation = useCallback((operation: () => Promise<void>) => {
     if (mutationLockRef.current) return;
@@ -668,22 +716,12 @@ export function WhiteboardWorkspace({
       <WhiteboardHeader
         actions={
           <div className="ml-auto flex items-center gap-2">
-            <div
-              className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex"
-              title={presence.map((person) => person.displayName).join(", ")}
-            >
-              {connection === "DEGRADED" ? (
-                <WifiOff
-                  aria-hidden="true"
-                  className="text-destructive size-4"
-                />
-              ) : (
-                <Users aria-hidden="true" className="size-4" />
-              )}
-              {connection === "DEGRADED"
-                ? "Offline collaboration"
-                : `${presence.length || 1} here`}
-            </div>
+            <WhiteboardCollaborators
+              colorAssignments={collaboratorColors}
+              connection={connection}
+              currentUserId={currentUser.id}
+              presence={presence}
+            />
             <WhiteboardCommentsPanel
               boardId={board.id}
               canMutate={canMutate}
@@ -716,7 +754,17 @@ export function WhiteboardWorkspace({
           {error}
         </div>
       ) : null}
-      <div className="relative min-h-0 flex-1" data-testid="whiteboard-canvas">
+      <div
+        className="relative min-h-0 flex-1"
+        data-testid="whiteboard-canvas"
+        onPointerMove={(event) => {
+          const position = flowRef.current?.screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          });
+          if (position) collaborationRef.current?.updateCursor(position);
+        }}
+      >
         <ReactFlow<WhiteboardFlowNode>
           deleteKeyCode={null}
           fitView
@@ -750,6 +798,7 @@ export function WhiteboardWorkspace({
           onNodesChange={(changes: NodeChange<WhiteboardFlowNode>[]) =>
             setNodes((current) => applyNodeChanges(changes, current))
           }
+          onMove={(_event, nextViewport) => setViewport(nextViewport)}
           onPaneClick={handlePaneClick}
           onSelectionChange={({ nodes: selected }) =>
             setSelectedId(selected[0]?.id ?? null)
@@ -765,6 +814,13 @@ export function WhiteboardWorkspace({
           />
           <Controls position="bottom-right" showInteractive={false} />
         </ReactFlow>
+        <WhiteboardCursors
+          colorAssignments={collaboratorColors}
+          currentUserId={currentUser.id}
+          cursors={remoteCursors}
+          presence={presence}
+          viewport={viewport}
+        />
         <div className="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2">
           <div className="pointer-events-auto">
             <WhiteboardToolbar

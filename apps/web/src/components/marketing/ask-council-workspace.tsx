@@ -15,6 +15,11 @@ import {
 import { useActionState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  specialistAccent,
+  SpecialistIdentity,
+  specialistVisuals,
+} from "@/components/marketing/specialist-visuals";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   MarketingAskCouncilContextRefRow,
@@ -39,19 +44,6 @@ import {
 import { canMutateMarketing } from "@/modules/marketing/authorization";
 
 type ReportOption = MarketingExternalResearchReportRow & { question: string };
-
-const specialistLabels: Record<string, string> = {
-  "marketing.audience-researcher": "Audience Researcher",
-  "marketing.brand-director": "Brand Director",
-  "marketing.competitor-analyst": "Competitor Analyst",
-  "marketing.content-strategist": "Content Strategist",
-  "marketing.creative-critic": "Creative Critic",
-  "marketing.hook-strategist": "Hook Strategist",
-  "marketing.retention-editor": "Retention Editor",
-  "marketing.script-writer": "Script Writer",
-  "marketing.trend-researcher": "Trend Strategist",
-  "marketing.visual-director": "Visual Strategist",
-};
 
 export function AskCouncilWorkspace({
   briefs,
@@ -82,8 +74,8 @@ export function AskCouncilWorkspace({
 }) {
   const writable = canMutateMarketing(role);
   return (
-    <div className="grid min-h-[34rem] overflow-hidden rounded-md border lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <aside className="bg-muted/25 border-b p-3 lg:border-r lg:border-b-0">
+    <div className="grid min-h-[34rem] overflow-hidden rounded-xl border lg:grid-cols-[17rem_minmax(0,1fr)]">
+      <aside className="bg-pastel-lilac border-pastel-lilac-border border-b p-3 lg:border-r lg:border-b-0">
         <Link
           className="bg-background hover:bg-muted inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium"
           href={"/apps/marketing/council" as Route}
@@ -119,7 +111,7 @@ export function AskCouncilWorkspace({
       </aside>
 
       <section className="flex min-w-0 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b px-4 py-3">
+        <header className="border-pastel-mint-border bg-pastel-mint flex items-center justify-between gap-3 border-b px-4 py-4">
           <div className="min-w-0">
             <p className="truncate font-medium">
               {selectedConversation?.title ?? "New Ask Council conversation"}
@@ -149,12 +141,14 @@ export function AskCouncilWorkspace({
 
         <div className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
           {!messages.length ? (
-            <div className="mx-auto max-w-xl py-14 text-center">
-              <BrainCircuit className="text-muted-foreground mx-auto size-8" />
-              <h2 className="mt-4 font-semibold">
+            <div className="border-pastel-cream-border bg-pastel-cream text-pastel-cream-foreground mx-auto max-w-xl rounded-xl border px-6 py-12 text-center">
+              <span className="bg-background/70 mx-auto flex size-12 items-center justify-center rounded-full">
+                <BrainCircuit className="size-6" />
+              </span>
+              <h2 className="mt-4 text-lg font-semibold">
                 Ask a focused marketing question
               </h2>
-              <p className="text-muted-foreground mt-2 text-sm">
+              <p className="mt-2 text-[15px] leading-6 opacity-80">
                 Stylus selects a small specialist set and uses bounded company,
                 research, performance, or explicitly attached creative context.
               </p>
@@ -413,12 +407,12 @@ function Message({
   const output = object(message.structured_output);
   return (
     <article
-      className={`max-w-3xl ${assistant ? "mr-auto" : "bg-muted/60 ml-auto rounded-md px-4 py-3"}`}
+      className={`max-w-[46rem] ${assistant ? "mr-auto" : "bg-pastel-lilac border-pastel-lilac-border ml-auto rounded-xl border px-4 py-3"}`}
     >
       <p className="text-muted-foreground text-xs font-medium">
         {assistant ? "Ask Council" : "You"}
       </p>
-      <p className="mt-1 text-sm leading-6 whitespace-pre-wrap">
+      <p className="mt-1 text-[15px] leading-7 whitespace-pre-wrap">
         {message.content}
       </p>
       {assistant && output ? (
@@ -437,9 +431,12 @@ function Message({
             <p className="text-xs font-medium">Council consulted</p>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {turn?.selected_specialists.map((id) => (
-                <span className="bg-muted rounded px-2 py-1 text-xs" key={id}>
-                  {specialistLabels[id] ?? safeLabel(id)}
-                </span>
+                <SpecialistIdentity
+                  className="bg-muted rounded px-2 py-1 text-xs"
+                  id={id}
+                  key={id}
+                  label={specialistVisuals[id]?.label ?? safeLabel(id)}
+                />
               ))}
             </div>
           </div>
@@ -468,12 +465,19 @@ function Message({
                 {specialistResults.map((result) => {
                   const perspective = object(result.structured_output);
                   return (
-                    <div className="border-l-2 pl-3 text-sm" key={result.id}>
-                      <p className="font-medium">
-                        {specialistLabels[result.specialist_id] ??
-                          safeLabel(result.specialist_id)}
-                      </p>
-                      <p className="text-muted-foreground mt-1">
+                    <div
+                      className={`border-l-2 pl-3 text-sm ${specialistAccent(result.specialist_id).border}`}
+                      key={result.id}
+                    >
+                      <SpecialistIdentity
+                        className="font-medium"
+                        id={result.specialist_id}
+                        label={
+                          specialistVisuals[result.specialist_id]?.label ??
+                          safeLabel(result.specialist_id)
+                        }
+                      />
+                      <p className="text-muted-foreground mt-2 leading-6">
                         {typeof perspective?.recommendation === "string"
                           ? perspective.recommendation
                           : "Perspective recorded."}

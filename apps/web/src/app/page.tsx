@@ -2,12 +2,16 @@ import { redirect } from "next/navigation";
 import type { Route } from "next";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { HomePlaceholder } from "@/components/home/home-placeholder";
+import { HomeDashboard } from "@/components/home/home-dashboard";
 import { logoutAction } from "@/modules/auth/actions";
 import { getCurrentOrganizationContext } from "@/modules/organizations/server/context";
 import { getWorkspaceRouteDecision } from "@/modules/onboarding/routing";
 import { getOnboardingData } from "@/modules/onboarding/server/data";
 import { getNotificationSummary } from "@/modules/notifications/server/data";
+import { canMutateTasks } from "@/modules/tasks/authorization";
+import { getEnabledOrganizationPluginIds } from "@/modules/plugins/server/data";
+import { getMarketingOverview } from "@/modules/marketing/server/data";
+import { getHomeCoreData } from "@/modules/home/server/data";
 
 export default async function HomePage() {
   const context = await getCurrentOrganizationContext();
@@ -27,10 +31,14 @@ export default async function HomePage() {
     redirect(onboardingDecision as Route);
   }
 
-  const notifications = await getNotificationSummary(
-    context.organization.id,
-    context.user.id,
-  );
+  const [notifications, home, enabledPluginIds] = await Promise.all([
+    getNotificationSummary(context.organization.id, context.user.id),
+    getHomeCoreData(context.organization.id),
+    getEnabledOrganizationPluginIds(context.organization.id),
+  ]);
+  const marketing = enabledPluginIds.includes("marketing")
+    ? await getMarketingOverview(context.organization.id)
+    : null;
 
   return (
     <AppShell
@@ -47,7 +55,16 @@ export default async function HomePage() {
         role: context.membership.role,
       }}
     >
-      <HomePlaceholder />
+      <HomeDashboard
+        activity={home.activity}
+        canMutate={canMutateTasks(context.membership.role)}
+        currentUserId={context.user.id}
+        marketing={marketing}
+        members={home.members}
+        nowIso={new Date().toISOString()}
+        organizationName={context.organization.name}
+        tasks={home.tasks}
+      />
     </AppShell>
   );
 }

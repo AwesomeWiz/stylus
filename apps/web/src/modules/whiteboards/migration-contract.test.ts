@@ -23,6 +23,20 @@ const collaborationEnums = readFileSync(
   ),
   "utf8",
 );
+const productionPolishMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825002010_final_production_polish.sql",
+  ),
+  "utf8",
+);
+const realtimeCorrectionMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825002020_fix_whiteboard_realtime_collaboration.sql",
+  ),
+  "utf8",
+);
 
 describe("whiteboard migration contract", () => {
   it("stores boards and independently addressable elements with safe geometry", () => {
@@ -116,6 +130,30 @@ describe("whiteboard collaboration migration contract", () => {
     );
     expect(collaborationMigration).toMatch(
       /'board:' \|\| board_record\.id::text/,
+    );
+  });
+
+  it("qualifies private presence topics by organization and board", () => {
+    expect(productionPolishMigration).toMatch(
+      /'board:' \|\| board_record\.organization_id::text \|\| ':' \|\| board_record\.id::text/,
+    );
+    expect(productionPolishMigration).toMatch(
+      /private\.is_organization_member\(board_record\.organization_id\)/,
+    );
+  });
+
+  it("authorizes presence and cursor broadcasts at the scoped channel boundary", () => {
+    expect(realtimeCorrectionMigration).toMatch(
+      /realtime\.messages\.extension in \('presence', 'broadcast'\)/,
+    );
+    expect(realtimeCorrectionMigration).toMatch(
+      /'board:' \|\| board_record\.organization_id::text \|\| ':' \|\| board_record\.id::text/,
+    );
+    expect(realtimeCorrectionMigration).toMatch(
+      /private\.is_organization_member\(board_record\.organization_id\)/,
+    );
+    expect(realtimeCorrectionMigration).not.toMatch(
+      /realtime\.messages\.payload ->>/,
     );
   });
 });

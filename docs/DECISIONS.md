@@ -841,3 +841,63 @@ TASK-019 Web Agency Integration is DEFERRED, not cancelled or renumbered,
 because the separate `ai-web-agency` implementation is not mature enough for a
 stable integration contract. Ask Council has no agency-memory or TASK-019
 access.
+
+## ADR-038 — Keep production appearance local and privileged diagnostics server-derived
+
+Status: ACCEPTED
+
+The final production-experience pass treats `#0D98BA` as the canonical brand
+token and derives both light and dark semantic palettes from it. Appearance is
+a device preference (`LIGHT`, `DARK` or `SYSTEM`) applied before hydration; it
+is not organization data and therefore requires no database write.
+
+Privileged account metadata remains server-derived. Team last-sign-in values
+are projected through the Supabase Auth Admin API only after OWNER/ADMIN
+authorization and only for the current organization's exact member IDs. They
+are never exposed to MEMBER or VIEWER roles. Only the authorized nullable
+timestamp crosses a small hydration-safe client boundary, where native `Intl`
+uses the current browser/system timezone. Organization deletion uses an
+OWNER-only, exact-name-confirmed transactional database function. Private
+Storage object paths are inventoried from authorized organization records
+before deletion and removed by exact path after the database commit; a cleanup
+failure can leave an inaccessible orphan but cannot expose or restore tenant
+data. Member authentication accounts are intentionally preserved.
+
+Whiteboard collaboration remains ephemeral rather than database history.
+Presence carries only slow-changing session identity and determines unique
+people on an organization-and-board-qualified private channel. High-frequency
+pointer coordinates use throttled Broadcast on that same channel. Realtime RLS
+is evaluated when the channel is joined, so policy authorizes only current
+members of the exact active board and the Presence/Broadcast extensions; it
+does not depend on a future payload. Broadcast omits user identity, and the
+receiver resolves its session through current Presence plus the authorized
+member directory before rendering. Coordinates are bounded, stale cursors are
+removed independently of collaborator Presence, and clients convert between
+flow and viewport space locally.
+Marketing dialogs and centralized Creative specialist visuals are presentation
+changes only; they do not alter existing RBAC, provenance, workflows or model
+call limits.
+
+## ADR-039 — Use editorial color and active-set identity allocation for final UI
+
+Status: ACCEPTED
+
+Stylus retains `#0D98BA` as its canonical brand identity while using a darker
+derived cyan with white text for accessible light-mode primary actions. A
+central token set supplies restrained lilac, mint, cream, coral, pink, lime and
+indigo section surfaces with explicit dark-theme counterparts. Shared hierarchy,
+spacing, controls and bounded reading measures carry most of the design; color
+is reserved for section rhythm, semantic state and human identity.
+
+Home is an organization-scoped read projection over existing tasks, activity,
+members, plugin state and Marketing aggregates. It introduces no dashboard
+table, synthetic metric or online-presence tracker. Mutation shortcuts remain
+role-aware and route through existing application flows.
+
+Whiteboard collaborator colors are allocated centrally from eight curated
+families over the current unique active user set. The deterministic algorithm
+keeps existing valid assignments, maximizes hue-family separation for new
+users, and reuses only after the palette is exhausted. User—not session—is the
+identity key, and avatar/cursor/label all consume the same assignment. This is
+presentation state only: Presence, Broadcast, RLS, throttling and persistence
+contracts are unchanged.

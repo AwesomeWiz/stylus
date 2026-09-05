@@ -95,6 +95,7 @@ export default async function TasksPage({
         comments={workspace.comments}
         currentUserId={context.user.id}
         filters={filters}
+        initiallyCreating={single(params.create) === "true"}
         members={workspace.members}
         nextDeadlineIso={nextDeadlineIso}
         nowIso={now.toISOString()}

@@ -19,6 +19,11 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  marketingSignalVisual,
+  statusVisual,
+} from "@/components/ui/semantic-visuals";
+import { cn } from "@/lib/utils";
 import type {
   MarketingExternalResearchEvidenceRow,
   MarketingExternalResearchReportRow,
@@ -307,7 +312,13 @@ function ResearchHistory({
                       >
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <strong>{item.evidence_id}</strong>
-                          <span className="text-muted-foreground text-xs font-medium">
+                          <span
+                            className={cn(
+                              "rounded-sm px-1.5 py-0.5 text-xs font-medium",
+                              marketingSignalVisual(item.evidence_type).surface,
+                              marketingSignalVisual(item.evidence_type).text,
+                            )}
+                          >
                             {evidenceTypeLabel(item.evidence_type)}
                           </span>
                           {item.author ? (
@@ -516,8 +527,8 @@ function FashionReport({
   runId: string;
 }) {
   return (
-    <div className="space-y-5">
-      <p className="text-sm">{report.summary}</p>
+    <div className="max-w-[52rem] space-y-5">
+      <p className="text-[15px] leading-7">{report.summary}</p>
       <FashionSignalList
         heading="Audience signals"
         items={report.audienceSignals.map((item) => ({
@@ -591,12 +602,12 @@ function FashionReport({
       {report.contentOpportunities.length ? (
         <section
           aria-label="Content opportunity candidates"
-          className="space-y-3"
+          className="border-pastel-lime-border bg-pastel-lime text-pastel-lime-foreground space-y-3 rounded-xl border p-5"
         >
           <h4 className="flex items-center gap-2 text-sm font-semibold">
             <Lightbulb className="size-4" /> Content opportunity candidates
           </h4>
-          <div className="divide-y border-y">
+          <div className="divide-pastel-lime-border border-pastel-lime-border divide-y border-y">
             {report.contentOpportunities.map((opportunity, index) => (
               <article
                 className="space-y-2 py-3"
@@ -739,7 +750,12 @@ function Status({ status }: { status: string }) {
         ? TriangleAlert
         : LoaderCircle;
   return (
-    <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+    <span
+      className={cn(
+        "flex items-center gap-1.5 text-xs font-medium",
+        statusVisual(status).text,
+      )}
+    >
       <Icon
         className={`size-4 ${["QUEUED", "RUNNING", "SYNTHESIZING"].includes(status) ? "animate-spin" : ""}`}
       />

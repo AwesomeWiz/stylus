@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 
 import type { TaskMember, TaskRow } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
+import { priorityVisual } from "@/components/ui/semantic-visuals";
 import { setTaskCompletionAction } from "@/modules/tasks/actions";
 import { isOverdue } from "@/modules/tasks/filters";
 import { initialTaskActionState } from "@/modules/tasks/schemas";
@@ -75,6 +76,7 @@ export function TaskRowItem({
   task: TaskRow;
 }) {
   const overdue = isOverdue(task, now);
+  const priority = priorityVisual(task.priority);
   return (
     <li className="hover:bg-muted/45 flex min-w-0 items-start gap-2 border-b px-2 py-3 last:border-b-0 sm:items-center sm:px-3">
       {canMutate && task.status !== "CANCELLED" ? (
@@ -115,7 +117,14 @@ export function TaskRowItem({
         <Clock3 aria-hidden="true" className="size-3.5" />
         {task.due_at ? formatTaskDate(task.due_at) : "No deadline"}
       </span>
-      <span className="text-muted-foreground hidden w-20 text-right text-xs lg:block">
+      <span
+        className={cn(
+          "hidden w-20 rounded-sm px-1.5 py-0.5 text-center text-xs font-medium lg:block",
+          priority
+            ? [priority.surface, priority.text]
+            : "bg-muted text-muted-foreground",
+        )}
+      >
         {taskLabel(task.priority)}
       </span>
     </li>

@@ -1,10 +1,10 @@
 # Stylus — Project State
 
-Last Updated: 2026-09-02
+Last Updated: 2026-09-05
 
 ## Overall Status
 
-TASK-020 CONTEXT RELEVANCE FIX VERIFIED / HOSTED RETEST PENDING
+FINAL PRODUCTION DESIGN SYSTEM VERIFIED / FINAL VISUAL QA READY
 
 Stylus Marketing now includes Ask Council, a bounded conversational advisor
 that reads authorized company, research, Performance Learning and exact
@@ -19,17 +19,51 @@ derivation, memory or Web Agency behavior.
 
 Phase 17 — Ask Council
 
-Status: TASK-020 CONTEXT RELEVANCE FIX VERIFIED / HOSTED RETEST PENDING
+Status: FINAL UI REFINEMENT VERIFIED / FINAL VISUAL QA READY
 
 ---
 
 ## Current Objective
 
-Deploy the verified TASK-020 research-relevance correction and resume the
-bounded hosted acceptance conversation. Confirm an anaphoric sizing follow-up
-retains the relevant sizing report while rejecting unrelated bug-blindness and
-autocomplete reports, with the four-call maximum and all security boundaries
-unchanged.
+Perform final light/dark responsive visual QA for the completed production
+design system and high-distinction Whiteboard collaborator identities without
+altering accepted TASK-001 through TASK-020 workflows.
+
+## Final Production Design Refinement
+
+The placeholder Home view is replaced by a permission-aware operating
+dashboard using only existing organization-scoped task, activity, member,
+plugin and Marketing data. It summarizes overdue/near-due/assigned work,
+provides existing-flow shortcuts, shows recent activity and adapts its pulse to
+whether Marketing is enabled. VIEWER receives review links rather than a task
+mutation shortcut; organization and actor context remain server-derived.
+
+The shared UI now uses a stronger editorial hierarchy, consistent 8px-derived
+spacing, accessible controls and centralized pastel section surfaces with dark
+counterparts. Canonical brand identity remains `#0D98BA`; light primary actions
+use the derived `#087690` surface with white text (5.24:1 WCAG contrast) and
+darker hover/active states. Marketing Overview, Creative Studio, Ask Council,
+Research, Settings and long-form Memory receive restrained section rhythm and
+bounded reading measures without workflow changes.
+
+Whiteboard identity uses eight curated high-distinction families. A single
+active-set allocator deduplicates by trusted user ID, preserves existing
+assignments across joins/leaves, deterministically resolves preferred-color
+collisions and supplies the same accessible tokens to avatar, cursor and name
+label. Realtime Presence/Broadcast, topic isolation, RLS, 25 Hz throttling,
+cursor expiry and migration `02020` are unchanged. No migration is introduced.
+
+Team-member last-sign-in values remain an OWNER/ADMIN-only server projection.
+A small hydration-safe client formatter now presents the authorized timestamp
+in the current viewer's browser/system timezone using native `Intl` rules; the
+stored absolute timestamp and Auth metadata boundary are unchanged.
+
+Focused verification passes 11 files / 46 tests and the complete web suite
+passes 164 files / 928 tests. Repository lint, web typecheck, scoped formatting,
+the web production build and npm audit with zero vulnerabilities pass.
+Automated browser screenshot QA is unavailable in the current environment, so
+the final light/dark responsive visual checklist remains a manual acceptance
+step.
 
 ---
 

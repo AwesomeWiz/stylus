@@ -1484,6 +1484,13 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      delete_owned_organization: {
+        Args: {
+          p_confirmation_name: string;
+          p_organization_id: string;
+        };
+        Returns: undefined;
+      };
       register_marketing_published_content: {
         Args: {
           p_canonical_url?: string | null;

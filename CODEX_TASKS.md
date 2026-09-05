@@ -2,6 +2,74 @@
 
 # Current
 
+## Final Production Polish
+
+Status: FINAL DESIGN REFINEMENT VERIFIED / FINAL VISUAL QA READY
+
+The production-polish pass establishes `#0D98BA` as the canonical brand token,
+uses the approved Stylus mark in auth/shell/icon metadata, adds hydration-safe
+persisted Light/Dark/System appearance, and replaces the Settings placeholder
+with real account, organization, team and OWNER-only danger-zone controls.
+
+Team last-sign-in is projected through a server-only Supabase Auth Admin client
+only after OWNER/ADMIN authorization. Organization deletion uses exact-name
+confirmation, server-derived tenant identity, an OWNER-only transactional RPC,
+and exact private Storage inventory/cleanup; it preserves member auth accounts.
+
+Whiteboard collaborator membership uses slow-changing Realtime Presence and
+explicitly unions the authoritative local member before deduplicating by user.
+High-frequency cursors use throttled Realtime Broadcast on the same private,
+organization-and-board-qualified channel. Broadcast carries only session and
+bounded flow coordinates; display identity, role and deterministic color come
+from authorized Presence plus the server-projected member directory.
+The shared Marketing record editor now uses responsive dialogs. Creative
+Council, Strategic Review and Ask Council share centralized Lucide specialist
+visual metadata and readable substantive typography; their workflows, RBAC,
+AI call counts and provenance are unchanged.
+
+Forward migrations: `20260825002010_final_production_polish.sql` and corrective
+`20260825002020_fix_whiteboard_realtime_collaboration.sql`. The correction
+allows both Presence and Broadcast during private-channel authorization and
+removes the payload predicate that Realtime could not evaluate at channel join.
+
+Focused verification passes 17 files / 64 tests. Complete verification passes
+161 web files / 912 tests and 5 worker files / 32 tests (166 files / 944 tests
+total), repository lint, both TypeScript checks, both production builds, scoped
+formatting, migration contracts and audit with zero vulnerabilities. The linked
+dry run reports only the production-polish migration pending and applies
+nothing. Repository-wide Prettier still reports 139 pre-existing files outside
+this diff; they were deliberately not normalized. Docker/Podman and an in-app
+browser session are unavailable, so local pgTAP and automated screenshot QA
+remain unavailable; the new pgTAP suite is ready for hosted execution.
+
+Whiteboard-correction verification passes the complete web suite (163 files /
+921 tests), repository lint, web typecheck, production build, scoped formatting
+and migration contracts. The linked dry run reports only `02020` pending and
+applies nothing. Hosted two-user Presence/cursor QA remains required after that
+migration is applied.
+
+The final design refinement replaces placeholder Home content with a real
+permission-aware operating dashboard, strengthens shared typography/spacing
+and form controls, introduces centralized editorial pastel surfaces for light
+and dark themes, and improves reading rhythm across the densest core and
+Marketing screens. `#0D98BA` remains canonical; light primary actions use an
+accessible darker derived surface with white text.
+
+Whiteboard collaborators now share one deterministic active-set allocation
+across avatars, cursors and labels using eight perceptually separated families.
+Duplicate sessions consume one identity, preferred collisions resolve to unused
+families, and existing assignments stay stable through ordinary joins/leaves.
+No Realtime, RLS, database or migration contract changed. The complete web
+suite passes 164 files / 928 tests; final browser visual QA remains manual
+because no browser session is available to Codex.
+
+The release-gate correction keeps team last-sign-in retrieval server-authorized
+for OWNER/ADMIN and moves only timestamp presentation into a small
+hydration-safe client boundary. Native `Intl` formatting follows each viewer's
+browser/system timezone and daylight-saving rules without a database change.
+
+---
+
 ## TASK-020 — Ask Council
 
 Status: CONTEXT RELEVANCE FIX VERIFIED / HOSTED RETEST PENDING

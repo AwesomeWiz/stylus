@@ -18,6 +18,11 @@ import type {
   ActivityEventType,
   TaskMember,
 } from "@/lib/supabase/database.types";
+import { cn } from "@/lib/utils";
+import {
+  accentVisuals,
+  marketingSignalVisual,
+} from "@/components/ui/semantic-visuals";
 
 const icons: Record<ActivityEventType, LucideIcon> = {
   BOARD_COMMENTED: MessageSquare,
@@ -49,6 +54,21 @@ function memberName(members: TaskMember[], userId: string | null) {
     members.find((member) => member.member_user_id === userId)?.display_name ??
     "a former teammate"
   );
+}
+
+function activityIconStyle(type: ActivityEventType) {
+  if (type === "TASK_COMPLETED" || type === "MEMORY_RESTORED")
+    return [accentVisuals.green.surface, accentVisuals.green.text];
+  if (type === "TASK_CANCELLED")
+    return [accentVisuals.coral.surface, accentVisuals.coral.text];
+  if (type.includes("ARCHIVED"))
+    return [accentVisuals.amber.surface, accentVisuals.amber.text];
+  if (type.includes("CREATED") || type === "TASK_ASSIGNED")
+    return [
+      marketingSignalVisual(type).surface,
+      marketingSignalVisual(type).text,
+    ];
+  return [accentVisuals.blue.surface, accentVisuals.blue.text];
 }
 
 export function activityDescription(
@@ -109,7 +129,12 @@ export function ActivityList({
         const Icon = icons[event.event_type];
         return (
           <li className="flex gap-3 py-3.5" key={event.id}>
-            <span className="bg-muted mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full">
+            <span
+              className={cn(
+                "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
+                activityIconStyle(event.event_type),
+              )}
+            >
               <Icon aria-hidden="true" className="size-4" />
             </span>
             <span className="min-w-0 flex-1">

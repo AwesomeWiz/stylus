@@ -4,6 +4,46 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Team-member last-sign-in timestamps now render after hydration in the current
+  viewer's browser/system timezone, including daylight-saving and local date
+  boundaries, while preserving the existing authorized server projection.
+
+- Completed the Stylus production design refinement with an accessible darker
+  primary-action surface, richer centralized light/dark editorial pastels,
+  clearer page and navigation hierarchy, roomier forms, and readable bounded
+  prose across core and Marketing workspaces.
+- Replaced the foundation placeholder at Home with a permission-aware operating
+  dashboard backed by existing task, activity, team, plugin and Marketing data,
+  including priorities, quick actions, recent activity and an adaptive pulse.
+- Expanded Whiteboard collaborator identity to a deterministic eight-family
+  high-distinction palette. Active users resolve collisions centrally, retain
+  stable colors through joins/leaves, and share one accessible color treatment
+  across avatars, cursors and labels; duplicate sessions still count once.
+
+- Established `#0D98BA` as the canonical Stylus brand color with accessible
+  semantic light/dark tokens, integrated the approved logo across auth, shell
+  and icon metadata, and added persisted hydration-safe Light/Dark/System
+  appearance controls.
+- Added a production Settings page with safe account/organization summaries,
+  Team navigation and an OWNER-only typed-confirmation organization deletion
+  flow that cleans exact tenant Storage objects without deleting auth users.
+- Added OWNER/ADMIN-only server-projected team last-sign-in metadata without
+  exposing the Supabase service role or Auth Admin records to browser code.
+- Added organization-and-board-isolated ephemeral whiteboard cursors with
+  authenticated presence identity, throttled flow coordinates, deterministic
+  colors and transformed remote rendering.
+- Repaired whiteboard collaboration so the people count explicitly includes
+  the local authenticated member and deduplicates multiple sessions by user.
+  Presence now carries only slow-changing session state; ephemeral cursor
+  coordinates use the same private board channel's bounded Broadcast path.
+- Added compact Figma-style collaborator avatars and centralized accessible
+  semantic accent tones for task, activity and Marketing specialist/status
+  treatments in both light and dark themes.
+- Replaced shared Marketing inline add/edit forms with responsive accessible
+  dialogs, added restrained semantic state color, and centralized professional
+  Lucide identities/readable output styling across Creative Council, Strategic
+  Review and Ask Council without changing their workflows or model calls.
+
 - Fixed Ask Council automatic Research context selection so anaphoric
   follow-ups use bounded recent user concepts, generic Marketing/Research/Reel
   terms cannot admit unrelated reports, and report/evidence identity is

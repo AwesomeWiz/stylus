@@ -20,6 +20,10 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  specialistAccent,
+  SpecialistIdentity,
+} from "@/components/marketing/specialist-visuals";
 import { StrategicReviewPanel } from "@/components/marketing/strategic-review-panel";
 import type {
   MarketingCreativeCouncilEvidenceRow,
@@ -114,11 +118,11 @@ export function CreativeStudio({
   return (
     <div className="space-y-8">
       <section aria-labelledby="council-run-heading" className="space-y-5">
-        <div>
+        <div className="border-pastel-lilac-border bg-pastel-lilac text-pastel-lilac-foreground rounded-xl border p-5 sm:p-6">
           <h2 className="text-lg font-semibold" id="council-run-heading">
             Create a Reel Brief
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="mt-2 max-w-3xl text-[15px] leading-6 opacity-80">
             One selected Reel Idea moves through Hook Strategist, Script Writer,
             and Creative Critic. Each stage uses the organization&apos;s current
             AI policy.
@@ -126,7 +130,10 @@ export function CreativeStudio({
         </div>
 
         {ideas.length ? (
-          <form action={action} className="space-y-5 border-y py-5">
+          <form
+            action={action}
+            className="space-y-6 rounded-xl border p-5 sm:p-6"
+          >
             <input name="idempotencyKey" type="hidden" value={idempotencyKey} />
             <label className="block max-w-xl">
               <span className="mb-1 block text-sm font-medium">Reel Idea</span>
@@ -282,7 +289,7 @@ function ContextSummary({
     .filter(([, value]) => value !== null)
     .map(([key]) => label(key));
   return (
-    <div className="bg-muted/30 grid gap-4 rounded-md border p-4 md:grid-cols-2">
+    <div className="border-pastel-cream-border bg-pastel-cream text-pastel-cream-foreground grid gap-5 rounded-xl border p-4 md:grid-cols-2">
       <div>
         <p className="text-sm font-medium">Selected source</p>
         <p className="mt-1 text-sm">{idea?.title ?? "No Reel Idea selected"}</p>
@@ -426,8 +433,17 @@ function StageSummary({
   value?: MarketingCreativeCouncilStageRow;
 }) {
   const running = runStatus === "RUNNING" && currentStage === stage;
+  const specialistId =
+    stage === "HOOK"
+      ? "marketing.hook-strategist"
+      : stage === "SCRIPT"
+        ? "marketing.script-writer"
+        : "marketing.creative-critic";
   return (
-    <details className="rounded-md border p-3" open={Boolean(value)}>
+    <details
+      className={`rounded-lg border border-l-4 p-4 ${specialistAccent(specialistId).border}`}
+      open={Boolean(value)}
+    >
       <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium">
         {value?.status === "SUCCEEDED" ? (
           <CheckCircle2 className="text-primary size-4" />
@@ -436,11 +452,7 @@ function StageSummary({
         ) : (
           <Circle className="text-muted-foreground size-4" />
         )}
-        {stage === "HOOK"
-          ? "Hook Strategist"
-          : stage === "SCRIPT"
-            ? "Script Writer"
-            : "Creative Critic"}
+        <SpecialistIdentity id={specialistId} />
       </summary>
       {value?.structured_output ? (
         <StageOutput stage={stage} value={value.structured_output} />
@@ -468,7 +480,7 @@ function StageOutput({
     const parsed = hookStrategySchema.safeParse(value);
     if (!parsed.success) return null;
     return (
-      <div className="text-muted-foreground mt-3 space-y-2 text-xs">
+      <div className="text-muted-foreground mt-3 space-y-2 text-sm leading-6">
         <p className="text-foreground font-medium">{parsed.data.primaryHook}</p>
         <p>{parsed.data.rationale}</p>
         <p>Confidence: {label(parsed.data.confidence)}</p>
@@ -479,7 +491,7 @@ function StageOutput({
     const parsed = reelScriptSchema.safeParse(value);
     if (!parsed.success) return null;
     return (
-      <div className="text-muted-foreground mt-3 space-y-2 text-xs">
+      <div className="text-muted-foreground mt-3 space-y-2 text-sm leading-6">
         <p className="text-foreground line-clamp-4 whitespace-pre-wrap">
           {parsed.data.spokenScript}
         </p>
@@ -491,7 +503,7 @@ function StageOutput({
   const parsed = creativeCritiqueSchema.safeParse(value);
   if (!parsed.success) return null;
   return (
-    <div className="text-muted-foreground mt-3 space-y-2 text-xs">
+    <div className="text-muted-foreground mt-3 space-y-2 text-sm leading-6">
       <p className="text-foreground font-medium">
         Verdict: {label(parsed.data.verdict)}
       </p>

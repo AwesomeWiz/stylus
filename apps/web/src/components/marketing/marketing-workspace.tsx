@@ -3,11 +3,17 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { Archive, Plus, RotateCcw } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  marketingSignalVisual,
+  statusVisual,
+} from "@/components/ui/semantic-visuals";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { canMutateMarketing } from "@/modules/marketing/authorization";
 import {
   saveMarketingCampaignAction,
@@ -180,17 +186,11 @@ export function MarketingWorkspace({
           {archived ? "View active" : "View archived"}
         </Link>
         {editable && !archived ? (
-          <details className="group">
-            <summary className="bg-primary text-primary-foreground flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-md px-3 text-sm font-medium">
-              <Plus className="size-4" />
-              Add {labels[area]}
-            </summary>
-            <Editor
-              area={area}
-              campaigns={campaigns}
-              coreCompetitors={coreCompetitors}
-            />
-          </details>
+          <EditorDialog
+            area={area}
+            campaigns={campaigns}
+            coreCompetitors={coreCompetitors}
+          />
         ) : null}
       </div>
       {records.length ? (
@@ -213,6 +213,7 @@ export function MarketingWorkspace({
                       text(record.title ?? record.name)
                     )}
                   </h2>
+                  <RecordBadge record={record} />
                   <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
                     {text(
                       record.objective ??
@@ -228,17 +229,14 @@ export function MarketingWorkspace({
                 ) : null}
               </div>
               {editable && !archived ? (
-                <details className="mt-3">
-                  <summary className="text-muted-foreground cursor-pointer text-sm hover:underline">
-                    Edit
-                  </summary>
-                  <Editor
+                <div className="mt-3">
+                  <EditorDialog
                     area={area}
                     campaigns={campaigns}
                     coreCompetitors={coreCompetitors}
                     record={record}
                   />
-                </details>
+                </div>
               ) : null}
             </article>
           ))}
@@ -260,7 +258,26 @@ export function MarketingWorkspace({
   );
 }
 
-function Editor({
+function RecordBadge({ record }: { record: RecordValue }) {
+  const value = text(record.status ?? record.category);
+  if (!value) return null;
+  const visual = record.status
+    ? statusVisual(value)
+    : marketingSignalVisual(value);
+  return (
+    <span
+      className={cn(
+        "mt-1 inline-flex rounded-sm px-1.5 py-0.5 text-[11px] font-medium",
+        visual.surface,
+        visual.text,
+      )}
+    >
+      {value.toLowerCase().replaceAll("_", " ")}
+    </span>
+  );
+}
+
+function EditorDialog({
   area,
   campaigns,
   coreCompetitors,
@@ -271,35 +288,89 @@ function Editor({
   coreCompetitors: Option[];
   record?: RecordValue;
 }) {
+  const [open, setOpen] = useState(false);
+  const actionLabel = record ? `Edit ${labels[area]}` : `Add ${labels[area]}`;
+  return (
+    <>
+      <Button
+        onClick={() => setOpen(true)}
+        type="button"
+        variant={record ? "ghost" : "primary"}
+      >
+        {record ? null : <Plus aria-hidden="true" className="size-4" />}
+        {actionLabel}
+      </Button>
+      <Dialog
+        description={`Enter the details for this ${labels[area]}.`}
+        onOpenChange={setOpen}
+        open={open}
+        title={actionLabel}
+      >
+        <Editor
+          area={area}
+          campaigns={campaigns}
+          coreCompetitors={coreCompetitors}
+          onSaved={() => setOpen(false)}
+          record={record}
+        />
+      </Dialog>
+    </>
+  );
+}
+
+function Editor({
+  area,
+  campaigns,
+  coreCompetitors,
+  onSaved,
+  record,
+}: {
+  area: Area;
+  campaigns: Option[];
+  coreCompetitors: Option[];
+  onSaved: () => void;
+  record?: RecordValue;
+}) {
   const [state, action, pending] = useActionState(
     saveActions[area],
     initialMarketingActionState,
   );
+  useEffect(() => {
+    if (state.status === "success") onSaved();
+  }, [onSaved, state.status]);
   return (
-    <form
-      action={action}
-      className="bg-muted/40 mt-3 grid gap-3 rounded-md border p-4 sm:grid-cols-2"
-    >
+    <form action={action} className="grid gap-4 p-5 sm:grid-cols-2">
       <input name="recordId" type="hidden" value={record?.id ?? ""} />
-      {fields[area].map((field) => (
-        <label
-          className={field.kind === "textarea" ? "sm:col-span-2" : ""}
-          key={field.key}
-        >
-          <span className="mb-1 block text-xs font-medium">{field.label}</span>
-          <Control
-            field={field}
-            options={
-              field.key === "campaign_id"
-                ? campaigns
-                : field.key === "core_competitor_id"
-                  ? coreCompetitors
-                  : []
-            }
-            value={text(record?.[field.key])}
-          />
-        </label>
-      ))}
+      {fields[area].map((field) => {
+        const fieldName = formNames[field.key] ?? field.key;
+        const error = state.fieldErrors?.[fieldName]?.[0];
+        return (
+          <label
+            className={field.kind === "textarea" ? "sm:col-span-2" : ""}
+            key={field.key}
+          >
+            <span className="mb-1 block text-sm font-medium">
+              {field.label}
+            </span>
+            <Control
+              field={field}
+              options={
+                field.key === "campaign_id"
+                  ? campaigns
+                  : field.key === "core_competitor_id"
+                    ? coreCompetitors
+                    : []
+              }
+              value={text(record?.[field.key])}
+            />
+            {error ? (
+              <span className="text-destructive mt-1 block text-xs">
+                {error}
+              </span>
+            ) : null}
+          </label>
+        );
+      })}
       <div className="flex items-center gap-3 sm:col-span-2">
         <Button disabled={pending} type="submit">
           {pending

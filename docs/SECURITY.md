@@ -592,3 +592,35 @@ collection.
 - Ask Council performs no Create, Strategic Review, live Research, performance
   derivation, memory mutation, job, worker, Web Agency/TASK-019 or direct
   provider operation. Suggested actions are non-executing text.
+
+## Production settings and presence security
+
+- Team last-sign-in is fetched only on the server after current-organization
+  OWNER/ADMIN authorization. Auth Admin is queried for exact existing team
+  member IDs, and the client receives only nullable `lastSignInAt`. A small
+  client presentation component formats that timestamp in the viewer's browser
+  timezone after hydration; tokens, IPs, providers and all other auth metadata
+  remain server-only.
+- Organization deletion accepts no browser organization/actor authority. It
+  derives both from authenticated context, requires active OWNER role and exact
+  case-sensitive organization-name confirmation in application and database
+  layers, locks the organization, then deletes through an empty-search-path
+  function granted only to `authenticated`.
+- Before database deletion, the server-only service client inventories exact
+  organization-prefixed board-image and competitor-reel paths. It removes only
+  those objects after the transaction succeeds. Cleanup failure leaves private,
+  inaccessible objects for operator cleanup rather than exposing tenant data or
+  damaging surviving database records. Auth user accounts are not deleted.
+- Whiteboard private Realtime topics include both trusted organization and board
+  IDs. Join-time SELECT/INSERT policies resolve that exact active board,
+  revalidate current organization membership and permit only Presence and
+  Broadcast extensions. They do not depend on a later message payload.
+- Presence contains minimal session/user identifiers and is normalized against
+  the authorized server-projected member directory. Cursor Broadcast contains
+  no user ID, name, role, email or credential: a bounded coordinate payload is
+  accepted only when its session resolves through current authorized Presence.
+  Local and unknown/not-present sessions fail closed. Neither Presence nor
+  cursor data is persisted.
+- Theme preference is non-sensitive local UI state. No service-role secret is
+  imported by a client component, and Marketing/Council authorization and AI
+  execution boundaries are unchanged.
