@@ -4,6 +4,10 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Team-member last-sign-in timestamps now render after hydration in the current
+  viewer's browser/system timezone, including daylight-saving and local date
+  boundaries, while preserving the existing authorized server projection.
+
 - Completed the Stylus production design refinement with an accessible darker
   primary-action surface, richer centralized light/dark editorial pastels,
   clearer page and navigation hierarchy, roomier forms, and readable bounded

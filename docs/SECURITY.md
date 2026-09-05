@@ -597,8 +597,10 @@ collection.
 
 - Team last-sign-in is fetched only on the server after current-organization
   OWNER/ADMIN authorization. Auth Admin is queried for exact existing team
-  member IDs, and the client receives only nullable `lastSignInAt`; tokens, IPs,
-  providers and all other auth metadata remain server-only.
+  member IDs, and the client receives only nullable `lastSignInAt`. A small
+  client presentation component formats that timestamp in the viewer's browser
+  timezone after hydration; tokens, IPs, providers and all other auth metadata
+  remain server-only.
 - Organization deletion accepts no browser organization/actor authority. It
   derives both from authenticated context, requires active OWNER role and exact
   case-sensitive organization-name confirmation in application and database

@@ -12,6 +12,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
 import type {
   OrganizationInvitationSummary,
   OrganizationRole,
@@ -32,14 +33,6 @@ export function formatTeamDate(value: string) {
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(value));
-}
-
-export function formatLastSignIn(value: string) {
-  return `${new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "UTC",
-  }).format(new Date(value))} UTC`;
 }
 
 export function TeamManagement({
@@ -96,9 +89,11 @@ export function TeamManagement({
                   {canManage ? (
                     <p className="text-muted-foreground mt-1 text-xs">
                       Last signed in{" "}
-                      {"lastSignInAt" in member && member.lastSignInAt
-                        ? formatLastSignIn(member.lastSignInAt)
-                        : "Never / unavailable"}
+                      <ViewerLocalDateTime
+                        value={
+                          "lastSignInAt" in member ? member.lastSignInAt : null
+                        }
+                      />
                     </p>
                   ) : null}
                 </div>

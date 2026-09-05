@@ -63,6 +63,11 @@ No Realtime, RLS, database or migration contract changed. The complete web
 suite passes 164 files / 928 tests; final browser visual QA remains manual
 because no browser session is available to Codex.
 
+The release-gate correction keeps team last-sign-in retrieval server-authorized
+for OWNER/ADMIN and moves only timestamp presentation into a small
+hydration-safe client boundary. Native `Intl` formatting follows each viewer's
+browser/system timezone and daylight-saving rules without a database change.
+
 ---
 
 ## TASK-020 — Ask Council

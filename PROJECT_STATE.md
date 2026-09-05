@@ -53,6 +53,11 @@ collisions and supplies the same accessible tokens to avatar, cursor and name
 label. Realtime Presence/Broadcast, topic isolation, RLS, 25 Hz throttling,
 cursor expiry and migration `02020` are unchanged. No migration is introduced.
 
+Team-member last-sign-in values remain an OWNER/ADMIN-only server projection.
+A small hydration-safe client formatter now presents the authorized timestamp
+in the current viewer's browser/system timezone using native `Intl` rules; the
+stored absolute timestamp and Auth metadata boundary are unchanged.
+
 Focused verification passes 11 files / 46 tests and the complete web suite
 passes 164 files / 928 tests. Repository lint, web typecheck, scoped formatting,
 the web production build and npm audit with zero vulnerabilities pass.

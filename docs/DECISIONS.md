@@ -854,7 +854,9 @@ is not organization data and therefore requires no database write.
 Privileged account metadata remains server-derived. Team last-sign-in values
 are projected through the Supabase Auth Admin API only after OWNER/ADMIN
 authorization and only for the current organization's exact member IDs. They
-are never exposed to MEMBER or VIEWER roles. Organization deletion uses an
+are never exposed to MEMBER or VIEWER roles. Only the authorized nullable
+timestamp crosses a small hydration-safe client boundary, where native `Intl`
+uses the current browser/system timezone. Organization deletion uses an
 OWNER-only, exact-name-confirmed transactional database function. Private
 Storage object paths are inventoried from authorized organization records
 before deletion and removed by exact path after the database commit; a cleanup
