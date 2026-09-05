@@ -68,6 +68,10 @@ for OWNER/ADMIN and moves only timestamp presentation into a small
 hydration-safe client boundary. Native `Intl` formatting follows each viewer's
 browser/system timezone and daylight-saving rules without a database change.
 
+Repository onboarding is consolidated in a detailed root `README.md` covering
+the implemented Core and Marketing system, architecture, setup, environment
+boundaries, verification, deployment and links to canonical documentation.
+
 ---
 
 ## TASK-020 — Ask Council

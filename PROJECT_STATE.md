@@ -58,6 +58,11 @@ A small hydration-safe client formatter now presents the authorized timestamp
 in the current viewer's browser/system timezone using native `Intl` rules; the
 stored absolute timestamp and Auth metadata boundary are unchanged.
 
+The root `README.md` is now the detailed public entry point for product scope,
+architecture, local setup, configuration, security, testing and deployment. It
+links to the existing specialist source-of-truth documents rather than
+replacing them.
+
 Focused verification passes 11 files / 46 tests and the complete web suite
 passes 164 files / 928 tests. Repository lint, web typecheck, scoped formatting,
 the web production build and npm audit with zero vulnerabilities pass.
