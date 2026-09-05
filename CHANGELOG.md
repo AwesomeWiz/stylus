@@ -4,6 +4,27 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Fixed Ask Council automatic Research context selection so anaphoric
+  follow-ups use bounded recent user concepts, generic Marketing/Research/Reel
+  terms cannot admit unrelated reports, and report/evidence identity is
+  deterministically deduplicated. Explicit report attachments remain allowed.
+- Added TASK-020 Ask Council, a bounded conversational Marketing advisor with
+  deterministic intent routing, a one-to-three specialist ceiling, exactly one
+  synthesis on full success and a four-ModelGateway-call maximum.
+- Added organization-scoped immutable Council conversations, messages, turn
+  versions, specialist/AI-run provenance and typed same-organization context
+  references for existing research, Performance Learnings, Reel Briefs and
+  Strategic Reviews.
+- Added the responsive `/apps/marketing/council` workspace with explicit
+  Create-versus-Ask separation, controlled context attachments, visible
+  specialists/provenance, safe failures, bounded suggested actions and
+  read-only Viewer access.
+- Ask Council has no tools, live research, performance derivation, memory
+  writes, automatic Reel creation, Strategic Review execution, durable jobs or
+  Web Agency/TASK-019 access. TASK-019 remains deferred because the separate
+  `ai-web-agency` implementation does not yet have a stable integration
+  contract.
+
 - Added TASK-018 manual Instagram Reel publication records, append-only
   performance snapshots, deterministic derived metrics and immutable,
   evidence-linked organization-local Performance Learnings.

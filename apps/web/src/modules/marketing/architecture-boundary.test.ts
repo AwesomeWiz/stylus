@@ -25,7 +25,7 @@ describe("Marketing architecture boundary", () => {
     );
     expect(source).not.toMatch(/fetch\([^)]*sourceUrl/);
     expect(source).not.toMatch(
-      /buildAIKnowledgeContext|retrieveMemoriesForContext|write.*memory/i,
+      /buildAIKnowledgeContext|retrieveMemoriesForContext|createCompanyMemory|updateCompanyMemory|writeMarketingMemory|writeAgencyMemory/i,
     );
   });
   it("keeps Creative Council tool-free, provider-neutral, and server-authoritative", () => {

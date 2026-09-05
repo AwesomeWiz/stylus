@@ -633,3 +633,40 @@ set. Repeating derivation over unchanged evidence is idempotent; a later evidenc
 set creates a new immutable record under its stored algorithm version. The
 evidence join carries every exact content/snapshot and nullable source Reel
 Brief version reference used by the baseline.
+
+## Ask Council V1
+
+`20260825002000_ask_council.sql` adds five organization-scoped tables:
+
+- `marketing_ask_council_conversations` for titled, soft-archivable history;
+- `marketing_ask_council_messages` for immutable USER/ASSISTANT messages;
+- `marketing_ask_council_turns` for idempotency, controlled intent, selected
+  specialists, routing/context/workflow/schema versions, bounded context
+  snapshot, lifecycle and normalized failure;
+- `marketing_ask_council_specialist_results` for ordered immutable structured
+  output and exact successful `ai_runs`; and
+- `marketing_ask_council_context_refs` for typed immutable Research Report,
+  Research Evidence, Performance Learning, Reel Brief version and Strategic
+  Review provenance.
+
+Composite foreign keys bind every conversation, message, turn, AI run and
+artifact reference to one organization. Context references require exactly one
+typed target. A partial unique index allows one PENDING turn per conversation;
+an actor/idempotency unique key plus advisory transaction lock prevents replay.
+Message, context and specialist history rejects update/delete. A separate turn
+trigger allows terminal lifecycle fields to advance but prevents rewriting
+tenant, conversation, message, intent, specialist, version, context, actor or
+creation provenance.
+
+Authenticated clients receive SELECT only through Marketing-enabled RLS. The
+start, specialist, completion and failure lifecycle functions are service-role
+only, `SECURITY DEFINER` and use an empty search path. Start and successful
+transitions revalidate active OWNER/ADMIN/MEMBER role, enabled Marketing and
+exact actor/organization/capability/operation/`BALANCED` AI-run provenance.
+Only the guarded authenticated archival RPC derives `auth.uid()`; VIEWER is
+denied and a pending conversation cannot be archived.
+
+Completion requires every selected specialist result in deterministic ordinal
+order before creating one assistant message. Failure creates none. Activity is
+limited to conversation creation and successful response completion and stores
+no question, prompt, response, provider content or credential.

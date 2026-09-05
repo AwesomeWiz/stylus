@@ -12,6 +12,7 @@ export const marketingPlugin = definePlugin({
       "marketing.reels.read",
       "marketing.reels.write",
       "marketing.creative-council.execute",
+      "marketing.ask-council.execute",
       "marketing.external-research.execute",
       "marketing.campaigns.read",
       "marketing.campaigns.write",
@@ -55,6 +56,12 @@ export const marketingPlugin = definePlugin({
       },
       {
         icon: "megaphone",
+        label: "Ask Council",
+        order: 135,
+        route: "/apps/marketing/council",
+      },
+      {
+        icon: "megaphone",
         label: "Campaigns",
         order: 140,
         route: "/apps/marketing/campaigns",
@@ -80,6 +87,7 @@ export const marketingPlugin = definePlugin({
       "marketing.reels.read",
       "marketing.reels.write",
       "marketing.creative-council.execute",
+      "marketing.ask-council.execute",
       "marketing.external-research.execute",
       "marketing.campaigns.read",
       "marketing.campaigns.write",
@@ -89,6 +97,6 @@ export const marketingPlugin = definePlugin({
       "marketing.briefs.write",
     ],
     tools: [],
-    version: "0.2.0",
+    version: "0.3.0",
   },
 });

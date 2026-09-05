@@ -27,6 +27,7 @@ describe("Marketing plugin", () => {
       "/apps/marketing/competitors",
       "/apps/marketing/reel-ideas",
       "/apps/marketing/creative-studio",
+      "/apps/marketing/council",
       "/apps/marketing/campaigns",
       "/apps/marketing/research",
       "/apps/marketing/creative-briefs",
@@ -38,9 +39,10 @@ describe("Marketing plugin", () => {
       builtInPluginRegistry
         .getNavigation(["marketing"])
         .filter((item) => item.pluginId === "marketing"),
-    ).toHaveLength(7);
+    ).toHaveLength(8);
     expect(manifest?.capabilities).toContain(
       "marketing.creative-council.execute",
     );
+    expect(manifest?.capabilities).toContain("marketing.ask-council.execute");
   });
 });

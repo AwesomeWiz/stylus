@@ -695,3 +695,35 @@ PostgreSQL is the final mutation boundary for role, plugin, tenant, evidence,
 horizon and sample validation. Repeating an unchanged exact evidence set is
 idempotent, while changed evidence creates a new historical learning. No AI,
 Council, Strategic Review, research, memory or Ask Council edge exists.
+
+## TASK-020 Ask Council Flow
+
+```text
+authorized bounded question + optional controlled selections
+  -> deterministic intent/routing-v1
+  -> explicit-first bounded same-organization context projection
+  -> 1-3 static specialists through ModelGateway (V1: two, parallel)
+  -> every specialist succeeds: exactly one ModelGateway synthesis
+  -> dynamic safe-reference validation
+  -> immutable assistant answer + exact relational provenance
+```
+
+Ask Council is synchronous and advisory. The hard limit is four calls and 55
+seconds; it uses no job, worker, tool registry, network retriever, memory
+retriever or autonomous agent runtime. Specialist failure stops before
+synthesis. Synthesis failure terminalizes the turn without an assistant
+message. Request idempotency and the one-pending-turn constraint prevent repeat
+or concurrent answers for a conversation.
+
+The server derives tenant and actor. Context selection sends structured Company
+fields plus bounded projections of existing Research, Performance Learnings and
+exact selected creative artifacts. Safe model references are mapped to separate
+same-organization foreign keys; raw artifact UUIDs are not model-facing.
+Messages and provenance are immutable, while conversations support only
+history-preserving archival. OWNER/ADMIN/MEMBER execute and VIEWER reads.
+
+The Create path remains TASK-015's exact Hook -> Script -> Critic artifact
+workflow. Ask Council never creates a Reel Brief, invokes Strategic Review,
+launches Research, derives performance, writes memory or crosses into TASK-019.
+TASK-019 Web Agency Integration is deferred because the separate
+`ai-web-agency` implementation is not yet mature enough for a stable contract.
