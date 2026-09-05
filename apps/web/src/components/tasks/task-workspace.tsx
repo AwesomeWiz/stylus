@@ -25,6 +25,7 @@ interface TaskWorkspaceProps {
   comments: TaskCommentRow[];
   currentUserId: string;
   filters: TaskFilters;
+  initiallyCreating?: boolean;
   members: TaskMember[];
   nextDeadlineIso: string | null;
   nowIso: string;
@@ -72,6 +73,7 @@ export function TaskWorkspace({
   comments,
   currentUserId,
   filters,
+  initiallyCreating = false,
   members,
   nextDeadlineIso,
   nowIso,
@@ -79,7 +81,7 @@ export function TaskWorkspace({
   tasks,
 }: TaskWorkspaceProps) {
   const router = useRouter();
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(initiallyCreating && canMutate);
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(
     () => tasks.find((task) => task.id === selectedTaskId) ?? null,
   );

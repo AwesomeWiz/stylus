@@ -4,6 +4,18 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Completed the Stylus production design refinement with an accessible darker
+  primary-action surface, richer centralized light/dark editorial pastels,
+  clearer page and navigation hierarchy, roomier forms, and readable bounded
+  prose across core and Marketing workspaces.
+- Replaced the foundation placeholder at Home with a permission-aware operating
+  dashboard backed by existing task, activity, team, plugin and Marketing data,
+  including priorities, quick actions, recent activity and an adaptive pulse.
+- Expanded Whiteboard collaborator identity to a deterministic eight-family
+  high-distinction palette. Active users resolve collisions centrally, retain
+  stable colors through joins/leaves, and share one accessible color treatment
+  across avatars, cursors and labels; duplicate sessions still count once.
+
 - Established `#0D98BA` as the canonical Stylus brand color with accessible
   semantic light/dark tokens, integrated the approved logo across auth, shell
   and icon metadata, and added persisted hydration-safe Light/Dark/System

@@ -10,12 +10,12 @@ interface AuthShellProps {
 
 export function AuthShell({ children, description, title }: AuthShellProps) {
   return (
-    <main className="bg-background relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6">
+    <main className="bg-pastel-lilac relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6">
       <div
         aria-hidden="true"
         className="bg-primary-subtle absolute inset-x-0 top-0 h-1"
       />
-      <div className="w-full max-w-sm">
+      <div className="bg-background border-pastel-lilac-border w-full max-w-md rounded-2xl border p-6 shadow-sm sm:p-8">
         <Link
           aria-label="Stylus home"
           className="mb-8 inline-flex items-center gap-2.5"

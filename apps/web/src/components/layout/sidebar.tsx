@@ -37,11 +37,11 @@ export function Sidebar({
       <Brand />
       <nav
         aria-label="Primary navigation"
-        className="flex-1 overflow-y-auto px-3 py-2"
+        className="flex-1 overflow-y-auto px-3 py-3"
       >
         {navigationGroups.map((group) => (
           <div className="mb-5" key={group.label}>
-            <p className="text-sidebar-muted mb-1.5 px-2 text-[10px] font-semibold tracking-[0.12em] uppercase">
+            <p className="text-sidebar-muted mb-2 px-2 text-[11px] font-semibold tracking-[0.11em] uppercase">
               {group.label}
             </p>
             <ul className="space-y-0.5">
@@ -50,9 +50,9 @@ export function Sidebar({
                   <a
                     aria-current={item.href === activePath ? "page" : undefined}
                     className={cn(
-                      "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground flex min-h-9 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors",
+                      "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground relative flex min-h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-colors",
                       item.href === activePath &&
-                        "bg-sidebar-accent text-accent-foreground",
+                        "bg-sidebar-accent text-accent-foreground before:bg-primary font-semibold before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full",
                     )}
                     href={item.href}
                   >
@@ -71,7 +71,7 @@ export function Sidebar({
       </nav>
       <div className="border-sidebar-border border-t p-3">
         <details className="group relative">
-          <summary className="hover:bg-sidebar-accent flex min-h-12 cursor-pointer list-none items-center gap-2.5 rounded-md px-2 transition-colors [&::-webkit-details-marker]:hidden">
+          <summary className="hover:bg-sidebar-accent flex min-h-12 cursor-pointer list-none items-center gap-2.5 rounded-lg px-2 transition-colors [&::-webkit-details-marker]:hidden">
             <Avatar fallback={getInitials(identity.displayName)} />
             <span className="min-w-0 flex-1">
               <span className="text-sidebar-foreground block truncate text-sm font-medium">

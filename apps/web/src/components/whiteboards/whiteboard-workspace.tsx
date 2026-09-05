@@ -48,10 +48,12 @@ import {
   undoWhiteboardHistory,
 } from "@/modules/whiteboards/history";
 import {
+  allocateBoardCollaboratorColors,
   chooseCommittedElement,
   includeLocalBoardPresence,
   reconcileBoardComment,
   type BoardCursorUpdate,
+  type BoardCollaboratorColorAssignments,
   type BoardPresence,
 } from "@/modules/whiteboards/collaboration";
 import {
@@ -137,6 +139,14 @@ export function WhiteboardWorkspace({
   const [presence, setPresence] = useState<BoardPresence[]>(() =>
     includeLocalBoardPresence([], currentUser, members),
   );
+  const [collaboratorColors, setCollaboratorColors] =
+    useState<BoardCollaboratorColorAssignments>(() =>
+      allocateBoardCollaboratorColors(
+        includeLocalBoardPresence([], currentUser, members).map(
+          (person) => person.userId,
+        ),
+      ),
+    );
   const [remoteCursors, setRemoteCursors] = useState<BoardCursorUpdate[]>([]);
   const [connection, setConnection] =
     useState<CollaborationConnectionState>("CONNECTING");
@@ -277,7 +287,15 @@ export function WhiteboardWorkspace({
           return update.cursor ? [...withoutUser, update] : withoutUser;
         }),
       onElement: receiveRemoteElement,
-      onPresence: setPresence,
+      onPresence: (people) => {
+        setPresence(people);
+        setCollaboratorColors((current) =>
+          allocateBoardCollaboratorColors(
+            people.map((person) => person.userId),
+            current,
+          ),
+        );
+      },
     });
     collaborationRef.current = collaboration;
     return () => {
@@ -699,6 +717,7 @@ export function WhiteboardWorkspace({
         actions={
           <div className="ml-auto flex items-center gap-2">
             <WhiteboardCollaborators
+              colorAssignments={collaboratorColors}
               connection={connection}
               currentUserId={currentUser.id}
               presence={presence}
@@ -796,6 +815,7 @@ export function WhiteboardWorkspace({
           <Controls position="bottom-right" showInteractive={false} />
         </ReactFlow>
         <WhiteboardCursors
+          colorAssignments={collaboratorColors}
           currentUserId={currentUser.id}
           cursors={remoteCursors}
           presence={presence}

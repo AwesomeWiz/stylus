@@ -875,3 +875,27 @@ flow and viewport space locally.
 Marketing dialogs and centralized Creative specialist visuals are presentation
 changes only; they do not alter existing RBAC, provenance, workflows or model
 call limits.
+
+## ADR-039 — Use editorial color and active-set identity allocation for final UI
+
+Status: ACCEPTED
+
+Stylus retains `#0D98BA` as its canonical brand identity while using a darker
+derived cyan with white text for accessible light-mode primary actions. A
+central token set supplies restrained lilac, mint, cream, coral, pink, lime and
+indigo section surfaces with explicit dark-theme counterparts. Shared hierarchy,
+spacing, controls and bounded reading measures carry most of the design; color
+is reserved for section rhythm, semantic state and human identity.
+
+Home is an organization-scoped read projection over existing tasks, activity,
+members, plugin state and Marketing aggregates. It introduces no dashboard
+table, synthetic metric or online-presence tracker. Mutation shortcuts remain
+role-aware and route through existing application flows.
+
+Whiteboard collaborator colors are allocated centrally from eight curated
+families over the current unique active user set. The deterministic algorithm
+keeps existing valid assignments, maximizes hue-family separation for new
+users, and reuses only after the palette is exhausted. User—not session—is the
+identity key, and avatar/cursor/label all consume the same assignment. This is
+presentation state only: Presence, Broadcast, RLS, throttling and persistence
+contracts are unchanged.

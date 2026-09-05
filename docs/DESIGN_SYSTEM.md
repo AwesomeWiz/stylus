@@ -13,8 +13,14 @@ The interface should feel:
 - trustworthy
 - efficient
 - cohesive
+- editorial
+- human
+- creatively confident
 
-The UI should prioritize usability over visual novelty.
+The UI should prioritize usability over visual novelty. Neutral structural
+chrome should frame deliberate pastel section blocks, not a field of uniformly
+boxed cards. Color communicates hierarchy, identity or meaning rather than
+decoration.
 
 ---
 
@@ -255,11 +261,27 @@ amber, green, blue, pink and indigo foreground/subtle/border combinations for
 meaningful task, activity and Marketing specialist/status treatments. These
 tokens have explicit light and dark values and do not replace text labels.
 
-Whiteboard collaborators use a deterministic curated six-color subset. Compact
-initial avatars and remote cursor/name labels resolve through the same color
-helper, so one person keeps one visual identity. The local avatar is identified
-as `You`; overflow is summarized as `+N`, and the adjacent count always means
-unique authenticated people currently on the board.
+Whiteboard collaborators use a deterministic curated eight-family identity
+palette: blue, coral, violet, amber, magenta, green, indigo and red. The active
+set resolves preferred-color collisions to unused, widely separated families
+while preserving existing assignments during joins and leaves. Compact initial
+avatars and remote cursor/name labels consume the same canonical assignment,
+so one trusted user keeps one visual identity across sessions and components.
+Every label uses a tested foreground/background pair; names and initials remain
+visible so color is never the only identity signal. The local avatar is
+identified as `You`; overflow is summarized as `+N`, and the adjacent count
+always means unique authenticated people currently on the board.
+
+The canonical brand remains `#0D98BA`. In light mode, filled primary controls
+use the derived `#087690` surface with white text for 5.24:1 normal-text
+contrast; hover and active states darken further. Dark mode uses a brighter cyan
+surface with a deep foreground. Disabled controls remain visibly disabled,
+focus rings remain explicit, and compact icon controls retain 40px targets.
+
+Editorial section tokens provide lilac, mint, cream, coral, pink, lime and
+indigo surfaces with explicit foregrounds and borders in both themes. Use one
+or two such surfaces to establish page rhythm, separated by neutral canvas;
+never tint every card or use large saturated reading surfaces.
 
 Shared Marketing record creation/editing uses the Radix-backed Dialog at mobile
 through desktop widths. Creative surfaces use the centralized

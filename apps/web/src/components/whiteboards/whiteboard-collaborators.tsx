@@ -1,8 +1,9 @@
 import { Users, WifiOff } from "lucide-react";
 
 import {
-  boardPresenceColor,
+  boardCollaboratorColor,
   boardPresenceInitials,
+  type BoardCollaboratorColorAssignments,
   type BoardPresence,
 } from "@/modules/whiteboards/collaboration";
 import type { CollaborationConnectionState } from "@/modules/whiteboards/realtime";
@@ -11,10 +12,12 @@ const VISIBLE_COLLABORATORS = 3;
 
 export function WhiteboardCollaborators({
   connection,
+  colorAssignments,
   currentUserId,
   presence,
 }: {
   connection: CollaborationConnectionState;
+  colorAssignments: BoardCollaboratorColorAssignments;
   currentUserId: string;
   presence: BoardPresence[];
 }) {
@@ -35,20 +38,12 @@ export function WhiteboardCollaborators({
     >
       <div className="flex -space-x-1.5" role="list">
         {visible.map((person) => (
-          <span
-            aria-label={`${person.displayName}${person.userId === currentUserId ? ", you" : ""}`}
-            className="border-background relative inline-flex size-7 items-center justify-center rounded-full border-2 text-[10px] font-semibold shadow-sm"
-            data-testid={`collaborator-avatar-${person.userId}`}
+          <CollaboratorAvatar
+            colorAssignments={colorAssignments}
+            currentUserId={currentUserId}
             key={person.userId}
-            role="listitem"
-            style={{
-              backgroundColor: boardPresenceColor(person.userId),
-              color: "var(--collaborator-foreground)",
-            }}
-            title={`${person.displayName}${person.userId === currentUserId ? " · You" : ""}`}
-          >
-            {boardPresenceInitials(person.displayName)}
-          </span>
+            person={person}
+          />
         ))}
         {overflow ? (
           <span
@@ -71,5 +66,30 @@ export function WhiteboardCollaborators({
           : `${presence.length} ${presence.length === 1 ? "person" : "people"} here`}
       </span>
     </div>
+  );
+}
+
+function CollaboratorAvatar({
+  colorAssignments,
+  currentUserId,
+  person,
+}: {
+  colorAssignments: BoardCollaboratorColorAssignments;
+  currentUserId: string;
+  person: BoardPresence;
+}) {
+  const color = boardCollaboratorColor(person.userId, colorAssignments);
+  return (
+    <span
+      aria-label={`${person.displayName}${person.userId === currentUserId ? ", you" : ""}`}
+      className="border-background relative inline-flex size-7 items-center justify-center rounded-full border-2 text-[10px] font-semibold shadow-sm"
+      data-color-family={color.family}
+      data-testid={`collaborator-avatar-${person.userId}`}
+      role="listitem"
+      style={{ backgroundColor: color.background, color: color.foreground }}
+      title={`${person.displayName}${person.userId === currentUserId ? " · You" : ""}`}
+    >
+      {boardPresenceInitials(person.displayName)}
+    </span>
   );
 }

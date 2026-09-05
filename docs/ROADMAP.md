@@ -373,9 +373,18 @@ chain-of-thought, automatic memory write or TASK-019 integration is permitted.
 - [x] compact color-linked collaborator avatars and cursor labels
 - [x] responsive shared Marketing record dialogs
 - [x] shared Creative specialist identity and response readability
+- [x] real permission-aware Home operating dashboard
+- [x] accessible primary-action contrast and editorial light/dark color system
+- [x] high-distinction stable collaborator identity palette
+- [x] final shared typography, spacing, form and reading-width refinement
 
 This polish layer changes presentation and narrowly required security
 boundaries only. The forward `02020` correction separates slow Presence from
 high-frequency cursor Broadcast while preserving exact organization/board
 topic isolation. TASK-001 through TASK-020 behavior remains intact, and
 TASK-019 Web Agency Integration remains deferred.
+
+The final design refinement adds no schema or workflow behavior. Final manual
+visual acceptance should cover representative light/dark routes at desktop,
+tablet and 430px mobile widths, plus two-user and four-user Whiteboard color
+identity checks.

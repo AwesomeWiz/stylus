@@ -527,8 +527,8 @@ function FashionReport({
   runId: string;
 }) {
   return (
-    <div className="space-y-5">
-      <p className="text-sm">{report.summary}</p>
+    <div className="max-w-[52rem] space-y-5">
+      <p className="text-[15px] leading-7">{report.summary}</p>
       <FashionSignalList
         heading="Audience signals"
         items={report.audienceSignals.map((item) => ({
@@ -602,12 +602,12 @@ function FashionReport({
       {report.contentOpportunities.length ? (
         <section
           aria-label="Content opportunity candidates"
-          className="space-y-3"
+          className="border-pastel-lime-border bg-pastel-lime text-pastel-lime-foreground space-y-3 rounded-xl border p-5"
         >
           <h4 className="flex items-center gap-2 text-sm font-semibold">
             <Lightbulb className="size-4" /> Content opportunity candidates
           </h4>
-          <div className="divide-y border-y">
+          <div className="divide-pastel-lime-border border-pastel-lime-border divide-y border-y">
             {report.contentOpportunities.map((opportunity, index) => (
               <article
                 className="space-y-2 py-3"

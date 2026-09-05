@@ -48,7 +48,7 @@ export default async function SettingsPage() {
         title="Settings"
       />
       <div className="mt-8 max-w-4xl space-y-10">
-        <section className="border-b pb-8">
+        <section className="border-pastel-lilac-border bg-pastel-lilac rounded-xl border p-5 sm:p-6">
           <ThemeSelector />
         </section>
         <section aria-labelledby="account-heading" className="border-b pb-8">
@@ -73,7 +73,7 @@ export default async function SettingsPage() {
         </section>
         <section
           aria-labelledby="organization-heading"
-          className="border-b pb-8"
+          className="border-pastel-mint-border bg-pastel-mint rounded-xl border p-5 sm:p-6"
         >
           <h2
             className="flex items-center gap-2 font-semibold"

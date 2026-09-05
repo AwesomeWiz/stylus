@@ -15,14 +15,78 @@ export type BoardCursorUpdate = {
   userId: string;
 };
 
-const collaboratorColors = [
-  "var(--collaborator-cyan)",
-  "var(--collaborator-violet)",
-  "var(--collaborator-coral)",
-  "var(--collaborator-green)",
-  "var(--collaborator-pink)",
-  "var(--collaborator-indigo)",
+export const boardCollaboratorPalette = [
+  {
+    background: "var(--collaborator-blue)",
+    cursor: "var(--collaborator-blue)",
+    family: "blue",
+    foreground: "var(--collaborator-on-blue)",
+    hue: 205,
+    subtle: "var(--collaborator-blue-subtle)",
+  },
+  {
+    background: "var(--collaborator-coral)",
+    cursor: "var(--collaborator-coral)",
+    family: "coral",
+    foreground: "var(--collaborator-on-coral)",
+    hue: 18,
+    subtle: "var(--collaborator-coral-subtle)",
+  },
+  {
+    background: "var(--collaborator-violet)",
+    cursor: "var(--collaborator-violet)",
+    family: "violet",
+    foreground: "var(--collaborator-on-violet)",
+    hue: 276,
+    subtle: "var(--collaborator-violet-subtle)",
+  },
+  {
+    background: "var(--collaborator-amber)",
+    cursor: "var(--collaborator-amber)",
+    family: "amber",
+    foreground: "var(--collaborator-on-amber)",
+    hue: 42,
+    subtle: "var(--collaborator-amber-subtle)",
+  },
+  {
+    background: "var(--collaborator-magenta)",
+    cursor: "var(--collaborator-magenta)",
+    family: "magenta",
+    foreground: "var(--collaborator-on-magenta)",
+    hue: 326,
+    subtle: "var(--collaborator-magenta-subtle)",
+  },
+  {
+    background: "var(--collaborator-green)",
+    cursor: "var(--collaborator-green)",
+    family: "green",
+    foreground: "var(--collaborator-on-green)",
+    hue: 154,
+    subtle: "var(--collaborator-green-subtle)",
+  },
+  {
+    background: "var(--collaborator-indigo)",
+    cursor: "var(--collaborator-indigo)",
+    family: "indigo",
+    foreground: "var(--collaborator-on-indigo)",
+    hue: 235,
+    subtle: "var(--collaborator-indigo-subtle)",
+  },
+  {
+    background: "var(--collaborator-red)",
+    cursor: "var(--collaborator-red)",
+    family: "red",
+    foreground: "var(--collaborator-on-red)",
+    hue: 4,
+    subtle: "var(--collaborator-red-subtle)",
+  },
 ] as const;
+export type BoardCollaboratorColorFamily =
+  (typeof boardCollaboratorPalette)[number]["family"];
+export type BoardCollaboratorColorAssignments = Record<
+  string,
+  BoardCollaboratorColorFamily
+>;
 const MAX_CURSOR_COORDINATE = 1_000_000;
 
 export function boardCollaborationTopic(
@@ -40,11 +104,98 @@ function isCursorCoordinate(value: unknown): value is number {
   );
 }
 
-export function boardPresenceColor(userId: string) {
+function collaboratorHash(userId: string) {
   let hash = 0;
   for (const character of userId)
     hash = (hash * 31 + character.charCodeAt(0)) | 0;
-  return collaboratorColors[Math.abs(hash) % collaboratorColors.length]!;
+  return Math.abs(hash);
+}
+
+function hueDistance(left: number, right: number) {
+  const difference = Math.abs(left - right);
+  return Math.min(difference, 360 - difference);
+}
+
+export function allocateBoardCollaboratorColors(
+  userIds: Iterable<string>,
+  previous: BoardCollaboratorColorAssignments = {},
+) {
+  const active = [...new Set(userIds)].sort();
+  const activeSet = new Set(active);
+  const paletteByFamily = new Map(
+    boardCollaboratorPalette.map((entry) => [entry.family, entry]),
+  );
+  const assignments: BoardCollaboratorColorAssignments = {};
+  const used = new Set<BoardCollaboratorColorFamily>();
+
+  for (const [userId, family] of Object.entries(previous)) {
+    if (
+      !activeSet.has(userId) ||
+      used.has(family) ||
+      !paletteByFamily.has(family)
+    )
+      continue;
+    assignments[userId] = family;
+    used.add(family);
+  }
+
+  for (const userId of active) {
+    if (assignments[userId]) continue;
+    const preferredIndex =
+      collaboratorHash(userId) % boardCollaboratorPalette.length;
+    const available = boardCollaboratorPalette.filter(
+      (entry) => !used.has(entry.family),
+    );
+    const candidates = available.length ? available : boardCollaboratorPalette;
+    const selected = [...candidates].sort((left, right) => {
+      const leftSeparation = used.size
+        ? Math.min(
+            ...[...used].map((family) =>
+              hueDistance(left.hue, paletteByFamily.get(family)!.hue),
+            ),
+          )
+        : 360;
+      const rightSeparation = used.size
+        ? Math.min(
+            ...[...used].map((family) =>
+              hueDistance(right.hue, paletteByFamily.get(family)!.hue),
+            ),
+          )
+        : 360;
+      if (rightSeparation !== leftSeparation)
+        return rightSeparation - leftSeparation;
+      const leftPreference =
+        (boardCollaboratorPalette.indexOf(left) -
+          preferredIndex +
+          boardCollaboratorPalette.length) %
+        boardCollaboratorPalette.length;
+      const rightPreference =
+        (boardCollaboratorPalette.indexOf(right) -
+          preferredIndex +
+          boardCollaboratorPalette.length) %
+        boardCollaboratorPalette.length;
+      return leftPreference - rightPreference;
+    })[0]!;
+    assignments[userId] = selected.family;
+    used.add(selected.family);
+  }
+  return assignments;
+}
+
+export function boardCollaboratorColor(
+  userId: string,
+  assignments: BoardCollaboratorColorAssignments,
+) {
+  const family =
+    assignments[userId] ??
+    boardCollaboratorPalette[
+      collaboratorHash(userId) % boardCollaboratorPalette.length
+    ]!.family;
+  return boardCollaboratorPalette.find((entry) => entry.family === family)!;
+}
+
+export function boardPresenceColor(userId: string) {
+  return boardCollaboratorColor(userId, {}).background;
 }
 
 export function boardPresenceInitials(displayName: string) {

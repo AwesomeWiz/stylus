@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { boardPresenceColor } from "@/modules/whiteboards/collaboration";
+import {
+  allocateBoardCollaboratorColors,
+  boardCollaboratorColor,
+} from "@/modules/whiteboards/collaboration";
 
 import { WhiteboardCollaborators } from "./whiteboard-collaborators";
 
@@ -15,11 +18,15 @@ const people = [
   },
   { displayName: "Morgan Lee", role: "ADMIN" as const, userId: "remote-c" },
 ];
+const colorAssignments = allocateBoardCollaboratorColors(
+  people.map((person) => person.userId),
+);
 
 describe("WhiteboardCollaborators", () => {
   it("shows unique collaborator avatars, initials, local identity, and count", () => {
     render(
       <WhiteboardCollaborators
+        colorAssignments={colorAssignments}
         connection="CONNECTED"
         currentUserId="local"
         presence={people.slice(0, 3)}
@@ -30,13 +37,15 @@ describe("WhiteboardCollaborators", () => {
     expect(screen.getByText("KB")).toBeInTheDocument();
     expect(screen.getByText("EV")).toBeInTheDocument();
     expect(screen.getByTestId("collaborator-avatar-remote-a")).toHaveStyle({
-      backgroundColor: boardPresenceColor("remote-a"),
+      backgroundColor: boardCollaboratorColor("remote-a", colorAssignments)
+        .background,
     });
   });
 
   it("bounds the avatar stack and reports overflow", () => {
     render(
       <WhiteboardCollaborators
+        colorAssignments={colorAssignments}
         connection="CONNECTED"
         currentUserId="local"
         presence={people}

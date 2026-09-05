@@ -15,7 +15,7 @@ export function SearchInput({
         className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
       />
       <input
-        className="border-input bg-background placeholder:text-muted-foreground focus:border-ring h-9 w-full rounded-md border pr-3 pl-9 text-sm transition-colors focus:outline-none"
+        className="border-input bg-card placeholder:text-muted-foreground focus:border-ring focus:ring-ring/15 h-10 w-full rounded-full border pr-4 pl-10 text-sm shadow-sm transition-[border-color,box-shadow] focus:ring-3 focus:outline-none"
         placeholder="Search Stylus"
         type="search"
         {...props}

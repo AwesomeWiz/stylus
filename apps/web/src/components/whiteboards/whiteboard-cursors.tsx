@@ -1,18 +1,21 @@
 import { MousePointer2 } from "lucide-react";
 
 import {
-  boardPresenceColor,
+  boardCollaboratorColor,
   flowPointToViewport,
+  type BoardCollaboratorColorAssignments,
   type BoardCursorUpdate,
   type BoardPresence,
 } from "@/modules/whiteboards/collaboration";
 
 export function WhiteboardCursors({
+  colorAssignments,
   currentUserId,
   cursors,
   presence,
   viewport,
 }: {
+  colorAssignments: BoardCollaboratorColorAssignments;
   currentUserId: string;
   cursors: BoardCursorUpdate[];
   presence: BoardPresence[];
@@ -29,7 +32,7 @@ export function WhiteboardCursors({
         .map((cursor) => {
           const person = people.get(cursor.userId);
           if (!person || !cursor.cursor) return null;
-          const color = boardPresenceColor(cursor.userId);
+          const color = boardCollaboratorColor(cursor.userId, colorAssignments);
           const position = flowPointToViewport(cursor.cursor, viewport);
           return (
             <div
@@ -44,14 +47,18 @@ export function WhiteboardCursors({
                 aria-hidden="true"
                 className="size-5 fill-current"
                 style={{
-                  color,
+                  color: color.cursor,
                   filter:
                     "drop-shadow(0 0 1px var(--background)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.35))",
                 }}
               />
               <span
-                className="-mt-1 ml-3 block max-w-32 truncate rounded-sm px-1.5 py-0.5 text-[11px] font-medium text-white shadow-sm"
-                style={{ backgroundColor: color }}
+                className="-mt-1 ml-3 block max-w-32 truncate rounded-sm px-1.5 py-0.5 text-[11px] font-medium shadow-sm"
+                data-color-family={color.family}
+                style={{
+                  backgroundColor: color.background,
+                  color: color.foreground,
+                }}
               >
                 {person.displayName}
               </span>

@@ -4,7 +4,7 @@
 
 ## Final Production Polish
 
-Status: VERIFIED / MANUAL PRODUCTION QA READY
+Status: FINAL DESIGN REFINEMENT VERIFIED / FINAL VISUAL QA READY
 
 The production-polish pass establishes `#0D98BA` as the canonical brand token,
 uses the approved Stylus mark in auth/shell/icon metadata, adds hydration-safe
@@ -47,6 +47,21 @@ Whiteboard-correction verification passes the complete web suite (163 files /
 and migration contracts. The linked dry run reports only `02020` pending and
 applies nothing. Hosted two-user Presence/cursor QA remains required after that
 migration is applied.
+
+The final design refinement replaces placeholder Home content with a real
+permission-aware operating dashboard, strengthens shared typography/spacing
+and form controls, introduces centralized editorial pastel surfaces for light
+and dark themes, and improves reading rhythm across the densest core and
+Marketing screens. `#0D98BA` remains canonical; light primary actions use an
+accessible darker derived surface with white text.
+
+Whiteboard collaborators now share one deterministic active-set allocation
+across avatars, cursors and labels using eight perceptually separated families.
+Duplicate sessions consume one identity, preferred collisions resolve to unused
+families, and existing assignments stay stable through ordinary joins/leaves.
+No Realtime, RLS, database or migration contract changed. The complete web
+suite passes 164 files / 928 tests; final browser visual QA remains manual
+because no browser session is available to Codex.
 
 ---
 

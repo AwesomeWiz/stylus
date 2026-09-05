@@ -6,6 +6,9 @@ import type {
   TaskMember,
 } from "@/lib/supabase/database.types";
 import {
+  allocateBoardCollaboratorColors,
+  boardCollaboratorColor,
+  boardCollaboratorPalette,
   boardCollaborationTopic,
   boardPresenceColor,
   boardPresenceInitials,
@@ -143,6 +146,49 @@ describe("whiteboard collaboration reconciliation", () => {
     expect(boardPresenceColor("user-a")).toBe(boardPresenceColor("user-a"));
     expect(boardPresenceColor("user-a")).toMatch(/^var\(--collaborator-/);
     expect(boardPresenceInitials("Alex Morgan")).toBe("AM");
+  });
+
+  it("allocates distinct canonical colors across a typical active board", () => {
+    const userIds = Array.from({ length: 8 }, (_, index) => `user-${index}`);
+    const assignments = allocateBoardCollaboratorColors(userIds);
+    expect(assignments).toEqual(allocateBoardCollaboratorColors(userIds));
+    expect(new Set(Object.values(assignments)).size).toBe(8);
+    expect(Object.keys(assignments)).toHaveLength(8);
+    expect(boardCollaboratorPalette).toHaveLength(8);
+  });
+
+  it("resolves hash collisions while preserving stable colors through joins and leaves", () => {
+    expect(boardPresenceColor("user-a")).toBe(boardPresenceColor("user-i"));
+    const collision = allocateBoardCollaboratorColors(["user-a", "user-i"]);
+    expect(collision["user-a"]).not.toBe(collision["user-i"]);
+
+    const initial = allocateBoardCollaboratorColors(["local", "remote-a"]);
+    expect(initial.local).not.toBe(initial["remote-a"]);
+
+    const joined = allocateBoardCollaboratorColors(
+      ["local", "remote-a", "remote-b"],
+      initial,
+    );
+    expect(joined.local).toBe(initial.local);
+    expect(joined["remote-a"]).toBe(initial["remote-a"]);
+    expect(new Set(Object.values(joined)).size).toBe(3);
+
+    const left = allocateBoardCollaboratorColors(["local", "remote-b"], joined);
+    expect(left.local).toBe(initial.local);
+    expect(left["remote-b"]).toBe(joined["remote-b"]);
+  });
+
+  it("deduplicates multiple sessions and uses one color for avatar, cursor and label", () => {
+    const assignments = allocateBoardCollaboratorColors([
+      "same-user",
+      "same-user",
+      "other-user",
+    ]);
+    expect(Object.keys(assignments)).toHaveLength(2);
+    expect(assignments["same-user"]).not.toBe(assignments["other-user"]);
+    expect(boardCollaboratorColor("same-user", assignments)).toEqual(
+      boardCollaboratorColor("same-user", assignments),
+    );
   });
 
   it("accepts a bounded broadcast only for an authorized present remote session", () => {

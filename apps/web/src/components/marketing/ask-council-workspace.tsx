@@ -74,8 +74,8 @@ export function AskCouncilWorkspace({
 }) {
   const writable = canMutateMarketing(role);
   return (
-    <div className="grid min-h-[34rem] overflow-hidden rounded-md border lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <aside className="bg-muted/25 border-b p-3 lg:border-r lg:border-b-0">
+    <div className="grid min-h-[34rem] overflow-hidden rounded-xl border lg:grid-cols-[17rem_minmax(0,1fr)]">
+      <aside className="bg-pastel-lilac border-pastel-lilac-border border-b p-3 lg:border-r lg:border-b-0">
         <Link
           className="bg-background hover:bg-muted inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium"
           href={"/apps/marketing/council" as Route}
@@ -111,7 +111,7 @@ export function AskCouncilWorkspace({
       </aside>
 
       <section className="flex min-w-0 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b px-4 py-3">
+        <header className="border-pastel-mint-border bg-pastel-mint flex items-center justify-between gap-3 border-b px-4 py-4">
           <div className="min-w-0">
             <p className="truncate font-medium">
               {selectedConversation?.title ?? "New Ask Council conversation"}
@@ -141,12 +141,14 @@ export function AskCouncilWorkspace({
 
         <div className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
           {!messages.length ? (
-            <div className="mx-auto max-w-xl py-14 text-center">
-              <BrainCircuit className="text-muted-foreground mx-auto size-8" />
-              <h2 className="mt-4 font-semibold">
+            <div className="border-pastel-cream-border bg-pastel-cream text-pastel-cream-foreground mx-auto max-w-xl rounded-xl border px-6 py-12 text-center">
+              <span className="bg-background/70 mx-auto flex size-12 items-center justify-center rounded-full">
+                <BrainCircuit className="size-6" />
+              </span>
+              <h2 className="mt-4 text-lg font-semibold">
                 Ask a focused marketing question
               </h2>
-              <p className="text-muted-foreground mt-2 text-sm">
+              <p className="mt-2 text-[15px] leading-6 opacity-80">
                 Stylus selects a small specialist set and uses bounded company,
                 research, performance, or explicitly attached creative context.
               </p>
@@ -405,7 +407,7 @@ function Message({
   const output = object(message.structured_output);
   return (
     <article
-      className={`max-w-3xl ${assistant ? "mr-auto" : "bg-muted/60 ml-auto rounded-md px-4 py-3"}`}
+      className={`max-w-[46rem] ${assistant ? "mr-auto" : "bg-pastel-lilac border-pastel-lilac-border ml-auto rounded-xl border px-4 py-3"}`}
     >
       <p className="text-muted-foreground text-xs font-medium">
         {assistant ? "Ask Council" : "You"}

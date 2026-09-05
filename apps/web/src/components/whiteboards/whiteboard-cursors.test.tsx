@@ -1,14 +1,22 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { boardPresenceColor } from "@/modules/whiteboards/collaboration";
+import {
+  allocateBoardCollaboratorColors,
+  boardCollaboratorColor,
+} from "@/modules/whiteboards/collaboration";
 
 import { WhiteboardCursors } from "./whiteboard-cursors";
 
 describe("WhiteboardCursors", () => {
   it("renders remote trusted identities in transformed canvas coordinates", () => {
+    const colorAssignments = allocateBoardCollaboratorColors([
+      "local",
+      "remote",
+    ]);
     render(
       <WhiteboardCursors
+        colorAssignments={colorAssignments}
         currentUserId="local"
         cursors={[
           { cursor: { x: 20, y: 30 }, userId: "remote" },
@@ -33,9 +41,12 @@ describe("WhiteboardCursors", () => {
     const cursor = screen.getByTestId("collaborator-cursor-remote");
     expect(cursor).toHaveStyle({ transform: "translate(45px, 68px)" });
     expect(cursor.querySelector("svg")).toHaveStyle({
-      color: boardPresenceColor("remote"),
+      color: boardCollaboratorColor("remote", colorAssignments).cursor,
     });
-    expect(screen.getByText("Taylor")).toBeInTheDocument();
+    expect(screen.getByText("Taylor")).toHaveAttribute(
+      "data-color-family",
+      colorAssignments.remote,
+    );
     expect(screen.queryByText("Local")).not.toBeInTheDocument();
     expect(
       screen.queryByTestId("collaborator-cursor-not-present"),
