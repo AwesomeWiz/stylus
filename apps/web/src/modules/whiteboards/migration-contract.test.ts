@@ -30,6 +30,13 @@ const productionPolishMigration = readFileSync(
   ),
   "utf8",
 );
+const realtimeCorrectionMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260825002020_fix_whiteboard_realtime_collaboration.sql",
+  ),
+  "utf8",
+);
 
 describe("whiteboard migration contract", () => {
   it("stores boards and independently addressable elements with safe geometry", () => {
@@ -133,8 +140,20 @@ describe("whiteboard collaboration migration contract", () => {
     expect(productionPolishMigration).toMatch(
       /private\.is_organization_member\(board_record\.organization_id\)/,
     );
-    expect(productionPolishMigration).toMatch(
-      /realtime\.messages\.payload ->> 'userId' = \(select auth\.uid\(\)\)::text/,
+  });
+
+  it("authorizes presence and cursor broadcasts at the scoped channel boundary", () => {
+    expect(realtimeCorrectionMigration).toMatch(
+      /realtime\.messages\.extension in \('presence', 'broadcast'\)/,
+    );
+    expect(realtimeCorrectionMigration).toMatch(
+      /'board:' \|\| board_record\.organization_id::text \|\| ':' \|\| board_record\.id::text/,
+    );
+    expect(realtimeCorrectionMigration).toMatch(
+      /private\.is_organization_member\(board_record\.organization_id\)/,
+    );
+    expect(realtimeCorrectionMigration).not.toMatch(
+      /realtime\.messages\.payload ->>/,
     );
   });
 });

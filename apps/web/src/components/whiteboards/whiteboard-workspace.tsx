@@ -18,7 +18,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Users, WifiOff } from "lucide-react";
 
 import type {
   BoardCommentRow,
@@ -50,7 +49,9 @@ import {
 } from "@/modules/whiteboards/history";
 import {
   chooseCommittedElement,
+  includeLocalBoardPresence,
   reconcileBoardComment,
+  type BoardCursorUpdate,
   type BoardPresence,
 } from "@/modules/whiteboards/collaboration";
 import {
@@ -69,6 +70,7 @@ import { WhiteboardToolbar, type WhiteboardTool } from "./whiteboard-toolbar";
 import { WhiteboardInspector } from "./whiteboard-inspector";
 import { WhiteboardCommentsPanel } from "./whiteboard-comments-panel";
 import { WhiteboardCursors } from "./whiteboard-cursors";
+import { WhiteboardCollaborators } from "./whiteboard-collaborators";
 
 const nodeTypes = { whiteboard: WhiteboardNode };
 
@@ -132,7 +134,10 @@ export function WhiteboardWorkspace({
   const [title, setTitle] = useState(board.title);
   const [renaming, setRenaming] = useState(false);
   const [comments, setComments] = useState(initialComments);
-  const [presence, setPresence] = useState<BoardPresence[]>([]);
+  const [presence, setPresence] = useState<BoardPresence[]>(() =>
+    includeLocalBoardPresence([], currentUser, members),
+  );
+  const [remoteCursors, setRemoteCursors] = useState<BoardCursorUpdate[]>([]);
   const [connection, setConnection] =
     useState<CollaborationConnectionState>("CONNECTING");
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
@@ -264,6 +269,13 @@ export function WhiteboardWorkspace({
       onComment: (comment) =>
         setComments((current) => reconcileBoardComment(current, comment)),
       onConnection: setConnection,
+      onCursor: (update) =>
+        setRemoteCursors((current) => {
+          const withoutUser = current.filter(
+            (cursor) => cursor.userId !== update.userId,
+          );
+          return update.cursor ? [...withoutUser, update] : withoutUser;
+        }),
       onElement: receiveRemoteElement,
       onPresence: setPresence,
     });
@@ -686,22 +698,11 @@ export function WhiteboardWorkspace({
       <WhiteboardHeader
         actions={
           <div className="ml-auto flex items-center gap-2">
-            <div
-              className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex"
-              title={presence.map((person) => person.displayName).join(", ")}
-            >
-              {connection === "DEGRADED" ? (
-                <WifiOff
-                  aria-hidden="true"
-                  className="text-destructive size-4"
-                />
-              ) : (
-                <Users aria-hidden="true" className="size-4" />
-              )}
-              {connection === "DEGRADED"
-                ? "Offline collaboration"
-                : `${presence.length || 1} here`}
-            </div>
+            <WhiteboardCollaborators
+              connection={connection}
+              currentUserId={currentUser.id}
+              presence={presence}
+            />
             <WhiteboardCommentsPanel
               boardId={board.id}
               canMutate={canMutate}
@@ -796,6 +797,7 @@ export function WhiteboardWorkspace({
         </ReactFlow>
         <WhiteboardCursors
           currentUserId={currentUser.id}
+          cursors={remoteCursors}
           presence={presence}
           viewport={viewport}
         />

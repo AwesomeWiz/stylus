@@ -20,7 +20,10 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
-import { SpecialistIdentity } from "@/components/marketing/specialist-visuals";
+import {
+  specialistAccent,
+  SpecialistIdentity,
+} from "@/components/marketing/specialist-visuals";
 import { StrategicReviewPanel } from "@/components/marketing/strategic-review-panel";
 import type {
   MarketingCreativeCouncilEvidenceRow,
@@ -427,8 +430,17 @@ function StageSummary({
   value?: MarketingCreativeCouncilStageRow;
 }) {
   const running = runStatus === "RUNNING" && currentStage === stage;
+  const specialistId =
+    stage === "HOOK"
+      ? "marketing.hook-strategist"
+      : stage === "SCRIPT"
+        ? "marketing.script-writer"
+        : "marketing.creative-critic";
   return (
-    <details className="rounded-md border p-3" open={Boolean(value)}>
+    <details
+      className={`rounded-md border border-l-2 p-3 ${specialistAccent(specialistId).border}`}
+      open={Boolean(value)}
+    >
       <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium">
         {value?.status === "SUCCEEDED" ? (
           <CheckCircle2 className="text-primary size-4" />
@@ -437,15 +449,7 @@ function StageSummary({
         ) : (
           <Circle className="text-muted-foreground size-4" />
         )}
-        <SpecialistIdentity
-          id={
-            stage === "HOOK"
-              ? "marketing.hook-strategist"
-              : stage === "SCRIPT"
-                ? "marketing.script-writer"
-                : "marketing.creative-critic"
-          }
-        />
+        <SpecialistIdentity id={specialistId} />
       </summary>
       {value?.structured_output ? (
         <StageOutput stage={stage} value={value.structured_output} />

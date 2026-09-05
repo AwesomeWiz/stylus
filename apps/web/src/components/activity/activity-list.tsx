@@ -19,6 +19,10 @@ import type {
   TaskMember,
 } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
+import {
+  accentVisuals,
+  marketingSignalVisual,
+} from "@/components/ui/semantic-visuals";
 
 const icons: Record<ActivityEventType, LucideIcon> = {
   BOARD_COMMENTED: MessageSquare,
@@ -54,12 +58,17 @@ function memberName(members: TaskMember[], userId: string | null) {
 
 function activityIconStyle(type: ActivityEventType) {
   if (type === "TASK_COMPLETED" || type === "MEMORY_RESTORED")
-    return "bg-success-subtle text-success";
-  if (type === "TASK_CANCELLED") return "bg-destructive/10 text-destructive";
-  if (type.includes("ARCHIVED")) return "bg-warning-subtle text-warning";
+    return [accentVisuals.green.surface, accentVisuals.green.text];
+  if (type === "TASK_CANCELLED")
+    return [accentVisuals.coral.surface, accentVisuals.coral.text];
+  if (type.includes("ARCHIVED"))
+    return [accentVisuals.amber.surface, accentVisuals.amber.text];
   if (type.includes("CREATED") || type === "TASK_ASSIGNED")
-    return "bg-primary-subtle text-accent-foreground";
-  return "bg-info-subtle text-info";
+    return [
+      marketingSignalVisual(type).surface,
+      marketingSignalVisual(type).text,
+    ];
+  return [accentVisuals.blue.surface, accentVisuals.blue.text];
 }
 
 export function activityDescription(

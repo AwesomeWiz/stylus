@@ -19,6 +19,11 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  marketingSignalVisual,
+  statusVisual,
+} from "@/components/ui/semantic-visuals";
+import { cn } from "@/lib/utils";
 import type {
   MarketingExternalResearchEvidenceRow,
   MarketingExternalResearchReportRow,
@@ -307,7 +312,13 @@ function ResearchHistory({
                       >
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <strong>{item.evidence_id}</strong>
-                          <span className="text-muted-foreground text-xs font-medium">
+                          <span
+                            className={cn(
+                              "rounded-sm px-1.5 py-0.5 text-xs font-medium",
+                              marketingSignalVisual(item.evidence_type).surface,
+                              marketingSignalVisual(item.evidence_type).text,
+                            )}
+                          >
                             {evidenceTypeLabel(item.evidence_type)}
                           </span>
                           {item.author ? (
@@ -740,13 +751,10 @@ function Status({ status }: { status: string }) {
         : LoaderCircle;
   return (
     <span
-      className={`flex items-center gap-1.5 text-xs font-medium ${
-        status === "SUCCEEDED"
-          ? "text-success"
-          : status === "FAILED" || status === "CANCELLED"
-            ? "text-destructive"
-            : "text-info"
-      }`}
+      className={cn(
+        "flex items-center gap-1.5 text-xs font-medium",
+        statusVisual(status).text,
+      )}
     >
       <Icon
         className={`size-4 ${["QUEUED", "RUNNING", "SYNTHESIZING"].includes(status) ? "animate-spin" : ""}`}

@@ -8,7 +8,12 @@ import { useActionState, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  marketingSignalVisual,
+  statusVisual,
+} from "@/components/ui/semantic-visuals";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { canMutateMarketing } from "@/modules/marketing/authorization";
 import {
   saveMarketingCampaignAction,
@@ -208,6 +213,7 @@ export function MarketingWorkspace({
                       text(record.title ?? record.name)
                     )}
                   </h2>
+                  <RecordBadge record={record} />
                   <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
                     {text(
                       record.objective ??
@@ -249,6 +255,25 @@ export function MarketingWorkspace({
         </div>
       )}
     </div>
+  );
+}
+
+function RecordBadge({ record }: { record: RecordValue }) {
+  const value = text(record.status ?? record.category);
+  if (!value) return null;
+  const visual = record.status
+    ? statusVisual(value)
+    : marketingSignalVisual(value);
+  return (
+    <span
+      className={cn(
+        "mt-1 inline-flex rounded-sm px-1.5 py-0.5 text-[11px] font-medium",
+        visual.surface,
+        visual.text,
+      )}
+    >
+      {value.toLowerCase().replaceAll("_", " ")}
+    </span>
   );
 }
 

@@ -861,11 +861,17 @@ before deletion and removed by exact path after the database commit; a cleanup
 failure can leave an inaccessible orphan but cannot expose or restore tenant
 data. Member authentication accounts are intentionally preserved.
 
-Whiteboard pointer collaboration remains ephemeral Realtime Presence rather
-than database history. Presence topics include organization and board IDs,
-write policy binds the payload user ID to `auth.uid()`, trusted display identity
-comes from the authorized member directory, coordinates are bounded and
-throttled, and every client converts between flow and viewport space locally.
+Whiteboard collaboration remains ephemeral rather than database history.
+Presence carries only slow-changing session identity and determines unique
+people on an organization-and-board-qualified private channel. High-frequency
+pointer coordinates use throttled Broadcast on that same channel. Realtime RLS
+is evaluated when the channel is joined, so policy authorizes only current
+members of the exact active board and the Presence/Broadcast extensions; it
+does not depend on a future payload. Broadcast omits user identity, and the
+receiver resolves its session through current Presence plus the authorized
+member directory before rendering. Coordinates are bounded, stale cursors are
+removed independently of collaborator Presence, and clients convert between
+flow and viewport space locally.
 Marketing dialogs and centralized Creative specialist visuals are presentation
 changes only; they do not alter existing RBAC, provenance, workflows or model
 call limits.

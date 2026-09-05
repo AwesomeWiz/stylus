@@ -368,10 +368,14 @@ chain-of-thought, automatic memory write or TASK-019 integration is permitted.
 - [x] persisted Light/Dark/System appearance
 - [x] functional Settings and permission-aware team metadata
 - [x] OWNER-only confirmed organization deletion boundary
-- [x] organization-qualified ephemeral whiteboard cursors
+- [x] organization-qualified unique-user whiteboard Presence
+- [x] private Broadcast cursors with session/member identity resolution
+- [x] compact color-linked collaborator avatars and cursor labels
 - [x] responsive shared Marketing record dialogs
 - [x] shared Creative specialist identity and response readability
 
 This polish layer changes presentation and narrowly required security
-boundaries only. TASK-001 through TASK-020 behavior remains intact, and TASK-019
-Web Agency Integration remains deferred.
+boundaries only. The forward `02020` correction separates slow Presence from
+high-frequency cursor Broadcast while preserving exact organization/board
+topic isolation. TASK-001 through TASK-020 behavior remains intact, and
+TASK-019 Web Agency Integration remains deferred.

@@ -609,10 +609,16 @@ collection.
   those objects after the transaction succeeds. Cleanup failure leaves private,
   inaccessible objects for operator cleanup rather than exposing tenant data or
   damaging surviving database records. Auth user accounts are not deleted.
-- Whiteboard Presence topics include both trusted organization and board IDs.
-  RLS revalidates active board membership and requires payload `userId` to equal
-  `auth.uid()` on writes. Display names and roles come from the authorized member
-  directory; cursor payloads contain no email or credential.
+- Whiteboard private Realtime topics include both trusted organization and board
+  IDs. Join-time SELECT/INSERT policies resolve that exact active board,
+  revalidate current organization membership and permit only Presence and
+  Broadcast extensions. They do not depend on a later message payload.
+- Presence contains minimal session/user identifiers and is normalized against
+  the authorized server-projected member directory. Cursor Broadcast contains
+  no user ID, name, role, email or credential: a bounded coordinate payload is
+  accepted only when its session resolves through current authorized Presence.
+  Local and unknown/not-present sessions fail closed. Neither Presence nor
+  cursor data is persisted.
 - Theme preference is non-sensitive local UI state. No service-role secret is
   imported by a client component, and Marketing/Council authorization and AI
   execution boundaries are unchanged.

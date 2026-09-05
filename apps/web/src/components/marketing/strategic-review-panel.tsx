@@ -19,7 +19,10 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
-import { SpecialistIdentity } from "@/components/marketing/specialist-visuals";
+import {
+  specialistAccent,
+  SpecialistIdentity,
+} from "@/components/marketing/specialist-visuals";
 import type {
   MarketingReelBriefVersionRow,
   MarketingStrategicCouncilReviewVersionRow,
@@ -261,8 +264,21 @@ function ReviewStage({
   value?: MarketingStrategicReviewStageRow;
 }) {
   const running = runStatus === "RUNNING" && currentStage === stage;
+  const specialistId =
+    stage === "AUDIENCE"
+      ? "marketing.audience-researcher"
+      : stage === "BRAND"
+        ? "marketing.brand-director"
+        : stage === "STRATEGY"
+          ? "marketing.content-strategist"
+          : stage === "CHALLENGE"
+            ? "strategic.challenge"
+            : "strategic.judge";
   return (
-    <details className="rounded-md border p-3" open={Boolean(value)}>
+    <details
+      className={`rounded-md border border-l-2 p-3 ${specialistAccent(specialistId).border}`}
+      open={Boolean(value)}
+    >
       <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium">
         {value?.status === "SUCCEEDED" ? (
           <CheckCircle2 className="text-primary size-4" />
@@ -271,20 +287,7 @@ function ReviewStage({
         ) : (
           <Circle className="text-muted-foreground size-4" />
         )}
-        <SpecialistIdentity
-          id={
-            stage === "AUDIENCE"
-              ? "marketing.audience-researcher"
-              : stage === "BRAND"
-                ? "marketing.brand-director"
-                : stage === "STRATEGY"
-                  ? "marketing.content-strategist"
-                  : stage === "CHALLENGE"
-                    ? "strategic.challenge"
-                    : "strategic.judge"
-          }
-          label={stageName(stage)}
-        />
+        <SpecialistIdentity id={specialistId} label={stageName(stage)} />
       </summary>
       {value?.structured_output ? (
         <ReviewStageOutput stage={stage} value={value.structured_output} />

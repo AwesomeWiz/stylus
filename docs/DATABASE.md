@@ -683,7 +683,17 @@ only to authenticated users. The application separately inventories and removes
 private Storage objects because Storage is not part of the PostgreSQL
 transaction; member `auth.users` records remain intact.
 
-Presence remains non-persistent Realtime data. Its topic changes from
-`board:<board>` to `board:<organization>:<board>`. Read/write policies resolve
-that exact active board, repeat organization membership, limit the extension to
-Presence, and bind write payload `userId` to `auth.uid()`.
+`20260825002020_fix_whiteboard_realtime_collaboration.sql` corrects the applied
+Realtime policy without rewriting `02010`. Realtime authorizes a private
+channel when it is joined, before a later Presence or Broadcast payload exists,
+so a payload `userId = auth.uid()` predicate prevented Presence authorization.
+The replacement SELECT/INSERT policies resolve the exact active
+`board:<organization>:<board>` topic, revalidate organization membership and
+permit only the `presence` and `broadcast` extensions.
+
+Both streams remain ephemeral and non-persistent. Presence contains only a
+session ID and user ID and represents who is on the board. Cursor Broadcast
+contains only that session ID and bounded flow coordinates. The receiver
+accepts a cursor only when the session resolves through current Presence to an
+authorized server-projected board member; names, roles and colors never come
+from the Broadcast payload.

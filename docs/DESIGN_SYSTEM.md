@@ -250,6 +250,17 @@ information colors are reserved for meaning and always retain text or icon
 labels. The approved mark is stored at `assets/brand/stylus-logo-source.png`;
 the optimized transparent web mark is `public/brand/stylus-mark.png`.
 
+The shared semantic accent registry provides accessible cyan, violet, coral,
+amber, green, blue, pink and indigo foreground/subtle/border combinations for
+meaningful task, activity and Marketing specialist/status treatments. These
+tokens have explicit light and dark values and do not replace text labels.
+
+Whiteboard collaborators use a deterministic curated six-color subset. Compact
+initial avatars and remote cursor/name labels resolve through the same color
+helper, so one person keeps one visual identity. The local avatar is identified
+as `You`; overflow is summarized as `+N`, and the adjacent count always means
+unique authenticated people currently on the board.
+
 Shared Marketing record creation/editing uses the Radix-backed Dialog at mobile
 through desktop widths. Creative surfaces use the centralized
 `specialist-visuals.tsx` Lucide mapping; icons support, but never replace,

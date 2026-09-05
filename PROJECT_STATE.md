@@ -19,15 +19,15 @@ derivation, memory or Web Agency behavior.
 
 Phase 17 — Ask Council
 
-Status: FINAL PRODUCTION POLISH VERIFIED / MANUAL PRODUCTION QA READY
+Status: WHITEBOARD REALTIME CORRECTION VERIFIED / MANUAL PRODUCTION QA READY
 
 ---
 
 ## Current Objective
 
-Verify and manually QA the final brand, theme, settings, Marketing form,
-Creative Studio readability and organization-qualified whiteboard presence
-changes without altering accepted TASK-001 through TASK-020 workflows.
+Apply the forward-only whiteboard Realtime correction and manually verify
+unique collaborator Presence plus Broadcast cursors without altering accepted
+TASK-001 through TASK-020 workflows.
 
 ---
 

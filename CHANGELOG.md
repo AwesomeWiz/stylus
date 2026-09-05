@@ -16,6 +16,13 @@ All notable user-facing changes to Stylus will be documented here.
 - Added organization-and-board-isolated ephemeral whiteboard cursors with
   authenticated presence identity, throttled flow coordinates, deterministic
   colors and transformed remote rendering.
+- Repaired whiteboard collaboration so the people count explicitly includes
+  the local authenticated member and deduplicates multiple sessions by user.
+  Presence now carries only slow-changing session state; ephemeral cursor
+  coordinates use the same private board channel's bounded Broadcast path.
+- Added compact Figma-style collaborator avatars and centralized accessible
+  semantic accent tones for task, activity and Marketing specialist/status
+  treatments in both light and dark themes.
 - Replaced shared Marketing inline add/edit forms with responsive accessible
   dialogs, added restrained semantic state color, and centralized professional
   Lucide identities/readable output styling across Creative Council, Strategic

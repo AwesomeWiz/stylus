@@ -6,8 +6,13 @@ import type {
   TaskMember,
 } from "@/lib/supabase/database.types";
 import {
+  boardCollaborationTopic,
   boardPresenceColor,
+  boardPresenceInitials,
   chooseCommittedElement,
+  flowPointToViewport,
+  includeLocalBoardPresence,
+  normalizeBoardCursorBroadcast,
   normalizeBoardPresence,
   reconcileBoardComment,
 } from "./collaboration";
@@ -45,8 +50,9 @@ const comment = {
   updated_at: "2026-08-25T00:00:00Z",
 } satisfies BoardCommentRow;
 const members: TaskMember[] = [
-  { display_name: "Alex", member_user_id: "user-a", role: "MEMBER" },
-  { display_name: "Alex", member_user_id: "user-b", role: "VIEWER" },
+  { display_name: "Alex Morgan", member_user_id: "user-a", role: "MEMBER" },
+  { display_name: "Alex Brown", member_user_id: "user-b", role: "VIEWER" },
+  { display_name: "Casey Lee", member_user_id: "user-c", role: "ADMIN" },
 ];
 
 describe("whiteboard collaboration reconciliation", () => {
@@ -72,33 +78,53 @@ describe("whiteboard collaboration reconciliation", () => {
         members,
       ),
     ).toEqual([
-      { cursor: null, displayName: "Alex", role: "MEMBER", userId: "user-a" },
+      { displayName: "Alex Morgan", role: "MEMBER", userId: "user-a" },
     ]);
   });
 
-  it("accepts bounded cursor coordinates but not forged member identity", () => {
+  it("counts a present user without requiring cursor coordinates", () => {
     expect(
       normalizeBoardPresence(
-        { one: [{ cursor: { x: 42, y: 18 }, userId: "user-b" }] },
+        { one: [{ sessionId: "session-b", userId: "user-b" }] },
         members,
       ),
     ).toEqual([
       {
-        cursor: { x: 42, y: 18 },
-        displayName: "Alex",
+        displayName: "Alex Brown",
         role: "VIEWER",
         userId: "user-b",
       },
     ]);
   });
 
-  it("drops excessive cursor coordinates from untrusted presence payloads", () => {
+  it("explicitly includes the local member and deduplicates multiple sessions", () => {
+    const local = { displayName: "Alex Morgan", id: "user-a" };
+    const remote = normalizeBoardPresence(
+      {
+        first: [{ sessionId: "b-one", userId: "user-b" }],
+        second: [{ sessionId: "b-two", userId: "user-b" }],
+      },
+      members,
+    );
     expect(
-      normalizeBoardPresence(
-        { one: [{ cursor: { x: 2_000_000, y: 18 }, userId: "user-b" }] },
+      includeLocalBoardPresence(remote, local, members).map(
+        (person) => person.userId,
+      ),
+    ).toEqual(["user-a", "user-b"]);
+    expect(includeLocalBoardPresence([], local, members)).toHaveLength(1);
+    expect(
+      includeLocalBoardPresence(
+        normalizeBoardPresence(
+          {
+            second: [{ sessionId: "b", userId: "user-b" }],
+            third: [{ sessionId: "c", userId: "user-c" }],
+          },
+          members,
+        ),
+        local,
         members,
-      )[0]?.cursor,
-    ).toBeNull();
+      ),
+    ).toHaveLength(3);
   });
 
   it("keeps duplicate display names as distinct identities", () => {
@@ -115,6 +141,65 @@ describe("whiteboard collaboration reconciliation", () => {
 
   it("assigns a stable curated color from the trusted user identifier", () => {
     expect(boardPresenceColor("user-a")).toBe(boardPresenceColor("user-a"));
-    expect(boardPresenceColor("user-a")).toMatch(/^#[0-9A-F]{6}$/i);
+    expect(boardPresenceColor("user-a")).toMatch(/^var\(--collaborator-/);
+    expect(boardPresenceInitials("Alex Morgan")).toBe("AM");
+  });
+
+  it("accepts a bounded broadcast only for an authorized present remote session", () => {
+    const state = {
+      session: [{ sessionId: "remote-session", userId: "user-b" }],
+    };
+    expect(
+      normalizeBoardCursorBroadcast(
+        { sessionId: "remote-session", x: 42, y: 18 },
+        state,
+        members,
+        "user-a",
+      ),
+    ).toEqual({ cursor: { x: 42, y: 18 }, userId: "user-b" });
+    expect(
+      normalizeBoardCursorBroadcast(
+        { sessionId: "unknown", x: 42, y: 18 },
+        state,
+        members,
+        "user-a",
+      ),
+    ).toBeNull();
+    expect(
+      normalizeBoardCursorBroadcast(
+        { sessionId: "remote-session", x: 2_000_000, y: 18 },
+        state,
+        members,
+        "user-a",
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects a local cursor broadcast and transforms flow coordinates", () => {
+    expect(
+      normalizeBoardCursorBroadcast(
+        { sessionId: "local-session", x: 2, y: 3 },
+        {
+          session: [{ sessionId: "local-session", userId: "user-a" }],
+        },
+        members,
+        "user-a",
+      ),
+    ).toBeNull();
+    expect(
+      flowPointToViewport({ x: 20, y: 30 }, { x: 5, y: 8, zoom: 2 }),
+    ).toEqual({ x: 45, y: 68 });
+  });
+
+  it("isolates collaboration topics by both organization and board", () => {
+    expect(boardCollaborationTopic("org-a", "board-a")).toBe(
+      "board:org-a:board-a",
+    );
+    expect(boardCollaborationTopic("org-a", "board-a")).not.toBe(
+      boardCollaborationTopic("org-a", "board-b"),
+    );
+    expect(boardCollaborationTopic("org-a", "board-a")).not.toBe(
+      boardCollaborationTopic("org-b", "board-a"),
+    );
   });
 });

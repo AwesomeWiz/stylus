@@ -16,15 +16,21 @@ only after OWNER/ADMIN authorization. Organization deletion uses exact-name
 confirmation, server-derived tenant identity, an OWNER-only transactional RPC,
 and exact private Storage inventory/cleanup; it preserves member auth accounts.
 
-Whiteboard cursors remain ephemeral Realtime Presence data, are scoped by both
-organization and board, validate the sender against `auth.uid()`, use trusted
-member-directory identity, throttled flow coordinates and deterministic colors.
+Whiteboard collaborator membership uses slow-changing Realtime Presence and
+explicitly unions the authoritative local member before deduplicating by user.
+High-frequency cursors use throttled Realtime Broadcast on the same private,
+organization-and-board-qualified channel. Broadcast carries only session and
+bounded flow coordinates; display identity, role and deterministic color come
+from authorized Presence plus the server-projected member directory.
 The shared Marketing record editor now uses responsive dialogs. Creative
 Council, Strategic Review and Ask Council share centralized Lucide specialist
 visual metadata and readable substantive typography; their workflows, RBAC,
 AI call counts and provenance are unchanged.
 
-Forward migration: `20260825002010_final_production_polish.sql`.
+Forward migrations: `20260825002010_final_production_polish.sql` and corrective
+`20260825002020_fix_whiteboard_realtime_collaboration.sql`. The correction
+allows both Presence and Broadcast during private-channel authorization and
+removes the payload predicate that Realtime could not evaluate at channel join.
 
 Focused verification passes 17 files / 64 tests. Complete verification passes
 161 web files / 912 tests and 5 worker files / 32 tests (166 files / 944 tests
@@ -35,6 +41,12 @@ nothing. Repository-wide Prettier still reports 139 pre-existing files outside
 this diff; they were deliberately not normalized. Docker/Podman and an in-app
 browser session are unavailable, so local pgTAP and automated screenshot QA
 remain unavailable; the new pgTAP suite is ready for hosted execution.
+
+Whiteboard-correction verification passes the complete web suite (163 files /
+921 tests), repository lint, web typecheck, production build, scoped formatting
+and migration contracts. The linked dry run reports only `02020` pending and
+applies nothing. Hosted two-user Presence/cursor QA remains required after that
+migration is applied.
 
 ---
 

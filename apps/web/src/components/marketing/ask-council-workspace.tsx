@@ -16,6 +16,7 @@ import { useActionState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
+  specialistAccent,
   SpecialistIdentity,
   specialistVisuals,
 } from "@/components/marketing/specialist-visuals";
@@ -463,7 +464,7 @@ function Message({
                   const perspective = object(result.structured_output);
                   return (
                     <div
-                      className="border-primary-border border-l-2 pl-3 text-sm"
+                      className={`border-l-2 pl-3 text-sm ${specialistAccent(result.specialist_id).border}`}
                       key={result.id}
                     >
                       <SpecialistIdentity
