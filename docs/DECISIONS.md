@@ -901,3 +901,22 @@ users, and reuses only after the palette is exhausted. User—not session—is t
 identity key, and avatar/cursor/label all consume the same assignment. This is
 presentation state only: Presence, Broadcast, RLS, throttling and persistence
 contracts are unchanged.
+
+---
+
+## ADR-040 — Apache-2.0 and lightweight contribution licensing
+
+Status: ACCEPTED
+
+Stylus source is released under Apache License 2.0. Its permissive copyright
+terms and explicit patent grant fit the project's commercial and plugin
+ecosystem goals without requiring hosted derivatives to publish modifications.
+Third-party dependencies and assets retain their own applicable terms; the
+Stylus license does not relicense them.
+
+Intentional contributions are accepted under Apache-2.0 as described by section
+5 of the license and `CONTRIBUTING.md`. The initial project does not impose a
+CLA, copyright assignment, or mandatory DCO bot. A CLA may be considered later
+only if a deliberate dual-licensing or formal commercial-licensing model needs
+one. Project-name and logo expectations are documented separately in
+`TRADEMARKS.md` without claiming registered-trademark status.

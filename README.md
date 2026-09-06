@@ -1,6 +1,9 @@
 # Stylus
 
-Stylus is a collaborative, AI-enabled operating system for startup teams. It
+![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)
+![Node.js 20.9+](https://img.shields.io/badge/Node.js-%3E%3D20.9-339933.svg)
+
+Stylus is an open-source, collaborative, AI-enabled operating system for startup teams. It
 combines everyday company operations—tasks, team coordination, whiteboards,
 knowledge, decisions, and activity—with bounded AI workflows and a modular
 business-plugin architecture.
@@ -13,6 +16,10 @@ learning from manually recorded performance.
 Stylus is designed to remain useful when AI providers, external data sources,
 or the optional Windows worker are unavailable. Human collaboration and the
 database remain the source of truth.
+
+Start with [Getting started](#getting-started). Contributions are welcome under
+[Apache-2.0](LICENSE); see [Contributing](CONTRIBUTING.md),
+[Security](.github/SECURITY.md), and [Support](SUPPORT.md).
 
 ## Contents
 
@@ -31,6 +38,7 @@ database remain the source of truth.
 - [Deployment](#deployment)
 - [Project documentation](#project-documentation)
 - [Contributing](#contributing)
+- [License and project identity](#license-and-project-identity)
 - [Current limitations](#current-limitations)
 
 ## Product capabilities
@@ -197,7 +205,7 @@ Optional prerequisites:
 ```bash
 git clone https://github.com/AwesomeWiz/stylus.git
 cd stylus
-npm install
+npm ci
 ```
 
 ### Start local Supabase
@@ -548,7 +556,8 @@ on an old task narrative.
 
 ## Contributing
 
-Read [AGENTS.md](AGENTS.md) before making changes. In particular:
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) before making
+changes. In particular:
 
 1. Inspect the current branch, working tree, implementation, tests, and relevant
    source-of-truth documents.
@@ -561,6 +570,19 @@ Read [AGENTS.md](AGENTS.md) before making changes. In particular:
 8. Review staged changes for secrets, environment files, generated artifacts,
    and unrelated line-ending noise.
 9. Do not push or merge unless the active task explicitly authorizes it.
+
+Use the issue templates for non-security bugs and feature requests. Report
+vulnerabilities only through the private process in
+[.github/SECURITY.md](.github/SECURITY.md). Support scope is documented in
+[SUPPORT.md](SUPPORT.md).
+
+## License and project identity
+
+Stylus source code is licensed under the [Apache License 2.0](LICENSE).
+Dependencies remain under their respective licenses. See
+[TRADEMARKS.md](TRADEMARKS.md) for use of the Stylus name and project logos, and
+[the release guide](docs/OPEN_SOURCE_RELEASE.md) for the public-release audit and
+checklist.
 
 ## Current limitations
 
@@ -580,5 +602,3 @@ Read [AGENTS.md](AGENTS.md) before making changes. In particular:
   it is offline.
 - Free/serverless availability, Supabase project pausing, provider quotas, and
   Vercel execution limits remain operational constraints.
-- A repository license file is not currently included. Choose and add an
-  explicit license before relying on public redistribution permissions.

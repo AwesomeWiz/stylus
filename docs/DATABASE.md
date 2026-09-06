@@ -348,8 +348,8 @@ Organization members can read their organization's metadata through RLS. Tables
 have no direct browser writes: pinned-search-path functions derive the actor,
 verify active role and enabled plugin state, and enforce one terminal transition.
 
-Future agent/workflow records may reference `ai_runs`; TASK-009 does not create
-reasoning-step or memory-retrieval tables.
+Later bounded workflow tables reference `ai_runs` for immutable provenance;
+TASK-009 itself did not create reasoning-step or memory-retrieval tables.
 
 Store explicit agent outputs, decisions and rationale designed for the
 application.
@@ -414,9 +414,9 @@ TASK-013 introduces exactly five plugin-owned canonical record tables:
 
 Every table is organization-scoped, provenance-audited, RLS-protected, and
 soft-archived. Composite foreign keys prevent cross-organization references;
-archiving campaigns preserves related history. Reel media, transcripts,
-analysis, performance, automated research, embeddings, and reasoning tables
-remain deferred.
+archiving campaigns preserves related history. Later forward migrations add
+Reel analysis, creative workflows, research, performance, and Ask Council while
+retaining this foundation. Embeddings remain deferred.
 
 ---
 

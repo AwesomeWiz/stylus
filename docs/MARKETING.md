@@ -157,7 +157,7 @@ Use deterministic preprocessing first.
 
 # Creative Council
 
-Planned agents:
+Council roles include:
 
 Audience Researcher
 Trend Researcher

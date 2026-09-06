@@ -378,9 +378,9 @@ Maintain security tests for:
   60-second signed URL only after credential, organization, active claim, lease,
   job type, Reel, and storage path are derived and verified by PostgreSQL.
 - Worker results are schema/size bounded and cannot select a table or path.
-- FFmpeg and Python use repository-selected executables/scripts and argument
-  arrays with `shell: false`; job input cannot supply commands or filesystem
-  paths.
+- FFmpeg, ffprobe, and the operator-configured whisper.cpp CLI use
+  repository-selected argument arrays with `shell: false`; job input cannot
+  supply commands, executables, models, or filesystem paths.
 - Activity excludes source URLs, transcript, prompt, provider response, and
   full analysis. No automatic `knowledge_memories` write occurs.
 

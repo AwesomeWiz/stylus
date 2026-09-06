@@ -252,12 +252,13 @@ enqueue/cancel/retry actions, the trusted registry, and `/jobs`. No generic Edge
 Function is deployed because TASK-011 has no real bounded network workload that
 justifies one.
 
-SERVERLESS and EXTERNAL_WORKER classes are routing contracts, not a claim that
-heavy workloads run today. Video, FFmpeg, transcription and large AI work remain
-queued until TASK-012 supplies an authenticated outbound worker. Do not place a
-Supabase service-role key on the Windows worker or expose Ollama. Supabase project
-pausing, Cron cadence, statement limits and future serverless/worker costs remain
-real operational limitations.
+SERVERLESS External Research executes through the bounded hosted job adapter,
+and EXTERNAL_WORKER competitor-Reel extraction can run through the authenticated
+outbound Windows worker when its operator-installed media tools are available.
+Unsupported or offline capabilities remain queued. Do not place a Supabase
+service-role key on the Windows worker or expose Ollama. Supabase project pausing,
+Cron cadence, statement limits and serverless/worker costs remain real
+operational limitations.
 
 ---
 

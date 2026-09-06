@@ -13,11 +13,14 @@ Avoid premature microservices.
 The repository uses npm workspaces:
 
 - `apps/web` contains the Next.js application and its local UI foundation.
+- `apps/worker` contains the optional outbound Windows worker.
 - `packages/typescript-config` contains shared strict TypeScript defaults.
 
 Future packages should be added only when code has a real cross-application
-or cross-module consumer. Core and plugin business modules have not been
-introduced during Phase 0.
+or cross-module consumer. Reusable platform modules live under
+`apps/web/src/core` and `apps/web/src/modules`; statically registered business
+plugins live under `apps/web/src/plugins` and depend on documented public Core
+contracts.
 
 ---
 
@@ -130,7 +133,7 @@ redirect. Repeating the same request cannot increment progress twice.
 
 # Core Modules
 
-Planned Core modules:
+Core modules include:
 
 - auth
 - organizations

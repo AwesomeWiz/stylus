@@ -4,9 +4,27 @@ coverage/
 dist/
 *.tsbuildinfo
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 .DS_Store
 Thumbs.db
 supabase/.temp/
+.audit-temp/
+
+# Local credentials and private keys
+worker.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Operator-installed models, binaries, and temporary media
+*.bin
+*.ggml
+*.onnx
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.srt
+*.vtt

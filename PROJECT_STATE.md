@@ -1,33 +1,66 @@
 # Stylus — Project State
 
-Last Updated: 2026-09-05
+Last Updated: 2026-09-06
 
 ## Overall Status
 
-FINAL PRODUCTION DESIGN SYSTEM VERIFIED / FINAL VISUAL QA READY
+OPEN-SOURCE READINESS IMPLEMENTED / PUBLICATION GATES PENDING
 
-Stylus Marketing now includes Ask Council, a bounded conversational advisor
-that reads authorized company, research, Performance Learning and exact
-creative-artifact context. Deterministic routing selects a small specialist set,
-then one final synthesis produces an immutable, provenance-backed advisory
-answer without invoking Create, Research, Strategic Review, performance
-derivation, memory or Web Agency behavior.
+The source tree now carries Apache-2.0 licensing, contribution and community
+policies, public-safe issue and pull-request templates, Dependabot configuration,
+and secret-free application plus isolated local-Supabase CI definitions. The
+current tree and all reachable history were audited for secrets, confidential
+data, private infrastructure, dependency licenses, and asset provenance without
+changing runtime behavior or database migrations.
 
 ---
 
 ## Current Phase
 
-Phase 17 — Ask Council
+Open-source release preparation
 
-Status: FINAL UI REFINEMENT VERIFIED / FINAL VISUAL QA READY
+Status: IMPLEMENTED / MANUAL GITHUB AND PUBLIC CI ACCEPTANCE PENDING
 
 ---
 
 ## Current Objective
 
-Perform final light/dark responsive visual QA for the completed production
-design system and high-distinction Whiteboard collaborator identities without
-altering accepted TASK-001 through TASK-020 workflows.
+Keep repository visibility private while maintainers enable and verify GitHub
+security settings, run the new workflow on the release candidate (including the
+isolated Supabase job), and complete final visual QA with fictional demo data.
+
+## Open-source readiness
+
+- Apache-2.0 is recorded in `LICENSE`, package metadata, README, contribution
+  terms, and ADR-040. Project-name and logo expectations remain separate in
+  `TRADEMARKS.md` without claiming a registered trademark.
+- Gitleaks 8.30.1 reported zero findings in the tracked base tree and in history
+  mode across all refs with all 88 base commits, including merge diffs.
+  Independent high-signal searches found no credentials, customer data, private
+  deployment identifiers, or Web Agency implementation.
+- The exact lockfile and committed assets were reviewed. No blocking external
+  dependency license was found; the two brand images have recorded C2PA-derived
+  provenance. No NOTICE file is required for the current source distribution.
+- Public CI requires no repository secrets. Application checks and an isolated
+  local-Supabase migration/RLS/pgTAP job are defined independently.
+- No application source, runtime behavior, schema, migration, provider routing,
+  worker protocol, or tenant/memory boundary changed in this task.
+
+Remaining release blockers are operational: public CI has not yet completed on
+the release branch, local database verification is unavailable on this machine
+without Docker/Podman, and GitHub Private Vulnerability Reporting, secret
+scanning/push protection, Dependabot, Issues, and `main` protection must be
+enabled and verified by a maintainer. Repository visibility must remain private
+until those checks pass. The detailed procedure is in
+`docs/OPEN_SOURCE_RELEASE.md`.
+
+Fresh-install verification passes repository formatting, lint, both workspace
+typechecks, 5 worker files / 32 tests, 165 web files / 933 tests, and both
+production builds. `npm audit --audit-level=high` reports zero vulnerabilities.
+Markdown links, JSON/YAML parsing, referenced CI scripts, and diff whitespace
+also pass local validation. Supabase CLI 2.115.0 is installed, but the isolated
+database stack cannot start because neither Docker nor Podman is installed; the
+database workflow therefore still requires GitHub-hosted acceptance.
 
 ## Final Production Design Refinement
 

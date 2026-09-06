@@ -306,9 +306,10 @@ architecture may safely use the optional laptop for heavy work.
 
 ## Deferred Work
 
-TASK-010 adds relational Company Knowledge/memory retrieval without embeddings
-or RAG. Later tasks add semantic retrieval, jobs/workers, agents, workflows and
-Marketing. No current system performs autonomous memory writes or tool loops.
+Relational Company Knowledge/memory, durable jobs, the optional Windows worker,
+and bounded Marketing AI workflows are implemented. Semantic retrieval,
+embeddings, generic autonomous agents, unrestricted tool loops, and automatic
+memory writes remain deferred.
 
 ## TASK-014 Trusted Job Continuation
 

@@ -149,8 +149,9 @@ interaction end; text/sticky edits save on commit. Board images are private and
 served through short-lived signed URLs. OWNER, ADMIN and MEMBER edit while
 VIEWER is read-only.
 
-Board and element comments, mentions and realtime collaboration are planned for
-the next whiteboard phase and are not part of the foundation.
+Board and element comments, structural mentions, private Realtime collaboration,
+presence, and ephemeral cursors are implemented as later layers over that
+foundation.
 
 Whiteboard content does not automatically become permanent Company
 Knowledge.
@@ -231,8 +232,9 @@ estimated cost and normalized errors. Complete prompts and model responses are
 not persisted or displayed. AI being disabled or a provider being offline does
 not make Core collaboration unavailable.
 
-TASK-009 supplies execution infrastructure only. It does not add agents,
-Marketing generation, memory retrieval, embeddings or autonomous tools.
+TASK-009 established the execution infrastructure. Later bounded Marketing
+workflows and explicit memory retrieval use that boundary; embeddings and
+autonomous tool loops remain unimplemented.
 
 ---
 
@@ -244,9 +246,10 @@ hold a browser request open. Members can inspect safe lifecycle metadata on
 read-only, and cancellation/retry follow explicit role and ownership rules.
 
 Job types come only from trusted static Core/plugin definitions with schemas,
-timeouts, retry policy and an execution class. The initial harmless Core test can
-run through hosted Supabase Cron. Future heavy media jobs remain queued until an
-authenticated compatible worker is available; the product does not depend on
+timeouts, retry policy and an execution class. The harmless Core test can run
+through hosted Supabase Cron, bounded External Research uses the SERVERLESS
+executor, and competitor-Reel extraction can use an authenticated compatible
+worker. Unsupported heavy work remains queued; the product does not depend on
 the developer laptop being online.
 
 Job rows do not expose raw inputs or sensitive results in the normal UI, do not
@@ -267,8 +270,8 @@ TASK-013 establishes its manual operating foundation: Overview, Competitors,
 Reel Ideas, Campaigns, Research, and Creative Briefs. These are collaborative
 planning records, not claims of automated collection or AI-generated strategy.
 TASK-015 adds Creative Studio's bounded three-stage Create workflow, safe
-structured Reasoning History, and versioned Reel Briefs. Ask Creative Council
-remains a separate future advisory product under TASK-020.
+structured Reasoning History, and versioned Reel Briefs. TASK-020 adds the
+separate bounded Ask Council advisory product.
 
 Initial focus:
 
@@ -356,7 +359,7 @@ Stylus should not simply copy competitor creative work.
 
 Marketing uses multiple specialized logical agents.
 
-Planned roles include:
+Council roles include:
 
 - Audience Researcher
 - Trend Researcher
@@ -381,17 +384,17 @@ artifact, not an internal chat transcript and not a rewrite of the source Reel
 Brief. The other TASK-016 specialists are reusable static contracts for later
 finite workflows but do not execute in Strategic Review V1.
 
-Creative Studio will eventually offer two distinct interaction modes:
+Creative Studio and Ask Council provide two distinct interaction modes:
 
 - **Create** turns a structured source into a bounded, auditable Marketing
   artifact. TASK-015 establishes the first version with a Reel Idea and
   versioned Reel Brief.
-- **Ask Council** will let authorized teammates ask Marketing advisory
+- **Ask Council** lets authorized teammates ask Marketing advisory
   questions. A bounded router selects the smallest appropriate approved
   specialist workflow and returns one synthesized answer.
 
-Ask Council is future approved direction, not an implemented generic chatbot.
-It will not invoke every agent by default, dynamically spawn arbitrary agents,
+Ask Council is implemented as a bounded advisor, not a generic chatbot. It does
+not invoke every agent by default, dynamically spawn arbitrary agents,
 show fake internal-agent conversations, use unrestricted tools or research, or
 expose raw chain-of-thought. Context and costs remain bounded, organization and
 plugin authorization remain server-enforced, and model execution remains behind

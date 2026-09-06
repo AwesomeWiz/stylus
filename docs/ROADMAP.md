@@ -1,5 +1,36 @@
 # Stylus — Roadmap
 
+## Public roadmap summary
+
+### Current
+
+- Complete the open-source release gate, public CI acceptance, and manual GitHub
+  repository-security settings.
+- Complete final light/dark responsive visual QA with fictional demo data.
+
+### Next
+
+- Marketing Opportunity Pipeline and Reel Production Workspace
+- Content Calendar
+- Explicit Performance Learning feedback into bounded creative workflows
+
+### Later
+
+- Semantic retrieval and embeddings after a dedicated security design
+- Official social transports only where access, retention, and deletion
+  requirements are compatible with Stylus
+
+### Deferred
+
+- TASK-019 Web Agency Integration remains deferred until the separate system has
+  a stable, permission-controlled integration contract. Its agency memory stays
+  isolated by default.
+
+The detailed roadmap below records implemented milestones and historical scope.
+It is directional, not a delivery promise.
+
+---
+
 ## Phase 0 — Foundation
 
 Status: COMPLETE
@@ -109,8 +140,9 @@ notification/activity foundations without external delivery channels.
 
 TASK-006 provides the persistent editor and TASK-007 adds board-scoped Realtime
 updates, private presence, comments/replies, structural mentions, notifications,
-activity and collaboration-safe local operation history. Live cursors and a CRDT
-remain deliberately outside this milestone.
+activity and collaboration-safe local operation history. The final production
+pass adds ephemeral private-channel cursors; a CRDT remains outside this
+milestone.
 
 ---
 
@@ -313,7 +345,7 @@ TASK-017E is complete and merged. TASK-018 Performance Learning is hosted
 accepted and merged. TASK-019 Web Agency Integration is **DEFERRED** because the
 separate `ai-web-agency` implementation is not yet mature enough for a stable
 integration contract. It is not cancelled or renumbered. TASK-020 Ask Council
-is the current local implementation awaiting hosted acceptance.
+is implemented, accepted, and merged.
 
 ---
 

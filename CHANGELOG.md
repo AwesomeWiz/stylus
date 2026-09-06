@@ -4,6 +4,19 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Prepared Stylus for a future public release under Apache-2.0 with explicit
+  package metadata, trademark guidance, contribution terms, community and
+  support policies, security reporting guidance, and public-safe issue/PR
+  templates.
+- Added read-only, secret-free GitHub Actions checks for formatting, lint,
+  typechecking, tests and production builds plus a separate isolated local
+  Supabase migration, schema-lint, and pgTAP job; added weekly Dependabot
+  coverage for npm and GitHub Actions.
+- Documented the full current-tree/history secret audit, dependency-license and
+  asset-provenance reviews, self-hosting path, release recommendation, manual
+  GitHub security settings, and the publication checklist. Runtime behavior and
+  database migrations are unchanged.
+
 - Team-member last-sign-in timestamps now render after hydration in the current
   viewer's browser/system timezone, including daylight-saving and local date
   boundaries, while preserving the existing authorized server projection.

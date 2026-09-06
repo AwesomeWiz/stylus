@@ -2,6 +2,36 @@
 
 # Current
 
+## OPEN-SOURCE-001 — Open-source readiness
+
+Status: IMPLEMENTED / PUBLICATION GATES PENDING
+
+Apache-2.0 licensing and metadata, trademark guidance, contributor/community
+policies, issue and pull-request templates, CODEOWNERS, Dependabot, public-safe
+application CI, and an isolated local-Supabase database CI job are implemented.
+The README and source-of-truth documentation now describe the current product,
+self-hosting path, contribution flow, release policy, and Web Agency boundary.
+
+The tracked source tree and all reachable history were scanned with a
+checksum-verified Gitleaks 8.30.1 binary and independent high-signal searches;
+no secret or confidential-data finding requires remediation or history rewrite.
+Dependency-license and committed-asset reviews found no blocker for the current
+source distribution. No runtime source or migration changed.
+
+Publication remains blocked until the release-branch workflow, including its
+isolated Supabase migration/RLS/pgTAP job, completes successfully and a
+maintainer verifies the manual GitHub settings in
+`docs/OPEN_SOURCE_RELEASE.md`. Repository visibility remains private; no tag or
+release has been created.
+
+Fresh `npm ci`, repository formatting, lint, both workspace typechecks, 5 worker
+files / 32 tests, 165 web files / 933 tests, both production builds, and diff
+checks pass. `npm audit --audit-level=high` reports zero vulnerabilities.
+Supabase CLI 2.115.0 cannot start the local stack because this machine has no
+Docker/Podman, so hosted database CI acceptance remains mandatory.
+
+---
+
 ## Final Production Polish
 
 Status: FINAL DESIGN REFINEMENT VERIFIED / FINAL VISUAL QA READY

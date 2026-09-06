@@ -1,0 +1,86 @@
+name: Bug report
+description: Report a reproducible non-security problem in Stylus.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve Stylus.
+
+        **DO NOT INCLUDE SECRETS OR PRIVATE DATA.** Report vulnerabilities through the private process in `.github/SECURITY.md`, not here.
+  - type: input
+    id: version
+    attributes:
+      label: Stylus version or commit
+      description: Provide a tag or commit SHA.
+      placeholder: v0.5.0 or abc1234
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment type
+      options:
+        - Local development
+        - Self-hosted production
+        - Vercel and Supabase
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and operating system
+      description: Include versions where relevant; write “Not applicable” for server-only issues.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest repeatable sequence using fictional or sanitized data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: checkboxes
+    id: areas
+    attributes:
+      label: Affected areas
+      options:
+        - label: Authorization or permissions
+        - label: Organization/data isolation
+        - label: AI or model provider
+        - label: Windows worker or durable jobs
+        - label: External research
+        - label: Whiteboard Realtime collaboration
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      description: Remove tokens, credentials, IDs, email addresses, prompts, provider bodies, and private data.
+      render: shell
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or additional context
+      description: Use only fictional demo data and redact private information.
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed secrets and private data, and this is not a vulnerability disclosure.
+          required: true
