@@ -1,5 +1,30 @@
 # Stylus — Roadmap
 
+## Stylus V2 experience — redesign track
+
+Status: REDESIGN-001 COMPLETE / DOCUMENTATION VERIFIED / IMPLEMENTATION NOT STARTED
+
+- [x] Canonical product, visual and navigation direction specified
+- [x] All 30 current page routes and retained entrypoints mapped
+- [x] Boards V2 and immersive BoardShell specified with P0/P1/P2 priorities
+- [x] Source-based performance audit and future measurement plan specified
+- [ ] REDESIGN-002: shared shell/navigation/auth and foundational performance
+- [ ] REDESIGN-003: Home and Tasks
+- [ ] REDESIGN-004: Boards foundation
+- [ ] REDESIGN-005: Boards and Stylus integrations/collaboration
+- [ ] REDESIGN-006: Marketing shell and Creative Studio
+- [ ] REDESIGN-007: Research, Campaigns and secondary Marketing
+- [ ] REDESIGN-008: Settings and advanced surfaces
+- [ ] REDESIGN-009: profiling, responsive/NVDA/accessibility and final QA
+
+This is a specification milestone, not a shipped redesign. Follow-up tasks are
+not started. See [V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) for
+scope, dependency order, security invariants and acceptance. Earlier product
+milestones below remain historical; no existing feature or hosted QA requirement
+is removed. TASK-019 remains deferred.
+
+---
+
 ## Phase 0 — Foundation
 
 Status: COMPLETE

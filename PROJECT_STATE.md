@@ -1,10 +1,48 @@
 # Stylus — Project State
 
-Last Updated: 2026-09-05
+Last Updated: 2026-11-01
 
 ## Overall Status
 
-FINAL PRODUCTION DESIGN SYSTEM VERIFIED / FINAL VISUAL QA READY
+REDESIGN-001 COMPLETE / V2 DOCUMENTATION VERIFIED / IMPLEMENTATION NOT STARTED
+
+## REDESIGN-001 — V2 Product Experience Foundation
+
+Documentation-only work on `codex/redesign-001-v2-foundation`, isolated at
+`.worktrees/redesign-001-v2-foundation` from freshly fetched `origin/main`
+`5b7e76a0fe6a4e80f17e14c04b119a84b43668a9`. Unrelated source edits and supplied
+untracked design references in the original `main` checkout are preserved.
+
+The canonical [V2 specification](docs/STYLUS_V2_PRODUCT_EXPERIENCE.md) defines
+neutral cyan-led visuals, Home/Tasks/Boards/Marketing/Settings navigation,
+all 30 page routes, immersive BoardShell, startup board templates/integrations,
+workflow-first Studio and Settings consolidation. DESIGN_SYSTEM and UI_PATTERNS
+now describe V2 targets, not an assertion that those targets are implemented.
+ADR-040 supersedes ADR-039's default editorial section-color guidance only.
+
+Source audit confirms ordinary sidebar anchors, page-owned shells, six-dataset
+onboarding gates on routine Core routes and eager loading of every task comment.
+Auth/plugin request memoization and existing loading files qualify other
+hypotheses. Production timing and each mechanism's latency contribution remain
+unmeasured. All ten verdicts, P0/P1/P2 remediation and repeatable benchmarks are
+in the spec. No browser automation, application code, migrations, RLS, workflow,
+worker behavior, dependencies or existing functionality changed.
+
+Validation passes: scoped Prettier for all seven Markdown files, all 30 page
+routes plus three retained non-page entrypoints, 16 local Markdown links,
+38 required sections, ten performance verdicts, repository lint, worker/web
+typechecks and six focused existing web test files / 23 tests. Diff review and
+whitespace checks confirm documentation-only changes. No full suite, production
+build or database tests were run: they are not applicable to this prose-only
+change. An ignored worktree-local junction resolves the existing shared
+TypeScript config for checks; no dependency/package/lockfile changed. Do not
+reuse old verification counts below as evidence for this task.
+
+Unresolved: capture production before/after timing, run NVDA and visual responsive
+QA during implementation, confirm owner product/budget decisions listed in the
+spec, and keep all previous hosted QA limitations in force. The reference files
+are user-supplied untracked inputs in the original checkout; they are not staged
+or copied into this documentation branch. No runtime feature is declared complete.
 
 Stylus Marketing now includes Ask Council, a bounded conversational advisor
 that reads authorized company, research, Performance Learning and exact
@@ -17,17 +55,19 @@ derivation, memory or Web Agency behavior.
 
 ## Current Phase
 
-Phase 17 — Ask Council
+REDESIGN-001 — V2 Product Experience Foundation (specification)
 
-Status: FINAL UI REFINEMENT VERIFIED / FINAL VISUAL QA READY
+Status: DOCUMENTATION VERIFIED / IMPLEMENTATION PENDING
 
 ---
 
 ## Current Objective
 
-Perform final light/dark responsive visual QA for the completed production
-design system and high-distinction Whiteboard collaborator identities without
-altering accepted TASK-001 through TASK-020 workflows.
+REDESIGN-001 is complete as documentation only. Review the specification, then
+explicitly scope REDESIGN-002; it has not started. Capture its benchmark baseline
+before changing shell, navigation or data loading. The earlier production and
+TASK-001 through TASK-020 notes below are historical implementation/QA records,
+not V2 completion claims; existing manual/hosted acceptance obligations remain.
 
 ## Final Production Design Refinement
 

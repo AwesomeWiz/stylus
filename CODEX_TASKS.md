@@ -2,6 +2,53 @@
 
 # Current
 
+## REDESIGN-001 — Stylus V2 Product Experience Foundation
+
+Status: COMPLETE / DOCUMENTATION VERIFIED / IMPLEMENTATION NOT STARTED
+
+Scope is planning/specification only. Main agent only; no production code,
+database, dependency, worker or AI contract changes. Branch:
+`codex/redesign-001-v2-foundation`, worktree
+`.worktrees/redesign-001-v2-foundation`, baseline freshly fetched `origin/main`
+`5b7e76a0fe6a4e80f17e14c04b119a84b43668a9`.
+
+Deliverables: [canonical V2 experience](docs/STYLUS_V2_PRODUCT_EXPERIENCE.md),
+aligned DESIGN_SYSTEM/UI_PATTERNS, status/roadmap updates and ADR-040. The spec
+accounts for all 30 page routes, five distinct design references, BoardShell,
+Boards P0/P1/P2, existing workflow/security boundaries, all ten performance
+hypotheses and a measurement plan without invented timing.
+
+Acceptance: documentation-only diff, complete route/link inventory, scoped
+formatting and whitespace checks, relevant existing checks recorded accurately;
+commit only the seven task Markdown files. No merge/push or automatic 002.
+
+Verification passes: seven-file scoped Prettier, 30 page routes, three retained
+non-page entrypoints, 16 local links, 38 sections, ten hypothesis verdicts,
+repository lint, worker/web typechecks and six focused existing test files /
+23 tests. Diff/whitespace review passes; production source and database are
+unchanged. Full suite/build/database checks are not applicable to prose-only
+work. Production timing, NVDA and browser visual acceptance remain future
+implementation gates; no benchmark results are invented.
+
+### Follow-up redesign queue — specified, not started
+
+| Task | Scope | Gate |
+| --- | --- | --- |
+| REDESIGN-002 | Baseline measurement; shared V2 primitives; persistent workspace shell, Link navigation, five global entries with discoverable landing links; two-column auth; narrow setup gate, render-only context deduplication and loading feedback; remove inert search | Preserve all current URLs, setup/invitation/role/plugin checks; no new schema, search backend, task drawer, board mechanics or AI/business behavior |
+| REDESIGN-003 | Home attention/timezones; Tasks toolbar/views/right detail and lazy comments | Preserve lifecycle, deadlines, 14-day archive and authorization; initial list excludes comment bodies |
+| REDESIGN-004 | Boards foundation: immersive editor, toolbar/shapes, sections, images, selection/group/alignment/layers/lock, zoom/minimap and templates | Private assets, Realtime and local history intact; no Marketing-private Core imports |
+| REDESIGN-005 | Public native entity references/conversion, voting/reactions and comments refinement; selection-intelligence foundations | P0 integration before optional P1 breadth; new AI execution/storyboard scope requires explicit inclusion |
+| REDESIGN-006 | Marketing local shell, workflow Studio, advisory Ask Council and output/history hierarchy | TASK-015/016/020 calls/context/versions unchanged |
+| REDESIGN-007 | Research/Competitors, Campaigns and secondary Marketing including Performance/human briefs | Preserve exact evidence, immutable observations and scoped canonical relations |
+| REDESIGN-008 | Settings consolidation and advanced/internal presentation | Preserve member-read versus manager-mutation distinctions and old URLs |
+| REDESIGN-009 | Full performance profiling, responsive, keyboard/NVDA and release QA | Measured acceptance and all relevant verification, not speculative optimization |
+
+Exact boundaries, dependency adjustments and acceptance are in sections 37–38
+of the canonical spec. Existing task records below retain their historical
+statuses; duplicated older planned entries are not authorization to redo work.
+
+---
+
 ## Final Production Polish
 
 Status: FINAL DESIGN REFINEMENT VERIFIED / FINAL VISUAL QA READY

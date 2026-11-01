@@ -901,3 +901,37 @@ users, and reuses only after the palette is exhausted. User—not session—is t
 identity key, and avatar/cursor/label all consume the same assignment. This is
 presentation state only: Presence, Broadcast, RLS, throttling and persistence
 contracts are unchanged.
+
+## ADR-040 — Define a neutral V2 workspace and separate immersive Boards
+
+Status: SPECIFICATION DEFINED / IMPLEMENTATION PENDING (2026-11-01)
+
+REDESIGN-001 establishes [Stylus V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md)
+as the canonical redesign direction. It is documentation only; subsequent tasks
+require their own approved scope and verification. It supersedes only ADR-039's
+default editorial/pastel section-color guidance for future UI implementation.
+Canonical cyan, accessible action variants, real Home data and stable active-set
+collaborator identity remain intact. DESIGN_SYSTEM and UI_PATTERNS now define
+V2 targets rather than claim the application has changed.
+
+The global IA proposal is Home, Tasks, Boards, enabled Marketing and Settings.
+Local Marketing navigation contains Overview, Ideas, Studio, Research and
+Campaigns, with discoverable Performance, Competitors, Ask Council and human
+Creative Briefs paths. Settings retains current member read rights independently
+of manager-only mutations. Every existing URL remains initially; hiding a normal
+nav item never becomes authorization. The user-facing Boards name requires no
+SQL/table/route rename.
+
+Future workspace routes share a persistent authenticated shell; the board editor
+uses an immersive BoardShell outside that chrome with the same server-derived
+tenant boundary. Render-only request-scoped context deduplication must preserve
+fresh direct-entry/data/mutation checks and RLS. No cross-user cache is authorized.
+Performance causes are source-identified mechanisms, not measured latency claims.
+
+Boards stays Core. Native Marketing cards/conversions require documented public
+entity resolver/opener/action contracts with plugin and tenant checks; Core must
+not import Marketing-private modules. Cards reference canonical objects and exact
+artifact versions. Selected-content AI needs a separate bounded approved gateway
+workflow; neither selection nor a board insertion grants memory-domain access or
+promotes working data into Company Knowledge. Existing private Realtime, Storage,
+local operation history and TASK-015/016/017/018/020 contracts remain unchanged.
