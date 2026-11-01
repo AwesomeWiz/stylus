@@ -1,10 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export function Brand() {
+export function Brand({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <Link
-      className="flex h-16 items-center gap-2.5 px-4"
+      className={
+        collapsed
+          ? "flex h-12 shrink-0 items-center justify-center"
+          : "flex h-12 shrink-0 items-center gap-2.5 px-4"
+      }
       href="/"
       aria-label="Stylus home"
     >
@@ -16,7 +20,13 @@ export function Brand() {
         src="/brand/stylus-mark.png"
         width={32}
       />
-      <span className="text-sidebar-foreground text-[15px] font-semibold tracking-tight">
+      <span
+        className={
+          collapsed
+            ? "sr-only"
+            : "text-sidebar-foreground text-[15px] font-semibold tracking-tight"
+        }
+      >
         Stylus
       </span>
     </Link>

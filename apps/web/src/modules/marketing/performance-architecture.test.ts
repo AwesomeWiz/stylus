@@ -10,7 +10,9 @@ describe("TASK-018 architecture boundaries", () => {
   const actions = source("src/modules/marketing/performance-actions.ts");
   const algorithm = source("src/modules/marketing/performance-learning.ts");
   const server = source("src/modules/marketing/server/performance.ts");
-  const route = source("src/app/apps/marketing/performance/page.tsx");
+  const route = source(
+    "src/app/(workspace)/apps/marketing/performance/page.tsx",
+  );
   const workspace = source(
     "src/components/marketing/performance-workspace.tsx",
   );

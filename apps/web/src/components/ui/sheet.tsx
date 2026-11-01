@@ -8,15 +8,23 @@ interface SheetProps {
   children: ReactNode;
   trigger: ReactNode;
   title: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function Sheet({ children, trigger, title }: SheetProps) {
+export function Sheet({
+  children,
+  trigger,
+  title,
+  open,
+  onOpenChange,
+}: SheetProps) {
   return (
-    <Dialog.Root>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/35" />
-        <Dialog.Content className="bg-sidebar fixed inset-y-0 left-0 z-50 w-[min(19rem,88vw)] border-r shadow-xl focus:outline-none">
+        <Dialog.Content className="bg-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(19rem,88vw)] flex-col border-r shadow-sm focus:outline-none">
           <Dialog.Title className="sr-only">{title}</Dialog.Title>
           <Dialog.Description className="sr-only">
             Choose a destination in the Stylus workspace.

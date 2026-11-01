@@ -24,8 +24,8 @@ export default async function OrganizationSetupPage() {
           className="text-primary mt-0.5 size-4 shrink-0"
         />
         <p>
-          You will become the organization owner. Team invitations come in a
-          later phase.
+          You will become the organization owner. You can invite teammates from
+          Settings after company setup.
         </p>
       </div>
       <OrganizationSetupForm />

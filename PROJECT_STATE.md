@@ -4,7 +4,87 @@ Last Updated: 2026-11-01
 
 ## Overall Status
 
-REDESIGN-001 COMPLETE / V2 DOCUMENTATION VERIFIED / IMPLEMENTATION NOT STARTED
+REDESIGN-002 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-002 baseline and scope
+
+Starting HEAD: accepted REDESIGN-001 commit
+`0deddae882c589f3e26be6e2af6017bbca273e83`, descendant of freshly fetched
+`origin/main` `5b7e76a`. Implementation is isolated in
+`.worktrees/redesign-002-shell-auth-performance` on
+`codex/redesign-002-shell-auth-performance`; original unrelated changes remain.
+
+Before implementation, source confirms sidebar document anchors, individually
+owned page shells, 256px sidebar/64px topbar, inert global search, six parallel
+onboarding datasets for routine routing, duplicate membership/org reads and two
+notification queries per page render. Plugin state and Auth are already
+request-memoized. Source-derived common Core-page overhead is 14 DB/RPC calls
+before feature data (3 context, 2 full-loader membership/org, 6 onboarding,
+2 notifications, 1 plugin); selected-cookie fallback may add a membership call.
+This is a structural call inventory, not a measured trace or latency benchmark.
+Marketing tab links already use client routing but recreate their shell.
+
+No connected browser tool or authenticated browser session is available for
+reliable Home -> Tasks, Tasks -> Marketing, Marketing -> Studio or Settings
+timings/request traces. Record structural before/after evidence and automated
+contracts without inventing measurements. Preserve existing incomplete-setup
+Marketing/Workers behavior and defer Home/Tasks content, BoardShell/mechanics,
+Marketing workflows and deep Settings consolidation.
+
+### REDESIGN-002 implementation and verification
+
+The `(workspace)` route group owns one AppShell at unchanged URLs. Each page
+keeps server-derived context and applicable setup/plugin/role checks; ordinary
+layouts do not grant mutation authority. The existing board editor remains on
+its page-owned AppShell until REDESIGN-004. Workers/Marketing retain their
+existing incomplete-onboarding behavior rather than acquiring a new setup gate.
+
+The shell uses serializable navigation icon IDs, a neutral 224px expanded/56px
+collapsed sidebar, 48px opaque topbar, Next Link pending feedback and content
+skeletons. Collapse is device-local, keyboard-labeled and works without Storage
+through a session fallback. Settings and local Marketing/Apps links preserve
+all moved destinations. The inert search field is gone. Auth retains its action,
+validation, confirmation and safe return contracts with a two-column desktop
+showcase and form-first layout below 1200px.
+
+Selected-membership resolution now reads one membership plus one organization,
+instead of selecting membership twice. Read-only onboarding/company composition
+reuses that request context, while explicit membership authorization stays
+uncached. Routine gates read only `completed_at, current_step`; full loaders
+remain for Company/Memory/editing. Layout owns initial notifications/plugin reads
+in parallel. Notification summaries refresh on opening through a fresh
+organization/recipient-derived action; focus refresh updates shell metadata.
+
+Structural common Core overhead is now 6 queries on a full workspace render
+(2 context, 1 setup, 2 notification, 1 plugin), or 3 on a content-only transition
+that reuses the layout, plus feature data. The baseline was 14. These are source
+counts, not observed production requests or latency claims; cookie fallback may
+add a membership query. Task comment loading is deliberately unchanged.
+
+Verification passes the full web suite (174 files / 969 tests), repository lint,
+worker/web typechecks and standard worker/web production builds. After aligning
+the shell/auth desktop breakpoint to the specified 1200px, the affected eight
+UI tests, targeted lint and web production build pass again. Scoped formatting,
+route contracts, diff/whitespace review and secret/local-artifact checks pass.
+
+Headless Chrome checks against the built public auth routes pass 28 cases:
+login/signup, light/dark, 320/390/430/768/1199/1200/1440px. Checks cover overflow,
+showcase visibility, form bounds, one main heading, autocomplete and real Tab
+order through the inputs/submit. Reduced-motion media is honored and no uncaught
+client errors were observed. Desktop/mobile screenshots were inspected. This is
+not manual NVDA testing or authenticated workspace performance acceptance.
+
+The isolated worktree needed a local install of the unchanged lockfile for
+Turbopack's workspace-root resolution; no dependency/version/lockfile changed.
+Build/browser QA uses non-secret verification public configuration, never a
+copied production environment. Temporary browser/server processes were stopped
+and generated QA files remain ignored. Worker tests were not rerun because no
+worker/shared runtime code changed; no DB migration tests apply without DB changes.
+
+Remaining acceptance: authenticated desktop/tablet/mobile shell transitions,
+real before/after latency/request traces and manual NVDA verification in the
+target environment. Do not claim measured speedups. Existing board/editor and
+feature-page content stays deliberately unchanged for later redesign phases.
 
 ## REDESIGN-001 — V2 Product Experience Foundation
 
@@ -55,17 +135,19 @@ derivation, memory or Web Agency behavior.
 
 ## Current Phase
 
-REDESIGN-001 — V2 Product Experience Foundation (specification)
+REDESIGN-002 — Workspace Shell / Authentication Foundation
 
-Status: DOCUMENTATION VERIFIED / IMPLEMENTATION PENDING
+Status: COMPLETE / REQUIRED LOCAL CHECKS PASS
 
 ---
 
 ## Current Objective
 
-REDESIGN-001 is complete as documentation only. Review the specification, then
-explicitly scope REDESIGN-002; it has not started. Capture its benchmark baseline
-before changing shell, navigation or data loading. The earlier production and
+Review REDESIGN-002 and its retained manual acceptance limitations; do not merge
+or push automatically. REDESIGN-003 is not started. Its exact next scope is Home
+attention hierarchy/local-time consistency and Tasks toolbar/views/right detail
+with lazy selected-task comments and bounded loading, preserving reminder,
+completion/archive and authorization contracts. The earlier production and
 TASK-001 through TASK-020 notes below are historical implementation/QA records,
 not V2 completion claims; existing manual/hosted acceptance obligations remain.
 

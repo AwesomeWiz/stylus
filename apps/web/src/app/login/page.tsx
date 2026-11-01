@@ -15,6 +15,7 @@ export default async function LoginPage({
 
   return (
     <AuthShell
+      showcase
       description="Use your work email and password to continue to your workspace."
       title="Sign in to Stylus"
     >

@@ -85,6 +85,37 @@ Supabase Auth sessions use `@supabase/ssr` and HTTP cookies.
 
 # Organization Boundary
 
+## V2 workspace shell (REDESIGN-002)
+
+An App Router `(workspace)` route group supplies a persistent authenticated
+layout without changing public URLs. The root layout owns document/theme only;
+auth/setup/onboarding/invitations stay outside the workspace. The board editor
+also stays outside, using its existing page-owned AppShell until REDESIGN-004.
+
+The workspace layout resolves current identity/membership, then reads initial
+notification and plugin state in parallel. The server registry projects plain
+navigation icon IDs into client chrome; provider/job/plugin implementation code
+does not enter that client boundary. Pages retain their own request-scoped
+context and direct plugin/setup guards. Marketing and Workers retain their
+existing incomplete-onboarding access; Core gates use the narrow progress query.
+
+`getCurrentOrganizationContext` validates the selected authenticated membership
+row directly rather than reselecting it before loading organization metadata.
+`getOrganizationContextForRead` reuses that verified result inside the same React
+request for full Company/onboarding composition. Explicit
+`requireOrganizationMembership` is uncached; mutation requests resolve identity
+and current organization independently and remain protected by RLS. No global,
+cross-request or cross-user private-data cache is introduced.
+
+Notification summaries can refresh on opening through an action that accepts no
+browser organization/recipient IDs. The response includes its server-derived
+organization so the client rejects a mismatched shell context. Window focus
+refreshes shell metadata; existing action invalidation remains. Device-local
+collapse state has no database or tenant meaning. The layout key includes user,
+organization and role to reset private client chrome when server identity changes.
+
+## Tenant enforcement
+
 Every authenticated application context resolves an explicit organization only
 after validating the current user's membership. Client-supplied organization
 identifiers are UUID-validated and checked against membership server-side.

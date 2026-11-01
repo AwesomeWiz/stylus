@@ -2,6 +2,8 @@
 
 import { CircleCheck, CircleOff } from "lucide-react";
 import { useActionState } from "react";
+import Link from "next/link";
+import type { Route } from "next";
 
 import { Button } from "@/components/ui/button";
 import { PluginIcon } from "@/core/plugins/icons";
@@ -57,6 +59,14 @@ function PluginRow({
           <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
             {manifest.description}
           </p>
+          {enabled && manifest.navigation[0] ? (
+            <Link
+              className="text-primary mt-2 inline-flex min-h-10 items-center text-sm font-medium underline-offset-4 hover:underline"
+              href={manifest.navigation[0].route as Route}
+            >
+              Open {manifest.name}
+            </Link>
+          ) : null}
           <p className="text-muted-foreground mt-2 text-xs">
             {manifest.capabilities.length
               ? `${manifest.capabilities.length} ${manifest.capabilities.length === 1 ? "capability" : "capabilities"}: ${manifest.capabilities.join(", ")}`

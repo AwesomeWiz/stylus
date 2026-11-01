@@ -2,6 +2,50 @@
 
 # Current
 
+## REDESIGN-002 — App Shell, Navigation, Auth and Foundational Performance
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-002-shell-auth-performance`, isolated worktree
+`.worktrees/redesign-002-shell-auth-performance`, starting at accepted spec commit
+`0deddae882c589f3e26be6e2af6017bbca273e83` (includes fetched `origin/main`).
+
+The `(workspace)` route group owns one persistent AppShell without changing
+URLs. Pages retain server context/role/plugin checks. Sidebar uses Next Link,
+five-destination V2 IA, a device-local collapse preference and accessible names/
+tooltips. The topbar is compact and opaque; inert global search is removed.
+Settings/Marketing/Apps supply paths to every relocated destination. Login/signup
+have a truthful desktop showcase and form-first smaller-screen composition.
+
+Routine Core gates read only onboarding completion/current step; full company
+loaders remain for actual consumers and direct onboarding edits. The selected
+membership is validated without reselecting it; read-only composition reuses
+React request context. Explicit membership authorization remains uncached and
+mutations still resolve server context per request. Layout owns initial plugin
+and notification reads; summaries refresh through a tenant/recipient-derived
+read action when opened and shell metadata refreshes on window focus.
+
+The board editor remains outside the workspace route group on its existing
+AppShell pending REDESIGN-004. Marketing/Workers retain their existing
+incomplete-onboarding access behavior. No Home/Task content, task detail/comments,
+board mechanics, AI contract, worker, schema or RLS changes are included.
+
+Verification passes: full web suite 174 files / 969 tests, repository lint,
+worker/web typechecks, standard worker/web production builds, scoped formatting,
+route/diff checks and secret/local-artifact review. The explicit 1200px desktop
+breakpoint is rechecked with eight affected UI tests, targeted lint and a final
+web production build. Headless Chrome passes 28 public-auth cases across both
+themes and 320/390/430/768/1199/1200/1440px, including real Tab order, form bounds,
+overflow, heading/autocomplete semantics and reduced-motion preference. No
+uncaught browser errors occurred; desktop/mobile screenshots were inspected.
+
+No dependency/lockfile, worker/shared runtime, DB, RLS or AI contract changed.
+Worker tests/DB migration tests are not applicable. Required next manual gates
+are signed-in shell transition/responsive acceptance, production request/latency
+traces and NVDA; they are not claimed as performed. No merge/push or automatic 003.
+
+---
+
 ## REDESIGN-001 — Stylus V2 Product Experience Foundation
 
 Status: COMPLETE / DOCUMENTATION VERIFIED / IMPLEMENTATION NOT STARTED
@@ -30,7 +74,7 @@ unchanged. Full suite/build/database checks are not applicable to prose-only
 work. Production timing, NVDA and browser visual acceptance remain future
 implementation gates; no benchmark results are invented.
 
-### Follow-up redesign queue — specified, not started
+### Follow-up redesign queue — 002 complete; later tasks not started
 
 | Task | Scope | Gate |
 | --- | --- | --- |

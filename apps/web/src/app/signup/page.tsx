@@ -15,6 +15,7 @@ export default async function SignupPage({
 
   return (
     <AuthShell
+      showcase
       description="Create your account, then set up the organization your team will share."
       title="Create your account"
     >

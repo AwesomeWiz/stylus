@@ -1,5 +1,4 @@
 import { createPluginRegistry, definePlugin } from "@/core/plugins/public";
-import { getPluginIcon } from "@/core/plugins/icons";
 import {
   coreNavigationGroups,
   type NavigationGroup,
@@ -27,16 +26,22 @@ export function getApplicationNavigation(
 ): NavigationGroup[] {
   const pluginItems = builtInPluginRegistry
     .getNavigation(enabledPluginIds)
+    .filter(
+      (item) =>
+        item.route === `/apps/${item.pluginId}` &&
+        builtInPluginRegistry.get(item.pluginId)?.manifest.category !==
+          "development",
+    )
     .map((item) => ({
       href: item.route,
-      icon: getPluginIcon(item.icon),
-      label: item.label,
+      icon: item.icon,
+      label: builtInPluginRegistry.get(item.pluginId)!.manifest.name,
     }));
-  return pluginItems.length
-    ? [
-        ...coreNavigationGroups.slice(0, 1),
-        { items: pluginItems, label: "Apps" },
-        ...coreNavigationGroups.slice(1),
-      ]
-    : coreNavigationGroups;
+  return [
+    {
+      ...coreNavigationGroups[0]!,
+      items: [...coreNavigationGroups[0]!.items, ...pluginItems],
+    },
+    ...coreNavigationGroups.slice(1),
+  ];
 }

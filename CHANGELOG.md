@@ -4,6 +4,24 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Established the V2 workspace foundation: a persistent authenticated layout,
+  neutral 224px/56px collapsible sidebar, compact 48px topbar, Home/Tasks/Boards/
+  Marketing navigation and a Settings utility entry. Sidebar collapse is local
+  to the device; the mobile navigation drawer retains keyboard focus handling.
+- Replaced sidebar document links with Next client navigation, added pending
+  link feedback/content skeletons and a skip link, and removed inert global
+  search. Existing URLs, query state, account controls and notifications remain.
+- Added Settings links to relocated company/team/knowledge/AI/apps/workers/jobs
+  routes, five local Marketing sections with secondary destinations, and enabled
+  app entry links including the development fixture.
+- Added restrained desktop login/signup storytelling alongside existing forms;
+  smaller screens keep the form first. Authentication, confirmation, validation
+  and invitation return behavior are preserved.
+- Replaced broad routine onboarding gates with a completion/current-step read,
+  removed a duplicate selected-membership read and reused request-scoped context
+  for read-only company composition. Mutations/direct data boundaries retain
+  server authorization and RLS; notification summaries refresh on demand.
+
 - Team-member last-sign-in timestamps now render after hydration in the current
   viewer's browser/system timezone, including daylight-saving and local date
   boundaries, while preserving the existing authorized server projection.

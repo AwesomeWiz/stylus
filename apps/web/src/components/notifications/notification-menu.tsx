@@ -1,7 +1,9 @@
 "use client";
 
 import { Bell, CheckCheck, Circle } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { refreshNotificationSummaryAction } from "@/modules/notifications/summary-action";
 
 import type { NotificationSummary } from "@/modules/notifications/server/data";
 import {
@@ -16,17 +18,50 @@ function notificationTime(value: string) {
   }).format(new Date(value));
 }
 
-export function NotificationMenu({ items, unreadCount }: NotificationSummary) {
+export function NotificationMenu({
+  items: initialItems,
+  unreadCount: initialUnreadCount,
+  organizationId,
+}: NotificationSummary & { organizationId?: string }) {
   const [open, setOpen] = useState(false);
+  const [{ items, unreadCount }, setSummary] = useState({
+    items: initialItems,
+    unreadCount: initialUnreadCount,
+  });
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState(false);
+  const router = useRouter();
+  function refresh() {
+    if (!organizationId) return;
+    setError(false);
+    startTransition(async () => {
+      try {
+        const result = await refreshNotificationSummaryAction();
+        if (result.organizationId !== organizationId) {
+          setSummary({ items: [], unreadCount: 0 });
+          setOpen(false);
+          router.refresh();
+          return;
+        }
+        setSummary(result.summary);
+      } catch {
+        setSummary({ items: [], unreadCount: 0 });
+        setError(true);
+      }
+    });
+  }
   return (
     <div className="relative">
       <button
         aria-controls="notification-popover"
         aria-expanded={open}
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
         aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
         className="text-muted-foreground hover:bg-muted hover:text-foreground relative flex size-9 min-h-9 items-center justify-center rounded-md"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          if (!open) refresh();
+          setOpen((current) => !current);
+        }}
         type="button"
       >
         <Bell aria-hidden="true" className="size-[18px]" />
@@ -60,6 +95,26 @@ export function NotificationMenu({ items, unreadCount }: NotificationSummary) {
               </form>
             ) : null}
           </div>
+          {pending ? (
+            <p
+              role="status"
+              className="text-muted-foreground px-3 py-2 text-xs"
+            >
+              Refreshing notifications…
+            </p>
+          ) : null}
+          {error ? (
+            <p role="status" className="px-3 py-2 text-xs">
+              Notifications could not refresh.{" "}
+              <button
+                onClick={refresh}
+                type="button"
+                className="min-h-10 underline"
+              >
+                Retry
+              </button>
+            </p>
+          ) : null}
           {items.length ? (
             <ul className="max-h-96 overflow-y-auto">
               {items.map((notification) => (
