@@ -4,14 +4,15 @@ import { Check, Circle, Clock3, UserRound } from "lucide-react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
-import type { TaskMember, TaskRow } from "@/lib/supabase/database.types";
+import type { TaskMember } from "@/lib/supabase/database.types";
+import type { TaskListItem } from "@/modules/tasks/list";
+import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
 import { cn } from "@/lib/utils";
-import { priorityVisual } from "@/components/ui/semantic-visuals";
 import { setTaskCompletionAction } from "@/modules/tasks/actions";
 import { isOverdue } from "@/modules/tasks/filters";
 import { initialTaskActionState } from "@/modules/tasks/schemas";
 
-import { formatTaskDate, taskLabel, taskMemberName } from "./presentation";
+import { taskLabel, taskMemberName } from "./presentation";
 
 function CompletionButton({
   completed,
@@ -25,7 +26,7 @@ function CompletionButton({
     <button
       aria-label={completed ? `Reopen ${title}` : `Complete ${title}`}
       className={cn(
-        "hover:bg-muted inline-flex size-8 items-center justify-center rounded-md disabled:pointer-events-none disabled:opacity-50",
+        "hover:bg-muted inline-flex size-11 items-center justify-center rounded-md disabled:pointer-events-none disabled:opacity-50",
         completed ? "text-success" : "text-muted-foreground",
       )}
       disabled={pending}
@@ -42,7 +43,7 @@ function CompletionButton({
   );
 }
 
-function CompletionControl({ task }: { task: TaskRow }) {
+function CompletionControl({ task }: { task: TaskListItem }) {
   const [state, action] = useActionState(
     setTaskCompletionAction,
     initialTaskActionState,
@@ -68,65 +69,80 @@ export function TaskRowItem({
   now,
   onOpen,
   task,
+  selected,
 }: {
   canMutate: boolean;
   members: TaskMember[];
   now: Date;
   onOpen: () => void;
-  task: TaskRow;
+  task: TaskListItem;
+  selected: boolean;
 }) {
   const overdue = isOverdue(task, now);
-  const priority = priorityVisual(task.priority);
   return (
-    <li className="hover:bg-muted/45 flex min-w-0 items-start gap-2 border-b px-2 py-3 last:border-b-0 sm:items-center sm:px-3">
+    <li
+      className={cn(
+        "hover:bg-muted/45 flex min-w-0 items-start gap-1 border-b py-1.5 last:border-b-0",
+        selected && "bg-primary/5",
+      )}
+    >
       {canMutate && task.status !== "CANCELLED" ? (
         <CompletionControl task={task} />
       ) : (
-        <span className="inline-flex size-8 shrink-0 items-center justify-center">
+        <span className="inline-flex size-11 shrink-0 items-center justify-center">
           <Circle aria-hidden="true" className="text-muted-foreground size-5" />
         </span>
       )}
       <button
-        className="min-w-0 flex-1 text-left"
+        aria-current={selected ? "true" : undefined}
+        aria-haspopup="dialog"
+        className="flex min-h-11 min-w-0 flex-1 flex-col justify-center gap-1.5 py-1 pr-2 text-left"
+        data-task-open={task.id}
         onClick={onOpen}
         type="button"
       >
         <span
           className={cn(
-            "block truncate text-sm font-medium",
-            task.status === "COMPLETED" && "text-muted-foreground line-through",
+            "block max-w-full truncate text-sm font-medium",
+            task.status === "COMPLETED" && "line-through",
           )}
         >
           {task.title}
         </span>
-        <span className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:hidden">
-          <span>{taskMemberName(members, task.assignee_id)}</span>
-          {task.due_at ? <span>{formatTaskDate(task.due_at)}</span> : null}
+        <span className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+          <span className="inline-flex items-center gap-1">
+            <UserRound aria-hidden="true" className="size-3" />
+            {taskMemberName(members, task.assignee_id)}
+          </span>
+          <span>{taskLabel(task.status)}</span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1",
+              overdue && "text-destructive font-medium",
+            )}
+          >
+            <Clock3 aria-hidden="true" className="size-3 shrink-0" />
+            {overdue ? "Overdue · " : ""}
+            {task.due_at ? (
+              <ViewerLocalDateTime value={task.due_at} />
+            ) : task.scheduled_at ? (
+              <>
+                Scheduled · <ViewerLocalDateTime value={task.scheduled_at} />
+              </>
+            ) : (
+              "No deadline"
+            )}
+          </span>
+          <span
+            className={cn(
+              (task.priority === "HIGH" || task.priority === "URGENT") &&
+                "text-foreground font-medium",
+            )}
+          >
+            {taskLabel(task.priority)} priority
+          </span>
         </span>
       </button>
-      <span className="text-muted-foreground hidden w-36 items-center gap-1.5 truncate text-xs sm:flex">
-        <UserRound aria-hidden="true" className="size-3.5 shrink-0" />
-        {taskMemberName(members, task.assignee_id)}
-      </span>
-      <span
-        className={cn(
-          "hidden w-40 items-center gap-1.5 text-xs md:flex",
-          overdue ? "text-destructive font-medium" : "text-muted-foreground",
-        )}
-      >
-        <Clock3 aria-hidden="true" className="size-3.5" />
-        {task.due_at ? formatTaskDate(task.due_at) : "No deadline"}
-      </span>
-      <span
-        className={cn(
-          "hidden w-20 rounded-sm px-1.5 py-0.5 text-center text-xs font-medium lg:block",
-          priority
-            ? [priority.surface, priority.text]
-            : "bg-muted text-muted-foreground",
-        )}
-      >
-        {taskLabel(task.priority)}
-      </span>
     </li>
   );
 }

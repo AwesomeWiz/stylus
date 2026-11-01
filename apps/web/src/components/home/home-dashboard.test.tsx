@@ -58,4 +58,65 @@ describe("HomeDashboard", () => {
       screen.getByRole("link", { name: /Review tasks/ }),
     ).toBeInTheDocument();
   });
+
+  it("omits Marketing when disabled or enabled without meaningful records", () => {
+    const { rerender } = render(<HomeDashboard {...props} />);
+    expect(screen.queryByText("Continue in Marketing")).not.toBeInTheDocument();
+    rerender(
+      <HomeDashboard
+        {...props}
+        marketing={{
+          activeCampaigns: 0,
+          briefCount: 0,
+          competitorCount: 2,
+          ideaCounts: { IDEA: 0, DRAFT: 0, READY: 0 },
+          recentBriefs: [],
+          recentResearch: [],
+        }}
+      />,
+    );
+    expect(screen.queryByText("Continue in Marketing")).not.toBeInTheDocument();
+  });
+
+  it("shows actual meaningful Marketing work and the activity route", () => {
+    render(
+      <HomeDashboard
+        {...props}
+        marketing={{
+          activeCampaigns: 1,
+          briefCount: 0,
+          competitorCount: 0,
+          ideaCounts: { IDEA: 0, DRAFT: 0, READY: 2 },
+          recentBriefs: [],
+          recentResearch: [],
+        }}
+      />,
+    );
+    expect(
+      screen.getByRole("link", { name: /Ideas ready to develop/ }),
+    ).toHaveAttribute("href", "/apps/marketing/reel-ideas");
+    expect(
+      screen.getByRole("link", { name: "View all activity" }),
+    ).toHaveAttribute("href", "/activity");
+  });
+
+  it("shows a proportionate empty state with no feature launcher grid", () => {
+    render(<HomeDashboard {...props} tasks={[]} />);
+    expect(
+      screen.getByText(/No active work needs attention/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Quick actions")).not.toBeInTheDocument();
+    expect(screen.queryByText("Team pulse")).not.toBeInTheDocument();
+  });
+
+  it("opens canonical task selection with hydration-safe viewer-local time", () => {
+    render(<HomeDashboard {...props} />);
+    expect(
+      screen.getByRole("link", { name: /Approve launch story/ }),
+    ).toHaveAttribute("href", "/tasks?view=all&task=task-1");
+    expect(document.querySelector("time")?.getAttribute("datetime")).toBe(
+      task.due_at,
+    );
+    expect(screen.getByText("Due soon")).toBeInTheDocument();
+  });
 });

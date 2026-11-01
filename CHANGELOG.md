@@ -4,6 +4,17 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Replaced Home's pastel dashboard and shortcut grid with a prioritized,
+  deduplicated attention list, meaningful Marketing continuations and recent
+  activity. Deadlines/activity use hydration-safe viewer-local time.
+- Refined Tasks with primary/More views, progressive filters, removable active
+  filters and compact rows with explicit status, ownership, due time and priority.
+- Added URL-preserving right-side task detail: nonmodal on desktop, overlay on
+  tablet and full-screen on mobile, with keyboard return to the list.
+- Removed organization-wide comment bodies from the initial Tasks payload.
+  Authorized direct detail and discussions load independently, with bounded
+  comment batches, earlier-page recovery, local retry and stale-response guards.
+
 - Established the V2 workspace foundation: a persistent authenticated layout,
   neutral 224px/56px collapsible sidebar, compact 48px topbar, Home/Tasks/Boards/
   Marketing navigation and a Settings utility entry. Sidebar collapse is local

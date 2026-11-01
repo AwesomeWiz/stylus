@@ -935,3 +935,26 @@ artifact versions. Selected-content AI needs a separate bounded approved gateway
 workflow; neither selection nor a board insertion grants memory-domain access or
 promotes working data into Company Knowledge. Existing private Realtime, Storage,
 local operation history and TASK-015/016/017/018/020 contracts remain unchanged.
+
+## ADR-041 — Separate Task list, selected detail and discussion reads
+
+Date: 2026-11-01. Status: Accepted for REDESIGN-003.
+
+Initial Tasks data is a summary projection and member directory, with no comment
+bodies. Task selection uses URL query state and native App Router-compatible
+history so opening/closing detail retains list context without a full list read.
+Direct selection never relies on membership in the visible filtered array.
+
+Read actions validate expected organization/task UUIDs and freshly resolve server
+context, then enforce explicit organization/task predicates under existing RLS.
+Comment batches recheck task availability, display at most 50 records and use a
+timestamp/ID keyset cursor for earlier records. Keyed client boundaries and active
+request lifecycles prevent stale responses from crossing selections.
+
+The total summary list stays complete for existing client filtering, archive and
+deadline semantics, using deterministic ID-keyset transport batches of 1,000.
+Product pagination/filtering may be introduced together in a later bounded task;
+silently presenting a first-N list is rejected. Home uses independent bounded
+priority arms because its explicitly six-item attention surface needs no complete
+history. These changes do not add persistence, change task business rules or
+promote working content into Company Knowledge.

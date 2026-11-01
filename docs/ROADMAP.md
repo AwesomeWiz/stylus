@@ -2,14 +2,14 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-002 COMPLETE / REQUIRED LOCAL CHECKS PASS
+Status: REDESIGN-003 COMPLETE / REQUIRED LOCAL CHECKS PASS
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
 - [x] Boards V2 and immersive BoardShell specified with P0/P1/P2 priorities
 - [x] Source-based performance audit and future measurement plan specified
 - [x] REDESIGN-002: shared shell/navigation/auth and foundational performance
-- [ ] REDESIGN-003: Home and Tasks
+- [x] REDESIGN-003: Home and Tasks
 - [ ] REDESIGN-004: Boards foundation
 - [ ] REDESIGN-005: Boards and Stylus integrations/collaboration
 - [ ] REDESIGN-006: Marketing shell and Creative Studio
@@ -18,8 +18,12 @@ Status: REDESIGN-002 COMPLETE / REQUIRED LOCAL CHECKS PASS
 - [ ] REDESIGN-009: profiling, responsive/NVDA/accessibility and final QA
 
 REDESIGN-001 is the completed specification milestone; REDESIGN-002 implements
-only the verified shell/auth/performance foundation. Signed-in transition timing
-and manual NVDA remain target-environment acceptance, not measured local claims. Later
+the verified shell/auth/performance foundation. REDESIGN-003 adds attention-led
+Home, viewer-local timestamps, URL-preserving responsive Task detail and lazy,
+authorized discussions with zero initial organization comment bodies. Complete
+summary-list search/filtering remains; total-list product pagination is deferred.
+Signed-in transition timing and manual NVDA remain target-environment acceptance,
+not measured local claims. Later
 follow-up tasks are not started. See [V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) for
 scope, dependency order, security invariants and acceptance. Earlier product
 milestones below remain historical; no existing feature or hosted QA requirement

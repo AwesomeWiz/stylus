@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef } from "react";
 
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
 import type {
   TaskCommentRow,
   TaskMember,
@@ -13,17 +14,26 @@ import type {
 import { addTaskCommentAction } from "@/modules/tasks/actions";
 import { initialTaskActionState } from "@/modules/tasks/schemas";
 
-import { formatTaskDate, taskLabel, taskMemberName } from "./presentation";
+import { taskLabel, taskMemberName } from "./presentation";
 
-function CommentComposer({ taskId }: { taskId: string }) {
+function CommentComposer({
+  taskId,
+  onPosted,
+}: {
+  taskId: string;
+  onPosted: () => void;
+}) {
   const [state, action] = useActionState(
     addTaskCommentAction,
     initialTaskActionState,
   );
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
-    if (state.status === "success") formRef.current?.reset();
-  }, [state.status]);
+    if (state.status === "success") {
+      formRef.current?.reset();
+      onPosted();
+    }
+  }, [state, onPosted]);
   return (
     <form action={action} className="mt-4" ref={formRef}>
       <input name="taskId" type="hidden" value={taskId} />
@@ -53,11 +63,13 @@ export function TaskDiscussion({
   comments,
   members,
   taskId,
+  onPosted,
 }: {
   canMutate: boolean;
   comments: TaskCommentRow[];
   members: TaskMember[];
   taskId: string;
+  onPosted: () => void;
 }) {
   const taskComments = comments.filter((comment) => comment.task_id === taskId);
   return (
@@ -72,9 +84,11 @@ export function TaskDiscussion({
               <p className="font-medium">
                 {taskMemberName(members, comment.created_by)}
               </p>
-              <p className="mt-0.5 whitespace-pre-wrap">{comment.body}</p>
+              <p className="mt-0.5 [overflow-wrap:anywhere] whitespace-pre-wrap">
+                {comment.body}
+              </p>
               <p className="text-muted-foreground mt-1 text-xs">
-                {formatTaskDate(comment.created_at)}
+                <ViewerLocalDateTime value={comment.created_at} />
               </p>
             </li>
           ))}
@@ -82,7 +96,9 @@ export function TaskDiscussion({
       ) : (
         <p className="text-muted-foreground mt-2 text-sm">No comments yet.</p>
       )}
-      {canMutate ? <CommentComposer taskId={taskId} /> : null}
+      {canMutate ? (
+        <CommentComposer onPosted={onPosted} taskId={taskId} />
+      ) : null}
     </section>
   );
 }
@@ -98,7 +114,7 @@ export function ReadOnlyTask({
     <dl className="grid gap-4 p-5 text-sm sm:grid-cols-2">
       <div className="sm:col-span-2">
         <dt className="text-muted-foreground text-xs">Description</dt>
-        <dd className="mt-1 whitespace-pre-wrap">
+        <dd className="mt-1 [overflow-wrap:anywhere] whitespace-pre-wrap">
           {task.description || "No description"}
         </dd>
       </div>
@@ -117,7 +133,21 @@ export function ReadOnlyTask({
       <div>
         <dt className="text-muted-foreground text-xs">Due</dt>
         <dd className="mt-1">
-          {task.due_at ? formatTaskDate(task.due_at) : "No deadline"}
+          {task.due_at ? (
+            <ViewerLocalDateTime value={task.due_at} />
+          ) : (
+            "No deadline"
+          )}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-muted-foreground text-xs">Scheduled</dt>
+        <dd className="mt-1">
+          {task.scheduled_at ? (
+            <ViewerLocalDateTime value={task.scheduled_at} />
+          ) : (
+            "Not scheduled"
+          )}
         </dd>
       </div>
     </dl>

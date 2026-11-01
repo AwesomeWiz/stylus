@@ -1,49 +1,29 @@
-import {
-  ArrowRight,
-  CalendarClock,
-  CheckCircle2,
-  CircleAlert,
-  Lightbulb,
-  MessageCircleQuestion,
-  Plus,
-  Search,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 
 import { ActivityList } from "@/components/activity/activity-list";
-import { PageHeader } from "@/components/ui/page-header";
+import { buttonVariants } from "@/components/ui/button";
+import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
+import { taskMemberName } from "@/components/tasks/presentation";
 import type {
   ActivityEventRow,
   TaskMember,
-  TaskRow,
 } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
+import { attentionReason, homeAttention } from "@/modules/home/attention";
 import type { getMarketingOverview } from "@/modules/marketing/server/data";
-
-type MarketingOverview = Awaited<ReturnType<typeof getMarketingOverview>>;
+import type { TaskListItem } from "@/modules/tasks/list";
 
 interface HomeDashboardProps {
   activity: ActivityEventRow[];
   canMutate: boolean;
   currentUserId: string;
-  marketing: MarketingOverview | null;
+  marketing: Awaited<ReturnType<typeof getMarketingOverview>> | null;
   members: TaskMember[];
   nowIso: string;
   organizationName: string;
-  tasks: TaskRow[];
-}
-
-const activeStatuses = new Set(["TODO", "IN_PROGRESS"]);
-
-function formatDeadline(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  }).format(new Date(value));
+  tasks: TaskListItem[];
 }
 
 export function HomeDashboard({
@@ -56,329 +36,184 @@ export function HomeDashboard({
   organizationName,
   tasks,
 }: HomeDashboardProps) {
-  const now = Date.parse(nowIso);
-  const next48Hours = now + 48 * 60 * 60 * 1_000;
-  const active = tasks.filter((task) => activeStatuses.has(task.status));
-  const overdue = active.filter(
-    (task) => task.due_at && Date.parse(task.due_at) < now,
-  );
-  const dueSoon = active.filter((task) => {
-    if (!task.due_at) return false;
-    const due = Date.parse(task.due_at);
-    return due >= now && due <= next48Hours;
-  });
-  const mine = active.filter((task) => task.assignee_id === currentUserId);
-  const priorities = [...overdue, ...dueSoon, ...mine]
-    .filter(
-      (task, index, all) => all.findIndex(({ id }) => id === task.id) === index,
-    )
-    .sort((left, right) => {
-      const leftDue = left.due_at ? Date.parse(left.due_at) : Number.MAX_VALUE;
-      const rightDue = right.due_at
-        ? Date.parse(right.due_at)
-        : Number.MAX_VALUE;
-      return leftDue - rightDue;
-    })
-    .slice(0, 4);
-
+  const now = new Date(nowIso);
+  const attention = homeAttention(tasks, currentUserId, now);
+  const meaningfulMarketing =
+    marketing &&
+    (marketing.ideaCounts.READY > 0 ||
+      marketing.activeCampaigns > 0 ||
+      marketing.recentResearch.length > 0 ||
+      marketing.recentBriefs.length > 0);
   return (
-    <div className="space-y-8 lg:space-y-10">
-      <PageHeader
-        description={`A clear view of what needs attention across ${organizationName}.`}
-        eyebrow="Today"
-        title="Home"
-      />
-
-      <section
-        aria-labelledby="priorities-heading"
-        className="border-pastel-cream-border bg-pastel-cream text-pastel-cream-foreground overflow-hidden rounded-xl border"
-      >
-        <div className="bg-pastel-cream-border grid gap-px border-b border-inherit sm:grid-cols-4">
-          <Metric icon={CircleAlert} label="Overdue" value={overdue.length} />
-          <Metric
-            icon={CalendarClock}
-            label="Due in 48 hours"
-            value={dueSoon.length}
-          />
-          <Metric
-            icon={CheckCircle2}
-            label="Assigned to me"
-            value={mine.length}
-          />
-          <Metric icon={Users} label="Active work" value={active.length} />
+    <div className="max-w-[1200px] space-y-8 [overflow-wrap:anywhere]">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Home</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {organizationName} · What needs your attention?
+          </p>
         </div>
-        <div className="p-5 sm:p-6">
-          <SectionHeading
-            actionHref="/tasks?view=my"
-            actionLabel="View tasks"
-            description="Your nearest commitments, ordered by deadline."
-            id="priorities-heading"
-            title="What needs attention"
-          />
-          {priorities.length ? (
-            <ul className="divide-pastel-cream-border mt-5 divide-y">
-              {priorities.map((task) => (
+        <Link
+          className={buttonVariants({
+            variant: canMutate ? "primary" : "secondary",
+          })}
+          href={canMutate ? "/tasks?create=true" : "/tasks"}
+        >
+          {canMutate ? (
+            <>
+              <Plus aria-hidden="true" className="size-4" />
+              Create task
+            </>
+          ) : (
+            "Review tasks"
+          )}
+        </Link>
+      </header>
+      <section aria-labelledby="attention-heading">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-semibold" id="attention-heading">
+            Your attention
+          </h2>
+          <Link
+            className="text-primary inline-flex min-h-10 items-center gap-1 text-sm hover:underline"
+            href="/tasks?view=all"
+          >
+            View all tasks
+            <ArrowRight aria-hidden="true" className="size-3.5" />
+          </Link>
+        </div>
+        <p className="text-muted-foreground mb-3 text-xs">
+          Overdue first, then due within 48 hours, assigned to you and other
+          active work.
+        </p>
+        {attention.length ? (
+          <ul className="divide-y border-y">
+            {attention.map((task) => {
+              const reason = attentionReason(task, currentUserId, now);
+              return (
                 <li key={task.id}>
                   <Link
-                    className="group flex min-h-14 items-center gap-3 py-3"
+                    className="hover:bg-muted/40 block py-3 pr-2"
                     href={
                       `/tasks?view=all&task=${encodeURIComponent(task.id)}` as Route
                     }
                   >
-                    <span
-                      className={cn(
-                        "size-2 shrink-0 rounded-full",
-                        task.due_at && Date.parse(task.due_at) < now
-                          ? "bg-tone-coral"
-                          : "bg-primary",
-                      )}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                      <span className="text-sm font-medium break-words">
                         {task.title}
                       </span>
-                      <span className="mt-0.5 block text-xs opacity-75">
-                        {task.due_at
-                          ? `Due ${formatDeadline(task.due_at)}`
-                          : "No deadline"}
+                      <span
+                        className={cn(
+                          "text-xs",
+                          reason === "Overdue"
+                            ? "text-destructive font-medium"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {reason}
                       </span>
-                    </span>
-                    <ArrowRight className="size-4 opacity-50 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                    <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                      <span>{taskMemberName(members, task.assignee_id)}</span>
+                      <span>
+                        {task.due_at ? (
+                          <>
+                            Due <ViewerLocalDateTime value={task.due_at} />
+                          </>
+                        ) : (
+                          "No deadline"
+                        )}
+                      </span>
+                    </div>
                   </Link>
                 </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="py-9 text-center">
-              <CheckCircle2 className="mx-auto size-6 opacity-60" />
-              <p className="mt-2 text-sm font-semibold">You are caught up.</p>
-              <p className="mt-1 text-sm opacity-75">
-                No overdue, near-due, or assigned work needs attention.
-              </p>
-            </div>
-          )}
-        </div>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground border-y py-6 text-sm">
+            No active work needs attention.{" "}
+            {canMutate
+              ? "Create a task when your team has a new commitment."
+              : "New team commitments will appear here."}
+          </p>
+        )}
       </section>
-
-      <section aria-labelledby="quick-actions-heading">
-        <SectionHeading
-          description="Move straight into the team’s most common workflows."
-          id="quick-actions-heading"
-          title="Quick actions"
-        />
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {canMutate ? (
-            <QuickAction
-              href="/tasks?create=true"
-              icon={Plus}
-              label="Create task"
-              tone="lilac"
-            />
-          ) : (
-            <QuickAction
-              href="/tasks?view=my"
-              icon={CheckCircle2}
-              label="Review tasks"
-              tone="lilac"
-            />
-          )}
-          <QuickAction
-            href="/whiteboards"
-            icon={Sparkles}
-            label="Open whiteboards"
-            tone="mint"
-          />
-          {marketing ? (
-            <>
-              <QuickAction
-                href="/apps/marketing/reel-ideas"
-                icon={Lightbulb}
-                label="Reel ideas"
-                tone="coral"
-              />
-              <QuickAction
-                href="/apps/marketing/council"
-                icon={MessageCircleQuestion}
-                label="Ask Council"
-                tone="pink"
-              />
-            </>
-          ) : (
-            <QuickAction
-              href="/activity"
-              icon={Search}
-              label="Review activity"
-              tone="coral"
-            />
-          )}
-        </div>
-      </section>
-
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
-        <section aria-labelledby="activity-heading">
-          <SectionHeading
-            actionHref="/activity"
-            actionLabel="All activity"
-            description="Recent meaningful changes across the workspace."
-            id="activity-heading"
-            title="Recent activity"
-          />
-          <ActivityList events={activity.slice(0, 6)} members={members} />
+      {meaningfulMarketing && marketing ? (
+        <section aria-labelledby="marketing-attention-heading">
+          <h2 className="mb-3 font-semibold" id="marketing-attention-heading">
+            Continue in Marketing
+          </h2>
+          <ul className="divide-y border-y text-sm">
+            {marketing.ideaCounts.READY > 0 ? (
+              <li>
+                <Link
+                  className="flex min-h-11 items-center justify-between gap-3 py-3 hover:underline"
+                  href="/apps/marketing/reel-ideas"
+                >
+                  <span>Ideas ready to develop</span>
+                  <span className="text-muted-foreground">
+                    {marketing.ideaCounts.READY}
+                  </span>
+                </Link>
+              </li>
+            ) : null}
+            {marketing.activeCampaigns > 0 ? (
+              <li>
+                <Link
+                  className="flex min-h-11 items-center justify-between gap-3 py-3 hover:underline"
+                  href="/apps/marketing/campaigns"
+                >
+                  <span>Active campaigns</span>
+                  <span className="text-muted-foreground">
+                    {marketing.activeCampaigns}
+                  </span>
+                </Link>
+              </li>
+            ) : null}
+            {marketing.recentResearch.map((note) => (
+              <li key={note.id}>
+                <Link
+                  className="block py-3 hover:underline"
+                  href="/apps/marketing/research"
+                >
+                  <span className="text-muted-foreground mr-2 text-xs">
+                    Research note
+                  </span>
+                  {note.title}
+                </Link>
+              </li>
+            ))}
+            {marketing.recentBriefs.map((brief) => (
+              <li key={brief.id}>
+                <Link
+                  className="block py-3 hover:underline"
+                  href="/apps/marketing/creative-briefs"
+                >
+                  <span className="text-muted-foreground mr-2 text-xs">
+                    Creative brief
+                  </span>
+                  {brief.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
-
-        <section aria-labelledby="pulse-heading">
-          <SectionHeading
-            actionHref={marketing ? "/apps/marketing" : "/team"}
-            actionLabel={marketing ? "Open Marketing" : "Open team"}
-            description={
-              marketing
-                ? "Current creative momentum."
-                : "Your active workspace."
-            }
-            id="pulse-heading"
-            title={marketing ? "Marketing pulse" : "Team pulse"}
-          />
-          {marketing ? (
-            <div className="border-pastel-lilac-border bg-pastel-lilac text-pastel-lilac-foreground mt-6 rounded-xl border p-5">
-              <div className="grid grid-cols-2 gap-5">
-                <PulseValue
-                  label="Active campaigns"
-                  value={marketing.activeCampaigns}
-                />
-                <PulseValue
-                  label="Ready ideas"
-                  value={marketing.ideaCounts.READY}
-                />
-                <PulseValue
-                  label="Ideas in draft"
-                  value={marketing.ideaCounts.DRAFT}
-                />
-                <PulseValue
-                  label="Creative briefs"
-                  value={marketing.briefCount}
-                />
-              </div>
-              <Link
-                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold hover:underline"
-                href="/apps/marketing/research"
-              >
-                <Search className="size-4" /> Start or review research
-              </Link>
-            </div>
-          ) : (
-            <div className="border-pastel-mint-border bg-pastel-mint text-pastel-mint-foreground mt-6 rounded-xl border p-5">
-              <Users className="size-5" />
-              <p className="mt-4 text-3xl font-semibold tracking-tight">
-                {members.length}
-              </p>
-              <p className="mt-1 text-sm">organization members</p>
-            </div>
-          )}
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function Metric({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof CircleAlert;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="bg-pastel-cream flex items-center gap-3 px-4 py-4 sm:px-5">
-      <Icon aria-hidden="true" className="size-4 opacity-70" />
-      <span>
-        <span className="block text-xl leading-none font-semibold">
-          {value}
-        </span>
-        <span className="mt-1 block text-xs opacity-75">{label}</span>
-      </span>
-    </div>
-  );
-}
-
-function SectionHeading({
-  actionHref,
-  actionLabel,
-  description,
-  id,
-  title,
-}: {
-  actionHref?: string;
-  actionLabel?: string;
-  description: string;
-  id: string;
-  title: string;
-}) {
-  return (
-    <div className="flex items-end justify-between gap-4">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight" id={id}>
-          {title}
-        </h2>
-        <p className="text-muted-foreground mt-1 text-sm leading-5">
-          {description}
-        </p>
-      </div>
-      {actionHref && actionLabel ? (
-        <Link
-          className="text-primary hover:text-primary-hover shrink-0 text-sm font-semibold"
-          href={actionHref as Route}
-        >
-          {actionLabel}
-        </Link>
       ) : null}
-    </div>
-  );
-}
-
-const quickActionTones = {
-  coral:
-    "border-pastel-coral-border bg-pastel-coral text-pastel-coral-foreground",
-  lilac:
-    "border-pastel-lilac-border bg-pastel-lilac text-pastel-lilac-foreground",
-  mint: "border-pastel-mint-border bg-pastel-mint text-pastel-mint-foreground",
-  pink: "border-pastel-pink-border bg-pastel-pink text-pastel-pink-foreground",
-};
-
-function QuickAction({
-  href,
-  icon: Icon,
-  label,
-  tone,
-}: {
-  href: string;
-  icon: typeof Plus;
-  label: string;
-  tone: keyof typeof quickActionTones;
-}) {
-  return (
-    <Link
-      className={cn(
-        "group flex min-h-20 items-center gap-3 rounded-xl border p-4 text-sm font-semibold transition-transform hover:-translate-y-0.5",
-        quickActionTones[tone],
-      )}
-      href={href as Route}
-    >
-      <span className="bg-background/70 flex size-9 items-center justify-center rounded-full">
-        <Icon className="size-4" />
-      </span>
-      <span className="flex-1">{label}</span>
-      <ArrowRight className="size-4 opacity-50 transition-transform group-hover:translate-x-0.5" />
-    </Link>
-  );
-}
-
-function PulseValue({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <p className="text-3xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-1 text-xs opacity-75">{label}</p>
+      <section aria-labelledby="recent-activity-heading">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-semibold" id="recent-activity-heading">
+            Recent activity
+          </h2>
+          <Link
+            className="text-primary inline-flex min-h-10 items-center text-sm hover:underline"
+            href="/activity"
+          >
+            View all activity
+          </Link>
+        </div>
+        <ActivityList compact events={activity.slice(0, 6)} members={members} />
+      </section>
     </div>
   );
 }

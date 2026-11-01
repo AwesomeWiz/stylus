@@ -114,6 +114,29 @@ refreshes shell metadata; existing action invalidation remains. Device-local
 collapse state has no database or tenant meaning. The layout key includes user,
 organization and role to reset private client chrome when server identity changes.
 
+## Home and Task read boundaries (REDESIGN-003)
+
+Home requests four bounded priority projections (six summaries each), merges and
+deduplicates them to six attention items, plus six activity events and the member
+directory. The existing enabled-Marketing overview contract is unchanged.
+Timestamps use a shared hydration-safe client Intl presentation component.
+
+The Tasks route requests summaries without descriptions/comments, then applies
+the existing complete-list filter/order contracts. ID-keyset transport batches
+of 1,000 avoid the implicit API row cap; total-list product pagination is deferred.
+Nearest active deadline calculation still sees the complete summary dataset.
+
+Native browser history controls `task`/`create` selection while preserving other
+query parameters and list scroll without another list read. Each lazy server
+read action freshly resolves current membership/organization and validates the
+expected organization and task UUID. Full detail has an explicit org+task query.
+Comments recheck task availability and read only that organization's selected
+task, with a 51-row lookahead, 50-row display batch and timestamp/ID keyset cursor.
+No layout cache grants access and no privileged client snapshot bypasses RLS.
+The detail component is keyed by organization/task and invalidates pending read
+lifecycles on selection changes, refresh or unmount. Server mutation APIs and
+database lifecycle/permissions are unchanged; no schema migration is involved.
+
 ## Tenant enforcement
 
 Every authenticated application context resolves an explicit organization only

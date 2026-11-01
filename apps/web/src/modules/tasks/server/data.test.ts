@@ -19,7 +19,10 @@ describe("task server data", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const tasksQuery = {
-      eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      eq: vi.fn(() => tasksQuery),
+      order: vi.fn(() => tasksQuery),
+      gt: vi.fn(() => tasksQuery),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
       select: vi.fn(() => tasksQuery),
     };
     const commentsQuery = {
@@ -47,18 +50,33 @@ describe("task server data", () => {
     await getTaskWorkspaceData(organizationId);
 
     const taskQuery = mocks.from.mock.results[0]?.value;
-    const commentQuery = mocks.from.mock.results[1]?.value;
     expect(taskQuery.eq).toHaveBeenCalledWith(
       "organization_id",
       organizationId,
     );
-    expect(commentQuery.eq).toHaveBeenCalledWith(
-      "organization_id",
-      organizationId,
+    expect(mocks.from).toHaveBeenCalledTimes(1);
+    expect(mocks.from).not.toHaveBeenCalledWith("task_comments");
+    expect(taskQuery.select).not.toHaveBeenCalledWith("*");
+    expect(taskQuery.limit).toHaveBeenCalledWith(1000);
+    expect(await getTaskWorkspaceData(organizationId)).not.toHaveProperty(
+      "comments",
     );
     expect(mocks.rpc).toHaveBeenCalledWith("list_organization_task_members", {
       p_organization_id: organizationId,
     });
+  });
+
+  it("reads beyond the transport cap so filters never use a silently truncated dataset", async () => {
+    const query = mocks.from("tasks");
+    query.limit
+      .mockResolvedValueOnce({
+        data: Array.from({ length: 1000 }, (_, id) => ({ id: String(id) })),
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: [{ id: "last" }], error: null });
+    const result = await getTaskWorkspaceData(organizationId);
+    expect(result.tasks).toHaveLength(1001);
+    expect(query.gt).toHaveBeenCalledWith("id", "999");
   });
 
   it("accepts only assignees returned by the organization member directory", async () => {

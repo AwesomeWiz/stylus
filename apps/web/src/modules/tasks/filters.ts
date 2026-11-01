@@ -1,8 +1,5 @@
-import type {
-  TaskPriority,
-  TaskRow,
-  TaskStatus,
-} from "@/lib/supabase/database.types";
+import type { TaskPriority, TaskStatus } from "@/lib/supabase/database.types";
+import type { TaskListItem } from "./list";
 
 export const taskViewValues = [
   "my",
@@ -26,11 +23,11 @@ export interface TaskFilters {
 
 export const RECENT_COMPLETION_DAYS = 14;
 
-export function isActiveTask(task: TaskRow) {
+export function isActiveTask(task: TaskListItem) {
   return task.status !== "COMPLETED" && task.status !== "CANCELLED";
 }
 
-export function isOverdue(task: TaskRow, now: Date) {
+export function isOverdue(task: TaskListItem, now: Date) {
   return Boolean(
     isActiveTask(task) &&
     task.due_at &&
@@ -38,7 +35,7 @@ export function isOverdue(task: TaskRow, now: Date) {
   );
 }
 
-export function nextActiveDeadline(tasks: TaskRow[], now: Date) {
+export function nextActiveDeadline(tasks: TaskListItem[], now: Date) {
   const nowTime = now.getTime();
   const deadlines = tasks
     .filter(isActiveTask)
@@ -52,14 +49,14 @@ export function recentCompletionThreshold(now: Date) {
   return new Date(now.getTime() - RECENT_COMPLETION_DAYS * 24 * 60 * 60 * 1000);
 }
 
-function actionableRank(task: TaskRow, now: Date) {
+function actionableRank(task: TaskListItem, now: Date) {
   if (isOverdue(task, now)) return 0;
   if (task.due_at) return 1;
   if (task.scheduled_at) return 2;
   return 3;
 }
 
-export function sortTasks(tasks: TaskRow[], now: Date) {
+export function sortTasks<T extends TaskListItem>(tasks: T[], now: Date) {
   return [...tasks].sort((left, right) => {
     const rankDifference =
       actionableRank(left, now) - actionableRank(right, now);
@@ -77,8 +74,8 @@ export function sortTasks(tasks: TaskRow[], now: Date) {
   });
 }
 
-export function filterTasks(
-  tasks: TaskRow[],
+export function filterTasks<T extends TaskListItem>(
+  tasks: T[],
   filters: TaskFilters,
   currentUserId: string,
   now: Date,

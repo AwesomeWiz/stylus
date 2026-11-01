@@ -7,9 +7,10 @@ import { getHomeCoreData } from "@/modules/home/server/data";
 
 export default async function HomePage() {
   const context = await getWorkspaceContext();
+  const now = new Date();
 
   const [home, enabledPluginIds] = await Promise.all([
-    getHomeCoreData(context.organization.id),
+    getHomeCoreData(context.organization.id, context.user.id, now),
     getEnabledOrganizationPluginIds(context.organization.id),
   ]);
   const marketing = enabledPluginIds.includes("marketing")
@@ -23,7 +24,7 @@ export default async function HomePage() {
       currentUserId={context.user.id}
       marketing={marketing}
       members={home.members}
-      nowIso={new Date().toISOString()}
+      nowIso={now.toISOString()}
       organizationName={context.organization.name}
       tasks={home.tasks}
     />

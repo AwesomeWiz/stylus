@@ -74,7 +74,7 @@ export function TaskForm({ members, onCancel, onSaved, task }: TaskFormProps) {
 
   useEffect(() => {
     if (state.status === "success") onSaved();
-  }, [onSaved, state.status]);
+  }, [onSaved, state]);
 
   return (
     <form action={formAction} className="space-y-5 p-5">
@@ -83,7 +83,7 @@ export function TaskForm({ members, onCancel, onSaved, task }: TaskFormProps) {
         Title
         <Input
           aria-invalid={Boolean(state.fieldErrors?.title)}
-          autoFocus
+          autoFocus={!task}
           className="mt-1.5"
           defaultValue={task?.title}
           maxLength={200}

@@ -1,10 +1,97 @@
 # Stylus — Project State
 
-Last Updated: 2026-11-01
+Last Updated: 2026-11-02
 
 ## Overall Status
 
-REDESIGN-002 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+REDESIGN-003 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-003 — Home and Tasks V2
+
+Branch `codex/redesign-003-home-tasks`, isolated worktree
+`.worktrees/redesign-003-home-tasks`, starting exactly at accepted REDESIGN-002
+`17ade235eabfe142ee536267e1a3d88da736942a`. Original checkout changes are untouched.
+Main agent only; no merge/push and no REDESIGN-004 implementation.
+
+Home replaces pastel/metric/launcher sections with six deduplicated tasks ranked
+overdue, due within 48 hours, assigned to the viewer, then other active work.
+Four organization-scoped queries each request at most six task summaries; a
+deterministic due-date/ID tie break produces the final six. Activity requests six
+events. The member directory and existing enabled-Marketing overview contract
+are retained. Meaningful Marketing work is omitted when disabled or empty.
+Create task uses the existing `?create=true` flow; VIEWER gets Review tasks.
+Home deadlines and compact activity reuse the hydration-safe, browser/System
+Intl component, including date-boundary and DST behavior.
+
+Tasks exposes My/All/Upcoming/Completed, with Overdue/Archive/Calendar under More
+views. Search, a mobile filter sheet, removable active filters and compact rows
+retain existing filter/order/completion/archive semantics. Selection uses native
+App Router-compatible history, preserving all other query state without a list
+refetch. Detail is a 480px nonmodal desktop panel, modal tablet overlay and
+full-screen mobile dialog. Back/Forward and direct selection work independently
+of visible rows. Closing returns focus to the row or heading.
+
+### Structural performance evidence
+
+Inspected baseline before changes: initial Tasks selected every task field and
+every organization comment body, plus one member-directory RPC: one task query,
+one comments query, one member query (excluding authorization/setup/shell).
+Home selected up to 50 full task rows and displayed four, with UTC-only deadline
+formatting. These are source observations, not production timings.
+
+After: initial Tasks reads only nine summary fields and one member RPC, with
+**zero comment queries/bodies**. For fewer than 1,000 tasks this is one task query;
+larger lists use deterministic ID-keyset batches of 1,000 (an exact multiple
+requires an empty final batch). No total-list cap is claimed: product pagination
+is deferred to preserve complete cross-list search, views, archive and deadline
+refresh semantics. The former implicit API row cap no longer silently truncates
+the workspace. Concurrent insertions before a traversed cursor appear on refresh.
+The full directory and total summary list can still grow; this remains a measured
+follow-up rather than an incorrect first-N client list.
+
+Opening detail starts one read action: fresh current organization/membership,
+validated UUIDs, then one organization+task-scoped full task read. Only after
+success does a second action reauthorize, check task existence and read at most
+51 comments, displaying 50 and an explicit earlier-page cursor. Ordering is
+timestamp+ID, newest batch displayed chronologically; Load earlier comments uses
+a validated keyset cursor. Each subsequent batch is bounded. Foreign/missing
+tasks share an unavailable response; expected organization is validated against
+fresh server context, never trusted as authority. RLS and mutation actions remain.
+Keyed selection boundaries and request lifecycles discard late detail/comments
+after switches, refreshes or closing. Local errors/retry preserve the list.
+
+No reliable authenticated Home -> Tasks latency or DB request trace is available;
+no milliseconds or production percentile improvement is asserted. Home trades
+one wider task query for four small priority-arm reads (at most 24 candidates).
+Marketing overview fetching remains its existing contract, outside this redesign.
+
+### Verification and remaining acceptance
+
+Focused Home/Tasks/read-authorization/local-time tests pass, including 22 final
+Task workspace/data tests. The final full web suite passes: 177 files / 997 tests.
+Headless Chrome passes 132 actual-component fixture checks at
+320/390/430/768/1024/1200/1440px in
+both themes, including a representative 224px desktop shell allowance, overflow,
+Enter opening, modal Tab wrap, URL/filter retention, empty/read-only/error states,
+lazy-read counters, mobile filter-sheet bounds and repeated comment posts that
+refresh discussion without remounting the focused composer. Desktop/mobile screenshots
+were inspected; no uncaught browser/console errors occurred. Fixture server reads
+are mocked; this is not live authenticated browser or RLS/production timing proof.
+Temporary fixture bundles, screenshots and profiles stay ignored under `.next`.
+
+Web lint, web typecheck and the web production build pass. Scoped formatting,
+diff checks and secret/runtime-artifact review pass; production client bundles
+contain none of the checked private server-environment/client-construction markers.
+The build retains all existing page and non-page entrypoints. Temporary QA browser
+and server processes are stopped. No worker validation or DB migration checks are
+required because neither shared worker runtime nor schema changed.
+Manual Windows NVDA and signed-in target-environment transition/
+authorization/latency acceptance remain outstanding and are not claimed as passed.
+No database, migration, RLS, dependency, worker/shared runtime, AI or memory changes.
+REDESIGN-004 remains the separately approved Boards foundation: list/templates,
+immersive BoardShell and editor mechanics. Native entity integrations/conversions
+remain in 005; Marketing redesign and new AI execution remain outside that scope.
+
 
 ## REDESIGN-002 baseline and scope
 

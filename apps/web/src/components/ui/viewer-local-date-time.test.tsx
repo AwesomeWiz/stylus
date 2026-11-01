@@ -38,6 +38,12 @@ describe("viewer-local date and time", () => {
     ).toBe("Sep 5, 2026, 8:00 AM EDT");
   });
 
+  it("keeps the previous local date west of UTC across midnight", () => {
+    expect(
+      formatViewerDateTime("2026-11-01T00:30:00Z", "America/Los_Angeles"),
+    ).toBe("Oct 31, 2026, 5:30 PM PDT");
+  });
+
   it("renders a deterministic SSR placeholder before browser-local formatting", async () => {
     expect(
       renderToString(<ViewerLocalDateTime value="2026-09-05T12:00:00Z" />),

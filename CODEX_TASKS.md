@@ -2,6 +2,36 @@
 
 # Current
 
+## REDESIGN-003 — Home and Tasks V2
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-003-home-tasks`, starting from accepted REDESIGN-002
+`17ade235eabfe142ee536267e1a3d88da736942a`, in its own worktree. Main agent only.
+Home has a bounded, ranked/deduplicated attention list, meaningful enabled-Marketing
+continuations, small recent activity and a role-aware task-create entry. All Home
+timestamps reuse browser-local Intl presentation.
+
+Tasks has primary/More views, progressive filters and removable active state,
+compact textual-status rows and URL-controlled responsive detail. Direct task
+selection is authorized independently of visible rows. Initial list payload has
+no descriptions or comment bodies; detail and bounded comments load separately
+with tenant/task checks, local retry and stale-response protection. Existing
+mutation, lifecycle, archive and deadline rules remain.
+
+Total-list product pagination is deliberately deferred: summary transport batches
+preserve complete search/filter semantics without silently capping the workspace.
+Comments display 50 per cursor batch. See PROJECT_STATE for the structural query
+inventory, browser fixture scope and remaining live/NVDA acceptance. Final web
+suite passes (177 files / 997 tests), as do focused tests, web lint/typecheck/build,
+scoped formatting and diff/secret/artifact checks. Headless Chrome passes 132
+actual-component fixture checks across both themes and all seven target widths,
+including keyboard/modal focus and comment-post focus retention. These mocked
+read boundaries do not substitute for live authorization/latency or manual NVDA.
+No DB/worker/dependency/AI changes, no merge/push and no automatic REDESIGN-004.
+
+---
+
 ## REDESIGN-002 — App Shell, Navigation, Auth and Foundational Performance
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

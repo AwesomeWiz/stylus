@@ -60,14 +60,17 @@ export default async function TasksPage({
   return (
     <TaskWorkspace
       canMutate={canMutateTasks(context.membership.role)}
-      comments={workspace.comments}
       currentUserId={context.user.id}
       filters={filters}
-      initiallyCreating={single(params.create) === "true"}
+      initialQuery={new URLSearchParams(
+        Object.entries(params).flatMap(([key, value]) =>
+          typeof value === "string" ? [[key, value]] : [],
+        ),
+      ).toString()}
       members={workspace.members}
       nextDeadlineIso={nextDeadlineIso}
       nowIso={now.toISOString()}
-      selectedTaskId={filters.selectedTaskId}
+      organizationId={context.organization.id}
       tasks={tasks}
     />
   );

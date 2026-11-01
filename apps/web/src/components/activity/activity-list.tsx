@@ -19,6 +19,7 @@ import type {
   TaskMember,
 } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
+import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
 import {
   accentVisuals,
   marketingSignalVisual,
@@ -108,11 +109,19 @@ function activityTime(value: string) {
 export function ActivityList({
   events,
   members,
+  compact = false,
 }: {
   events: ActivityEventRow[];
   members: TaskMember[];
+  compact?: boolean;
 }) {
   if (!events.length) {
+    if (compact)
+      return (
+        <p className="text-muted-foreground mt-3 border-y py-6 text-sm">
+          No recent activity. Team changes will appear here.
+        </p>
+      );
     return (
       <div className="mt-6 border-y px-4 py-14 text-center">
         <p className="text-sm font-medium">No activity yet.</p>
@@ -124,7 +133,7 @@ export function ActivityList({
   }
 
   return (
-    <ol className="mt-6 divide-y border-y">
+    <ol className={cn("divide-y border-y", compact ? "mt-3" : "mt-6")}>
       {events.map((event) => {
         const Icon = icons[event.event_type];
         return (
@@ -132,14 +141,19 @@ export function ActivityList({
             <span
               className={cn(
                 "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
-                activityIconStyle(event.event_type),
+                compact
+                  ? "text-muted-foreground"
+                  : activityIconStyle(event.event_type),
               )}
             >
               <Icon aria-hidden="true" className="size-4" />
             </span>
             <span className="min-w-0 flex-1">
               <Link
-                className="hover:underline"
+                className={cn(
+                  "hover:underline",
+                  compact && "[overflow-wrap:anywhere]",
+                )}
                 href={
                   (event.entity_type === "MARKETING"
                     ? `/apps/marketing/${marketingPath(metadataText(event, "record_type"))}`
@@ -154,12 +168,18 @@ export function ActivityList({
                   {activityDescription(event, members)}
                 </span>
               </Link>
-              <time
-                className="text-muted-foreground mt-1 block text-xs"
-                dateTime={event.created_at}
-              >
-                {activityTime(event.created_at)}
-              </time>
+              {compact ? (
+                <span className="text-muted-foreground mt-1 block text-xs">
+                  <ViewerLocalDateTime value={event.created_at} />
+                </span>
+              ) : (
+                <time
+                  className="text-muted-foreground mt-1 block text-xs"
+                  dateTime={event.created_at}
+                >
+                  {activityTime(event.created_at)}
+                </time>
+              )}
             </span>
           </li>
         );
