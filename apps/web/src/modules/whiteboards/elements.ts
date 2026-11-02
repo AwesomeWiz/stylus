@@ -3,10 +3,37 @@ import type {
   BoardElementType,
 } from "@/lib/supabase/database.types";
 
+/** Paths are private object keys, never URLs or normalizable relative paths. */
+export function isBoardImagePath(
+  value: unknown,
+  organizationId: string,
+  boardId: string,
+): value is string {
+  if (typeof value !== "string") return false;
+  const prefix = `${organizationId}/${boardId}/`;
+  return (
+    value.startsWith(prefix) &&
+    /^[a-z0-9][a-z0-9_.-]{0,250}\.(png|jpe?g|webp)$/i.test(
+      value.slice(prefix.length),
+    )
+  );
+}
+
+/** Authored paint cannot turn an SVG stroke into an external resource fetch. */
+export function boardPaint(value: unknown, fallback: string) {
+  return typeof value === "string" &&
+    /^(#[a-f0-9]{3,4}|#[a-f0-9]{6}|#[a-f0-9]{8})$/i.test(value)
+    ? value
+    : fallback;
+}
+
 export const defaultElementSize: Record<
   BoardElementType,
   { height: number; width: number }
 > = {
+  SECTION: { height: 420, width: 640 },
+  GROUP: { height: 200, width: 300 },
+  LINK: { height: 120, width: 300 },
   ARROW: { height: 24, width: 220 },
   IMAGE: { height: 240, width: 320 },
   SHAPE: { height: 140, width: 200 },
@@ -16,6 +43,15 @@ export const defaultElementSize: Record<
 
 export function defaultElementData(type: BoardElementType) {
   switch (type) {
+    case "SECTION":
+      return {
+        content: { title: "Section", collapsed: false },
+        style: { fill: "#f4f4f5", stroke: "#a1a1aa" },
+      };
+    case "GROUP":
+      return { content: { title: "Group" }, style: {} };
+    case "LINK":
+      return { content: { title: "", url: "", note: "" }, style: {} };
     case "TEXT":
       return {
         content: { text: "Text" },

@@ -1,887 +1,787 @@
 "use client";
+import { MessageSquare } from "lucide-react";
 
-import {
-  applyNodeChanges,
-  Background,
-  BackgroundVariant,
-  Controls,
-  ReactFlow,
-  type NodeChange,
-  type ReactFlowInstance,
-  type Viewport,
-} from "@xyflow/react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
-
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import type {
   BoardCommentRow,
   BoardElementRow,
   BoardRow,
   TaskMember,
 } from "@/lib/supabase/database.types";
+import { renameBoardAction } from "@/modules/whiteboards/actions";
+import { reconcileBoardComment } from "@/modules/whiteboards/collaboration";
 import {
-  archiveBoardElementAction,
-  createBoardElementAction,
-  renameBoardAction,
-  restoreBoardElementAction,
-  updateBoardElementAction,
-  uploadBoardImageAction,
-} from "@/modules/whiteboards/actions";
+  alignObjects,
+  archiveObjects,
+  assignSection,
+  createLocalObject,
+  distributeObjects,
+  duplicateObjects,
+  groupObjects,
+  isObjectLocked,
+  layerObjects,
+  matchObjectSize,
+  moveObjects,
+  selectionRoots,
+  ungroupObjects,
+} from "@/modules/whiteboards/operations";
 import {
-  defaultElementData,
-  defaultElementSize,
-  nextZIndex,
-  reorderElement,
-} from "@/modules/whiteboards/elements";
-import {
-  createWhiteboardHistory,
-  diffWhiteboardSnapshots,
-  recordWhiteboardHistory,
-  reconcileRemoteElement,
-  redoWhiteboardHistory,
-  undoWhiteboardHistory,
-} from "@/modules/whiteboards/history";
-import {
-  allocateBoardCollaboratorColors,
-  chooseCommittedElement,
-  includeLocalBoardPresence,
-  reconcileBoardComment,
-  type BoardCursorUpdate,
-  type BoardCollaboratorColorAssignments,
-  type BoardPresence,
-} from "@/modules/whiteboards/collaboration";
-import {
-  subscribeToBoardCollaboration,
-  type CollaborationConnectionState,
-} from "@/modules/whiteboards/realtime";
-import { boardImageFileSchema } from "@/modules/whiteboards/schemas";
+  readBoardCommentsAction,
+  readBoardSnapshotAction,
+} from "@/modules/whiteboards/read-actions";
 
-import { WhiteboardNode, type WhiteboardFlowNode } from "./whiteboard-node";
+import { BoardInspector, type SelectionAction } from "./board-inspector";
 import {
-  SelectionToolbar,
-  WhiteboardHeader,
-  type WhiteboardSaveState,
-} from "./whiteboard-chrome";
-import { WhiteboardToolbar, type WhiteboardTool } from "./whiteboard-toolbar";
-import { WhiteboardInspector } from "./whiteboard-inspector";
-import { WhiteboardCommentsPanel } from "./whiteboard-comments-panel";
-import { WhiteboardCursors } from "./whiteboard-cursors";
+  BoardNavigation,
+  focusBoardCanvas,
+  type BoardNavigationState,
+} from "./board-navigation";
+import { BoardOutline } from "./board-outline";
+import { BoardPanel } from "./board-panel";
+import { useBoardCollaboration } from "./use-board-collaboration";
+import { useBoardDocument } from "./use-board-document";
+import { useBoardImages } from "./use-board-images";
+import { useBoardUploads } from "./use-board-uploads";
+import { WhiteboardHeader } from "./whiteboard-chrome";
 import { WhiteboardCollaborators } from "./whiteboard-collaborators";
+import { WhiteboardCommentsPanel } from "./whiteboard-comments-panel";
+import { BoardHelp, BoardLinkDialog, BoardMenu } from "./board-controls";
+import type { WhiteboardTool } from "./whiteboard-toolbar";
+import { BoardCanvas, type BoardCanvasHandle } from "./board-canvas";
 
-const nodeTypes = { whiteboard: WhiteboardNode };
-
-function flowNode(
-  element: BoardElementRow,
-  imageUrl?: string,
-): WhiteboardFlowNode {
-  return {
-    data: {
-      canMutate: false,
-      commentCount: 0,
-      element,
-      imageUrl,
-      onInteractionCancel: () => undefined,
-      onInteractionStart: () => undefined,
-      onContentCommit: () => undefined,
-      onResizeCommit: () => undefined,
-    },
-    draggable: true,
-    id: element.id,
-    position: { x: element.x, y: element.y },
-    style: {
-      height: element.height,
-      width: element.width,
-      zIndex: element.z_index,
-    },
-    type: "whiteboard",
-  };
-}
+const anonymous = { displayName: "Current user", id: "" };
+const emptyMembers: TaskMember[] = [];
+type Panel = "INSPECTOR" | "OUTLINE" | "COMMENTS" | null;
+type Point = { x: number; y: number };
 
 export function WhiteboardWorkspace({
   board,
   canMutate,
   comments: initialComments = [],
-  currentUser = { displayName: "Current user", id: "" },
+  currentUser = anonymous,
   elements,
   imageUrls,
-  members = [],
+  members = emptyMembers,
+  shell,
 }: {
   board: BoardRow;
   canMutate: boolean;
   comments?: BoardCommentRow[];
-  currentUser?: { displayName: string; id: string };
+  currentUser?: typeof anonymous;
   elements: BoardElementRow[];
   imageUrls: Record<string, string>;
   members?: TaskMember[];
+  shell?: BoardNavigationState;
 }) {
-  const [nodes, setNodes] = useState<WhiteboardFlowNode[]>(() =>
-    elements.map((element) => flowNode(element, imageUrls[element.id])),
+  const router = useRouter();
+  useEffect(() => {
+    document.title = `${board.title} · Stylus`;
+  }, [board.title]);
+  const {
+    history,
+    rows,
+    pending,
+    error: documentError,
+    commit,
+    navigate,
+    receive,
+    adopt,
+    retry,
+    startInteraction,
+    cancelInteraction,
+    isBusy,
+    isDirty,
+    dirty,
+    dismissError,
+    hasRetry,
+    getRows,
+    getRevision,
+    mergeSnapshot,
+  } = useBoardDocument(board, elements, canMutate);
+  const {
+    url: imageUrl,
+    retry: retryImage,
+    accept: acceptImage,
+  } = useBoardImages(board, rows, imageUrls);
+  const [selected, setSelected] = useState<string[]>([]),
+    [panel, setPanel] = useState<Panel>(null);
+  const [tool, setTool] = useState<WhiteboardTool>("SELECT"),
+    [shape, setShape] = useState("rectangle");
+  const [title, setTitle] = useState(board.title),
+    [renaming, setRenaming] = useState(false),
+    [titlePending, setTitlePending] = useState(false);
+  const [error, setError] = useState<string | null>(null),
+    [help, setHelp] = useState(false),
+    [shortcuts, setShortcuts] = useState(true);
+  const [archiveChoice, setArchiveChoice] = useState(false),
+    [linkAt, setLinkAt] = useState<Point | null>(null);
+  const [minimap, setMinimap] = useState(false);
+  const [comments, setComments] = useState(initialComments),
+    [commentsLoading, setCommentsLoading] = useState(false),
+    [commentsError, setCommentsError] = useState<string | null>(null);
+  const commentsLoaded = useRef(initialComments.length > 0),
+    commentsBusy = useRef(false);
+  const [beforeComment, setBeforeComment] = useState<{
+    createdAt: string;
+    id: string;
+  } | null>(null);
+  const canvasApi = useRef<BoardCanvasHandle>(null),
+    picker = useRef<HTMLInputElement>(null);
+  const imagePosition = useRef<Point>({ x: 0, y: 0 }),
+    replacement = useRef<string | undefined>(undefined);
+  const selectedRows = selectionRoots(rows, selected);
+  const onUploaded = useCallback(
+    (row: BoardElementRow, url: string, created: boolean) => {
+      adopt(row, created);
+      acceptImage(row, url);
+      setSelected([row.id]);
+      setTool("SELECT");
+    },
+    [adopt, acceptImage],
   );
-  const [history, setHistory] = useState(() =>
-    createWhiteboardHistory(elements),
+  const uploads = useBoardUploads(
+    board,
+    getRows,
+    startInteraction,
+    cancelInteraction,
+    onUploaded,
   );
-  const [activeTool, setActiveTool] = useState<WhiteboardTool>("SELECT");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<WhiteboardSaveState>("SAVED");
-  const [error, setError] = useState<string | null>(null);
-  const [lastRetry, setLastRetry] = useState<(() => Promise<void>) | null>(
-    null,
-  );
-  const [title, setTitle] = useState(board.title);
-  const [renaming, setRenaming] = useState(false);
-  const [comments, setComments] = useState(initialComments);
-  const [presence, setPresence] = useState<BoardPresence[]>(() =>
-    includeLocalBoardPresence([], currentUser, members),
-  );
-  const [collaboratorColors, setCollaboratorColors] =
-    useState<BoardCollaboratorColorAssignments>(() =>
-      allocateBoardCollaboratorColors(
-        includeLocalBoardPresence([], currentUser, members).map(
-          (person) => person.userId,
-        ),
-      ),
+  const uploadFailed = uploads.items.some((item) => item.state === "Error");
+  const busy = pending || uploads.pending || titlePending;
+  const editable = canMutate && !busy && !dirty;
+  const beforeLeave = () =>
+    (!isDirty() &&
+      !uploads.pending &&
+      !uploadFailed &&
+      !titlePending &&
+      (!renaming || title === board.title)) ||
+    window.confirm(
+      "This board has unsaved work. Stay to retry saving, or leave and discard unsaved changes?",
     );
-  const [remoteCursors, setRemoteCursors] = useState<BoardCursorUpdate[]>([]);
-  const [connection, setConnection] =
-    useState<CollaborationConnectionState>("CONNECTING");
-  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
-  const [pending, startTransition] = useTransition();
-  const flowRef = useRef<ReactFlowInstance<WhiteboardFlowNode> | null>(null);
-  const collaborationRef = useRef<ReturnType<
-    typeof subscribeToBoardCollaboration
-  > | null>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const imagePositionRef = useRef({ x: 0, y: 0 });
-  const historyRef = useRef(history);
-  const imageUrlsRef = useRef(imageUrls);
-  const mutationLockRef = useRef(false);
-  const activeElementsRef = useRef(new Set<string>());
-  const queuedRemoteRef = useRef(new Map<string, BoardElementRow>());
-  const expectedEchoRef = useRef(new Map<string, string>());
-  const selectedIdRef = useRef(selectedId);
-  useEffect(() => {
-    selectedIdRef.current = selectedId;
-  }, [selectedId]);
-
-  const syncNodes = useCallback((snapshot: BoardElementRow[]) => {
-    setNodes((current) => {
-      const byId = new Map(current.map((node) => [node.id, node]));
-      return snapshot.map((element) => {
-        const existing = byId.get(element.id);
-        return {
-          ...flowNode(
-            element,
-            existing?.data.imageUrl ?? imageUrlsRef.current[element.id],
-          ),
-          selected: existing?.selected,
-        };
-      });
-    });
-  }, []);
-
-  const recordSnapshot = useCallback(
-    (snapshot: BoardElementRow[]) => {
-      const next = recordWhiteboardHistory(historyRef.current, snapshot);
-      historyRef.current = next;
-      setHistory(next);
-      syncNodes(snapshot);
+  const onComment = useCallback(
+    (row: BoardCommentRow) => {
+      if (
+        row.organization_id === board.organization_id &&
+        row.board_id === board.id
+      )
+        setComments((rows) => reconcileBoardComment(rows, row));
     },
-    [syncNodes],
+    [board.id, board.organization_id],
   );
-
-  const recordCreatedElement = useCallback(
-    (element: BoardElementRow) => {
-      const base = historyRef.current.present.filter(
-        (candidate) => candidate.id !== element.id,
-      );
-      const next = recordWhiteboardHistory(
-        { ...historyRef.current, present: base },
-        [...base, element],
-      );
-      historyRef.current = next;
-      setHistory(next);
-      syncNodes(next.present);
-      expectedEchoRef.current.set(element.id, element.updated_at);
-    },
-    [syncNodes],
-  );
-
-  const applyRemoteElement = useCallback(
-    (element: BoardElementRow, preserveHistory = false) => {
-      const next = reconcileRemoteElement(historyRef.current, element, {
-        preserveHistory,
-      });
-      historyRef.current = next;
-      setHistory(next);
-      syncNodes(next.present);
-      if (element.archived_at && selectedIdRef.current === element.id)
-        setSelectedId(null);
-    },
-    [syncNodes],
-  );
-
-  const receiveRemoteElement = useCallback(
-    (element: BoardElementRow) => {
-      if (expectedEchoRef.current.get(element.id) === element.updated_at) {
-        expectedEchoRef.current.delete(element.id);
-        applyRemoteElement(element, true);
-        return;
-      }
-      if (activeElementsRef.current.has(element.id)) {
-        const queued = queuedRemoteRef.current.get(element.id) ?? null;
-        queuedRemoteRef.current.set(
-          element.id,
-          chooseCommittedElement(queued, element),
-        );
-        return;
-      }
-      applyRemoteElement(element);
-    },
-    [applyRemoteElement],
-  );
-
-  const finishElementMutation = useCallback(
-    (elementId: string, persisted: BoardElementRow | null) => {
-      activeElementsRef.current.delete(elementId);
-      const queued = queuedRemoteRef.current.get(elementId);
-      queuedRemoteRef.current.delete(elementId);
-      if (queued) {
-        const winner = chooseCommittedElement(persisted, queued);
-        if (winner === persisted && persisted)
-          expectedEchoRef.current.set(elementId, persisted.updated_at);
-        applyRemoteElement(winner, winner === persisted);
-      } else if (persisted) {
-        expectedEchoRef.current.set(elementId, persisted.updated_at);
-        applyRemoteElement(persisted, true);
-      }
-    },
-    [applyRemoteElement],
-  );
-
-  const cancelElementInteraction = useCallback(
-    (elementId: string) => finishElementMutation(elementId, null),
-    [finishElementMutation],
-  );
-
-  useEffect(() => {
-    if (!currentUser.id) return;
-    const collaboration = subscribeToBoardCollaboration({
-      boardId: board.id,
-      organizationId: board.organization_id,
-      currentUser,
-      members,
-      onComment: (comment) =>
-        setComments((current) => reconcileBoardComment(current, comment)),
-      onConnection: setConnection,
-      onCursor: (update) =>
-        setRemoteCursors((current) => {
-          const withoutUser = current.filter(
-            (cursor) => cursor.userId !== update.userId,
-          );
-          return update.cursor ? [...withoutUser, update] : withoutUser;
-        }),
-      onElement: receiveRemoteElement,
-      onPresence: (people) => {
-        setPresence(people);
-        setCollaboratorColors((current) =>
-          allocateBoardCollaboratorColors(
-            people.map((person) => person.userId),
-            current,
-          ),
-        );
-      },
-    });
-    collaborationRef.current = collaboration;
-    return () => {
-      collaborationRef.current = null;
-      collaboration.unsubscribe();
-    };
-  }, [
-    board.id,
-    board.organization_id,
+  const collaboration = useBoardCollaboration(
+    board,
     currentUser,
     members,
-    receiveRemoteElement,
-  ]);
-
-  const runMutation = useCallback((operation: () => Promise<void>) => {
-    if (mutationLockRef.current) return;
-    mutationLockRef.current = true;
-    setSaveState("SAVING");
-    setError(null);
-    startTransition(async () => {
-      try {
-        await operation();
-        setSaveState("SAVED");
-        setLastRetry(null);
-      } catch (caught) {
-        setSaveState("ERROR");
+    receive,
+    onComment,
+  );
+  const refreshBoard = useCallback(() => {
+    router.refresh();
+    const revision = getRevision();
+    void readBoardSnapshotAction({
+      boardId: board.id,
+      organizationId: board.organization_id,
+    })
+      .then((result) => {
+        if (result.status === "success" && result.canMutate === canMutate)
+          mergeSnapshot(result.rows, revision);
+        else if (result.status === "error") setError(result.message);
+      })
+      .catch(() =>
         setError(
-          caught instanceof Error
-            ? caught.message
-            : "The change could not be saved.",
-        );
-        setLastRetry(() => operation);
-      } finally {
-        mutationLockRef.current = false;
-      }
-    });
-  }, []);
-
-  const replaceElement = useCallback(
-    (element: BoardElementRow, signedUrl?: string) => {
-      setNodes((current) =>
-        current.map((node) =>
-          node.id === element.id
-            ? {
-                ...flowNode(
-                  element,
-                  signedUrl ?? (node.data.imageUrl as string | undefined),
-                ),
-                selected: node.selected,
-              }
-            : node,
+          "Board access could not be refreshed. Reload to check access.",
         ),
       );
-    },
-    [],
-  );
-
-  const persistUpdate = useCallback(
-    (
-      elementId: string,
-      changes: Parameters<typeof updateBoardElementAction>[0],
-    ) => {
-      activeElementsRef.current.add(elementId);
-      runMutation(async () => {
-        let persisted: BoardElementRow | null = null;
-        try {
-          const result = await updateBoardElementAction({
-            ...changes,
-            elementId,
-          });
-          if (result.status === "error") throw new Error(result.message);
-          persisted = result.data;
-          replaceElement(result.data);
-        } finally {
-          finishElementMutation(elementId, persisted);
-        }
-      });
-    },
-    [finishElementMutation, replaceElement, runMutation],
-  );
-
-  const persistHistoryTransition = useCallback(
-    async (from: BoardElementRow[], to: BoardElementRow[]) => {
-      const diff = diffWhiteboardSnapshots(from, to);
-      const elementIds = [
-        ...diff.archiveIds,
-        ...diff.restore.map((element) => element.id),
-        ...diff.update.map((element) => element.id),
-      ];
-      elementIds.forEach((id) => activeElementsRef.current.add(id));
-      const results = await Promise.all([
-        ...diff.archiveIds.map((id) => archiveBoardElementAction(id)),
-        ...diff.restore.map((element) => restoreBoardElementAction(element.id)),
-        ...diff.update.map((element) =>
-          updateBoardElementAction({
-            content: element.content,
-            elementId: element.id,
-            height: element.height,
-            metadata: element.metadata,
-            rotation: element.rotation,
-            style: element.style,
-            width: element.width,
-            x: element.x,
-            y: element.y,
-            zIndex: element.z_index,
-          }),
-        ),
-      ]);
-      results.forEach((result, index) =>
-        finishElementMutation(
-          elementIds[index]!,
-          result.status === "success" ? result.data : null,
-        ),
-      );
-      const failed = results.find((result) => result.status === "error");
-      if (failed?.status === "error") throw new Error(failed.message);
-    },
-    [finishElementMutation],
-  );
-
-  const navigateHistory = useCallback(
-    (direction: "UNDO" | "REDO") => {
-      if (!canMutate || mutationLockRef.current) return;
-      const current = historyRef.current;
-      const next =
-        direction === "UNDO"
-          ? undoWhiteboardHistory(current)
-          : redoWhiteboardHistory(current);
-      if (next === current) return;
-      historyRef.current = next;
-      setHistory(next);
-      syncNodes(next.present);
-      if (!next.present.some((element) => element.id === selectedId))
-        setSelectedId(null);
-      runMutation(() =>
-        persistHistoryTransition(current.present, next.present),
-      );
-    },
-    [canMutate, persistHistoryTransition, runMutation, selectedId, syncNodes],
-  );
-
-  const onContentCommit = useCallback(
-    (elementId: string, content: Record<string, unknown>) => {
-      if (mutationLockRef.current) return;
-      recordSnapshot(
-        historyRef.current.present.map((element) =>
-          element.id === elementId ? { ...element, content } : element,
-        ),
-      );
-      persistUpdate(elementId, { elementId, content });
-    },
-    [persistUpdate, recordSnapshot],
-  );
-
-  const onStyleCommit = useCallback(
-    (elementId: string, style: Record<string, unknown>) => {
-      if (mutationLockRef.current) return;
-      recordSnapshot(
-        historyRef.current.present.map((element) =>
-          element.id === elementId ? { ...element, style } : element,
-        ),
-      );
-      persistUpdate(elementId, { elementId, style });
-    },
-    [persistUpdate, recordSnapshot],
-  );
-
-  const onResizeCommit = useCallback(
-    (
-      elementId: string,
-      dimensions: { height: number; width: number; x: number; y: number },
-    ) => {
-      if (mutationLockRef.current) return;
-      recordSnapshot(
-        historyRef.current.present.map((element) =>
-          element.id === elementId ? { ...element, ...dimensions } : element,
-        ),
-      );
-      persistUpdate(elementId, { elementId, ...dimensions });
-    },
-    [persistUpdate, recordSnapshot],
-  );
-
-  const renderedNodes = useMemo(() => {
-    const commentCounts = comments.reduce((counts, comment) => {
-      if (!comment.archived_at && comment.element_id)
-        counts.set(
-          comment.element_id,
-          (counts.get(comment.element_id) ?? 0) + 1,
-        );
-      return counts;
-    }, new Map<string, number>());
-    return nodes.map((node) => ({
-      ...node,
-      data: {
-        ...node.data,
-        canMutate,
-        commentCount: commentCounts.get(node.id) ?? 0,
-        onContentCommit,
-        onInteractionCancel: cancelElementInteraction,
-        onInteractionStart: (elementId: string) =>
-          activeElementsRef.current.add(elementId),
-        onResizeCommit,
-      },
-      draggable: canMutate && activeTool === "SELECT",
-    }));
   }, [
-    activeTool,
+    router,
+    getRevision,
+    mergeSnapshot,
+    board.id,
+    board.organization_id,
     canMutate,
-    cancelElementInteraction,
-    comments,
-    nodes,
-    onContentCommit,
-    onResizeCommit,
   ]);
-  const selectedElement = nodes.find((node) => node.id === selectedId)?.data
-    .element;
-
-  const removeSelected = useCallback(() => {
-    if (!canMutate || !selectedId || pending || mutationLockRef.current) return;
-    const removed = historyRef.current.present.find(
-      (element) => element.id === selectedId,
-    );
-    if (!removed) return;
-    recordSnapshot(
-      historyRef.current.present.filter((element) => element.id !== selectedId),
-    );
-    setSelectedId(null);
-    activeElementsRef.current.add(selectedId);
-    runMutation(async () => {
-      let persisted: BoardElementRow | null = null;
-      try {
-        const result = await archiveBoardElementAction(selectedId);
-        if (result.status === "error") throw new Error(result.message);
-        persisted = result.data;
-      } finally {
-        finishElementMutation(selectedId, persisted);
-      }
-    });
-  }, [
-    canMutate,
-    finishElementMutation,
-    pending,
-    recordSnapshot,
-    runMutation,
-    selectedId,
-  ]);
-
+  const previousConnection = useRef(collaboration.connection);
   useEffect(() => {
-    const listener = (event: KeyboardEvent) => {
-      const target = event.target;
+    if (
+      previousConnection.current === "DEGRADED" &&
+      collaboration.connection === "CONNECTED"
+    )
+      refreshBoard();
+    previousConnection.current = collaboration.connection;
+  }, [collaboration.connection, refreshBoard]);
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
       if (
-        target instanceof Element &&
-        target.matches("input, textarea, select, [contenteditable='true']")
-      )
-        return;
-      const modifier = event.ctrlKey || event.metaKey;
-      if (modifier && event.key.toLowerCase() === "z") {
+        isDirty() ||
+        uploads.pending ||
+        uploadFailed ||
+        titlePending ||
+        renaming
+      ) {
         event.preventDefault();
-        navigateHistory(event.shiftKey ? "REDO" : "UNDO");
-        return;
-      }
-      if (modifier && event.key.toLowerCase() === "y") {
-        event.preventDefault();
-        navigateHistory("REDO");
-        return;
-      }
-      if ((event.key === "Delete" || event.key === "Backspace") && selectedId) {
-        event.preventDefault();
-        removeSelected();
-      }
-      if (event.key === "Escape") {
-        setSelectedId(null);
-        setNodes((current) =>
-          current.map((node) => ({ ...node, selected: false })),
-        );
+        event.returnValue = "";
       }
     };
-    window.addEventListener("keydown", listener);
-    return () => window.removeEventListener("keydown", listener);
-  }, [navigateHistory, removeSelected, selectedId]);
-
-  function addElement(
-    type: Exclude<WhiteboardTool, "SELECT" | "PAN" | "IMAGE">,
-    position: { x: number; y: number },
-  ) {
-    if (mutationLockRef.current) return;
-    const elementRows = historyRef.current.present;
-    const size = defaultElementSize[type];
-    const defaults = defaultElementData(type);
-    runMutation(async () => {
-      const result = await createBoardElementAction({
+    window.addEventListener("beforeunload", warn);
+    window.addEventListener("focus", refreshBoard);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      window.removeEventListener("focus", refreshBoard);
+    };
+  }, [
+    isDirty,
+    uploads.pending,
+    uploadFailed,
+    titlePending,
+    renaming,
+    refreshBoard,
+  ]);
+  async function loadComments(earlier = false) {
+    if (commentsBusy.current) return;
+    commentsBusy.current = true;
+    setCommentsLoading(true);
+    setCommentsError(null);
+    try {
+      const result = await readBoardCommentsAction({
         boardId: board.id,
-        ...defaults,
-        elementType: type,
-        height: size.height,
-        metadata: {},
-        rotation: 0,
-        width: size.width,
-        x: position.x,
-        y: position.y,
-        zIndex: nextZIndex(elementRows),
+        organizationId: board.organization_id,
+        ...(earlier && beforeComment ? { before: beforeComment } : {}),
       });
       if (result.status === "error") throw new Error(result.message);
-      recordCreatedElement(result.data);
-      setSelectedId(result.data.id);
-      setActiveTool("SELECT");
-    });
+      setComments((rows) =>
+        result.comments.reduce(reconcileBoardComment, rows),
+      );
+      setBeforeComment(result.before);
+      commentsLoaded.current = true;
+    } catch (caught) {
+      setCommentsError(
+        caught instanceof Error
+          ? caught.message
+          : "Comments could not load. Retry comments.",
+      );
+    } finally {
+      setCommentsLoading(false);
+      commentsBusy.current = false;
+    }
   }
-
-  function handlePaneClick(event: React.MouseEvent) {
+  function openPanel(next: Panel) {
+    setPanel(next);
+    if (next === "COMMENTS" && !commentsLoaded.current) void loadComments();
+  }
+  function report(operation: () => BoardElementRow[]) {
+    if (!editable) return;
+    try {
+      setError(null);
+      void commit(operation());
+    } catch (caught) {
+      setError((caught as Error).message);
+    }
+  }
+  const update = useCallback(
+    async (id: string, patch: Partial<BoardElementRow>) => {
+      if (!canMutate || isBusy() || isDirty()) return null;
+      const rows = getRows(),
+        row = rows.find((entry) => entry.id === id);
+      if (!row || isObjectLocked(row, rows)) {
+        cancelInteraction(id);
+        return null;
+      }
+      let next = { ...row, ...patch };
+      if (
+        (row.element_type === "IMAGE" && next.style.aspectLock !== false) ||
+        (row.element_type === "SHAPE" && next.content.shape === "circle")
+      ) {
+        if (next.width !== row.width)
+          next = {
+            ...next,
+            height:
+              row.element_type === "SHAPE"
+                ? next.width
+                : (row.height * next.width) / row.width,
+          };
+        else if (next.height !== row.height)
+          next = {
+            ...next,
+            width:
+              row.element_type === "SHAPE"
+                ? next.height
+                : (row.width * next.height) / row.height,
+          };
+      }
+      try {
+        let after = rows;
+        if (
+          (row.element_type === "SECTION" || row.element_type === "GROUP") &&
+          next.width === row.width &&
+          next.height === row.height &&
+          (next.x !== row.x || next.y !== row.y)
+        )
+          after = moveObjects(rows, [id], next.x - row.x, next.y - row.y);
+        after = after.map((entry) => (entry.id === id ? next : entry));
+        const saved = await commit(after);
+        return saved
+          ? (getRows().find((entry) => entry.id === id) ?? next)
+          : null;
+      } finally {
+        cancelInteraction(id);
+      }
+    },
+    [canMutate, cancelInteraction, commit, getRows, isBusy, isDirty],
+  );
+  const onContentCommit = useCallback(
+    (id: string, content: Record<string, unknown>) => {
+      void update(id, { content });
+    },
+    [update],
+  );
+  const onResizeCommit = useCallback(
+    (
+      id: string,
+      bounds: { height: number; width: number; x: number; y: number },
+    ) => {
+      void update(id, bounds);
+    },
+    [update],
+  );
+  const commentCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of comments)
+      if (row.element_id && !row.archived_at)
+        counts.set(row.element_id, (counts.get(row.element_id) ?? 0) + 1);
+    return counts;
+  }, [comments]);
+  function select(id: string, additive = false) {
+    setSelected((ids) =>
+      additive
+        ? ids.includes(id)
+          ? ids.filter((value) => value !== id)
+          : [...ids, id]
+        : [id],
+    );
+  }
+  function imageRequest(id?: string) {
+    if (!editable) return;
+    replacement.current = id;
+    imagePosition.current = canvasApi.current?.center() ?? { x: 0, y: 0 };
+    if (picker.current) picker.current.multiple = !id;
+    picker.current?.click();
+  }
+  function insert(at: Point) {
+    if (!editable || tool === "SELECT" || tool === "PAN") return;
+    if (tool === "LINK") {
+      setLinkAt(at);
+      setTool("SELECT");
+      return;
+    }
+    if (tool === "IMAGE") {
+      imageRequest();
+      return;
+    }
+    const row = createLocalObject(
+      tool,
+      board.id,
+      board.organization_id,
+      currentUser.id,
+      getRows(),
+      at,
+    );
+    if (tool === "SHAPE") {
+      row.content = { shape };
+      if (shape === "circle") row.height = row.width;
+    }
+    if (tool === "ARROW") row.content = { line: shape === "line" };
+    void commit([...getRows(), row]).then((saved) => {
+      if (saved) setSelected([row.id]);
+    });
+    setTool("SELECT");
+  }
+  function archive(keep = false) {
+    report(() => archiveObjects(getRows(), selected, keep));
+    setArchiveChoice(false);
+  }
+  function action(value: SelectionAction) {
+    if (!editable) return;
     if (
-      !canMutate ||
-      activeTool === "SELECT" ||
-      activeTool === "PAN" ||
-      activeTool === "IMAGE" ||
-      pending ||
-      !flowRef.current
-    )
-      return;
-    const position = flowRef.current.screenToFlowPosition({
-      x: event.clientX,
-      y: event.clientY,
-    });
-    addElement(activeTool, position);
-  }
-
-  function requestImagePicker() {
-    if (!canMutate || pending || mutationLockRef.current) return;
-    const canvas = document.querySelector<HTMLElement>(
-      "[data-testid='whiteboard-canvas']",
-    );
-    const bounds = canvas?.getBoundingClientRect();
-    if (bounds && flowRef.current) {
-      imagePositionRef.current = flowRef.current.screenToFlowPosition({
-        x: bounds.left + bounds.width / 2,
-        y: bounds.top + bounds.height / 2,
-      });
-    }
-    imageInputRef.current?.click();
-  }
-
-  function uploadImage(file: File) {
-    if (mutationLockRef.current) return;
-    const validation = boardImageFileSchema.safeParse(file);
-    if (!validation.success) {
-      setSaveState("ERROR");
-      setError(validation.error.issues[0]?.message ?? "Choose a valid image.");
+      value === "ARCHIVE" &&
+      selectedRows.some((row) => row.element_type === "SECTION")
+    ) {
+      setArchiveChoice(true);
       return;
     }
-    const position = imagePositionRef.current;
-    const size = defaultElementSize.IMAGE;
-    const formData = new FormData();
-    formData.set("boardId", board.id);
-    formData.set("file", file);
-    formData.set("height", String(size.height));
-    formData.set("width", String(size.width));
-    formData.set("x", String(position.x));
-    formData.set("y", String(position.y));
-    formData.set("zIndex", String(nextZIndex(historyRef.current.present)));
-    runMutation(async () => {
-      const result = await uploadBoardImageAction(formData);
-      if (result.status === "error") throw new Error(result.message);
-      imageUrlsRef.current = {
-        ...imageUrlsRef.current,
-        [result.data.element.id]: result.data.signedUrl,
-      };
-      recordCreatedElement(result.data.element);
-      setSelectedId(result.data.element.id);
-      setActiveTool("SELECT");
+    report(() => {
+      const rows = getRows();
+      switch (value) {
+        case "ARCHIVE":
+          return archiveObjects(rows, selected);
+        case "GROUP": {
+          let groupId = "";
+          const after = groupObjects(rows, selected, (bounds, parent_id) => {
+            const group = createLocalObject(
+              "GROUP",
+              board.id,
+              board.organization_id,
+              currentUser.id,
+              rows,
+              { x: bounds.x - 8, y: bounds.y - 32 },
+              {
+                width: bounds.width + 16,
+                height: bounds.height + 40,
+                parent_id,
+              },
+            );
+            groupId = group.id;
+            return group;
+          });
+          setSelected([groupId]);
+          return after;
+        }
+        case "UNGROUP":
+          return ungroupObjects(rows, selected);
+        case "DUPLICATE": {
+          const copied = duplicateObjects(rows, selected, currentUser.id);
+          setSelected(copied.ids);
+          return copied.rows;
+        }
+        case "LOCK": {
+          const ids = new Set(
+              selectionRoots(rows, selected).map((row) => row.id),
+            ),
+            unlock = selectionRoots(rows, selected).every((row) => row.locked);
+          return rows.map((row) =>
+            ids.has(row.id) ? { ...row, locked: !unlock } : row,
+          );
+        }
+        case "WIDTH":
+        case "HEIGHT":
+          return matchObjectSize(
+            rows,
+            selected,
+            value === "WIDTH" ? "width" : "height",
+          );
+        case "DISTRIBUTE_X":
+        case "DISTRIBUTE_Y":
+          return distributeObjects(
+            rows,
+            selected,
+            value === "DISTRIBUTE_X" ? "x" : "y",
+          );
+        default:
+          return layerObjects(rows, selected, value);
+      }
     });
   }
-
-  function changeLayer(direction: "BACKWARD" | "FORWARD" | "FRONT" | "BACK") {
-    if (!selectedId || mutationLockRef.current) return;
-    const currentElements = historyRef.current.present;
-    const reordered = reorderElement(currentElements, selectedId, direction);
-    const changed = reordered.filter(
-      (element) =>
-        currentElements.find((current) => current.id === element.id)
-          ?.z_index !== element.z_index,
-    );
-    if (changed.length === 0) return;
-    recordSnapshot(reordered);
-    changed.forEach((element) => activeElementsRef.current.add(element.id));
-    runMutation(async () => {
-      const results = await Promise.all(
-        changed.map((element) =>
-          updateBoardElementAction({
-            elementId: element.id,
-            zIndex: element.z_index,
-          }),
-        ),
-      );
-      results.forEach((result, index) =>
-        finishElementMutation(
-          changed[index]!.id,
-          result.status === "success" ? result.data : null,
-        ),
-      );
-      const failed = results.find((result) => result.status === "error");
-      if (failed?.status === "error") throw new Error(failed.message);
-    });
-  }
-
-  function saveTitle() {
-    if (title.trim() === board.title) return setRenaming(false);
-    runMutation(async () => {
+  async function rename() {
+    if (!renaming) return;
+    setRenaming(false);
+    if (title === board.title) return;
+    setTitlePending(true);
+    try {
       const result = await renameBoardAction(board.id, title);
       if (result.status === "error") throw new Error(result.message);
-      setTitle(result.data.title);
-      setRenaming(false);
-    });
+    } catch (caught) {
+      setError((caught as Error).message);
+      setRenaming(true);
+    } finally {
+      setTitlePending(false);
+    }
   }
-
   return (
-    <section className="bg-muted/30 flex h-[calc(100dvh-4rem)] min-h-[34rem] flex-col overflow-hidden border-y lg:h-screen">
-      <WhiteboardHeader
-        actions={
-          <div className="ml-auto flex items-center gap-2">
-            <WhiteboardCollaborators
-              colorAssignments={collaboratorColors}
-              connection={connection}
-              currentUserId={currentUser.id}
-              presence={presence}
-            />
-            <WhiteboardCommentsPanel
-              boardId={board.id}
-              canMutate={canMutate}
-              comments={comments}
-              currentUserId={currentUser.id}
-              members={members}
-              onComment={(comment) =>
-                setComments((current) =>
-                  reconcileBoardComment(current, comment),
-                )
-              }
-              selectedElementId={selectedId}
-            />
-          </div>
-        }
-        canMutate={canMutate}
-        onRename={saveTitle}
-        onRenamingChange={setRenaming}
-        onRetry={lastRetry ? () => runMutation(lastRetry) : undefined}
-        renaming={renaming}
-        saveState={saveState}
-        setTitle={setTitle}
-        title={title}
-      />
-      {error ? (
-        <div
-          className="bg-destructive/10 text-destructive border-b px-4 py-2 text-sm"
-          role="alert"
-        >
-          {error}
-        </div>
-      ) : null}
-      <div
-        className="relative min-h-0 flex-1"
-        data-testid="whiteboard-canvas"
-        onPointerMove={(event) => {
-          const position = flowRef.current?.screenToFlowPosition({
-            x: event.clientX,
-            y: event.clientY,
-          });
-          if (position) collaborationRef.current?.updateCursor(position);
+    <div
+      data-board-shell
+      className="bg-background flex h-dvh min-h-0 flex-col overflow-hidden max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
+    >
+      <a
+        className="bg-background focus:ring-ring sr-only fixed top-2 left-2 z-[60] rounded border px-4 py-2 focus:not-sr-only focus:ring-2"
+        href="#board-canvas"
+        onClick={(event) => {
+          event.preventDefault();
+          focusBoardCanvas();
         }}
       >
-        <ReactFlow<WhiteboardFlowNode>
-          deleteKeyCode={null}
-          fitView
-          maxZoom={2.5}
-          minZoom={0.15}
-          nodeTypes={nodeTypes}
-          nodes={renderedNodes}
-          nodesConnectable={false}
-          nodesDraggable={canMutate && activeTool === "SELECT"}
-          onInit={(instance) => {
-            flowRef.current = instance;
-          }}
-          onNodeDragStop={(_event, node) => {
-            if (!canMutate || mutationLockRef.current) return;
-            recordSnapshot(
-              historyRef.current.present.map((element) =>
-                element.id === node.id
-                  ? { ...element, x: node.position.x, y: node.position.y }
-                  : element,
-              ),
-            );
-            persistUpdate(node.id, {
-              elementId: node.id,
-              x: node.position.x,
-              y: node.position.y,
-            });
-          }}
-          onNodeDragStart={(_event, node) =>
-            activeElementsRef.current.add(node.id)
-          }
-          onNodesChange={(changes: NodeChange<WhiteboardFlowNode>[]) =>
-            setNodes((current) => applyNodeChanges(changes, current))
-          }
-          onMove={(_event, nextViewport) => setViewport(nextViewport)}
-          onPaneClick={handlePaneClick}
-          onSelectionChange={({ nodes: selected }) =>
-            setSelectedId(selected[0]?.id ?? null)
-          }
-          panOnDrag={activeTool === "PAN" ? true : [1, 2]}
-          selectionOnDrag={activeTool === "SELECT"}
-        >
-          <Background
-            color="var(--border)"
-            gap={20}
-            size={1}
-            variant={BackgroundVariant.Dots}
-          />
-          <Controls position="bottom-right" showInteractive={false} />
-        </ReactFlow>
-        <WhiteboardCursors
-          colorAssignments={collaboratorColors}
-          currentUserId={currentUser.id}
-          cursors={remoteCursors}
-          presence={presence}
-          viewport={viewport}
-        />
-        <div className="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2">
-          <div className="pointer-events-auto">
-            <WhiteboardToolbar
-              activeTool={activeTool}
-              busy={pending}
-              canMutate={canMutate}
-              canRedo={history.future.length > 0}
-              canUndo={history.past.length > 0}
-              onImageRequest={requestImagePicker}
-              onRedo={() => navigateHistory("REDO")}
-              onToolChange={setActiveTool}
-              onUndo={() => navigateHistory("UNDO")}
-            />
-          </div>
-        </div>
-        {selectedId && canMutate ? (
-          <SelectionToolbar
-            element={selectedElement}
-            onLayerChange={changeLayer}
-            onRemove={removeSelected}
-            onShapeChange={(shape) => {
-              if (!selectedElement) return;
-              onContentCommit(selectedElement.id, {
-                ...selectedElement.content,
-                shape,
-              });
-            }}
-            pending={pending}
-          />
-        ) : null}
-        {selectedElement && canMutate ? (
-          <div className="pointer-events-none absolute top-16 left-1/2 z-10 -translate-x-1/2">
-            <div className="pointer-events-auto">
-              <WhiteboardInspector
-                element={selectedElement}
-                onStyleChange={(style) =>
-                  onStyleCommit(selectedElement.id, style)
-                }
-                pending={pending}
+        Skip to canvas
+      </a>
+      <WhiteboardHeader
+        canMutate={canMutate && !busy}
+        title={title}
+        setTitle={setTitle}
+        renaming={renaming}
+        onRenamingChange={setRenaming}
+        onRename={() => void rename()}
+        saveState={
+          (documentError && dirty) || uploadFailed
+            ? "ERROR"
+            : busy
+              ? "SAVING"
+              : renaming
+                ? "UNSAVED"
+                : "SAVED"
+        }
+        onRetry={hasRetry ? retry : undefined}
+        beforeLeave={beforeLeave}
+        navigation={
+          shell ? (
+            <BoardNavigation state={shell} beforeLeave={beforeLeave} />
+          ) : undefined
+        }
+        actions={
+          <>
+            <div className="hidden sm:block">
+              <WhiteboardCollaborators
+                connection={collaboration.connection}
+                colorAssignments={collaboration.colors}
+                currentUserId={currentUser.id}
+                presence={collaboration.presence}
               />
             </div>
-          </div>
-        ) : null}
-        {!canMutate ? (
-          <p className="bg-background/95 text-muted-foreground absolute bottom-3 left-3 z-10 rounded-md border px-3 py-2 text-xs shadow-sm">
-            View only
-          </p>
-        ) : null}
-        <input
-          accept="image/png,image/jpeg,image/webp"
-          aria-label="Upload board image"
-          className="sr-only"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0];
-            if (file) uploadImage(file);
-            event.currentTarget.value = "";
+            <Button
+              aria-label="Open board comments"
+              aria-pressed={panel === "COMMENTS"}
+              onClick={() =>
+                openPanel(panel === "COMMENTS" ? null : "COMMENTS")
+              }
+              size="icon"
+              title="Comments"
+              variant="ghost"
+            >
+              <MessageSquare aria-hidden="true" className="size-4" />
+            </Button>
+            <BoardMenu
+              onOutline={() => openPanel("OUTLINE")}
+              onHelp={() => setHelp(true)}
+              shortcuts={shortcuts}
+              onShortcuts={setShortcuts}
+              minimap={minimap}
+              onMinimap={() => setMinimap((value) => !value)}
+              connection={collaboration.connection}
+            />
+          </>
+        }
+      />
+      {error || documentError || uploads.error ? (
+        <div
+          className="bg-background flex items-center justify-between gap-2 border-b px-3 py-2 text-sm"
+          role="alert"
+        >
+          <p>{error ?? documentError ?? uploads.error}</p>
+          <Button
+            onClick={() => {
+              setError(null);
+              dismissError();
+              uploads.dismiss();
+            }}
+            variant="ghost"
+          >
+            Dismiss
+          </Button>
+          {dirty && !hasRetry ? (
+            <Button
+              onClick={() => window.location.reload()}
+              variant="secondary"
+            >
+              Reload board
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+      <main
+        className="relative flex min-h-0 flex-1 flex-col"
+        aria-label="Board workspace"
+      >
+        <BoardCanvas
+          ref={canvasApi}
+          board={board}
+          userId={currentUser.id}
+          rows={rows}
+          selected={selected}
+          select={select}
+          onSelection={setSelected}
+          tool={tool}
+          setTool={setTool}
+          shape={shape}
+          setShape={setShape}
+          editable={editable}
+          canMutate={canMutate}
+          busy={busy}
+          canUndo={history.past.length > 0}
+          canRedo={history.future.length > 0}
+          navigate={navigate}
+          action={action}
+          shortcuts={shortcuts}
+          onMove={(dx, dy) =>
+            report(() => moveObjects(getRows(), selected, dx, dy))
+          }
+          onInsert={insert}
+          onImageRequest={(position) => {
+            imagePosition.current = position;
+            replacement.current = undefined;
+            if (picker.current) picker.current.multiple = true;
+            picker.current?.click();
           }}
-          ref={imageInputRef}
-          type="file"
+          onFiles={uploads.add}
+          onPanel={openPanel}
+          collaboration={collaboration}
+          minimap={minimap}
+          commentCounts={commentCounts}
+          imageUrl={imageUrl}
+          retryImage={retryImage}
+          onContentCommit={onContentCommit}
+          onResizeCommit={onResizeCommit}
+          startInteraction={startInteraction}
+          cancelInteraction={cancelInteraction}
+          getRows={getRows}
+          commit={commit}
+          onError={setError}
         />
-      </div>
-    </section>
+      </main>
+      {uploads.items.length ? (
+        <div
+          aria-label="Image uploads"
+          className="bg-background max-h-40 overflow-y-auto border-t px-3 py-2 text-xs"
+        >
+          <div className="flex items-center justify-between">
+            <p>Images · up to 10 MB each</p>
+            <Button
+              disabled={uploads.pending}
+              onClick={uploads.dismiss}
+              variant="ghost"
+            >
+              Dismiss uploads
+            </Button>
+          </div>
+          {uploads.items.map((item) => (
+            <div className="flex items-center gap-2 py-1" key={item.id}>
+              <span className="min-w-0 flex-1 truncate">{item.file.name}</span>
+              <span role={item.state === "Error" ? "alert" : "status"}>
+                {item.error ?? item.state}
+              </span>
+              {item.state === "Error" ? (
+                <Button onClick={() => uploads.retry(item.id)} variant="ghost">
+                  Retry file
+                </Button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <input
+        accept="image/png,image/jpeg,image/webp"
+        aria-label="Upload board images"
+        className="sr-only"
+        onChange={(event) => {
+          const files = Array.from(event.currentTarget.files ?? []);
+          uploads.add(
+            replacement.current ? files.slice(0, 1) : files,
+            imagePosition.current,
+            replacement.current,
+          );
+          event.currentTarget.value = "";
+          replacement.current = undefined;
+        }}
+        ref={picker}
+        tabIndex={-1}
+        type="file"
+      />
+      {panel === "INSPECTOR" ? (
+        <BoardPanel title="Inspector" onClose={() => setPanel(null)}>
+          <BoardInspector
+            rows={rows}
+            selection={selectedRows}
+            canMutate={canMutate}
+            busy={busy || dirty}
+            onUpdate={update}
+            onAction={action}
+            onAlign={(alignment) =>
+              report(() => alignObjects(getRows(), selected, alignment))
+            }
+            onMembership={(id) =>
+              report(() => assignSection(getRows(), selected, id))
+            }
+            onReplace={imageRequest}
+            onSelect={(id) => select(id)}
+          />
+        </BoardPanel>
+      ) : null}
+      {panel === "OUTLINE" ? (
+        <BoardPanel title="Object outline" onClose={() => setPanel(null)}>
+          <BoardOutline
+            rows={rows}
+            selected={selected}
+            onSelect={(id, additive) => select(id, additive)}
+            onLocate={(id) => {
+              canvasApi.current?.locate(id);
+              setPanel(null);
+              requestAnimationFrame(focusBoardCanvas);
+            }}
+          />
+          <Button
+            className="mt-4 w-full"
+            disabled={!selectedRows.length}
+            onClick={() => setPanel("INSPECTOR")}
+            variant="secondary"
+          >
+            Inspect selected objects
+          </Button>
+        </BoardPanel>
+      ) : null}
+      <WhiteboardCommentsPanel
+        boardId={board.id}
+        canMutate={canMutate}
+        comments={comments}
+        currentUserId={currentUser.id}
+        members={members}
+        onComment={onComment}
+        selectedElementId={
+          selectedRows.length === 1 ? selectedRows[0]!.id : null
+        }
+        controlledOpen={panel === "COMMENTS"}
+        onOpenChange={(open) => openPanel(open ? "COMMENTS" : null)}
+        loading={commentsLoading}
+        loadError={commentsError}
+        onLoad={() => void loadComments(Boolean(beforeComment))}
+        hasEarlier={Boolean(beforeComment)}
+      />
+      <Dialog
+        className="max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
+        open={archiveChoice}
+        onOpenChange={setArchiveChoice}
+        title="Archive Section"
+        description="Choose what happens to its children. This is one atomic, undoable operation."
+      >
+        <div className="flex flex-wrap gap-2 p-5">
+          <Button onClick={() => archive(true)} variant="secondary">
+            Keep children on board
+          </Button>
+          <Button onClick={() => archive(false)} variant="destructive">
+            Archive Section and children
+          </Button>
+        </div>
+      </Dialog>
+      <BoardLinkDialog
+        open={Boolean(linkAt)}
+        onClose={() => setLinkAt(null)}
+        busy={busy}
+        onCreate={async (content) => {
+          const row = createLocalObject(
+            "LINK",
+            board.id,
+            board.organization_id,
+            currentUser.id,
+            getRows(),
+            linkAt ?? canvasApi.current?.center() ?? { x: 0, y: 0 },
+            { content },
+          );
+          const saved = await commit([...getRows(), row]);
+          if (saved) {
+            setSelected([row.id]);
+            setLinkAt(null);
+          }
+          return saved;
+        }}
+      />
+      <BoardHelp open={help} onOpenChange={setHelp} />
+    </div>
   );
 }

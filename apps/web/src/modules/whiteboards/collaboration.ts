@@ -235,9 +235,18 @@ export function chooseCommittedElement(
   remote: BoardElementRow,
 ) {
   if (!local) return remote;
-  return Date.parse(remote.updated_at) > Date.parse(local.updated_at)
+  return compareBoardTimestamps(remote.updated_at, local.updated_at) > 0
     ? remote
     : local;
+}
+
+/** PostgreSQL audit timestamps carry microseconds; Date alone truncates them. */
+export function compareBoardTimestamps(left: string, right: string) {
+  const milliseconds = Date.parse(left) - Date.parse(right);
+  if (milliseconds) return Math.sign(milliseconds);
+  const fraction = (value: string) =>
+    (value.match(/\.(\d+)(?:Z|[+-]\d{2}:\d{2})$/)?.[1] ?? "").padEnd(9, "0");
+  return fraction(left).localeCompare(fraction(right));
 }
 
 export function normalizeBoardPresence(

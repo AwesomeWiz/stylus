@@ -47,14 +47,19 @@ describe("workspace routing and loading architecture", () => {
       ]),
     );
   });
-  it("puts workspace pages below one shell while preserving the future editor boundary", () => {
+  it("puts workspace pages below one shell and keeps the immersive editor outside it", () => {
     const pages = files(join(root, "(workspace)")).filter((file) =>
       file.endsWith("page.tsx"),
     );
     for (const file of pages)
       expect(readFileSync(file, "utf8"), file).not.toContain("<AppShell");
     expect(source("app/(workspace)/layout.tsx")).toContain("<AppShell");
-    expect(source("app/whiteboards/[boardId]/page.tsx")).toContain("<AppShell");
+    const editor = source("app/whiteboards/[boardId]/page.tsx");
+    expect(editor).toContain("<BoardShell");
+    expect(editor).toContain("getWorkspaceContext()");
+    expect(editor).not.toMatch(/AppShell|getNotificationSummary/);
+    const boardShell = source("components/whiteboards/board-shell.tsx");
+    expect(boardShell).not.toMatch(/import.*AppShell|getNotificationSummary/);
     expect(source("components/marketing/marketing-page.tsx")).not.toContain(
       "getNotificationSummary",
     );

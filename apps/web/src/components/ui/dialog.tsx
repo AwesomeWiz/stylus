@@ -12,6 +12,7 @@ interface DialogProps {
   open: boolean;
   title: string;
   mobileSheet?: boolean;
+  className?: string;
 }
 
 export function Dialog({
@@ -21,6 +22,7 @@ export function Dialog({
   open,
   title,
   mobileSheet = false,
+  className,
 }: DialogProps) {
   return (
     <DialogPrimitive.Root onOpenChange={onOpenChange} open={open}>
@@ -32,6 +34,7 @@ export function Dialog({
             mobileSheet
               ? "inset-x-0 bottom-0 w-full rounded-t-xl pb-[env(safe-area-inset-bottom)] md:inset-x-auto md:top-1/2 md:bottom-auto md:left-1/2 md:w-[min(42rem,calc(100vw-2rem))] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl"
               : "top-1/2 left-1/2 w-[min(42rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl",
+            className,
           )}
         >
           <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b bg-inherit px-5 py-5 sm:px-6">

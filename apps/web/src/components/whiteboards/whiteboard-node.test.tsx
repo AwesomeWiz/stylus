@@ -71,6 +71,25 @@ function nodeData(overrides: Partial<WhiteboardNodeData> = {}) {
 }
 
 describe("WhiteboardNode", () => {
+  it("does not interpret untrusted SVG paint as an external resource URL", () => {
+    const { container } = render(
+      <WhiteboardNode
+        {...props(
+          nodeData({
+            element: {
+              ...sticky,
+              element_type: "ARROW",
+              style: { color: "url(https://example.test/paint.svg)" },
+            },
+          }),
+        )}
+      />,
+    );
+    expect(container.querySelector("line")).toHaveAttribute(
+      "stroke",
+      "#52525b",
+    );
+  });
   afterEach(cleanup);
 
   it("commits text on blur without rendering unsafe HTML", () => {

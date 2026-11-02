@@ -10,7 +10,7 @@ export default function WhiteboardsError({
 }) {
   return (
     <div className="mx-auto max-w-lg py-20 text-center">
-      <h1 className="text-xl font-semibold">Whiteboards could not be loaded</h1>
+      <h1 className="text-xl font-semibold">Boards could not be loaded</h1>
       <p className="text-muted-foreground mt-2 text-sm">
         Check your connection, then try again.
       </p>

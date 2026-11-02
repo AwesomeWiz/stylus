@@ -2,6 +2,30 @@
 
 # Current
 
+## REDESIGN-004 - Boards V2 foundation
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-004-boards-v2`, starting exactly at
+`d211d878793b60abb2598460a0feaf1f9baf5c9f`, in its own worktree. Main agent only.
+Boards retains its URLs, adds real list metadata and seven native templates, and
+opens an immersive BoardShell with vertical tools, named Shapes, selection,
+Sections/Groups, atomic manipulation, private image editing, safe manual links,
+shared Inspector/Comments/outline slot, viewport navigation and scoped shortcuts.
+Two forward migrations protect parent/lock/template invariants and bounded atomic
+operations. Initial canvas reads exclude comments/signing; deferred reads freshly
+check tenant/board access. Realtime identity, colors, cursors and local history
+remain; conflicting failed saves require reload. No native entity integrations,
+conversion, votes/reactions, AI, memory promotion, worker changes or 005 execution.
+
+Full web tests (186 files / 1,063 tests), focused tests (24 / 149), 93 board
+pgTAP assertions, web lint/typecheck/build and 70 fixture browser checks pass.
+See [Boards](docs/BOARDS.md) and PROJECT_STATE for verification and explicit local
+PostgreSQL/browser limits. No merge/push; hosted transport/NVDA checks remain
+separate target-environment acceptance.
+
+---
+
 ## REDESIGN-003.1 — Auth visual identity and interactive artwork
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

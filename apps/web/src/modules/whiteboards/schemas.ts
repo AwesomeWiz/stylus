@@ -17,15 +17,57 @@ export const boardElementTypeSchema = z.enum([
   "IMAGE",
   "SHAPE",
   "ARROW",
+  "SECTION",
+  "GROUP",
+  "LINK",
 ] satisfies readonly BoardElementType[]);
 
 const coordinate = z.number().finite().min(-1_000_000).max(1_000_000);
 const dimension = z.number().finite().min(24).max(10_000);
-const jsonObject = z.record(z.string(), z.unknown());
+const jsonObject = z.record(z.string(), z.unknown()).refine((value) => {
+  try {
+    return JSON.stringify(value).length <= 24000;
+  } catch {
+    return false;
+  }
+}, "Keep object data under 24 KB.");
+
+export const safeBoardUrl = z
+  .url()
+  .max(2048)
+  .refine((value) => {
+    const url = new URL(value);
+    return (
+      ["http:", "https:"].includes(url.protocol) &&
+      !url.username &&
+      !url.password
+    );
+  }, "Use an http or https URL without credentials.");
+export const boardShapeValues = [
+  "rectangle",
+  "rounded_rectangle",
+  "circle",
+  "diamond",
+  "line",
+  "arrow",
+] as const;
+export const boardTemplateValues = [
+  "blank",
+  "brand-moodboard",
+  "campaign",
+  "reel-storyboard",
+  "research-synthesis",
+  "competitor-inspiration",
+  "brainstorm",
+] as const;
+export const boardTemplateSchema = z.enum(boardTemplateValues);
 
 export const createElementSchema = z.object({
+  id: elementIdSchema.optional(),
   boardId: boardIdSchema,
   content: jsonObject,
+  parentId: elementIdSchema.nullable().optional(),
+  locked: z.boolean().optional(),
   elementType: boardElementTypeSchema,
   height: dimension,
   metadata: jsonObject.default({}),
@@ -40,6 +82,8 @@ export const createElementSchema = z.object({
 export const updateElementSchema = z
   .object({
     content: jsonObject.optional(),
+    parentId: elementIdSchema.nullable().optional(),
+    locked: z.boolean().optional(),
     elementId: elementIdSchema,
     height: dimension.optional(),
     metadata: jsonObject.optional(),
@@ -91,3 +135,85 @@ export const createBoardCommentSchema = z.object({
 export type CreateElementInput = z.input<typeof createElementSchema>;
 export type UpdateElementInput = z.input<typeof updateElementSchema>;
 export type CreateBoardCommentInput = z.input<typeof createBoardCommentSchema>;
+
+export const operationElementSchema = z
+  .object({
+    id: elementIdSchema,
+    element_type: boardElementTypeSchema,
+    x: coordinate,
+    y: coordinate,
+    width: dimension,
+    height: dimension,
+    rotation: z.number().finite().min(-360).max(360),
+    z_index: z.number().int().min(-1_000_000).max(1_000_000),
+    parent_id: elementIdSchema.nullable(),
+    locked: z.boolean(),
+    content: jsonObject,
+    style: jsonObject,
+    metadata: jsonObject,
+  })
+  .superRefine((value, context) => {
+    function issue(message: string) {
+      context.addIssue({ code: "custom", message });
+    }
+    for (const key of ["text", "alt", "caption", "note"])
+      if (
+        value.content[key] !== undefined &&
+        (typeof value.content[key] !== "string" ||
+          value.content[key].length > 5000)
+      )
+        issue("Keep text under 5,000 characters.");
+    if (
+      value.element_type === "IMAGE" &&
+      value.content.sourceUrl &&
+      !safeBoardUrl.safeParse(value.content.sourceUrl).success
+    )
+      issue("Enter a safe source URL.");
+    if (value.element_type === "LINK") {
+      if (!safeBoardUrl.safeParse(value.content.url).success)
+        issue("Enter a safe link URL.");
+      if (
+        !z.string().trim().min(1).max(200).safeParse(value.content.title)
+          .success
+      )
+        issue("Enter a link title.");
+    }
+    if (value.element_type === "SECTION") {
+      if (
+        value.parent_id ||
+        !z.string().trim().min(1).max(200).safeParse(value.content.title)
+          .success
+      )
+        issue("Sections need a name and cannot be nested.");
+      if (
+        value.content.collapsed !== undefined &&
+        typeof value.content.collapsed !== "boolean"
+      )
+        issue("Invalid collapse state.");
+    }
+    for (const [key, min, max] of [
+      ["cropZoom", 1, 4],
+      ["cropX", 0, 100],
+      ["cropY", 0, 100],
+      ["fontSize", 12, 72],
+    ] as const) {
+      if (
+        value.style[key] !== undefined &&
+        !z.number().finite().min(min).max(max).safeParse(value.style[key])
+          .success
+      )
+        issue(`Invalid ${key}.`);
+    }
+  });
+export const boardOperationSchema = z
+  .object({
+    boardId: boardIdSchema,
+    upserts: z.array(operationElementSchema).max(200),
+    archiveIds: z.array(elementIdSchema).max(200),
+  })
+  .refine(({ upserts, archiveIds }) => {
+    const ids = [...upserts.map((row) => row.id), ...archiveIds];
+    return (
+      ids.length > 0 && ids.length <= 200 && new Set(ids).size === ids.length
+    );
+  }, "Choose between 1 and 200 distinct objects.");

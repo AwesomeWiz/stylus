@@ -4,7 +4,7 @@ export default function WhiteboardsLoading() {
       className="bg-muted/40 h-[calc(100dvh-4rem)] animate-pulse"
       role="status"
     >
-      <span className="sr-only">Loading whiteboards</span>
+      <span className="sr-only">Loading Boards</span>
     </div>
   );
 }

@@ -609,9 +609,19 @@ export type MarketingAskCouncilContextRefRow = {
   strategic_review_id: string | null;
   turn_id: string;
 };
-export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
+export type BoardElementType =
+  | "TEXT"
+  | "STICKY"
+  | "IMAGE"
+  | "SHAPE"
+  | "ARROW"
+  | "SECTION"
+  | "GROUP"
+  | "LINK";
 
 export type BoardRow = {
+  /** Absent only on legacy client snapshots; SQL defaults to null. */
+  template_key?: string | null;
   archived_at: string | null;
   created_at: string;
   created_by: string;
@@ -623,6 +633,9 @@ export type BoardRow = {
 };
 
 export type BoardElementRow = {
+  /** Legacy snapshots normalize absent ownership/lock to null/false. */
+  parent_id?: string | null;
+  locked?: boolean;
   archived_at: string | null;
   board_id: string;
   content: Record<string, unknown>;
@@ -1069,11 +1082,15 @@ export type Database = {
           | "y"
           | "z_index"
         > &
-          Partial<Pick<BoardElementRow, "id" | "rotation">>;
+          Partial<
+            Pick<BoardElementRow, "id" | "rotation" | "parent_id" | "locked">
+          >;
         Update: Partial<
           Pick<
             BoardElementRow,
             | "archived_at"
+            | "parent_id"
+            | "locked"
             | "content"
             | "height"
             | "metadata"
@@ -1106,7 +1123,7 @@ export type Database = {
           BoardRow,
           "created_by" | "organization_id" | "title" | "updated_by"
         > &
-          Partial<Pick<BoardRow, "id">>;
+          Partial<Pick<BoardRow, "id" | "template_key">>;
         Update: Partial<Pick<BoardRow, "archived_at" | "title" | "updated_by">>;
         Relationships: [];
       };
@@ -1484,6 +1501,23 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      apply_board_operation: {
+        Args: {
+          p_board_id: string;
+          p_upserts: Record<string, unknown>[];
+          p_archive_ids: string[];
+        };
+        Returns: BoardElementRow[];
+      };
+      create_board_from_template: {
+        Args: {
+          p_organization_id: string;
+          p_title: string;
+          p_template_key: string;
+          p_elements: Record<string, unknown>[];
+        };
+        Returns: BoardRow;
+      };
       delete_owned_organization: {
         Args: {
           p_confirmation_name: string;

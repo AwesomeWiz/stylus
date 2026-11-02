@@ -4,7 +4,112 @@ Last Updated: 2026-11-02
 
 ## Overall Status
 
-REDESIGN-003.1 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+REDESIGN-004 COMPLETE / REQUIRED LOCAL CHECKS PASS
+
+## REDESIGN-004 - Boards V2 foundation
+
+Boards now has real owner/updater/template metadata and seven native templates.
+The editor uses an immersive BoardShell with overlay navigation, vertical named
+creation tools, six Shapes choices, one-shot insertion, explicit Sections/Groups,
+selection sets and atomic manipulation. Private images support bounded batches,
+paste/drop, per-file recovery, aspect/crop/fit and identity-preserving replacement.
+Safe manual links fetch no previews. Inspector, Comments and the accessible
+outline share one responsive slot; zoom/fit/minimap and account/org/board-scoped
+local viewports preserve context. Scoped shortcuts and outline/Inspector controls
+provide alternatives to dragging. See [Boards](docs/BOARDS.md) for full contracts.
+
+Two forward migrations add minimal parent/lock/template invariants and bounded
+atomic operation/template RPCs. Direct writes and RPCs serialize on the board and
+repeat tenant/role/ownership checks. Initial canvas data has zero comment bodies
+and zero Storage signing calls. Deferred reads freshly check organization/board,
+accept PostgreSQL offset timestamps and sign canonical private asset keys in
+batches. Traversal/encoded/URL-shaped keys are rejected in both app and SQL.
+SVG paint cannot request external resources. Realtime keeps existing private
+channels, directory identity, unique people, stable colors and throttled cursors.
+Timestamp comparison retains PostgreSQL microseconds; same-transaction changes
+reconcile without dropping final row fields. Failed conflicting intents require
+reload rather than blind replay. No provider/plugin-private/Knowledge path is added.
+
+Verification passes:
+
+- Focused board plus workspace architecture: 24 files / 149 tests.
+- Full web suite: 186 files / 1,063 tests, including permanent isolation,
+  authorization, memory-domain, plugin-boundary and workflow categories.
+- Actual board SQL in isolated PostgreSQL/pgTAP: 34 existing plus 59 V2 assertions.
+  Covers tenant/role/revocation, direct read policies, ownership/cycles, atomic
+  rollback/moves, bounds/locks, archive/restore, image identity/private keys and
+  bounded template initialization. Existing SQL fixtures were corrected, not
+  weakened: policy-compatible UUIDs, accurate plan and distinct actor-denial /
+  recipient-success notification checks.
+- Web lint, standalone web typecheck and production Next build pass. The build
+  retains all 30 page URLs and non-page entrypoints, using nonsecret local
+  Supabase placeholders. No worker/shared-worker code changed, so worker checks
+  are not applicable.
+- Sandboxed headless Chrome: 70 recorded actual-component fixture checks across
+  320/390/430/768/1024/1200/1440/1920 px and both themes, plus a desktop panel-focus
+  transition check. Covers blank/populated/template/1,000-object/20-image boards,
+  list/empty/VIEWER, mouse/keyboard/touch-style input/reduced motion, manipulation,
+  real Group/Section dragging and image resize, outline/panels, comments, upload
+  recovery/paste/drop/replacement, reconnect simulation and viewport restore.
+  Recorded browser runs have zero runtime exceptions. Resize handles were raised
+  above image surfaces after actual hit testing exposed an overlap.
+
+Limits: browser fixtures replace only Next transport/actions/Realtime; they are
+not a live authenticated Supabase session. PostgreSQL uses a minimal Supabase
+bootstrap because Docker/Podman/local Supabase are unavailable; hosted data and
+service transport are untouched. Hosted migration/Storage/private-channel smoke
+checks and manual Windows NVDA remain target-environment acceptance. No offline
+persistence, connector attachment relation, image garbage collection, permanent
+board history, or native entity/AI integration is claimed. Local short timing
+probes are client-only observations, not before/after speedups or service SLAs.
+
+Temporary dependencies, synthetic fixtures, screenshots, logs and profiles are
+ignored under `.next/cache/redesign-004-qa`; no app dependency/lockfile changed.
+Task browser/preview helpers were stopped. No merge/push or 005 implementation.
+Scoped code/changed-Markdown formatting, local documentation links and
+`git diff --check` pass. Review covers all 64 changed candidate files; no secret,
+environment, dependency/lockfile or generated artifact is included. The production
+build retains 30 unique page URLs and three callback/API entrypoints. Its 48
+client JavaScript files contain none of the checked private-provider environment
+or synthetic QA markers. These scans are scoped verification, not a hosted audit.
+
+### Baseline captured before persistence changes
+
+Branch `codex/redesign-004-boards-v2`, worktree `.worktrees/redesign-004-boards-v2`,
+starts exactly at `d211d878793b60abb2598460a0feaf1f9baf5c9f`. Main agent only.
+Original checkout changes remain untouched. No merge/push or 005 implementation.
+
+Before modifying persistence: `boards` holds title, organization, author/updater,
+timestamps and archival state. `board_elements` has independently addressed TEXT,
+STICKY, IMAGE, SHAPE and ARROW rows; world x/y, width/height, rotation, persisted
+z-index and object-shaped content/style/metadata. Images use metadata.storagePath
+in the private board-images bucket, PNG/JPEG/WebP up to 10MB. Comments reference
+board/optional object, with shallow replies and validated mentions. Existing
+tenant foreign keys, provenance triggers, member-read/collaborator-write RLS and
+private org+board Realtime channel authorization are retained.
+
+No sections, groups, locks, links or template metadata exist in the baseline.
+Only the first selected ID is retained. Layer/undo changes persist through
+independent row actions (Promise.all), so partial saves are possible. The list
+uses repeated generic previews and generic owner labels. The editor sits in its
+page-owned AppShell, then adds its own header/horizontal toolbar. Initial editor
+loading waits for board, elements, directory, up to 200 comments and individual
+signing of every image; no production timing claim is made.
+
+Recorded plan: retain URLs/module/table names; add an immersive BoardShell with navigation
+overlay and no notification/search reads. Add bounded atomic operations and
+relational ownership/lock/template invariants with forward migrations, keeping
+legacy object identity/world coordinates. Build native templates, multi-selection,
+group/section manipulation, named shape tools, inspector/outline alternatives and
+zoom/device viewport controls. Defer comments and batched authorized image signing
+until after the base canvas is usable; retain private original assets and comment
+identities on replacement. Keep existing cursor/presence/color normalization and
+local conflict-aware operation history. No plugin imports, canonical entity cards,
+conversion, voting/reactions, AI execution or memory promotion.
+
+Docker/Podman/local PostgreSQL are unavailable. Database verification used an
+isolated embedded PostgreSQL/pgTAP runner, documenting its Supabase
+bootstrap/service limits; hosted data is not a test fixture and is not modified.
 
 ## REDESIGN-003.1 — Auth visual identity and interactive artwork
 

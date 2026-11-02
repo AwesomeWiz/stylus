@@ -45,12 +45,16 @@ function Palette({
   value?: string;
 }) {
   return (
-    <div aria-label={label} className="flex items-center gap-1" role="group">
+    <div
+      aria-label={label}
+      className="flex flex-wrap items-center gap-1"
+      role="group"
+    >
       {colors.map((color) => (
         <button
           aria-label={`${label}: ${color}`}
           aria-pressed={value === color}
-          className="aria-pressed:outline-primary size-6 rounded-full border border-black/20 outline-offset-2 aria-pressed:outline aria-pressed:outline-2"
+          className="aria-pressed:outline-primary size-10 shrink-0 rounded-full border border-black/20 outline-offset-2 aria-pressed:outline aria-pressed:outline-2"
           disabled={disabled}
           key={color}
           onClick={() => onChange(color)}
@@ -138,7 +142,7 @@ export function WhiteboardInspector({
       {element.element_type === "STICKY" ? (
         <div
           aria-label="Sticky color"
-          className="flex items-center gap-1"
+          className="flex flex-wrap items-center gap-1"
           role="group"
         >
           {STICKY_COLORS.map((choice) => (
@@ -149,7 +153,7 @@ export function WhiteboardInspector({
                 (!element.style.background &&
                   element.style.color === choice.background)
               }
-              className="aria-pressed:outline-primary size-6 rounded-full border border-black/20 outline-offset-2 aria-pressed:outline aria-pressed:outline-2"
+              className="aria-pressed:outline-primary size-10 shrink-0 rounded-full border border-black/20 outline-offset-2 aria-pressed:outline aria-pressed:outline-2"
               disabled={pending}
               key={choice.label}
               onClick={() => updateStyle(choice)}

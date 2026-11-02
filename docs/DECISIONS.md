@@ -978,3 +978,34 @@ needed. Media/visibility changes cancel movement; reduced motion is also enforce
 in CSS. Pointer data is never persisted, logged or transmitted. The art is hidden
 from assistive technology and creates no tab stop. Auth business logic, providers,
 schemas, return-path validation, RLS and database remain unchanged.
+
+## ADR-043 — Atomic native board ownership and an immersive editor boundary
+
+Date: 2026-11-02. Status: Accepted for REDESIGN-004.
+
+Boards keeps its existing routes/tables and independently addressed world-space
+objects. Sections and Groups require real composite tenant/board ownership and
+bounded transactions; opaque arbitrary JSON and independent child saves cannot
+protect those invariants. Two forward migrations add committed enum values,
+minimal parent/lock/template fields, direct-write validation and authenticated
+atomic operation/template RPCs. Board row locks serialize both API and direct
+writes. One intent touches at most 200 objects; a container owns at most 199
+descendants. Nested Sections/Groups are deliberately rejected. Moving carries
+children; resizing only changes bounds. No canonical business objects are created.
+
+BoardShell lives outside AppShell, shares verified identity/public plugin
+navigation, and never fetches global notification/search UI to hide it. The
+account/organization/board/role key clears private client state when authority
+changes. Initial reads omit discussion and signing; new read actions reauthorize
+bounded comment pages and supported Storage batch signing after the canvas.
+URLs stay transient; replacement retains original assets and object identity.
+The body-size limit accommodates one existing-policy image, not an unbounded batch.
+
+Local patch history remains conflict-aware. Realtime keeps its private channels,
+directory identities, unique people and stable colors. Duplicate/older rows are
+ignored, active edits queue updates, and a failed intent changed by a collaborator
+requires reload instead of blind replay. No CRDT, offline-durable document,
+provider access, plugin-private import or implicit Knowledge promotion is added.
+Native entity/conversion/selection-intelligence contracts remain REDESIGN-005 or
+separately approved execution scope. See [Boards](BOARDS.md) for implementation
+and the explicit limits of local PostgreSQL/browser verification.

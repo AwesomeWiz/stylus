@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Archive, MessageSquare, Reply, Send, X } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
+import { BoardPanel } from "./board-panel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type {
@@ -23,6 +24,12 @@ export function WhiteboardCommentsPanel({
   members,
   onComment,
   selectedElementId,
+  controlledOpen,
+  onOpenChange,
+  loading = false,
+  loadError,
+  onLoad,
+  hasEarlier = false,
 }: {
   boardId: string;
   canMutate: boolean;
@@ -31,9 +38,18 @@ export function WhiteboardCommentsPanel({
   members: TaskMember[];
   onComment: (comment: BoardCommentRow) => void;
   selectedElementId: string | null;
+  controlledOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  loading?: boolean;
+  loadError?: string | null;
+  onLoad?: () => void;
+  hasEarlier?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [elementOnly, setElementOnly] = useState(false);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const memberById = useMemo(
     () => new Map(members.map((member) => [member.member_user_id, member])),
@@ -41,19 +57,122 @@ export function WhiteboardCommentsPanel({
   );
   const visible = comments.filter(
     (comment) =>
-      (elementOnly && selectedElementId
-        ? comment.element_id === selectedElementId
+      (elementOnly
+        ? Boolean(selectedElementId) && comment.element_id === selectedElementId
         : comment.element_id === null) && comment.parent_id === null,
   );
 
+  const content = (
+    <>
+      {" "}
+      <div
+        className="flex gap-1 border-b p-2"
+        role="group"
+        aria-label="Comment scope"
+      >
+        <Button
+          aria-pressed={!elementOnly}
+          onClick={() => {
+            setElementOnly(false);
+            setReplyTo(null);
+          }}
+          className="h-8"
+          variant={!elementOnly ? "secondary" : "ghost"}
+        >
+          Board
+        </Button>
+        <Button
+          aria-pressed={elementOnly}
+          disabled={!selectedElementId}
+          onClick={() => {
+            setElementOnly(true);
+            setReplyTo(null);
+          }}
+          className="h-8"
+          variant={elementOnly ? "secondary" : "ghost"}
+        >
+          Selected element
+        </Button>
+      </div>
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+        {loading ? <p role="status">Loading comments?</p> : null}
+        {archiveError ? (
+          <p role="alert" className="text-destructive text-sm">
+            {archiveError}
+          </p>
+        ) : null}
+        {elementOnly && !selectedElementId ? (
+          <p role="status">
+            The selected object is no longer available. Switch to Board to
+            continue.
+          </p>
+        ) : null}
+        {loadError ? (
+          <div role="alert">
+            <p>{loadError}</p>
+            <Button onClick={onLoad} variant="secondary">
+              Retry comments
+            </Button>
+          </div>
+        ) : null}
+        {hasEarlier ? (
+          <Button disabled={loading} onClick={onLoad} variant="secondary">
+            Load earlier comments
+          </Button>
+        ) : null}
+        {visible.length ? (
+          visible.map((comment) => (
+            <CommentThread
+              comment={comment}
+              comments={comments}
+              currentUserId={currentUserId}
+              key={comment.id}
+              memberById={memberById}
+              canReply={canMutate}
+              onArchive={async (id) => {
+                const result = await archiveBoardCommentAction(id);
+                if (result.status === "success") {
+                  onComment(result.data);
+                  setArchiveError(null);
+                } else setArchiveError(result.message);
+              }}
+              onReply={() => setReplyTo(comment.id)}
+            />
+          ))
+        ) : (
+          <p className="text-muted-foreground py-10 text-center text-sm">
+            {loading ? "Loading discussion?" : "No comments yet."}
+          </p>
+        )}
+      </div>
+      {canMutate && (!elementOnly || selectedElementId) ? (
+        <CommentComposer
+          boardId={boardId}
+          elementId={elementOnly ? selectedElementId : null}
+          members={members}
+          onComment={(comment) => {
+            onComment(comment);
+            setReplyTo(null);
+          }}
+          parentId={replyTo}
+        />
+      ) : (
+        <p className="text-muted-foreground border-t p-4 text-sm">
+          Viewers can read comments but cannot post.
+        </p>
+      )}
+    </>
+  );
+  if (controlledOpen !== undefined)
+    return open ? (
+      <BoardPanel title="Comments" onClose={() => setOpen(false)}>
+        {content}
+      </BoardPanel>
+    ) : null;
   return (
     <Dialog.Root onOpenChange={setOpen} open={open}>
       <Dialog.Trigger asChild>
-        <Button
-          aria-label="Open board comments"
-          className="h-9"
-          variant="secondary"
-        >
+        <Button aria-label="Open board comments" variant="secondary">
           <MessageSquare aria-hidden="true" className="size-4" />
           Comments
         </Button>
@@ -61,7 +180,7 @@ export function WhiteboardCommentsPanel({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/25" />
         <Dialog.Content className="bg-background fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l shadow-xl focus:outline-none">
-          <header className="flex items-start justify-between gap-3 border-b p-4">
+          <header className="flex items-center justify-between border-b p-4">
             <div>
               <Dialog.Title className="font-semibold">Comments</Dialog.Title>
               <Dialog.Description className="text-muted-foreground text-sm">
@@ -74,63 +193,7 @@ export function WhiteboardCommentsPanel({
               </Button>
             </Dialog.Close>
           </header>
-          <div className="flex gap-1 border-b p-2" role="tablist">
-            <Button
-              aria-selected={!elementOnly}
-              onClick={() => setElementOnly(false)}
-              className="h-8"
-              variant={!elementOnly ? "secondary" : "ghost"}
-            >
-              Board
-            </Button>
-            <Button
-              aria-selected={elementOnly}
-              disabled={!selectedElementId}
-              onClick={() => setElementOnly(true)}
-              className="h-8"
-              variant={elementOnly ? "secondary" : "ghost"}
-            >
-              Selected element
-            </Button>
-          </div>
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
-            {visible.length ? (
-              visible.map((comment) => (
-                <CommentThread
-                  comment={comment}
-                  comments={comments}
-                  currentUserId={currentUserId}
-                  key={comment.id}
-                  memberById={memberById}
-                  onArchive={async (id) => {
-                    const result = await archiveBoardCommentAction(id);
-                    if (result.status === "success") onComment(result.data);
-                  }}
-                  onReply={() => setReplyTo(comment.id)}
-                />
-              ))
-            ) : (
-              <p className="text-muted-foreground py-10 text-center text-sm">
-                No comments yet.
-              </p>
-            )}
-          </div>
-          {canMutate ? (
-            <CommentComposer
-              boardId={boardId}
-              elementId={elementOnly ? selectedElementId : null}
-              members={members}
-              onComment={(comment) => {
-                onComment(comment);
-                setReplyTo(null);
-              }}
-              parentId={replyTo}
-            />
-          ) : (
-            <p className="text-muted-foreground border-t p-4 text-sm">
-              Viewers can read comments but cannot post.
-            </p>
-          )}
+          {content}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -144,6 +207,7 @@ function CommentThread({
   memberById,
   onArchive,
   onReply,
+  canReply,
 }: {
   comment: BoardCommentRow;
   comments: BoardCommentRow[];
@@ -151,6 +215,7 @@ function CommentThread({
   memberById: Map<string, TaskMember>;
   onArchive: (id: string) => Promise<void>;
   onReply: () => void;
+  canReply: boolean;
 }) {
   const replies = comments.filter(
     (candidate) => candidate.parent_id === comment.id,
@@ -177,9 +242,11 @@ function CommentThread({
         </p>
         {!comment.archived_at ? (
           <div className="mt-2 flex gap-1">
-            <Button className="h-8" onClick={onReply} variant="ghost">
-              <Reply aria-hidden="true" className="size-3.5" /> Reply
-            </Button>
+            {canReply ? (
+              <Button className="h-8" onClick={onReply} variant="ghost">
+                <Reply aria-hidden="true" className="size-3.5" /> Reply
+              </Button>
+            ) : null}
             {comment.author_id === currentUserId ? (
               <Button
                 className="h-8"

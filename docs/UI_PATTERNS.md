@@ -98,11 +98,20 @@ inspector use one panel slot on Boards, with context preserved when switching.
 
 ## Boards and canvas
 
+REDESIGN-004 implements the native foundation below; [Boards](BOARDS.md) records
+the actual limits, keyboard behavior and verification. Native Stylus cards,
+conversions, AI, votes/reactions and comment resolution below remain future
+contracts. The implemented list uses compact real metadata rows without invented
+preview images; template diagrams appear only during explicit creation.
+
 The list uses normal AppShell and offers compact previews, actual metadata and
 focused templates. The editor switches to BoardShell: main sidebar/search absent,
 compact header, full canvas, left creation tools, optional right context and
 bottom-right zoom/fit controls. Open-main-navigation is an overlay, not a return
 to permanent global chrome. Save and channel connectivity remain distinct.
+Outline, Inspector and Comments share one optional slot. Desktop panels are
+nonmodal; narrower panels are modal and mobile uses the full width. The outline
+retains collapsed descendants and allows Shift-selection before inspection.
 
 Tool icons have accessible names, focus-visible tooltips and selected states.
 Shapes is a named menu with basic geometry. Creation tools return to Select

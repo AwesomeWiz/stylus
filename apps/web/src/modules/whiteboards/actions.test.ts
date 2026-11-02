@@ -42,12 +42,14 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import {
   archiveBoardAction,
+  applyBoardOperationAction,
   createBoardCommentAction,
   createBoardAction,
   createBoardElementAction,
   restoreBoardElementAction,
   updateBoardElementAction,
 } from "./actions";
+import { projectObject } from "./operations";
 
 const userId = "00000000-0000-4000-8000-000000000001";
 const organizationId = "10000000-0000-4000-8000-000000000001";
@@ -99,6 +101,82 @@ const comment = {
 };
 
 describe("whiteboard actions", () => {
+  it("initializes native templates through one tenant-authorized transaction", async () => {
+    mocks.rpc.mockResolvedValue({ data: board, error: null });
+    expect(
+      (await createBoardAction("Campaign thinking", "campaign")).status,
+    ).toBe("success");
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      "create_board_from_template",
+      expect.objectContaining({
+        p_organization_id: organizationId,
+        p_template_key: "campaign",
+        p_title: "Campaign thinking",
+        p_elements: expect.arrayContaining([
+          expect.objectContaining({ element_type: "SECTION", parent_id: null }),
+        ]),
+      }),
+    );
+    expect(mocks.builder.insert).not.toHaveBeenCalled();
+  });
+  it("rejects unknown templates and VIEWER operations before persistence", async () => {
+    expect((await createBoardAction("Invalid", "unknown")).status).toBe(
+      "error",
+    );
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    mocks.getContext.mockResolvedValue({
+      organization: { id: organizationId },
+      membership: { role: "VIEWER" },
+      user: { id: userId },
+    });
+    expect(
+      (
+        await applyBoardOperationAction({
+          boardId,
+          upserts: [projectObject(element)],
+          archiveIds: [],
+        })
+      ).status,
+    ).toBe("error");
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+  it("freshly scopes atomic operations and never accepts client tenant provenance", async () => {
+    mocks.builder.maybeSingle.mockResolvedValue({
+      data: { id: boardId },
+      error: null,
+    });
+    mocks.rpc.mockResolvedValue({ data: [element], error: null });
+    expect(
+      (
+        await applyBoardOperationAction({
+          boardId,
+          upserts: [projectObject(element)],
+          archiveIds: [],
+        })
+      ).status,
+    ).toBe("success");
+    expect(mocks.builder.eq).toHaveBeenCalledWith(
+      "organization_id",
+      organizationId,
+    );
+    expect(mocks.rpc).toHaveBeenCalledWith("apply_board_operation", {
+      p_board_id: boardId,
+      p_upserts: [projectObject(element)],
+      p_archive_ids: [],
+    });
+    mocks.rpc.mockClear();
+    mocks.builder.maybeSingle.mockResolvedValue({ data: null, error: null });
+    expect(
+      (
+        await applyBoardOperationAction({
+          boardId,
+          upserts: [projectObject(element)],
+          archiveIds: [],
+        })
+      ).status,
+    ).toBe("error");
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     for (const key of [

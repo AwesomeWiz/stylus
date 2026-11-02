@@ -100,7 +100,9 @@ actions, schemas, redirects and session boundaries are unchanged.
 An App Router `(workspace)` route group supplies a persistent authenticated
 layout without changing public URLs. The root layout owns document/theme only;
 auth/setup/onboarding/invitations stay outside the workspace. The board editor
-also stays outside, using its existing page-owned AppShell until REDESIGN-004.
+also stays outside. REDESIGN-004 supplies its immersive BoardShell without
+mounting AppShell or loading global notifications/search. It shares verified
+workspace identity and the public plugin-navigation host.
 
 The workspace layout resolves current identity/membership, then reads initial
 notification and plugin state in parallel. The server registry projects plain
@@ -249,11 +251,10 @@ derive organization/creator/updater provenance, and persist only at bounded
 interaction points. PostgreSQL repeats the boundary through composite board/org
 foreign keys, restricted column grants, provenance triggers and RLS.
 
-The editor keeps at most 75 local element snapshots. Each user-level operation
-records once at its commit boundary; undo/redo diffs adjacent snapshots and
-persists the resulting authorized update, archive or restore operations. This is
-local editing history, not event sourcing, and reload reconstructs the last
-persisted state from normal element rows.
+The editor keeps at most 75 local patch operations. Each user-level intent records
+once; undo/redo persists one bounded atomic `apply_board_operation` transaction
+for updates, archive and restore. Reload reconstructs the last committed rows.
+This remains local history, not event sourcing or shared unlimited undo.
 
 Images use the private `board-images` Supabase Storage bucket. Object paths begin
 with the validated organization and board IDs; membership/role storage policies
@@ -270,6 +271,18 @@ never become undo entries, same-element remote changes invalidate stale local
 history, and remote changes received during an active local edit wait for the
 server response. Database timestamps determine the winner without CRDT
 infrastructure.
+
+REDESIGN-004 adds minimal template metadata and typed Sections/Groups/Links.
+Explicit composite-scoped parent relationships retain world coordinates; bounded
+container operations and direct-write validation serialize on the active board.
+One logical move cannot partially save its descendants. Locked descendants block
+movement; container resize does not scale content. Initial editor reads omit
+comments and Storage signing; fresh authorized read actions load bounded comments
+and batched private previews after the canvas. Client state is keyed by account,
+organization, board and role; signed URLs remain local and transient. Duplicate/
+older Realtime events are ignored, and conflicting failed intents require reload
+rather than blind replay. [Boards](BOARDS.md) defines the object, control, image,
+history and verification contracts. Native plugin entities remain future scope.
 
 ---
 

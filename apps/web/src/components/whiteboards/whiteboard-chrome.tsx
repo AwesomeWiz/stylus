@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { BoardElementRow } from "@/lib/supabase/database.types";
 
-export type WhiteboardSaveState = "SAVED" | "SAVING" | "ERROR";
+export type WhiteboardSaveState = "SAVED" | "SAVING" | "ERROR" | "UNSAVED";
 
 export function WhiteboardHeader({
   actions,
@@ -32,6 +32,8 @@ export function WhiteboardHeader({
   saveState,
   setTitle,
   title,
+  navigation,
+  beforeLeave,
 }: {
   actions?: ReactNode;
   canMutate: boolean;
@@ -42,12 +44,25 @@ export function WhiteboardHeader({
   saveState: WhiteboardSaveState;
   setTitle: (title: string) => void;
   title: string;
+  navigation?: ReactNode;
+  beforeLeave?: () => boolean;
 }) {
   return (
-    <header className="bg-background flex min-h-14 items-center gap-3 border-b px-3 sm:px-4">
+    <header className="bg-background z-30 flex min-h-12 flex-wrap items-center gap-1 border-b px-2 sm:gap-2 sm:px-3">
+      {navigation}
       <Link
-        aria-label="Back to whiteboards"
-        className="focus-visible:ring-ring rounded-md p-2 focus-visible:ring-2"
+        aria-label="Back to Boards"
+        onClick={(event) => {
+          if (
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.shiftKey &&
+            beforeLeave &&
+            !beforeLeave()
+          )
+            event.preventDefault();
+        }}
+        className="focus-visible:ring-ring inline-flex min-h-10 min-w-10 items-center justify-center rounded-md p-2 focus-visible:ring-2 max-md:min-h-11 max-md:min-w-11"
         href={"/whiteboards" as Route}
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
@@ -60,6 +75,7 @@ export function WhiteboardHeader({
             event.currentTarget.querySelector("input")?.blur();
           }}
         >
+          <h1 className="sr-only">{title}</h1>
           <Input
             aria-label="Board name"
             autoFocus
@@ -71,14 +87,16 @@ export function WhiteboardHeader({
           />
         </form>
       ) : (
-        <button
-          className="min-w-0 truncate text-left text-sm font-semibold disabled:cursor-default"
-          disabled={!canMutate}
-          onClick={() => onRenamingChange(true)}
-          title={canMutate ? "Rename board" : undefined}
-        >
-          {title}
-        </button>
+        <h1 className="min-w-0 flex-1 truncate text-sm font-semibold">
+          <button
+            className="min-h-10 max-w-full truncate rounded px-1 text-left disabled:cursor-default"
+            disabled={!canMutate}
+            onClick={() => onRenamingChange(true)}
+            title={canMutate ? "Rename board" : undefined}
+          >
+            {title}
+          </button>
+        </h1>
       )}
       {actions}
       <div
@@ -87,7 +105,7 @@ export function WhiteboardHeader({
       >
         {saveState === "SAVING" ? (
           <LoaderCircle aria-hidden="true" className="size-3.5 animate-spin" />
-        ) : saveState === "ERROR" ? (
+        ) : saveState === "ERROR" || saveState === "UNSAVED" ? (
           <CloudAlert aria-hidden="true" className="size-3.5" />
         ) : (
           <Check aria-hidden="true" className="size-3.5" />
@@ -96,7 +114,9 @@ export function WhiteboardHeader({
           ? "Saving"
           : saveState === "ERROR"
             ? "Not saved"
-            : "Saved"}
+            : saveState === "UNSAVED"
+              ? "Unsaved title"
+              : "Saved"}
         {saveState === "ERROR" && onRetry ? (
           <Button className="ml-1 h-8" onClick={onRetry} variant="secondary">
             <RotateCcw aria-hidden="true" className="size-3.5" /> Retry

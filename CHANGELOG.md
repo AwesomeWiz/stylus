@@ -4,6 +4,20 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Built Boards V2 with real owner/template metadata and seven focused native
+  templates. Existing `/whiteboards` URLs and historical records remain.
+- Added an immersive board editor with overlay navigation, vertical named tools,
+  six Shapes choices, explicit Sections/Groups, multi-selection, atomic movement,
+  alignment/distribution, layers, lock and duplicate.
+- Improved private images with bounded batch upload/paste, per-file recovery,
+  aspect/crop/fit controls and replacement preserving object/comments identity.
+  Safe manual links fetch no external previews.
+- Added a shared Inspector/Comments/accessible-outline slot, mobile sheets,
+  scoped keyboard controls, zoom/fit/minimap and account-scoped local viewports.
+- Deferred discussion and authorized batch image signing until after the base
+  canvas. Retained private Realtime identity/colors and conflict-aware local undo;
+  forward migrations enforce tenant-scoped ownership and all-or-nothing edits.
+
 - Added an original abstract SVG identity for login/signup, with authored light/
   dark palettes, subtle desktop parallax and a local line reveal. Tablet and
   mobile use static treatments; reduced motion disables effects. Forms, providers,
