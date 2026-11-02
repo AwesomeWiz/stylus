@@ -81,6 +81,16 @@ Supabase Auth sessions use `@supabase/ssr` and HTTP cookies.
   authorization on the server; Proxy is not the sole security control.
 - TASK-002 does not require or instantiate a service-role client.
 
+REDESIGN-003.1 adds a presentation-only login/signup identity field. AuthShell
+and SVG artwork remain server components; the server passes the artwork through
+a small client wrapper as children. Scoped CSS owns theme palettes, responsive
+layout and layer transforms. The wrapper only writes numeric CSS variables in
+bounded animation-frame bursts, never React state on pointer movement. Desktop
+fine-pointer/media/visibility guards and cleanup keep smaller screens, reduced
+motion and hidden tabs static. There is no account/tenant input, persistence,
+analytics, network artwork, model call or new dependency. Existing auth forms,
+actions, schemas, redirects and session boundaries are unchanged.
+
 ---
 
 # Organization Boundary

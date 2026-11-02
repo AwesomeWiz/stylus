@@ -4,6 +4,11 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added an original abstract SVG identity for login/signup, with authored light/
+  dark palettes, subtle desktop parallax and a local line reveal. Tablet and
+  mobile use static treatments; reduced motion disables effects. Forms, providers,
+  validation and authentication return behavior remain unchanged.
+
 - Replaced Home's pastel dashboard and shortcut grid with a prioritized,
   deduplicated attention list, meaningful Marketing continuations and recent
   activity. Deadlines/activity use hydration-safe viewer-local time.

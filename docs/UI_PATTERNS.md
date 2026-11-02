@@ -28,6 +28,24 @@ focus containment and sensible focus placement after selecting a route. On
 ordinary route completion, update title and focus the new main heading; do not
 move focus for every filter or background refresh.
 
+## Authentication identity
+
+Quiet work surfaces allow expressive moments of identity at authentication,
+onboarding and selected first-run/brand moments. REDESIGN-003.1 implements only
+login/signup. Share one abstract SVG system with a calm, unchanged form. Full
+desktop composition is approximately 55/45; tablet uses a smaller static field;
+below 768px the form leads with only a small static brand accent. Setup, recovery
+and invitation shells remain focused without the identity field.
+
+Artwork is decorative, `aria-hidden`, unfocusable and independent of account or
+application state. Pointer position is ephemeral local presentation data: never
+log, persist, transmit or use it as analytics. Fine desktop pointers can move
+layers slightly and reveal secondary lines through a soft mask, without moving
+the form. No idle animation loop is required. Reduced motion, coarse pointers,
+hidden tabs and unsupported media-query APIs keep the static composition; cancel
+frames and remove listeners on unmount. Login/signup validation, return-path
+security, confirmation and password-manager hints remain the existing contract.
+
 ## Page headers and local navigation
 
 One compact page title, optional short description, one primary action and a

@@ -958,3 +958,23 @@ silently presenting a first-N list is rejected. Home uses independent bounded
 priority arms because its explicitly six-item attention surface needs no complete
 history. These changes do not add persistence, change task business rules or
 promote working content into Company Knowledge.
+
+## ADR-042 — Expressive auth identity with a static-first SVG boundary
+
+Date: 2026-11-02. Status: Accepted for REDESIGN-003.1.
+
+Quiet work surfaces allow expressive moments of identity at authentication,
+onboarding and selected first-run/brand moments. This task implements the
+exception only for login/signup; it does not change normal application chrome.
+Original abstract contours/planes and sparse geometry replace the workflow-card
+showcase. The same composition has authored light/dark palettes, a reduced static
+tablet field and a small mobile accent. No generated raster, copied reference
+artwork, WebGL, external asset or animation dependency is introduced.
+
+Server-rendered SVG passes through a small presentation-only client wrapper.
+Pointer position only drives clamped CSS variables and a soft local line-reveal
+mask in finite animation-frame bursts. No ambient loop or velocity effect is
+needed. Media/visibility changes cancel movement; reduced motion is also enforced
+in CSS. Pointer data is never persisted, logged or transmitted. The art is hidden
+from assistive technology and creates no tab stop. Auth business logic, providers,
+schemas, return-path validation, RLS and database remain unchanged.

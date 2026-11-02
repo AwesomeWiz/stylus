@@ -28,7 +28,7 @@ beforeEach(() => {
   mocks.user.mockResolvedValue(null);
 });
 describe("V2 authentication composition", () => {
-  it("keeps login form-first below desktop with an explicitly illustrative showcase", async () => {
+  it("pairs the unchanged login form with decorative identity artwork", async () => {
     render(
       await LoginPage({
         searchParams: Promise.resolve({ next: "/invite/return" }),
@@ -37,10 +37,18 @@ describe("V2 authentication composition", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Sign in to Stylus" }),
     ).toBeInTheDocument();
+    const visual = screen.getByRole("complementary", {
+      name: "Stylus identity",
+    });
+    expect(visual.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+    expect(visual.querySelector("a, button, input, [tabindex]")).toBeNull();
+    expect(visual.querySelector("svg")).toHaveAttribute("focusable", "false");
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+      "Think clearly.Build together.",
+    );
     expect(
-      screen.getByRole("complementary", { name: "About Stylus" }),
-    ).toHaveClass("hidden", "min-[1200px]:flex");
-    expect(screen.getByText("Example Marketing workflow")).toBeInTheDocument();
+      screen.queryByText("Example Marketing workflow"),
+    ).not.toBeInTheDocument();
     expect(screen.getByLabelText("Email address")).toHaveAttribute(
       "autocomplete",
       "email",
@@ -71,6 +79,9 @@ describe("V2 authentication composition", () => {
       "autocomplete",
       "name",
     );
+    expect(
+      screen.getByRole("complementary", { name: "Stylus identity" }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toHaveAttribute(
       "autocomplete",
       "new-password",

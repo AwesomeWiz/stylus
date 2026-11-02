@@ -4,7 +4,73 @@ Last Updated: 2026-11-02
 
 ## Overall Status
 
-REDESIGN-003 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+REDESIGN-003.1 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-003.1 — Auth visual identity and interactive artwork
+
+Branch `codex/redesign-003-1-auth-visual-identity`, isolated worktree
+`.worktrees/redesign-003-1-auth-visual-identity`, starts exactly at accepted
+REDESIGN-003 `d9f481d119a7d4f517d428bd3b4a6473bf38e444`. Original checkout changes
+remain untouched. Main agent only; no merge/push or REDESIGN-004 implementation.
+
+Login/signup share an original abstract contour/plane composition: ideas becoming
+structure, with sparse grid/coordinate fragments and concise identity copy.
+Server SVG is passed into a small client interaction wrapper. Scoped theme tokens
+provide mist/teal/seafoam/warm-neutral light art and separately authored charcoal/
+muted-teal dark art. Normal application surfaces and global tokens are unchanged.
+Desktop is approximately 55/45; tablet has a reduced static field; mobile is
+form-first with a small static accent. Focused invitation/setup/recovery shells
+retain their existing presentation and behavior.
+
+Fine desktop pointer movement normalizes/clamps position, translates layers by
+2/4/8/10 SVG units and reveals secondary lines through a soft radial CSS mask.
+Geometry is cached outside the frame loop and invalidated on resize/scroll.
+Only CSS variables change in finite RAF bursts; no React state/render loop,
+ambient drift, velocity effect, SVG filter, WebGL, raster hero or new dependency.
+Media/visibility changes reset/cancel animation; reduced motion also disables
+transforms/reveal in CSS. All pointer data is ephemeral and local, never logged,
+persisted or sent. Decorative artwork is aria-hidden, unfocusable and independent
+of auth, account, organization or application state.
+
+AuthForm, auth pages/actions/schemas, session and return-path boundaries are
+unchanged. Focused tests pass: 5 files / 24 tests, including existing normalized
+credentials, validation, generic errors, signup confirmation and invitation return
+security; new tests cover form submission, decorative safety, media/visibility
+guards, finite frames, cached geometry, cleanup and zero pointer-driven React
+child rerenders. Preview screenshots of actual public routes were inspected.
+
+Production public-route QA passes 260 checks across 32 login/signup cases in both
+themes at 320/390/430/768/1024/1200/1440/1920px, plus 1440x600 short-screen checks.
+Coverage includes form bounds/reflow, caption separation, essential button/copy
+contrast, decorative focus isolation, actual Tab order, return paths, invalid
+submission, static small-screen art, slow/fast pointer response, local reveal,
+form stability, settled idle behavior and live reduced-motion reset. Final desktop,
+mobile and reveal screenshots were inspected. There were no uncaught/console
+errors. Public pages used nonsecret local Supabase placeholders; successful live
+provider authentication was not exercised. Existing action/schema tests retain
+that behavior coverage through mocks. Manual NVDA is not claimed.
+
+Against the accepted REDESIGN-003 production build, the declared login client-
+reference JS chunk union remains five files: 356,085 -> 359,234 bytes raw and
+88,524 -> 89,452 bytes locally gzipped, a +3,149/+928 byte change. This includes
+shared chunks and is an artifact comparison, not measured HTTP transfer. SVG
+markup and CSS are additional payload, not included in those JS figures. Short
+desktop slow/fast-pointer probes observed zero Long Task entries in both themes;
+this is a local observation, not a device-independent performance guarantee.
+Unit tests verify zero pointer-driven child rerenders; browser checks verify no
+continuing style writes after settling. No elaborate benchmark harness was added.
+
+All required local checks pass: full web suite 179 files / 1,006 tests, focused
+auth suite 5 files / 24 tests, web lint, standalone web typecheck, production build,
+scoped formatting and diff/secret/artifact review. Checked private server/client
+construction markers are absent from production client bundles. QA assets remain
+ignored under `.next`; temporary browser/server processes are stopped. No worker
+or DB validation is required because no shared worker runtime or schema changed.
+No Home/Tasks/Boards/Marketing/Settings, database/RLS, worker/shared runtime,
+provider or dependency changes are included. Total-list pagination and signed-in/
+NVDA follow-up from REDESIGN-003 remain unchanged. REDESIGN-004 can proceed as a
+separately authorized task; it is not started here.
+
 
 ## REDESIGN-003 — Home and Tasks V2
 

@@ -258,13 +258,15 @@ steps are reachable states within these routes, not missing standalone pages.
 
 ## 14. Authentication
 
-At desktop widths, a two-column AuthShell pairs a neutral product narrative on
-the left with a focused 360–400px form on the right. The left demonstrates real
-concepts: Research signal -> Content opportunity -> Council review -> Production
-brief. Use simple illustrative UI fragments labeled as examples; never use live
-tenant data before authentication, fake metrics or fabricated customer claims.
-An alternative fragment can show Tasks, Knowledge and Boards without implying
-that AI is mandatory. No proprietary reference assets or new font are needed.
+REDESIGN-003.1 refines the approved visual identity: **Quiet work surfaces.
+Expressive moments of identity.** A desktop two-column AuthShell pairs an original
+abstract SVG field on the left with a focused 360–400px form on the right, at
+approximately 55/45. Organic contours resolve into sparse structure, supported by
+one short headline and sentence. This supersedes the original workflow-fragment
+showcase proposal. No live tenant data, fake metrics, proprietary reference
+assets, raster hero, external artwork or new font is needed. Decorative desktop
+parallax and a local line reveal remain optional to understanding the form;
+reduced motion keeps a complete static composition.
 
 Right: Stylus mark, concise title, existing signup name field where required,
 email, password, explicit labels, existing validation, pending action, primary
@@ -273,8 +275,9 @@ manager/autocomplete support, confirmation state, generic authentication errors
 and safe `next` handling. Do not introduce SSO/password-reset claims or new auth
 behavior in this visual task.
 
-Below 768px, form first; remove the decorative showcase rather than placing it
-before the form. Setup, invitation and auth recovery reuse focused variants.
+Below 768px, form first with only a small static brand accent; do not run the full
+desktop visual. Tablet uses a reduced static field. Setup, invitation and auth
+recovery reuse focused variants without the identity field.
 Organization setup copy should reflect existing invitations rather than claim
 they are a future phase (a source-confirmed stale sentence).
 

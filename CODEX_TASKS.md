@@ -2,6 +2,32 @@
 
 # Current
 
+## REDESIGN-003.1 — Auth visual identity and interactive artwork
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-003-1-auth-visual-identity`, starting exactly at
+`d9f481d119a7d4f517d428bd3b4a6473bf38e444`, in its own worktree. Main agent only.
+Login/signup replace workflow cards with original, server-rendered abstract SVG,
+scoped light/dark palettes, finite desktop parallax and a soft local line reveal.
+Tablet is static/reduced; mobile is form-first with a small static brand accent.
+Reduced motion/coarse pointers/hidden tabs reset and disable movement. Artwork is
+decorative with no tab stop, state/data dependency, network artwork or persistence.
+Existing forms, actions, validation, redirects and return-path security remain.
+
+Focused auth tests pass (5 files / 24 tests), as do full web tests (179 files /
+1,006 tests), web lint/typecheck/build, scoped formatting and diff/secret/artifact
+checks. Production browser QA passes 260 checks across 32 public login/signup
+cases in both themes at all requested widths plus 1920px, including keyboard,
+pointer/reveal, reduced motion, contrast and form stability. The declared login
+client JS chunk union grows by 3,149 raw / 928 locally gzipped bytes; short local
+pointer probes observed no Long Task entries. These are scoped observations,
+not a live-provider or broad device-performance guarantee. See PROJECT_STATE for
+measurement boundaries and manual NVDA limitations. No normal work-surface,
+database, worker, dependency or auth-logic changes; no merge/push or automatic 004.
+
+---
+
 ## REDESIGN-003 — Home and Tasks V2
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

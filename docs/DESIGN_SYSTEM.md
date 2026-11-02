@@ -15,6 +15,21 @@ root), served through `apps/web/public/brand/stylus-mark.png`. Normal chrome is
 neutral; team content provides expression. Avoid dashboard-template composition,
 giant headings and colorful feature launchers.
 
+**Quiet work surfaces. Expressive moments of identity.** Authentication,
+onboarding and selected first-run/brand moments may use original, art-directed
+abstract visuals. This is a bounded identity treatment, not permission to color
+Home, Tasks, Settings or ordinary workspace chrome. REDESIGN-003.1 implements
+this exception only for login/signup: flat organic SVG planes, contour lines,
+sparse structure and one short headline, with the existing quiet form alongside.
+No workflow-card stack, floating dashboard, glass, glow, generic AI imagery,
+external artwork or new font is needed.
+
+Auth artwork uses scoped `--auth-*` custom properties with authored light/dark
+palettes; canonical brand/action tokens remain unchanged. Decorative strokes
+are not status colors. Essential copy/form contrast still follows the rules below.
+Keep the composition complete when static. Desktop pointer response is subtle
+and local; smaller screens, coarse pointers and reduced motion use static art.
+
 Use existing semantic tokens in `apps/web/src/app/globals.css`, current UI
 primitives and Radix foundations. No new component library or font dependency.
 Rules below are V2 targets; existing components are not assumed to satisfy them.

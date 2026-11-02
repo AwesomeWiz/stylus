@@ -2,7 +2,7 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-003 COMPLETE / REQUIRED LOCAL CHECKS PASS
+Status: REDESIGN-003.1 COMPLETE / REQUIRED LOCAL CHECKS PASS
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -10,6 +10,7 @@ Status: REDESIGN-003 COMPLETE / REQUIRED LOCAL CHECKS PASS
 - [x] Source-based performance audit and future measurement plan specified
 - [x] REDESIGN-002: shared shell/navigation/auth and foundational performance
 - [x] REDESIGN-003: Home and Tasks
+- [x] REDESIGN-003.1: auth visual identity and interactive abstract artwork
 - [ ] REDESIGN-004: Boards foundation
 - [ ] REDESIGN-005: Boards and Stylus integrations/collaboration
 - [ ] REDESIGN-006: Marketing shell and Creative Studio
@@ -22,6 +23,9 @@ the verified shell/auth/performance foundation. REDESIGN-003 adds attention-led
 Home, viewer-local timestamps, URL-preserving responsive Task detail and lazy,
 authorized discussions with zero initial organization comment bodies. Complete
 summary-list search/filtering remains; total-list product pagination is deferred.
+REDESIGN-003.1 adds a bounded expressive identity at login/signup: original SVG,
+authored theme palettes, finite desktop interaction and static smaller-screen/
+reduced-motion treatments. Existing authentication logic remains unchanged.
 Signed-in transition timing and manual NVDA remain target-environment acceptance,
 not measured local claims. Later
 follow-up tasks are not started. See [V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) for
