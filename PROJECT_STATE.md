@@ -1,10 +1,86 @@
 # Stylus — Project State
 
-Last Updated: 2026-11-02
+Last Updated: 2026-11-03
 
 ## Overall Status
 
-REDESIGN-004 COMPLETE / REQUIRED LOCAL CHECKS PASS
+REDESIGN-004.1 COMPLETE / REQUIRED LOCAL CHECKS PASS
+
+## REDESIGN-004.1 — Brand identity, typography and premium auth
+
+Branch `codex/redesign-004-1-brand-auth`, isolated worktree
+`.worktrees/redesign-004-1-brand-auth`, starts exactly at
+`f4571e28cb6325406abe4fcc2afb97a91ddf08e5`. Main agent only. Original checkout
+and prior worktree changes are preserved. No merge/push or REDESIGN-005 work.
+
+“Calm where people work. Expressive where the product speaks.” now governs the
+shared brand. Cobalt #4F5BD5 replaces cyan; warm light/charcoal dark neutrals keep
+Home, Tasks, Boards and navigation calm. Supporting apricot/mint/butter/sky have
+separate dark artwork values and remain distinct from semantic states and human
+collaborator colors. Older pastel names are palette-derived compatibility aliases.
+
+The supplied blue–coral logo package is integrated unchanged, with full wordmark
+variants, compact/monochrome marks and favicon/Apple/app icons. Shared BrandLogo
+uses the pre-hydration theme class; runtime full-logo image hints avoid oversized
+downloads. Geist variable Sans (69,436 bytes) is self-hosted from official
+`geist@1.7.0`, with original SIL OFL license, hash, same-origin preload and
+system fallback. No package/lockfile changes or runtime CDN.
+
+Login/signup use a full-bleed deterministic architectural tile field and one
+concise content card. Local proximity controls bounded Z lift, tilt, directional
+shadows and highlight intensity through refs/finite RAF easing. No WebGL, new
+graphics library, idle loop or React pointer rerenders. Reduced motion, hidden
+documents, coarse pointers and small screens reset/stay static. Mobile is form
+first with a small static accent. Artwork is decorative and unfocusable.
+
+Removed redundant login/signup, Tasks and Boards subtitles; Home retains the
+organization name. Useful ordering/read-only/empty/error/password guidance stays.
+Board template preview accents are presentation only; no Board data, template
+initialization, Realtime, private Storage, task rules or Marketing workflow changes.
+Auth actions, schemas, provider, safe returns and session semantics are unchanged.
+The proxy matcher excludes only the exact shipped font and license so public
+auth can load them; permanent tests keep private/similar routes protected.
+
+Verification:
+
+- Full web suite: **188 files / 1,070 tests pass**. Existing permanent isolation,
+  authorization, memory-domain, plugin, task and workflow coverage remains enabled.
+- Focused brand/auth/contrast: 7 files / 30 tests pass. Targeted static-font routing,
+  existing session proxy and contrast: 3 files / 11 tests pass (contrast overlaps).
+- Web lint (zero warnings), standalone typecheck and production build pass.
+- Actual production public login/signup: **142 checks across 32 theme/width/mode
+  cases pass**, at 320/390/430/768/1024/1200/1440/1920px. Includes keyboard sequence,
+  form labels/safe return, static art, pointer entry/slow-fast movement/local
+  falloff/settling, reduced motion, short viewport, mobile and zoom-equivalent
+  reflow. Zero recorded browser exceptions. No successful provider login/signup
+  or real authenticated session was exercised; local nonsecret env placeholders.
+- Home/Tasks/Boards list/editor: **16 actual-component fixture smoke checks pass**
+  in both themes at 390/1440px. Only transport/actions/Realtime are synthetic; this
+  checks tokens/reflow, not a new audit of Boards functionality or hosted services.
+- Rendered auth contrast: button text 5.54:1 light / 7.80:1 dark; input boundaries
+  3.39:1 / 4.13:1; body 16.09:1 / 16.86:1. Automated token tests cover body, muted,
+  links, action states, selected nav, semantic states, inputs and focus. Decorative
+  dividers are intentionally lower contrast. The global border default was moved
+  into the base layer so control/selection tokens actually apply.
+- Login declared client-reference JS union versus the starting build: **-103 raw /
+  +48 locally gzipped bytes**, five chunks in both. No shader/canvas bundle. Local
+  optimized wordmark responses were 8,180/8,036 bytes; both variants are requested
+  to support device-local theme switching. Font is an additional 69,436-byte file.
+- A short 60-move local production-page probe recorded local falloff, stable form
+  bounds, zero Long Task/layout-shift entries and no frames after rest/leave.
+  These are scoped observations, not a production benchmark, cold-load CLS claim
+  or device SLA. No authenticated latency improvement is claimed.
+
+Limits: manual Windows NVDA, physical devices, non-Chromium browsers and hosted
+provider acceptance remain target-environment checks. The existing locked install
+reported npm audit findings; dependency upgrades were not part of this visual
+task. Database/worker validation is not applicable because neither changed.
+Temporary QA/install artifacts stay ignored under `.next/cache/redesign-004-1-qa`.
+Scoped code formatting, 13 changed Markdown ranges, diff whitespace and the
+57-file artifact/secret/relative-link review pass. Final sidebar logo fit passes
+after its size default was placed below utility overrides. Task browser and
+preview helpers are stopped. See [Brand](docs/BRAND.md) for canonical sources/usage and
+the exact future REDESIGN-005 recommendation.
 
 ## REDESIGN-004 - Boards V2 foundation
 

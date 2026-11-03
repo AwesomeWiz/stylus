@@ -80,10 +80,6 @@ export function BoardList({
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Boards</h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl text-sm leading-6">
-            A visual workspace to turn research, inspiration and ideas into
-            decisions and executable work.
-          </p>
         </div>
         {canMutate ? (
           <Button onClick={() => setCreateOpen(true)}>

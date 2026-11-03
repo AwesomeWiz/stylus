@@ -42,7 +42,12 @@ describe("V2 authentication composition", () => {
     });
     expect(visual.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
     expect(visual.querySelector("a, button, input, [tabindex]")).toBeNull();
-    expect(visual.querySelector("svg")).toHaveAttribute("focusable", "false");
+    expect(visual.querySelector("[data-auth-tile]")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Use your work email and password/),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector(".brand-logo-light")).toHaveAttribute("src");
+    expect(document.querySelector(".brand-logo-dark")).toHaveAttribute("src");
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
       "Think clearly.Build together.",
     );
@@ -75,6 +80,9 @@ describe("V2 authentication composition", () => {
         searchParams: Promise.resolve({ next: "/tasks?view=my" }),
       }),
     );
+    expect(
+      screen.queryByText(/then set up the organization/),
+    ).not.toBeInTheDocument();
     expect(screen.getByLabelText("Full name")).toHaveAttribute(
       "autocomplete",
       "name",

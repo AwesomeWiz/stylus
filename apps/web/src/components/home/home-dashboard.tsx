@@ -50,7 +50,7 @@ export function HomeDashboard({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Home</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {organizationName} · What needs your attention?
+            {organizationName}
           </p>
         </div>
         <Link

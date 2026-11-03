@@ -91,10 +91,11 @@ export function TaskWorkspace({
           >
             Tasks
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Ownership, deadlines and the work ahead.
-            {!canMutate ? " You have read-only access." : ""}
-          </p>
+          {!canMutate ? (
+            <p className="text-muted-foreground mt-1 text-sm">
+              You have read-only access.
+            </p>
+          ) : null}
         </div>
         {canMutate ? (
           <Button

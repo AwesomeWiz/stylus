@@ -1,4 +1,4 @@
-﻿# Stylus — UI Patterns V2
+# Stylus — UI Patterns V2
 
 Status: DEFINED; implement only in the approved follow-up task. The current
 application is not assumed to implement these patterns.
@@ -30,21 +30,26 @@ move focus for every filter or background refresh.
 
 ## Authentication identity
 
-Quiet work surfaces allow expressive moments of identity at authentication,
-onboarding and selected first-run/brand moments. REDESIGN-003.1 implements only
-login/signup. Share one abstract SVG system with a calm, unchanged form. Full
-desktop composition is approximately 55/45; tablet uses a smaller static field;
-below 768px the form leads with only a small static brand accent. Setup, recovery
-and invitation shells remain focused without the identity field.
+**Calm where people work. Expressive where the product speaks.** REDESIGN-004.1
+uses a full-height CSS architectural tile field and one content card beside
+login/signup. Desktop is approximately 55/45; tablet has a narrower static field;
+below 768px only a small static geometric accent accompanies the form. Setup,
+recovery and invitations retain their informative focused shells.
 
-Artwork is decorative, `aria-hidden`, unfocusable and independent of account or
-application state. Pointer position is ephemeral local presentation data: never
-log, persist, transmit or use it as analytics. Fine desktop pointers can move
-layers slightly and reveal secondary lines through a soft mask, without moving
-the form. No idle animation loop is required. Reduced motion, coarse pointers,
-hidden tabs and unsupported media-query APIs keep the static composition; cancel
-frames and remove listeners on unmount. Login/signup validation, return-path
-security, confirmation and password-manager hints remain the existing contract.
+Tiles are decorative, `aria-hidden`, unfocusable and independent of account or
+application state. Fine desktop pointer proximity influences a local neighborhood
+with bounded depth/tilt/directional lighting. Refs and direct style updates avoid
+React renders; easing stops when settled and after leaving. Media/visibility
+changes cancel frames and reset styles; listeners are removed on unmount. CSS
+also enforces static reduced-motion/coarse-pointer behavior. No idle loop, WebGL,
+network input, logging, persistence or analytics is involved. Auth remains usable
+without enhancement. The content card is ordinary readable text, not interactive
+art. Full wordmarks switch using the pre-hydration theme class without recoloring.
+
+Login/signup omit redundant explanatory subtitles. Useful field hints, error
+recovery, validation, safe returns, confirmation and password-manager semantics
+remain unchanged. Page descriptions should explain state or non-obvious behavior,
+not repeat titles; retain empty-state, read-only and risk guidance.
 
 ## Page headers and local navigation
 

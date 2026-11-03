@@ -1009,3 +1009,25 @@ provider access, plugin-private import or implicit Knowledge promotion is added.
 Native entity/conversion/selection-intelligence contracts remain REDESIGN-005 or
 separately approved execution scope. See [Boards](BOARDS.md) for implementation
 and the explicit limits of local PostgreSQL/browser verification.
+
+
+## ADR-044 — Cobalt identity, warm work surfaces and self-hosted Geist
+
+Date: 2026-11-03. Status: Accepted for REDESIGN-004.1.
+
+“Calm where people work. Expressive where the product speaks.” supersedes the
+cyan-primary and system-font-only portions of ADR-038/039/040 and the SVG art
+implementation in ADR-042. Historical records remain historical. Canonical
+primary is #4F5BD5; dark actions use a separately tested lighter value with dark
+ink. Warm neutral work surfaces remain quiet. Supporting apricot/mint/butter/sky
+are editorial artwork roles, separate from semantic states and collaborator
+identity. Approved user-supplied blue–coral logos are copied unchanged; theme
+variants preserve the actual wordmark. Geist is an unmodified locally served
+font from the official package with its SIL OFL license, no runtime CDN.
+
+Auth uses deterministic server-rendered CSS tiles and a small client wrapper.
+Finite local proximity easing supplies depth, tilt and directional light/shadow;
+no WebGL or continuous React pointer renders are necessary. Reduced motion,
+coarse/small screens and hidden documents stay static. Auth logic, schemas,
+Board data/Realtime, task behavior, database and domain boundaries are unchanged.
+See [Brand](BRAND.md) for sources, tokens and verification.

@@ -4,6 +4,14 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Established cobalt brand actions, warm neutral surfaces, self-hosted Geist and
+  the approved blue–coral logo/wordmark variants across light/dark themes.
+- Rebuilt login/signup around a full-height geometric field with local tile
+  depth, tilt and directional shadows; reduced-motion/mobile remain static.
+- Simplified repeated auth/Home/Tasks/Boards subtext, retained meaningful hints,
+  and strengthened control borders and focus visibility. Authentication and
+  Board/task workflows remain unchanged.
+
 - Built Boards V2 with real owner/template metadata and seven focused native
   templates. Existing `/whiteboards` URLs and historical records remain.
 - Added an immersive board editor with overlay navigation, vertical named tools,

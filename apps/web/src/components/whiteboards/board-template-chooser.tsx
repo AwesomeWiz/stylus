@@ -28,7 +28,13 @@ function TemplatePreview({ template }: { template: BoardTemplate }) {
             width="50"
             height="22"
             rx="1"
-            fill="var(--muted)"
+            fill={
+              i === 0
+                ? "var(--primary-subtle)"
+                : i === 1
+                  ? "var(--pastel-coral)"
+                  : "var(--muted)"
+            }
             stroke="currentColor"
             strokeWidth=".5"
           />

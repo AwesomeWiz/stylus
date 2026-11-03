@@ -18,12 +18,13 @@ the next implementation task.
 
 ## 1. Executive direction
 
-**Quiet interface, expressive product.** Stylus is a calm, professional operating
+**Calm where people work. Expressive where the product speaks.** Stylus is a calm, professional operating
 system where startup teams turn planning, knowledge, collaboration and marketing
 intelligence into executable work. Expression belongs in the team's content,
 images and decisions. Application chrome stays neutral and predictable.
 
-Keep `#0D98BA`, the approved Stylus mark, Light/Dark/System appearance, Lucide,
+REDESIGN-004.1 supersedes the original cyan/system-font proposal with cobalt
+`#4F5BD5`, self-hosted Geist and the approved blue–coral logo. Keep Light/Dark/System, Lucide,
 the existing component foundation and modular monolith. Improve the product's
 hierarchy and workflow rather than applying a new coat of color. Core work must
 remain useful when AI is disabled or an optional worker is offline.
@@ -94,7 +95,8 @@ needed. Conflicting extracted brand rules are intentionally discarded.
 
 Use the existing semantic CSS tokens, UI primitives and Radix-backed dialogs.
 Add focused variants only when an implementation needs them; no new component
-library, font dependency or independent page-specific design system.
+library or independent page-specific design system. REDESIGN-004.1 supplies
+licensed self-hosted Geist without a runtime font dependency.
 
 The numeric visual contract lives in [Design System](DESIGN_SYSTEM.md). This
 specification defines its product application. V2 supersedes the earlier
@@ -104,20 +106,19 @@ collaborator identity allocation remains intact (see ADR-040).
 ## 6. Color
 
 Directionally, normal application chrome is about 90% neutral, 7% Stylus accent
-and 3% semantic color. These are review heuristics, not CSS quotas. Cyan signals
+and 3% semantic color. These are review heuristics, not CSS quotas. Cobalt signals
 primary action, selection or navigation. Red/amber/green communicate status with
 text or icons. Human collaborator colors and user-authored board colors are
 separate intentional systems.
 
-Retain accessible derived primary action colors; canonical brand cyan is not
-automatically suitable for small white button text. Replace feature-index pastel
+Use the tested light/dark cobalt action pairs in Design System; artwork colors are not automatically suitable for small button text. Replace feature-index pastel
 fills with neutral surfaces during the relevant implementation phase. Rare
 editorial callouts must have a stated purpose and accessible theme pairs. Never
 color-code specialists as their main identity.
 
 ## 7. Typography
 
-Use the current system sans stack. Page titles are compact; weight, alignment
+Use self-hosted Geist with system sans fallbacks (REDESIGN-004.1). Page titles are compact; weight, alignment
 and whitespace establish hierarchy. Dense rows and metadata remain readable.
 AI output uses the same body scale and bounded reading width as human prose.
 Review findings become titled sections, citations and decisions rather than JSON
@@ -258,17 +259,18 @@ steps are reachable states within these routes, not missing standalone pages.
 
 ## 14. Authentication
 
-REDESIGN-003.1 refines the approved visual identity: **Quiet work surfaces.
-Expressive moments of identity.** A desktop two-column AuthShell pairs an original
-abstract SVG field on the left with a focused 360–400px form on the right, at
-approximately 55/45. Organic contours resolve into sparse structure, supported by
-one short headline and sentence. This supersedes the original workflow-fragment
-showcase proposal. No live tenant data, fake metrics, proprietary reference
-assets, raster hero, external artwork or new font is needed. Decorative desktop
-parallax and a local line reveal remain optional to understanding the form;
-reduced motion keeps a complete static composition.
+REDESIGN-004.1 finalizes the identity: **Calm where people work. Expressive
+where the product speaks.** A desktop two-column AuthShell pairs a full-bleed
+architectural CSS tile field and one concise content card with a focused
+360–400px form, approximately 55/45. Warm neutral/cobalt planes have controlled
+apricot/mint/butter/sky accents and separately authored dark values. This
+supersedes the REDESIGN-003.1 contour/reveal artwork. No live tenant data, fake
+metrics, proprietary reference assets or external artwork is used. Self-hosted
+Geist and the approved full wordmark establish identity. Bounded local depth,
+tilt and directional shadows settle without an idle loop; reduced motion keeps
+a complete static composition. No WebGL or graphics dependency is required.
 
-Right: Stylus mark, concise title, existing signup name field where required,
+Right: approved theme-specific full wordmark, concise title, existing signup name field where required,
 email, password, explicit labels, existing validation, pending action, primary
 submit and sign-in/sign-up switch. No giant floating card. Preserve password
 manager/autocomplete support, confirmation state, generic authentication errors

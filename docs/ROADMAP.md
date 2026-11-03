@@ -2,7 +2,7 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-004 COMPLETE / REQUIRED LOCAL CHECKS PASS
+Status: REDESIGN-004.1 COMPLETE / REQUIRED LOCAL CHECKS PASS
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -12,6 +12,7 @@ Status: REDESIGN-004 COMPLETE / REQUIRED LOCAL CHECKS PASS
 - [x] REDESIGN-003: Home and Tasks
 - [x] REDESIGN-003.1: auth visual identity and interactive abstract artwork
 - [x] REDESIGN-004: Boards foundation
+- [x] REDESIGN-004.1: brand identity, Geist typography and premium auth
 - [ ] REDESIGN-005: Boards and Stylus integrations/collaboration
 - [ ] REDESIGN-006: Marketing shell and Creative Studio
 - [ ] REDESIGN-007: Research, Campaigns and secondary Marketing
@@ -29,6 +30,9 @@ reduced-motion treatments. Existing authentication logic remains unchanged.
 REDESIGN-004 adds the immersive BoardShell and native templates, atomic Sections/
 Groups and manipulation, private image editing, safe links, outline/Inspector and
 deferred authorized discussion/preview reads. Native integrations remain 005 scope.
+REDESIGN-004.1 supersedes the earlier cyan/system-font identity with cobalt, warm
+neutrals, licensed self-hosted Geist, the approved logo package and full-height
+CSS auth tiles. No later workflow scope starts with this visual change.
 Signed-in transition timing and manual NVDA remain target-environment acceptance,
 not measured local claims. Later
 follow-up tasks are not started. See [V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) for

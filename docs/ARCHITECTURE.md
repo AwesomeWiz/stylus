@@ -804,3 +804,13 @@ workflow. Ask Council never creates a Reel Brief, invokes Strategic Review,
 launches Research, derives performance, writes memory or crosses into TASK-019.
 TASK-019 Web Agency Integration is deferred because the separate
 `ai-web-agency` implementation is not yet mature enough for a stable contract.
+
+
+## Shared brand presentation (REDESIGN-004.1)
+
+Global semantic tokens and self-hosted Geist apply to existing workspace shells.
+The exact font/license paths bypass the session proxy as public static assets;
+account/session decisions and private-route guards are unchanged. BrandLogo
+centralizes supplied theme variants. Auth uses server-rendered deterministic
+CSS geometry with a small decorative client boundary for finite local pointer
+response; no WebGL, network artwork or account state. See [Brand](BRAND.md).

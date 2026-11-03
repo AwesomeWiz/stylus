@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,7 @@ import styles from "./auth-visual.module.css";
 
 interface AuthShellProps {
   children: ReactNode;
-  description: string;
+  description?: string;
   title: string;
   showcase?: boolean;
 }
@@ -32,14 +32,14 @@ export function AuthShell({
             <AuthVisualArtwork />
           </AuthVisual>
           <div className={styles.caption}>
-            <p className={styles.eyebrow}>A space for what comes next</p>
+            <p className={styles.eyebrow}>A workspace for startup work</p>
             <h2 className={styles.headline}>
               Think clearly.
               <br />
               Build together.
             </h2>
             <p className={styles.support}>
-              One shared space for your team’s next move.
+              Bring your ideas, your people and your next move together.
             </p>
           </div>
         </aside>
@@ -52,17 +52,7 @@ export function AuthShell({
               aria-label="Stylus home"
               className="inline-flex min-h-10 items-center gap-2.5"
             >
-              <Image
-                alt=""
-                className="size-9 object-contain"
-                height={36}
-                width={36}
-                priority
-                src="/brand/stylus-mark.png"
-              />
-              <span className="text-base font-semibold tracking-tight">
-                Stylus
-              </span>
+              <BrandLogo />
             </Link>
             {showcase ? <AuthVisualAccent /> : null}
           </div>
@@ -70,9 +60,11 @@ export function AuthShell({
             <h1 className="text-2xl leading-8 font-semibold tracking-tight">
               {title}
             </h1>
-            <p className="text-muted-foreground mt-2 text-sm leading-6">
-              {description}
-            </p>
+            {description ? (
+              <p className="text-muted-foreground mt-2 text-sm leading-6">
+                {description}
+              </p>
+            ) : null}
           </header>
           {children}
         </div>

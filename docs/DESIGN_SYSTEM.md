@@ -1,7 +1,7 @@
-﻿# Stylus — Design System V2
+# Stylus — Design System V2
 
-Status: DEFINED for future implementation in REDESIGN-002 onward. No CSS or
-component implementation changes are made by REDESIGN-001.
+Status: Shared brand, typography and auth identity implemented in REDESIGN-004.1
+(2026-11-03). Feature-specific V2 targets remain subject to their delivery phase.
 
 [Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) owns feature direction,
 route placement and implementation scope. This document owns shared visual
@@ -9,31 +9,26 @@ rules. [UI Patterns](UI_PATTERNS.md) owns interaction and state behavior.
 
 ## Identity and visual hierarchy
 
-**Quiet interface, expressive product.** Preserve canonical Stylus cyan
-`#0D98BA` and the approved mark at `assets/brand/stylus-logo-source.png` (repository
-root), served through `apps/web/public/brand/stylus-mark.png`. Normal chrome is
-neutral; team content provides expression. Avoid dashboard-template composition,
-giant headings and colorful feature launchers.
+**Calm where people work. Expressive where the product speaks.** Cobalt
+`#4F5BD5` supersedes canonical cyan. Home, Tasks, Settings, navigation, inspectors
+and reading surfaces remain neutral. Expressive authentication, template previews
+and selected editorial moments use the supporting palette purposefully. Features
+do not receive permanent colors. User-authored Board content and collaborator
+identity keep their separate systems. See [Brand](BRAND.md) and ADR-044.
 
-**Quiet work surfaces. Expressive moments of identity.** Authentication,
-onboarding and selected first-run/brand moments may use original, art-directed
-abstract visuals. This is a bounded identity treatment, not permission to color
-Home, Tasks, Settings or ordinary workspace chrome. REDESIGN-003.1 implements
-this exception only for login/signup: flat organic SVG planes, contour lines,
-sparse structure and one short headline, with the existing quiet form alongside.
-No workflow-card stack, floating dashboard, glass, glow, generic AI imagery,
-external artwork or new font is needed.
+Use the exact approved blue–coral artwork in `assets/brand/`, served from
+`apps/web/public/brand/`. Auth and expanded navigation use theme-specific full
+wordmarks; collapsed navigation and compact contexts use the mark. No CSS tinting.
 
-Auth artwork uses scoped `--auth-*` custom properties with authored light/dark
-palettes; canonical brand/action tokens remain unchanged. Decorative strokes
-are not status colors. Essential copy/form contrast still follows the rules below.
-Keep the composition complete when static. Desktop pointer response is subtle
-and local; smaller screens, coarse pointers and reduced motion use static art.
+Auth is a full-height architectural tile field with one concise content card.
+Its decorative client wrapper adds bounded local lift, tilt and directional
+light/shadow in finite animation-frame bursts. Static server-rendered geometry
+remains complete without JavaScript, on smaller/coarse-pointer screens and with
+reduced motion. No WebGL, external artwork or graphics library is required.
 
-Use existing semantic tokens in `apps/web/src/app/globals.css`, current UI
-primitives and Radix foundations. No new component library or font dependency.
-Rules below are V2 targets; existing components are not assumed to satisfy them.
-When implementing, change shared primitives/tokens before creating page variants.
+Reuse semantic tokens in `apps/web/src/app/globals.css`, current UI primitives
+and Radix foundations. Geist is self-hosted with its original redistribution
+license; no runtime font CDN or new component library.
 
 ## Color and theme
 
@@ -41,20 +36,20 @@ Directional normal-application balance: about 90% neutral surfaces, 7% primary
 accent, 3% semantic/status. These are qualitative review proportions; user images,
 intentional board objects and collaborator identity are not chrome color quotas.
 
-| Role | V2 rule |
-| --- | --- |
-| Brand | Keep `--brand: #0D98BA` in both themes; use for approved identity |
-| Filled primary action | Retain light `--primary: #087690` with white foreground; dark `#42C2DE` with existing deep foreground. Verify all states on their actual surfaces |
-| Hover/active | Retain derived primary state tokens; do not hard-code page colors |
-| Selection/current area | Small primary indicator or subtle cyan surface plus text/weight; not an entire colored page section |
-| Page/chrome | Existing `background`, `sidebar`, `card`, `muted`, `popover`, foreground and border tokens; keep chroma low |
-| Status | Success, warning, destructive and information tokens with a text/icon label; unknown is neutral |
-| Specialist identity | Existing centralized Lucide mapping plus name/status. Remove reliance on unique specialist-colored reading blocks |
-| Human identity | Preserve tested eight-family active-set collaborator allocation, including avatar/cursor/name agreement and multi-tab deduplication |
-| Editorial accent | Rare, small callout only when meaning is explicit; no per-feature/index pastel assignment |
+| Role                   | V2 rule                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Brand                  | `--brand: #4F5BD5`; approved artwork remains unchanged                                                                              |
+| Filled primary action  | Light `#4F5BD5` / white; dark `#A1AAFF` / `#171B35`. Hover and active have tested separate values                                   |
+| Hover/active           | Retain derived primary state tokens; do not hard-code page colors                                                                   |
+| Selection/current area | Small primary indicator or subtle cobalt surface plus text/weight; not an entire colored page section                               |
+| Page/chrome            | Existing `background`, `sidebar`, `card`, `muted`, `popover`, foreground and border tokens; keep chroma low                         |
+| Status                 | Success, warning, destructive and information tokens with a text/icon label; unknown is neutral                                     |
+| Specialist identity    | Existing centralized Lucide mapping plus name/status. Remove reliance on unique specialist-colored reading blocks                   |
+| Human identity         | Preserve tested eight-family active-set collaborator allocation, including avatar/cursor/name agreement and multi-tab deduplication |
+| Editorial accent       | Rare, small callout only when meaning is explicit; no per-feature/index pastel assignment                                           |
 
 Normal text contrast must be at least 4.5:1; large text and meaningful non-text
-controls at least 3:1. The canonical cyan is not a blanket white-text button fill.
+controls at least 3:1. Brand artwork colors do not automatically qualify as button fills.
 Do not assume muted labels, skeletons, disabled controls or board objects inherit
 safe contrast from the page. Keep focus rings visible against adjacent surfaces.
 
@@ -65,29 +60,49 @@ filter to user images. Canvas content colors preserve authorship while editing
 controls and text equivalents remain accessible.
 
 Earlier guidance recommending one or two pastel section blocks per page is
-superseded. Existing pastel tokens need not be deleted; stop assigning them as
+superseded. Legacy pastel names are compatibility aliases derived from the approved supporting palette; stop assigning them as
 default structure in each phase. Collaborator palettes and meaningful semantic
 colors remain. See ADR-040 in [Decisions](DECISIONS.md).
 
+### Resolved palette
+
+| Role                      | Light                             | Dark                              |
+| ------------------------- | --------------------------------- | --------------------------------- |
+| Canvas / surface / raised | `#F7F6F2` / `#FFFFFF` / `#F0EFEB` | `#111216` / `#191B20` / `#202228` |
+| Ink / muted               | `#191A1D` / `#66676E`             | `#F4F3EF` / `#A1A3AB`             |
+| Divider / control border  | `#DDDCD7` / `#85858B`             | `#303238` / `#737680`             |
+| Cobalt artwork            | `#4F5BD5`                         | `#4652AE`                         |
+| Apricot / mint            | `#F49372` / `#69C5A5`             | `#B87560` / `#528C77`             |
+| Butter / sky              | `#EFCB68` / `#72ACD5`             | `#B49A5D` / `#547F9F`             |
+
+Supporting colors are optional artwork/editorial fills, never unlabeled state.
+Success/warning/destructive/information use independent semantic tokens. Dividers
+are decorative; input boundaries and focus rings meet 3:1 against adjacent
+neutral surfaces. Dark primary is tuned for readable text and controls rather
+than using white text on a light blue fill.
+
 ## Typography
 
-Keep the current `Inter, ui-sans-serif, system-ui, ...` fallback stack; no new
-download is required. Express sizes in rem at a 16px browser default and respect
-user scaling. Use sentence case. Tight tracking is optional only on short titles;
-body and metadata track normally. Do not reproduce reference marketing sizes or
-proprietary font metrics.
+Use self-hosted Geist variable Sans (100–900 available, body 400, labels 500,
+headings 600) with ui-sans-serif/system-ui fallbacks. The unmodified WOFF2 and
+SIL OFL 1.1 license come from Vercel's official `geist@1.7.0` package. Font
+loading uses a same-origin preload and `font-display: swap`. No Mono download
+is needed; existing technical code retains system monospace. Express sizes in
+rem at a 16px browser default and respect scaling. Short headings use tight
+tracking; body and metadata track normally. Auth alone has expressive headline
+type. No giant marketing type in work surfaces.
 
-| Token/role | Size / line height | Weight | Application |
-| --- | --- | --- | --- |
-| Page title | 24 / 32px | 600 | Home, Tasks, Settings and normal area titles |
-| Workspace title | 20 / 28px | 600 | Active Studio artifact or workspace heading |
-| Section title | 16 / 24px | 600 | Attention, evidence, production sections |
-| Body / long-form AI output | 15 / 24px | 400 | Main prose, reviewed findings and production brief |
-| Dense list / table body | 14 / 20px | 400; title 500 | Task rows, research lists and database-like views |
-| Form label / control | 14 / 20px | 500 / 400 | Explicit labels and control content; inputs become 16px on mobile |
-| Metadata / table header | 12 / 18px | 400 / 500 | Dates, evidence provenance, secondary labels; no essential instruction below 12px |
-| Canvas object label | 16 / 24px at 100% zoom | 400; section 600 | Defaults for new objects; preserve authored styles |
-| Board header title | 14 / 20px | 600 | Compact chrome, independent of canvas zoom |
+| Token/role                 | Size / line height     | Weight           | Application                                                                       |
+| -------------------------- | ---------------------- | ---------------- | --------------------------------------------------------------------------------- |
+| Page title                 | 24 / 32px              | 600              | Home, Tasks, Settings and normal area titles                                      |
+| Workspace title            | 20 / 28px              | 600              | Active Studio artifact or workspace heading                                       |
+| Section title              | 16 / 24px              | 600              | Attention, evidence, production sections                                          |
+| Body / long-form AI output | 15 / 24px              | 400              | Main prose, reviewed findings and production brief                                |
+| Dense list / table body    | 14 / 20px              | 400; title 500   | Task rows, research lists and database-like views                                 |
+| Form label / control       | 14 / 20px              | 500 / 400        | Explicit labels and control content; inputs become 16px on mobile                 |
+| Metadata / table header    | 12 / 18px              | 400 / 500        | Dates, evidence provenance, secondary labels; no essential instruction below 12px |
+| Canvas object label        | 16 / 24px at 100% zoom | 400; section 600 | Defaults for new objects; preserve authored styles                                |
+| Board header title         | 14 / 20px              | 600              | Compact chrome, independent of canvas zoom                                        |
 
 Use 72ch maximum reading width for prose and reviews; Studio's inspector is
 metadata, not the primary place to read an entire report. Structure AI content
@@ -100,20 +115,20 @@ wall or giant specialist headings. Numeric metadata may use tabular numerals.
 Use the 8px-derived scale `4, 8, 12, 16, 24, 32, 40, 48, 64`. The 4px and 12px
 subdivisions serve dense label/icon relationships, not arbitrary page margins.
 
-| Context | Canonical target |
-| --- | --- |
-| Desktop shell | 224px expanded sidebar, 56px collapsed; 48px topbar |
-| Page margin | 24px desktop/tablet; 16px mobile |
-| Main section separation | 32px; 16px between related subsections |
-| Page header to toolbar/content | 24px; 8px title-to-description |
-| Standard control | 40px minimum target/height; 44px on touch; 16px icons, 20px where needed |
-| Dense list row | 48px minimum; content may wrap; 12–16px horizontal padding |
-| Content card | 16px padding; 24px for substantive isolated forms |
-| Dialog/drawer | 24px padding desktop; 16px mobile; 16px field gap |
-| Task detail | 480px desktop target, viewport-bounded; full-screen mobile |
-| Context inspector | 320px Board slot; 288px Studio slot; single optional right panel |
-| Canvas toolbar/control offset | 16px from edges plus safe-area inset; 8px control-group gap |
-| Board header | 48px minimum; wraps/uses overflow before hiding essential save state |
+| Context                        | Canonical target                                                         |
+| ------------------------------ | ------------------------------------------------------------------------ |
+| Desktop shell                  | 224px expanded sidebar, 56px collapsed; 48px topbar                      |
+| Page margin                    | 24px desktop/tablet; 16px mobile                                         |
+| Main section separation        | 32px; 16px between related subsections                                   |
+| Page header to toolbar/content | 24px; 8px title-to-description                                           |
+| Standard control               | 40px minimum target/height; 44px on touch; 16px icons, 20px where needed |
+| Dense list row                 | 48px minimum; content may wrap; 12–16px horizontal padding               |
+| Content card                   | 16px padding; 24px for substantive isolated forms                        |
+| Dialog/drawer                  | 24px padding desktop; 16px mobile; 16px field gap                        |
+| Task detail                    | 480px desktop target, viewport-bounded; full-screen mobile               |
+| Context inspector              | 320px Board slot; 288px Studio slot; single optional right panel         |
+| Canvas toolbar/control offset  | 16px from edges plus safe-area inset; 8px control-group gap              |
+| Board header                   | 48px minimum; wraps/uses overflow before hiding essential save state     |
 
 At desktop (>=1200px), normal overview/settings content caps at 1200px, while
 operational lists use available width. Prose caps at 72ch. Studio can use the
@@ -127,15 +142,15 @@ desktop grid onto a phone. Full responsive behavior is in the product spec.
 Prefer page sections and dividers to a container around every section. Neutral
 surface differences express hierarchy; cards group distinct objects or actions.
 
-| Primitive | Rule |
-| --- | --- |
-| App surface | Neutral background, flat |
-| Sidebar/topbar | Neutral, opaque; one subtle dividing border |
-| List/table | Neutral content surface or direct page content, subtle row separators |
-| Card | Neutral, 1px semantic border, no decorative shadow |
-| Popover/menu | Neutral overlay with border and one subtle shadow if needed |
-| Dialog/drawer | Neutral, border, restrained overlay/shadow; no floating marketing card treatment |
-| Canvas controls | Neutral opaque groups above canvas; border and minimal separation shadow only |
+| Primitive       | Rule                                                                             |
+| --------------- | -------------------------------------------------------------------------------- |
+| App surface     | Neutral background, flat                                                         |
+| Sidebar/topbar  | Neutral, opaque; one subtle dividing border                                      |
+| List/table      | Neutral content surface or direct page content, subtle row separators            |
+| Card            | Neutral, 1px semantic border, no decorative shadow                               |
+| Popover/menu    | Neutral overlay with border and one subtle shadow if needed                      |
+| Dialog/drawer   | Neutral, border, restrained overlay/shadow; no floating marketing card treatment |
+| Canvas controls | Neutral opaque groups above canvas; border and minimal separation shadow only    |
 
 Radius scale: 4px compact indicators/menu items, 6px controls and list groups,
 8px object cards/tool groups, 12px dialogs. A drawer flush to a viewport edge

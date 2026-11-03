@@ -2,6 +2,27 @@
 
 # Current
 
+## REDESIGN-004.1 — Brand identity, typography and premium auth
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-004-1-brand-auth`, starting at
+`f4571e28cb6325406abe4fcc2afb97a91ddf08e5`, in its own worktree. Main agent only.
+Cobalt/warm-neutral shared tokens, self-hosted licensed Geist and approved
+blue–coral logo variants establish the final identity. Full-height procedural
+CSS tiles and one content card replace the auth SVG; bounded local depth/tilt/
+light/shadow settle with no idle rendering. Mobile/reduced-motion stay static.
+Redundant subtext is removed while auth behavior and helpful state copy remain.
+Only exact public font/license paths bypass the session proxy. No database,
+Board/task business logic, Marketing workflows, worker or dependency changes.
+
+Full web tests (188 files / 1,070 tests), focused brand/auth/routing/contrast,
+lint/typecheck/build, 142 auth browser checks and 16 shared-surface fixture smoke
+checks pass. See PROJECT_STATE and [Brand](docs/BRAND.md) for measurements and
+limits. No merge/push; REDESIGN-005 remains unstarted.
+
+---
+
 ## REDESIGN-004 - Boards V2 foundation
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

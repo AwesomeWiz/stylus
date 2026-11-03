@@ -1,6 +1,7 @@
 import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthVisual } from "./auth-visual";
+import { AuthVisualArtwork } from "./auth-visual-artwork";
 
 let allowed = true;
 let mediaChanged: () => void;
@@ -26,14 +27,17 @@ function pointer(node: Element, type: string, x = 480, y = 160) {
 function mount() {
   const result = render(
     <AuthVisual>
-      <svg aria-hidden="true" />
+      <AuthVisualArtwork />
     </AuthVisual>,
   );
   const node = result.container.firstElementChild as HTMLElement;
   const geometry = vi
     .spyOn(node, "getBoundingClientRect")
     .mockReturnValue({ left: 0, top: 0, width: 600, height: 400 } as DOMRect);
-  return { ...result, node, geometry };
+  const tile = node.querySelector<HTMLElement>(
+    '[data-column="4"][data-row="3"]',
+  )!;
+  return { ...result, node, tile, geometry };
 }
 beforeEach(() => {
   allowed = true;
@@ -77,7 +81,7 @@ describe("decorative auth interaction lifecycle", () => {
     const { node } = mount();
     pointer(node, "pointerenter");
     expect(queue.size).toBe(0);
-    expect(node.querySelector("svg")).toBeInTheDocument();
+    expect(node.querySelector("[data-auth-tile]")).toBeInTheDocument();
   });
   it("is inert for reduced-motion, small-screen or coarse-pointer media", () => {
     allowed = false;
@@ -89,29 +93,34 @@ describe("decorative auth interaction lifecycle", () => {
     expect(node).toHaveAttribute("aria-hidden", "true");
     expect(node).not.toHaveAttribute("tabindex");
   });
-  it("batches normalized movement, reveals locally, then settles without an idle loop", () => {
-    const { node, geometry } = mount();
+  it("batches local depth and directional response, then settles without an idle loop", () => {
+    const { node, tile, geometry } = mount();
     pointer(node, "pointerenter");
     for (let i = 0; i < 20; i++) pointer(node, "pointermove");
     expect(queue.size).toBe(1);
     flush();
     expect(geometry).toHaveBeenCalledTimes(1);
-    expect(Number(node.style.getPropertyValue("--auth-x"))).toBeCloseTo(0.6);
-    expect(Number(node.style.getPropertyValue("--auth-y"))).toBeCloseTo(-0.2);
-    expect(node.style.getPropertyValue("--auth-reveal-x")).toBe("80.00%");
-    expect(Number(node.style.getPropertyValue("--auth-reveal"))).toBe(1);
+    expect(Number(tile.style.getPropertyValue("--tile-lift"))).toBeGreaterThan(
+      0.5,
+    );
+    expect(Number(tile.style.getPropertyValue("--tile-x"))).toBeGreaterThan(0);
+    expect(Number(tile.style.getPropertyValue("--tile-y"))).toBeLessThan(0);
+    const distant = node.querySelector<HTMLElement>(
+      '[data-column="0"][data-row="7"]',
+    )!;
+    expect(Number(distant.style.getPropertyValue("--tile-lift"))).toBe(0);
     expect(queue.size).toBe(0);
     pointer(node, "pointerleave");
     flush();
-    expect(Number(node.style.getPropertyValue("--auth-x"))).toBe(0);
-    expect(Number(node.style.getPropertyValue("--auth-reveal"))).toBe(0);
+    expect(Number(tile.style.getPropertyValue("--tile-x"))).toBe(0);
+    expect(Number(tile.style.getPropertyValue("--tile-lift"))).toBe(0);
     expect(queue.size).toBe(0);
   });
   it("does not rerender React children while the pointer moves", () => {
     const draw = vi.fn();
     function Artwork() {
       draw();
-      return <svg aria-hidden="true" />;
+      return <AuthVisualArtwork />;
     }
     const { container } = render(
       <AuthVisual>
@@ -133,12 +142,12 @@ describe("decorative auth interaction lifecycle", () => {
     expect(draw).toHaveBeenCalledTimes(initial);
   });
   it("stops and resets immediately when motion preferences or visibility change", () => {
-    const { node } = mount();
+    const { node, tile } = mount();
     pointer(node, "pointerenter");
     flush();
     allowed = false;
     act(() => mediaChanged());
-    expect(node.style.getPropertyValue("--auth-x")).toBe("");
+    expect(tile.style.getPropertyValue("--tile-x")).toBe("");
     pointer(node, "pointermove");
     expect(queue.size).toBe(0);
     allowed = true;
@@ -148,7 +157,7 @@ describe("decorative auth interaction lifecycle", () => {
     visibility().mockReturnValue("hidden");
     act(() => document.dispatchEvent(new Event("visibilitychange")));
     expect(queue.size).toBe(0);
-    expect(node.style.getPropertyValue("--auth-reveal")).toBe("");
+    expect(tile.style.getPropertyValue("--tile-lift")).toBe("");
   });
   it("invalidates geometry on resize and cleans up pending frames/listeners", () => {
     const { node, geometry, unmount } = mount();
@@ -158,8 +167,12 @@ describe("decorative auth interaction lifecycle", () => {
     pointer(node, "pointermove", 900, -10);
     flush();
     expect(geometry).toHaveBeenCalledTimes(2);
-    expect(Number(node.style.getPropertyValue("--auth-x"))).toBe(1);
-    expect(Number(node.style.getPropertyValue("--auth-y"))).toBe(-1);
+    expect(
+      [...node.querySelectorAll<HTMLElement>("[data-auth-tile]")].every(
+        (tile) =>
+          Math.abs(Number(tile.style.getPropertyValue("--tile-x"))) <= 1,
+      ),
+    ).toBe(true);
     pointer(node, "pointerleave");
     expect(queue.size).toBe(1);
     unmount();
