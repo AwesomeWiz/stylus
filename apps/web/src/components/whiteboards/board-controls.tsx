@@ -14,6 +14,10 @@ export function BoardMenu({
   minimap,
   onMinimap,
   connection,
+  grid = true,
+  onGrid = () => {},
+  onFit = () => {},
+  onFitSelection = () => {},
 }: {
   onOutline: () => void;
   onHelp: () => void;
@@ -22,6 +26,10 @@ export function BoardMenu({
   minimap: boolean;
   onMinimap: () => void;
   connection: CollaborationConnectionState;
+  grid?: boolean;
+  onGrid?: () => void;
+  onFit?: () => void;
+  onFitSelection?: () => void;
 }) {
   return (
     <details className="relative">
@@ -37,14 +45,14 @@ export function BoardMenu({
           onClick={() => onOutline()}
           variant="ghost"
         >
-          Object outline
+          Layers
         </Button>
         <Button
           className="w-full justify-start"
           onClick={() => onHelp()}
           variant="ghost"
         >
-          Tools and keyboard help
+          Keyboard shortcuts
         </Button>
         <label className="flex min-h-11 items-center gap-2 px-3 text-sm">
           <input
@@ -61,9 +69,31 @@ export function BoardMenu({
         >
           {minimap ? "Hide" : "Show"} minimap
         </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={onGrid}
+        >
+          {grid ? "Hide" : "Show"} dot grid
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={onFit}
+        >
+          Fit board
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={onFitSelection}
+        >
+          Fit selection
+        </Button>
         <p className="text-muted-foreground px-3 py-2 text-xs">
           Collaboration: {connection.toLowerCase()}. Saving is reported
-          separately.
+          separately. Undo and clipboard stay local to this board. Failed saves
+          restore saved state; offline work is not durable.
         </p>
       </div>
     </details>
@@ -137,46 +167,80 @@ export function BoardHelp({
   onOpenChange,
 }: {
   open: boolean;
-  onOpenChange: (value: boolean) => void;
+  onOpenChange: (v: boolean) => void;
 }) {
+  const groups = [
+    [
+      "Tools",
+      [
+        ["V", "Select"],
+        ["H / Space", "Pan"],
+        ["T", "Text"],
+        ["N", "Sticky"],
+        ["F", "Section"],
+      ],
+    ],
+    [
+      "Selection",
+      [
+        ["Shift + click", "Add / remove"],
+        ["Drag", "Marquee"],
+        ["⌘ / Ctrl + A", "Select all"],
+        ["Esc", "Clear selection"],
+        ["Shift + F10", "Context menu"],
+      ],
+    ],
+    [
+      "Edit",
+      [
+        ["⌘ / Ctrl + C / X", "Copy / Cut"],
+        ["⌘ / Ctrl + V", "Paste"],
+        ["⌘ / Ctrl + D", "Duplicate"],
+        ["⌘ / Ctrl + G", "Group"],
+        ["⌘ / Ctrl + Shift + G", "Ungroup"],
+        ["Delete", "Delete"],
+      ],
+    ],
+    [
+      "Arrange & history",
+      [
+        ["⌘ / Ctrl + [ / ]", "Backward / Forward"],
+        ["⌘ / Ctrl + Shift + [ / ]", "Back / Front"],
+        ["⌘ / Ctrl + Z", "Undo"],
+        ["⌘ / Ctrl + Shift + Z", "Redo"],
+      ],
+    ],
+  ] as const;
   return (
     <Dialog
-      className="max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
       open={open}
       onOpenChange={onOpenChange}
-      title="Board tools and keyboard"
-      description="Core editing works without AI. New tools insert once and return to Select."
+      title="Keyboard shortcuts"
+      description="Focus the canvas to use shortcuts. Shift+Enter adds a new line while editing text."
     >
-      <div className="space-y-4 p-5 text-sm leading-6">
-        <p>
-          Focus the canvas first. V Select, H Pan, T Text, N Sticky, F Section.
-          Choose a creation tool and press Enter to insert at the center. Shapes
-          offers six named choices. Hold Space to pan temporarily.
-        </p>
-        <p>
-          Shift-select or drag a selection rectangle. Enter opens the Inspector.
-          Arrow keys move by 1 unit; Shift moves by 10. Ctrl/Cmd+D duplicates;
-          Ctrl/Cmd+G groups; Ctrl/Cmd+Shift+G ungroups; Ctrl/Cmd+Z undoes;
-          Shift+Z or Ctrl+Y redoes. Delete archives only when the canvas itself
-          is focused.
-        </p>
-        <p>
-          Escape returns to Select or closes a panel. Tab leaves the canvas
-          normally. The Object outline and Inspector provide alternatives to
-          dragging. Single-key shortcuts can be disabled in the Board menu.
-        </p>
-        <p>
-          Section membership is explicit in the Inspector. A Section move
-          carries its children; resizing changes only its bounds. Locked objects
-          remain inspectable. Images stay private; a source URL is metadata
-          only.
-        </p>
-        <p>
-          Saving and collaboration connection are separate. There is no offline
-          durability guarantee. Retry a failed save before leaving. Undo is
-          local and may be invalidated when another person changes the same
-          object.
-        </p>
+      <div className="grid gap-6 p-5 sm:grid-cols-2">
+        {groups.map(([title, shortcuts]) => (
+          <section key={title}>
+            <h3 className="text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase">
+              {title}
+            </h3>
+            <dl className="space-y-2">
+              {shortcuts.map(([keys, label]) => (
+                <div
+                  key={label}
+                  className="flex flex-wrap items-center justify-between gap-2 text-xs"
+                >
+                  <dt>{label}</dt>
+                  <dd>
+                    <kbd className="bg-muted rounded border px-2 py-1 font-sans">
+                      {keys}
+                    </kbd>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
       </div>
     </Dialog>
   );

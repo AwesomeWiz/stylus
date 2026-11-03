@@ -38,6 +38,7 @@ import {
   readBoardCommentsAction,
   readBoardImagesAction,
   readBoardSnapshotAction,
+  readBoardPreviewAction,
 } from "./read-actions";
 import { getBoardEditorData } from "./server/data";
 const scope = { boardId: board.id, organizationId: board.organization_id };
@@ -258,5 +259,34 @@ describe("Board read boundaries", () => {
       canMutate: false,
       rows: [],
     });
+  });
+
+  it("rejects a forged thumbnail organization before any record read", async () => {
+    expect(
+      (
+        await readBoardPreviewAction({
+          ...scope,
+          organizationId: crypto.randomUUID(),
+        })
+      ).status,
+    ).toBe("error");
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+  it("reauthorizes active boards and bounds a preview without signing private assets", async () => {
+    const result = await readBoardPreviewAction(scope);
+    expect(result.status).toBe("success");
+    expect(mocks.query.limit).toHaveBeenCalledWith(128);
+    const projection = mocks.query.select.mock.calls
+      .map((call) => call[0])
+      .find(
+        (value) => typeof value === "string" && value.includes("element_type"),
+      );
+    expect(projection).not.toMatch(/metadata|storagePath|comments/);
+    expect(mocks.sign).not.toHaveBeenCalled();
+  });
+  it("fails thumbnails closed when an active board cannot be resolved", async () => {
+    mocks.query.maybeSingle.mockResolvedValue({ data: null, error: null });
+    expect((await readBoardPreviewAction(scope)).status).toBe("error");
+    expect(mocks.query.limit).not.toHaveBeenCalled();
   });
 });

@@ -2,6 +2,25 @@
 
 # Current
 
+## REDESIGN-004.2 — Boards stabilization and UX polish
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+The existing task branch/worktree continues from
+`f6fdf51882b299d24e538d385ae311e05b797043`. The owner authorized the configured
+Stylus backend for this development task; both reviewed missing Boards
+migrations are applied and real authenticated persistence passes. Rollback/error
+handling, Shift/marquee selection, context menus, Properties, Layers,
+Sections/Groups UX, clipboard/shortcuts/help, grid and card previews are
+implemented. Full web tests (192 files / 1,104 tests), lint/typecheck and 93
+isolated pgTAP assertions pass. Production responsive/keyboard/browser QA and
+scoped fixture cleanup pass. The two-theme eight-width matrix found and
+corrected desktop card breakpoints; the final targeted 18 card/preview checks
+pass without browser exceptions. See PROJECT_STATE and
+[environment findings](docs/BOARDS_ENVIRONMENT.md). No merge/push or 005.
+
+---
+
 ## REDESIGN-004.1 — Brand identity, typography and premium auth
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

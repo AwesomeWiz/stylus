@@ -14,7 +14,13 @@ import type {
 import { renameBoardAction } from "@/modules/whiteboards/actions";
 import { reconcileBoardComment } from "@/modules/whiteboards/collaboration";
 import {
+  canMoveObject,
   alignObjects,
+  ancestors,
+  expandedIds,
+  objectBounds,
+  objectTitle,
+  sectionFromSelection,
   archiveObjects,
   assignSection,
   createLocalObject,
@@ -33,6 +39,8 @@ import {
   readBoardSnapshotAction,
 } from "@/modules/whiteboards/read-actions";
 
+import { BoardContextMenu, type BoardCommand } from "./board-context-menu";
+import { alignmentCommands, layerCommands } from "./board-arrange-controls";
 import { BoardInspector, type SelectionAction } from "./board-inspector";
 import {
   BoardNavigation,
@@ -97,6 +105,7 @@ export function WhiteboardWorkspace({
     dirty,
     dismissError,
     hasRetry,
+    hasReload,
     getRows,
     getRevision,
     mergeSnapshot,
@@ -118,7 +127,14 @@ export function WhiteboardWorkspace({
     [shortcuts, setShortcuts] = useState(true);
   const [archiveChoice, setArchiveChoice] = useState(false),
     [linkAt, setLinkAt] = useState<Point | null>(null);
-  const [minimap, setMinimap] = useState(false);
+  const [minimap, setMinimap] = useState(false),
+    [grid, setGrid] = useState(true);
+  const [context, setContext] = useState<{
+    x: number;
+    y: number;
+    point: Point;
+  } | null>(null);
+  const [clipboard, setClipboard] = useState<BoardElementRow[]>([]);
   const [comments, setComments] = useState(initialComments),
     [commentsLoading, setCommentsLoading] = useState(false),
     [commentsError, setCommentsError] = useState<string | null>(null);
@@ -133,6 +149,7 @@ export function WhiteboardWorkspace({
   const imagePosition = useRef<Point>({ x: 0, y: 0 }),
     replacement = useRef<string | undefined>(undefined);
   const selectedRows = selectionRoots(rows, selected);
+
   const onUploaded = useCallback(
     (row: BoardElementRow, url: string, created: boolean) => {
       adopt(row, created);
@@ -152,6 +169,26 @@ export function WhiteboardWorkspace({
   const uploadFailed = uploads.items.some((item) => item.state === "Error");
   const busy = pending || uploads.pending || titlePending;
   const editable = canMutate && !busy && !dirty;
+  const focusName = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !busy &&
+      panel === "INSPECTOR" &&
+      focusName.current &&
+      selected.includes(focusName.current)
+    ) {
+      requestAnimationFrame(() => {
+        const field = document.querySelector<HTMLInputElement>(
+          '[aria-label="Name"]',
+        );
+        if (field) {
+          field.focus();
+          field.select();
+          focusName.current = null;
+        }
+      });
+    }
+  }, [busy, panel, selected, rows]);
   const beforeLeave = () =>
     (!isDirty() &&
       !uploads.pending &&
@@ -275,7 +312,15 @@ export function WhiteboardWorkspace({
     if (!editable) return;
     try {
       setError(null);
-      void commit(operation());
+      const previousSelection = selected;
+      void commit(operation()).then((saved) => {
+        if (!saved)
+          setSelected(
+            previousSelection.filter((id) =>
+              getRows().some((row) => row.id === id),
+            ),
+          );
+      });
     } catch (caught) {
       setError((caught as Error).message);
     }
@@ -285,7 +330,15 @@ export function WhiteboardWorkspace({
       if (!canMutate || isBusy() || isDirty()) return null;
       const rows = getRows(),
         row = rows.find((entry) => entry.id === id);
-      if (!row || isObjectLocked(row, rows)) {
+      if (
+        !row ||
+        (isObjectLocked(row, rows) &&
+          !(
+            patch.locked === false &&
+            row.locked &&
+            !ancestors(row, rows).some((parent) => parent.locked)
+          ))
+      ) {
         cancelInteraction(id);
         return null;
       }
@@ -416,6 +469,34 @@ export function WhiteboardWorkspace({
       switch (value) {
         case "ARCHIVE":
           return archiveObjects(rows, selected);
+        case "SECTION": {
+          const result = sectionFromSelection(rows, selected, (bounds) =>
+            createLocalObject(
+              "SECTION",
+              board.id,
+              board.organization_id,
+              currentUser.id,
+              rows,
+              { x: bounds.x - 32, y: bounds.y - 48 },
+              {
+                width: Math.max(160, bounds.width + 64),
+                height: Math.max(120, bounds.height + 80),
+                content: { title: "New Section", collapsed: false },
+              },
+            ),
+          );
+          setSelected([result.id]);
+          focusName.current = result.id;
+          setPanel("INSPECTOR");
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() =>
+              document
+                .querySelector<HTMLInputElement>('[aria-label="Name"]')
+                ?.focus(),
+            ),
+          );
+          return result.rows;
+        }
         case "GROUP": {
           let groupId = "";
           const after = groupObjects(rows, selected, (bounds, parent_id) => {
@@ -473,6 +554,247 @@ export function WhiteboardWorkspace({
       }
     });
   }
+  function clipboardAction(command: "COPY" | "CUT" | "PASTE", point?: Point) {
+    if (command !== "PASTE") {
+      const ids = expandedIds(getRows(), selected);
+      setClipboard(
+        getRows()
+          .filter((row) => ids.has(row.id))
+          .map((row) => structuredClone(row)),
+      );
+      if (command === "CUT" && editable)
+        report(() => archiveObjects(getRows(), selected));
+      return;
+    }
+    if (!editable || !clipboard.length) return;
+    const copied = duplicateObjects(
+      clipboard,
+      clipboard
+        .filter((row) => !clipboard.some((p) => p.id === row.parent_id))
+        .map((row) => row.id),
+      currentUser.id,
+    );
+    const copies = copied.rows.filter(
+        (row) => !clipboard.some((old) => old.id === row.id),
+      ),
+      bounds = objectBounds(selectionRoots(copies, copied.ids)),
+      at = point ?? canvasApi.current?.center() ?? { x: 0, y: 0 };
+    const after = moveObjects(
+      copies.map((row) => ({ ...row, locked: false })),
+      copied.ids,
+      at.x - bounds.x,
+      at.y - bounds.y,
+    ).map((row) => ({
+      ...row,
+      locked: copies.find((c) => c.id === row.id)!.locked,
+    }));
+    void commit([...getRows(), ...after]).then((ok) => {
+      if (ok) setSelected(copied.ids);
+    });
+  }
+  function contextCommands(): BoardCommand[] {
+    const selection = selectedRows,
+      one = selection.length === 1 ? selection[0] : undefined,
+      allFree = selection.every((row) => canMoveObject(row, rows));
+    const make = (label: string, value: SelectionAction): BoardCommand => ({
+      label,
+      run: () => action(value),
+    });
+    const commands: BoardCommand[] = [];
+    if (!selection.length) {
+      if (editable && clipboard.length)
+        commands.push({
+          label: "Paste here",
+          run: () => clipboardAction("PASTE", context?.point),
+        });
+      if (editable)
+        for (const [label, type] of [
+          ["Add sticky", "STICKY"],
+          ["Add text", "TEXT"],
+          ["Add Section", "SECTION"],
+        ] as const)
+          commands.push({
+            label,
+            run: () => {
+              const row = createLocalObject(
+                type,
+                board.id,
+                board.organization_id,
+                currentUser.id,
+                getRows(),
+                context?.point ?? { x: 0, y: 0 },
+              );
+              void commit([...getRows(), row]).then((ok) => {
+                if (ok) setSelected([row.id]);
+              });
+            },
+          });
+      if (editable)
+        commands.push({
+          label: "Add image",
+          run: () => {
+            imagePosition.current = context?.point ?? { x: 0, y: 0 };
+            replacement.current = undefined;
+            picker.current?.click();
+          },
+        });
+      commands.push(
+        {
+          label: "Select all",
+          run: () =>
+            setSelected(rows.filter((r) => !r.parent_id).map((r) => r.id)),
+        },
+        { label: "Fit board", run: () => canvasApi.current?.fit() },
+        { label: "Dot grid", checked: grid, run: () => setGrid((v) => !v) },
+        {
+          label: "Minimap",
+          checked: minimap,
+          run: () => setMinimap((v) => !v),
+        },
+      );
+      return commands;
+    }
+    commands.push({ label: "Copy", run: () => clipboardAction("COPY") });
+    if (editable) {
+      if (allFree)
+        commands.push({ label: "Cut", run: () => clipboardAction("CUT") });
+      if (clipboard.length)
+        commands.push({
+          label: "Paste here",
+          run: () => clipboardAction("PASTE", context?.point),
+        });
+      commands.push(make("Duplicate", "DUPLICATE"));
+      if (one && ["GROUP", "SECTION"].includes(one.element_type))
+        commands.push({
+          label: "Rename",
+          run: () => {
+            openPanel("INSPECTOR");
+            setTimeout(
+              () =>
+                document
+                  .querySelector<HTMLInputElement>('[aria-label="Name"]')
+                  ?.focus(),
+              0,
+            );
+          },
+        });
+      if (one?.element_type === "GROUP" && allFree)
+        commands.push(make("Ungroup", "UNGROUP"));
+      if (
+        selection.length >= 2 &&
+        allFree &&
+        selection.every(
+          (r) => !["GROUP", "SECTION"].includes(r.element_type),
+        ) &&
+        new Set(selection.map((r) => r.parent_id)).size === 1 &&
+        !ancestors(selection[0]!, rows).some((r) => r.element_type === "GROUP")
+      )
+        commands.push(make("Group selection", "GROUP"));
+      if (
+        allFree &&
+        selection.every((r) => !r.parent_id && r.element_type !== "SECTION")
+      )
+        commands.push(make("Create section from selection", "SECTION"));
+      if (selection.length >= 2 && allFree)
+        commands.push({
+          label: "Alignment",
+          children: alignmentCommands.map(([value, label]) => ({
+            label,
+            run: () => report(() => alignObjects(getRows(), selected, value)),
+          })),
+        });
+      if (selection.length >= 3 && allFree)
+        commands.push({
+          label: "Distribution",
+          children: [
+            make("Distribute horizontally", "DISTRIBUTE_X"),
+            make("Distribute vertically", "DISTRIBUTE_Y"),
+          ],
+        });
+      if (
+        selection.length >= 2 &&
+        allFree &&
+        selection.every(
+          (r) => !["SECTION", "GROUP", "ARROW"].includes(r.element_type),
+        )
+      )
+        commands.push({
+          label: "Match size",
+          children: [
+            make("Same width", "WIDTH"),
+            make("Same height", "HEIGHT"),
+          ],
+        });
+      if (allFree)
+        commands.push({
+          label: "Arrange",
+          children: layerCommands.map(([value, label]) => make(label, value)),
+        });
+      commands.push(
+        make(selection.every((r) => r.locked) ? "Unlock" : "Lock", "LOCK"),
+      );
+      if (
+        allFree &&
+        selection.every(
+          (r) =>
+            r.element_type !== "SECTION" &&
+            ancestors(r, rows)[0]?.element_type !== "GROUP",
+        )
+      )
+        commands.push({
+          label: "Move to section",
+          children: [
+            {
+              label: "Loose objects",
+              run: () => report(() => assignSection(getRows(), selected, null)),
+            },
+            ...rows
+              .filter((r) => r.element_type === "SECTION" && !r.locked)
+              .map((r) => ({
+                label: objectTitle(r),
+                run: () =>
+                  report(() => assignSection(getRows(), selected, r.id)),
+              })),
+          ],
+        });
+      if (one?.element_type === "SECTION")
+        commands.push(
+          {
+            label: one.content.collapsed ? "Expand" : "Collapse",
+            run: () =>
+              void update(one.id, {
+                content: { ...one.content, collapsed: !one.content.collapsed },
+              }),
+          },
+          {
+            label: "Select contents",
+            run: () =>
+              setSelected(
+                rows.filter((r) => r.parent_id === one.id).map((r) => r.id),
+              ),
+          },
+          {
+            label: "Archive Section",
+            children: [
+              {
+                label: "Keep children on board",
+                danger: true,
+                run: () => archive(true),
+              },
+              {
+                label: "Archive contents",
+                danger: true,
+                run: () => archive(false),
+              },
+            ],
+          },
+        );
+      else if (allFree)
+        commands.push({ ...make("Delete", "ARCHIVE"), danger: true });
+    }
+    commands.push({ label: "Properties", run: () => openPanel("INSPECTOR") });
+    return commands;
+  }
   async function rename() {
     if (!renaming) return;
     setRenaming(false);
@@ -511,7 +833,7 @@ export function WhiteboardWorkspace({
         onRenamingChange={setRenaming}
         onRename={() => void rename()}
         saveState={
-          (documentError && dirty) || uploadFailed
+          documentError || uploadFailed
             ? "ERROR"
             : busy
               ? "SAVING"
@@ -550,6 +872,10 @@ export function WhiteboardWorkspace({
             </Button>
             <BoardMenu
               onOutline={() => openPanel("OUTLINE")}
+              grid={grid}
+              onGrid={() => setGrid((v) => !v)}
+              onFit={() => canvasApi.current?.fit()}
+              onFitSelection={() => canvasApi.current?.fit(true)}
               onHelp={() => setHelp(true)}
               shortcuts={shortcuts}
               onShortcuts={setShortcuts}
@@ -576,12 +902,15 @@ export function WhiteboardWorkspace({
           >
             Dismiss
           </Button>
-          {dirty && !hasRetry ? (
+          {hasReload ? (
             <Button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                dismissError();
+                refreshBoard();
+              }}
               variant="secondary"
             >
-              Reload board
+              Reload latest state
             </Button>
           ) : null}
         </div>
@@ -624,6 +953,31 @@ export function WhiteboardWorkspace({
           onPanel={openPanel}
           collaboration={collaboration}
           minimap={minimap}
+          grid={grid}
+          onContext={(event, id, point) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (id && !selected.includes(id)) select(id);
+            if (!id) setSelected([]);
+            setContext({ x: event.clientX, y: event.clientY, point });
+          }}
+          onClipboard={clipboardAction}
+          hasClipboard={clipboard.length > 0}
+          onSectionDraw={(bounds) => {
+            const row = createLocalObject(
+              "SECTION",
+              board.id,
+              board.organization_id,
+              currentUser.id,
+              getRows(),
+              bounds,
+              bounds,
+            );
+            void commit([...getRows(), row]).then((ok) => {
+              if (ok) setSelected([row.id]);
+            });
+            setTool("SELECT");
+          }}
           commentCounts={commentCounts}
           imageUrl={imageUrl}
           retryImage={retryImage}
@@ -685,7 +1039,16 @@ export function WhiteboardWorkspace({
         type="file"
       />
       {panel === "INSPECTOR" ? (
-        <BoardPanel title="Inspector" onClose={() => setPanel(null)}>
+        <BoardPanel
+          title={
+            selectedRows.length === 1
+              ? selectedRows[0]!.element_type.toLowerCase()
+              : `${selectedRows.length} objects`
+          }
+          tab="INSPECTOR"
+          onTab={openPanel}
+          onClose={() => setPanel(null)}
+        >
           <BoardInspector
             rows={rows}
             selection={selectedRows}
@@ -705,10 +1068,24 @@ export function WhiteboardWorkspace({
         </BoardPanel>
       ) : null}
       {panel === "OUTLINE" ? (
-        <BoardPanel title="Object outline" onClose={() => setPanel(null)}>
+        <BoardPanel
+          title="Layers"
+          tab="OUTLINE"
+          onTab={openPanel}
+          onClose={() => setPanel(null)}
+        >
           <BoardOutline
             rows={rows}
             selected={selected}
+            onUpdate={canMutate ? update : undefined}
+            onContext={(id, x, y) => {
+              if (!selected.includes(id)) select(id);
+              setContext({
+                x,
+                y,
+                point: canvasApi.current?.center() ?? { x: 0, y: 0 },
+              });
+            }}
             onSelect={(id, additive) => select(id, additive)}
             onLocate={(id) => {
               canvasApi.current?.locate(id);
@@ -781,6 +1158,13 @@ export function WhiteboardWorkspace({
           return saved;
         }}
       />
+      {context ? (
+        <BoardContextMenu
+          position={context}
+          commands={contextCommands}
+          onClose={() => setContext(null)}
+        />
+      ) : null}
       <BoardHelp open={help} onOpenChange={setHelp} />
     </div>
   );

@@ -49,6 +49,7 @@ vi.mock("@xyflow/react", () => ({
     onNodeDrag,
     onNodeDragStop,
     onNodesChange,
+    onNodeClick,
     onPaneClick,
     onMove,
     onMoveEnd,
@@ -60,6 +61,7 @@ vi.mock("@xyflow/react", () => ({
     onNodeDrag: (event: unknown, node: unknown) => void;
     onNodeDragStop: (event: unknown, node: unknown) => void;
     onNodesChange: (changes: unknown[]) => void;
+    onNodeClick: (event: { shiftKey: boolean }, node: unknown) => void;
     onPaneClick: (event: unknown) => void;
     onMove: (
       event: unknown,
@@ -128,11 +130,12 @@ vi.mock("@xyflow/react", () => ({
         </button>
         <button
           disabled={!nodes[0]}
-          onClick={() =>
+          onClick={(event) => {
             onNodesChange([
               { id: nodes[0]!.id, type: "select", selected: true },
-            ])
-          }
+            ]);
+            onNodeClick(event, nodes[0]);
+          }}
         >
           Select first
         </button>
@@ -177,7 +180,7 @@ function mount(
 }
 function inspect() {
   fireEvent.click(screen.getByRole("button", { name: "Select first" }));
-  fireEvent.click(screen.getByRole("button", { name: "Inspect selection" }));
+  fireEvent.click(screen.getByRole("button", { name: "Open Properties" }));
 }
 function historyButton(name: string) {
   const more = screen.getByLabelText("More tools");
@@ -281,8 +284,9 @@ describe("Boards V2 workspace", () => {
     mount();
     inspect();
     fireEvent.click(screen.getByRole("button", { name: "Blue sticky" }));
-    expect(mocks.operation).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Save object" }));
+    expect(
+      screen.queryByRole("button", { name: "Save object" }),
+    ).not.toBeInTheDocument();
     await waitFor(() => expect(mocks.operation).toHaveBeenCalledOnce());
     expect(mocks.operation.mock.calls[0]![0].upserts[0].style).toMatchObject({
       background: "#dbeafe",
@@ -405,9 +409,7 @@ describe("Boards V2 workspace", () => {
     mount();
     expect(mocks.comments).not.toHaveBeenCalled();
     inspect();
-    expect(
-      screen.getByRole("dialog", { name: "Inspector" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "sticky" })).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Open board comments" }),
     );
@@ -444,7 +446,7 @@ describe("Boards V2 workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sticky" }));
     fireEvent.click(screen.getByRole("button", { name: "Canvas pane" }));
     await waitFor(() =>
-      expect(screen.getByText("Not saved")).toBeInTheDocument(),
+      expect(screen.getByText("Couldn’t save")).toBeInTheDocument(),
     );
     const payload = mocks.operation.mock.calls[0]![0];
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
@@ -469,7 +471,9 @@ describe("Boards V2 workspace", () => {
     mount([sticky], false);
     fireEvent.click(screen.getByRole("button", { name: "Select first" }));
     mocks.fit.mockClear();
-    fireEvent.click(screen.getByRole("button", { name: "Fit selection" }));
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Fit selection" })[0]!,
+    );
     expect(mocks.fit).toHaveBeenCalledWith(
       expect.objectContaining({
         nodes: [expect.objectContaining({ id: sticky.id })],

@@ -173,3 +173,26 @@ export async function readBoardImagesAction(input: unknown) {
     } as const;
   }
 }
+
+export async function readBoardPreviewAction(input: unknown) {
+  try {
+    const { boardId, organizationId, supabase } = await readContext(input);
+    const { data, error } = await supabase
+      .from("board_elements")
+      .select(
+        "id,element_type,x,y,width,height,rotation,z_index,content,style,parent_id",
+      )
+      .eq("board_id", boardId)
+      .eq("organization_id", organizationId)
+      .is("archived_at", null)
+      .order("z_index")
+      .order("id")
+      .limit(128);
+    if (error) throw error;
+    // No asset keys, signed URLs, comments or audit/private metadata in thumbnails.
+    return { status: "success", rows: data ?? [] } as const;
+  } catch (error) {
+    unstable_rethrow(error);
+    return { status: "error" } as const;
+  }
+}

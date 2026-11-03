@@ -105,14 +105,62 @@ export function indexBoardObjects(rows: BoardElementRow[]) {
       }
   return { parents, immovable, layers };
 }
+export function visualBounds(row: BoardElementRow) {
+  const angle = (row.rotation * Math.PI) / 180,
+    width =
+      Math.abs(Math.cos(angle)) * row.width +
+      Math.abs(Math.sin(angle)) * row.height,
+    height =
+      Math.abs(Math.sin(angle)) * row.width +
+      Math.abs(Math.cos(angle)) * row.height;
+  return {
+    x: row.x + (row.width - width) / 2,
+    y: row.y + (row.height - height) / 2,
+    width,
+    height,
+  };
+}
 export function objectBounds(rows: BoardElementRow[]) {
-  const x = Math.min(...rows.map((row) => row.x)),
-    y = Math.min(...rows.map((row) => row.y));
+  const boxes = rows.map(visualBounds),
+    x = Math.min(...boxes.map((r) => r.x)),
+    y = Math.min(...boxes.map((r) => r.y));
   return {
     x,
     y,
-    width: Math.max(...rows.map((row) => row.x + row.width)) - x,
-    height: Math.max(...rows.map((row) => row.y + row.height)) - y,
+    width: Math.max(...boxes.map((r) => r.x + r.width)) - x,
+    height: Math.max(...boxes.map((r) => r.y + r.height)) - y,
+  };
+}
+export function sectionFromSelection(
+  rows: BoardElementRow[],
+  ids: string[],
+  make: (bounds: ReturnType<typeof objectBounds>) => BoardElementRow,
+) {
+  const selected = selectionRoots(rows, ids);
+  if (
+    !selected.length ||
+    selected.some(
+      (r) =>
+        r.parent_id || r.element_type === "SECTION" || !canMoveObject(r, rows),
+    )
+  )
+    throw Error(
+      "Choose unlocked loose objects or Groups. Sections cannot nest.",
+    );
+  const section = make(objectBounds(selected)),
+    chosen = new Set(selected.map((r) => r.id));
+  if (expandedIds(rows, [...chosen]).size + 1 > 200)
+    throw Error(
+      "This action affects more than 200 objects. Reduce the selection and try again.",
+    );
+  return {
+    rows: [
+      section,
+      ...rows.map((r) =>
+        chosen.has(r.id) ? { ...r, parent_id: section.id } : r,
+      ),
+    ],
+    id: section.id,
   };
 }
 export function createLocalObject(
@@ -354,23 +402,24 @@ export function alignObjects(
   let result = rows;
   for (const row of selected)
     if (canMoveObject(row, rows)) {
+      const box = visualBounds(row);
       const x =
         alignment === "left"
           ? bounds.x
           : alignment === "center"
-            ? bounds.x + (bounds.width - row.width) / 2
+            ? bounds.x + (bounds.width - box.width) / 2
             : alignment === "right"
-              ? bounds.x + bounds.width - row.width
-              : row.x;
+              ? bounds.x + bounds.width - box.width
+              : box.x;
       const y =
         alignment === "top"
           ? bounds.y
           : alignment === "middle"
-            ? bounds.y + (bounds.height - row.height) / 2
+            ? bounds.y + (bounds.height - box.height) / 2
             : alignment === "bottom"
-              ? bounds.y + bounds.height - row.height
-              : row.y;
-      result = moveObjects(result, [row.id], x - row.x, y - row.y);
+              ? bounds.y + bounds.height - box.height
+              : box.y;
+      result = moveObjects(result, [row.id], x - box.x, y - box.y);
     }
   return result;
 }
@@ -383,24 +432,26 @@ export function distributeObjects(
   if (selected.length < 3 || selected.some((row) => !canMoveObject(row, rows)))
     throw new Error("Select at least three unlocked objects to distribute.");
   const dimension = axis === "x" ? "width" : "height";
-  const ordered = [...selected].sort(
-    (a, b) => a[axis] - b[axis] || a.id.localeCompare(b.id),
-  );
-  const start = ordered[0]![axis],
-    end = Math.max(...ordered.map((row) => row[axis] + row[dimension]));
+  const ordered = selected
+    .map((row) => ({ row, box: visualBounds(row) }))
+    .sort(
+      (a, b) => a.box[axis] - b.box[axis] || a.row.id.localeCompare(b.row.id),
+    );
+  const start = ordered[0]!.box[axis],
+    end = Math.max(...ordered.map((r) => r.box[axis] + r.box[dimension]));
   const gap =
-    (end - start - ordered.reduce((sum, row) => sum + row[dimension], 0)) /
+    (end - start - ordered.reduce((sum, r) => sum + r.box[dimension], 0)) /
     (ordered.length - 1);
   let offset = start,
     result = rows;
-  for (const row of ordered) {
+  for (const { row, box } of ordered) {
     result = moveObjects(
       result,
       [row.id],
-      axis === "x" ? offset - row.x : 0,
-      axis === "y" ? offset - row.y : 0,
+      axis === "x" ? offset - box.x : 0,
+      axis === "y" ? offset - box.y : 0,
     );
-    offset += row[dimension] + gap;
+    offset += box[dimension] + gap;
   }
   return result;
 }

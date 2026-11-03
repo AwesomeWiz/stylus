@@ -202,39 +202,55 @@ remains possible; a future permanent purge workflow may remove archived assets.
 Forward migrations `20261102000100_board_v2_element_types.sql` and
 `20261102000110_board_v2_foundation.sql` add enum values SECTION/GROUP/LINK in a
 separate committed migration, then nullable `boards.template_key`, nullable
-`board_elements.parent_id` and non-null `locked` (default false). Existing boards
-keep a null template and existing objects remain root-level. No table/route is
-renamed and no historical record is copied or deleted.
+`board_elements.parent_id` and non-null `locked` (default false). Existing
+boards keep a null template and existing objects remain root-level. No
+table/route is renamed and no historical record is copied or deleted.
 
-A composite `(organization_id, board_id, parent_id)` foreign key references scoped
-element identity. Triggers reject nested Sections, nested Groups, ordinary-object
-parents, cycles, cross-board ownership, inactive parents and containers exceeding
-199 descendants. Content/style/metadata have byte bounds; links/Sections have
-minimum shape checks. Image paths must match the current organization/board.
-Geometry/provenance/RLS constraints remain. Direct writes also lock their board
-and repeat relationship/lock validation. A container move translates descendants
-in the same transaction; dimension changes leave children unchanged.
+A composite `(organization_id, board_id, parent_id)` foreign key references
+scoped element identity. Triggers reject nested Sections, nested Groups,
+ordinary-object parents, cycles, cross-board ownership, inactive parents and
+containers exceeding 199 descendants. Content/style/metadata have byte bounds;
+links/Sections have minimum shape checks. Image paths must match the current
+organization/board. Geometry/provenance/RLS constraints remain. Direct writes
+also lock their board and repeat relationship/lock validation. A container move
+translates descendants in the same transaction; dimension changes leave children
+unchanged.
 
 `apply_board_operation(board_id, upserts, archive_ids)` is an authenticated-only
 SECURITY DEFINER API with fixed empty search path, fresh active-membership/role
-checks, active-board row lock, explicit allowed fields, no tenant/audit projection,
-distinct identities, a 2 MB payload ceiling and at most 200 touched objects. It
-preserves creator provenance and commits all changes or none. Existing foreign
-IDs are rejected; missing archive IDs are an idempotent no-op for recovery. Deferred
-ownership constraints are validated before the RPC returns. Section archival
-requires detaching or archiving active children in that transaction.
+checks, active-board row lock, explicit allowed fields, no tenant/audit
+projection, distinct identities, a 2 MB payload ceiling and at most 200 touched
+objects. It preserves creator provenance and commits all changes or none.
+Existing foreign IDs are rejected; missing archive IDs are an idempotent no-op
+for recovery. Deferred ownership constraints are validated before the RPC
+returns. Section archival requires detaching or archiving active children in
+that transaction.
 
-`create_board_from_template` freshly checks the supplied organization membership,
-restricts template keys to seven registered definitions, and atomically creates
-the board/native objects. It cannot create Tasks, plugin records or Knowledge.
-Existing member-read/collaborator-write policies and private Storage/Realtime
-policies remain. Originals are retained for duplicate/replacement/undo; only an
-uncommitted upload is removed on row failure. No destructive GC is introduced.
+`create_board_from_template` freshly checks the supplied organization
+membership, restricts template keys to seven registered definitions, and
+atomically creates the board/native objects. It cannot create Tasks, plugin
+records or Knowledge. Existing member-read/collaborator-write policies and
+private Storage/Realtime policies remain. Originals are retained for
+duplicate/replacement/undo; only an uncommitted upload is removed on row
+failure. No destructive GC is introduced.
 
 Permanent SQL coverage: `whiteboards_rls.test.sql` (34 assertions) and
-`board_v2_rls.test.sql` (59). Local execution uses isolated PostgreSQL/pgTAP with a
-minimal Supabase bootstrap, not deployed service transport. See [Boards](BOARDS.md)
-and PROJECT_STATE for environment limits and required hosted smoke checks.
+`board_v2_rls.test.sql` (59). Local execution uses isolated PostgreSQL/pgTAP
+with a minimal Supabase bootstrap, not deployed service transport. See
+[Boards](BOARDS.md) and PROJECT_STATE for environment limits and hosted smoke
+results.
+
+REDESIGN-004.2 inspected the linked development backend ledger and applied only
+these two previously missing forward migrations unchanged. The remote ledger is
+current through `20261102000110`; API schema and actual authenticated template/
+operation calls verify both RPCs, template/parent/lock columns and object
+behavior. No new migration, reset, table removal, truncation or unrelated record
+deletion was needed. Isolated hosted fixtures were removed after real
+mutation/reload/recovery tests. Cleanup exposed the existing owner
+organization-deletion ordering problem with
+`board_elements_creator_membership_fkey`; this needs a separately scoped forward
+fix, not a rewrite of an applied migration. See
+[environment notes](BOARDS_ENVIRONMENT.md).
 
 TASK-007 adds migrations `20260825000700_extend_collaboration_enums.sql` and
 `20260825000710_whiteboard_collaboration.sql`.

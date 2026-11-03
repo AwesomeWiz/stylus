@@ -4,7 +4,105 @@ Last Updated: 2026-11-03
 
 ## Overall Status
 
-REDESIGN-004.1 COMPLETE / REQUIRED LOCAL CHECKS PASS
+REDESIGN-004.2 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-004.2 — Boards stabilization and UX polish
+
+Status: **PASS — LOCAL AND REAL AUTHENTICATED VERIFICATION**.
+
+Branch `codex/redesign-004-2-boards-stabilization` continues from
+`f6fdf51882b299d24e538d385ae311e05b797043` in the existing worktree. The
+previous uncommitted P0 patch was retained. Main agent only; original
+checkout/other worktrees preserved; no merge/push or REDESIGN-005.
+
+The owner explicitly superseded the earlier production restriction and
+authorized `otdofpjgccvnkcvkcjxx` as this task's active development backend.
+Supported CLI ledger inspection confirmed history through `20260825002020` and
+exactly two missing migrations. The reviewed dry run listed only
+`20261102000100_board_v2_element_types.sql` and
+`20261102000110_board_v2_foundation.sql`; both were applied unchanged. They add
+enum values, nullable/defaulted columns, constraints, indexes, triggers and
+bounded RPCs. No reset, DROP, TRUNCATE or unrelated record deletion. Ledger and
+API schema now include both RPCs, `template_key`, `parent_id` and `locked`.
+
+Real authenticated QA used one isolated account/organization, three boards and
+one private image. Direct hosted RPC verification passes 18 checks. Signed-in
+browser actions verify cross-type Shift selection; one persisted multi-object
+move; Group/ Ungroup; decimal property commit; context duplication/undo;
+internal clipboard; network-failure rollback, retry and reload;
+marquee/Shift-marquee; saved alignment/ distribution;
+Section-from-selection/name focus and drag creation; Layers locks; keyboard
+context menus; grid and shortcut help. An initial visible-menu event wrapper
+defect was found and corrected during QA. These are actual Next/Supabase
+authenticated actions, not mocked transport. Final production browser checks and
+isolated fixture cleanup are complete.
+
+Failures now restore confirmed document/history state and keep unrelated/remote
+work. The board remains usable. Safe retry retains identities; conflict recovery
+loads latest state without page reload. Safe error categories distinguish
+access, locks, limits, validation, conflict, missing schema and infrastructure.
+Diagnostics log codes only. Custom clicks own Shift toggling; React Flow
+selection changes are applied only during marquee to avoid the former duplicate
+selection update.
+
+Properties uses rounded decimal text fields with Enter/blur commit, Escape
+restore and inline validation; no native step popup or Save object button.
+Context menus, icon alignment/arrangement, Layers/Properties tabs and compact
+keycap help expose power actions. Groups are manipulation containers; Sections
+are visible named organization regions. Cards render deferred, freshly
+authorized bounded native content previews; image glyphs replace costly
+private-image signing. Dot grid and minimap toggle through View controls.
+Existing privacy, operation/ownership limits, private Realtime and
+no-AI/no-native-entity boundaries remain.
+
+Verification:
+
+- Full web: **192 files / 1,104 tests pass**. Focused Boards tests pass; new
+  geometry, property, recovery/error and preview authorization coverage is
+  included.
+- Web lint (zero warnings), standalone typecheck and production build pass.
+- Real hosted RPC suite: **18 checks pass**. Signed-in browser suites pass all
+  seven cross-type Shift selection cases, **13 persisted interaction/recovery
+  checks** and **11 extended manipulation/Section/Layers/help checks**.
+- Actual production app: editor/reflow, single responsive panel, Properties,
+  focus return, visible action menu and reduced-motion checks pass at
+  320/390/430/768/1024/1200/1440/1920px in both themes. The first 83-check run
+  found six desktop card-column failures caused by mixed Tailwind breakpoint
+  units. Those were corrected, rebuilt and replaced by **18 passing targeted
+  card/ preview checks**. Both production runs recorded zero browser exceptions.
+  These are authenticated application/transport checks, not synthetic fixtures.
+- Permanent pgTAP: **34 existing + 59 V2 = 93 assertions pass** in isolated
+  PostgreSQL/PGlite using actual repository SQL. The supported hosted CLI test
+  runner requires unavailable Docker; real hosted RPC/browser verification above
+  is separate and succeeds. No permanent test was skipped or weakened.
+- No worker, dependency/lockfile, auth/provider, Marketing or native-entity
+  changes. Existing two migrations were applied; no migration source was
+  rewritten.
+- Scoped formatting, local documentation links, diff and secret/artifact checks
+  pass. Temporary QA artifacts and local credentials are excluded from the
+  commit.
+
+Fixture cleanup verified exact test identity, ownership, organization name and
+three board IDs. One private image, all three QA boards, the QA organization and
+the QA account were removed; unrelated records were not targeted. The existing
+owner organization-deletion RPC first failed transactionally with
+`board_elements_creator_membership_fkey`: membership cascade precedes the board
+audit reference cleanup. Removing only the inventoried QA board rows first
+allowed cleanup. This pre-existing organization-deletion ordering issue needs a
+separately scoped fix; no applied migration or deletion behavior was changed
+here.
+
+Limits: manual Windows NVDA, physical touch devices and non-Chromium browsers
+were not exercised. Automated keyboard/focus/modal/reflow and reduced-motion
+behavior passed; these checks do not replace manual screen-reader acceptance.
+Docker is unavailable, so hosted CLI pgTAP did not run. No hosted
+latency/performance SLA is claimed. REDESIGN-005 may proceed as a separately
+authorized task and is not started.
+
+Temporary scripts, credentials, screenshots and logs stay ignored under
+`.next/cache/redesign-004-2-qa`; local environment files are untracked/ignored.
+See [Boards](docs/BOARDS.md) and
+[environment findings](docs/BOARDS_ENVIRONMENT.md).
 
 ## REDESIGN-004.1 — Brand identity, typography and premium auth
 

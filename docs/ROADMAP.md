@@ -2,7 +2,7 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-004.1 COMPLETE / REQUIRED LOCAL CHECKS PASS
+Status: REDESIGN-004.2 COMPLETE / VERIFIED
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -13,6 +13,7 @@ Status: REDESIGN-004.1 COMPLETE / REQUIRED LOCAL CHECKS PASS
 - [x] REDESIGN-003.1: auth visual identity and interactive abstract artwork
 - [x] REDESIGN-004: Boards foundation
 - [x] REDESIGN-004.1: brand identity, Geist typography and premium auth
+- [x] REDESIGN-004.2: Boards stabilization and UX polish
 - [ ] REDESIGN-005: Boards and Stylus integrations/collaboration
 - [ ] REDESIGN-006: Marketing shell and Creative Studio
 - [ ] REDESIGN-007: Research, Campaigns and secondary Marketing
@@ -23,22 +24,28 @@ REDESIGN-001 is the completed specification milestone; REDESIGN-002 implements
 the verified shell/auth/performance foundation. REDESIGN-003 adds attention-led
 Home, viewer-local timestamps, URL-preserving responsive Task detail and lazy,
 authorized discussions with zero initial organization comment bodies. Complete
-summary-list search/filtering remains; total-list product pagination is deferred.
-REDESIGN-003.1 adds a bounded expressive identity at login/signup: original SVG,
-authored theme palettes, finite desktop interaction and static smaller-screen/
-reduced-motion treatments. Existing authentication logic remains unchanged.
-REDESIGN-004 adds the immersive BoardShell and native templates, atomic Sections/
-Groups and manipulation, private image editing, safe links, outline/Inspector and
-deferred authorized discussion/preview reads. Native integrations remain 005 scope.
-REDESIGN-004.1 supersedes the earlier cyan/system-font identity with cobalt, warm
-neutrals, licensed self-hosted Geist, the approved logo package and full-height
-CSS auth tiles. No later workflow scope starts with this visual change.
-Signed-in transition timing and manual NVDA remain target-environment acceptance,
-not measured local claims. Later
-follow-up tasks are not started. See [V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) for
-scope, dependency order, security invariants and acceptance. Earlier product
-milestones below remain historical; no existing feature or hosted QA requirement
-is removed. TASK-019 remains deferred.
+summary-list search/filtering remains; total-list product pagination is
+deferred. REDESIGN-003.1 adds a bounded expressive identity at login/signup:
+original SVG, authored theme palettes, finite desktop interaction and static
+smaller-screen/ reduced-motion treatments. Existing authentication logic remains
+unchanged. REDESIGN-004 adds the immersive BoardShell and native templates,
+atomic Sections/ Groups and manipulation, private image editing, safe links,
+outline/Inspector and deferred authorized discussion/preview reads. Native
+integrations remain 005 scope. REDESIGN-004.1 supersedes the earlier
+cyan/system-font identity with cobalt, warm neutrals, licensed self-hosted
+Geist, the approved logo package and full-height CSS auth tiles. No later
+workflow scope starts with this visual change. REDESIGN-004.2 verifies real
+hosted board persistence after applying the two reviewed missing forward
+migrations, fixes failed-intent rollback and Shift selection, and adds context
+menus, Properties, Layers, card previews and compact controls/help. All
+task-owned hosted fixtures were removed. Existing owner organization-deletion
+ordering needs a separate fix; see PROJECT_STATE. Signed-in transition timing
+and manual NVDA remain target-environment acceptance, not measured local claims.
+Later follow-up tasks are not started. See
+[V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) for scope, dependency
+order, security invariants and acceptance. Earlier product milestones below
+remain historical; no existing feature or hosted QA requirement is removed.
+TASK-019 remains deferred.
 
 ---
 

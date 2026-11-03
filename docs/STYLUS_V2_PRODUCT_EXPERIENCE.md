@@ -347,6 +347,13 @@ embedded music, conferencing, complex presentations or hundreds of shapes.
 
 ## 18. Board list and templates
 
+Implementation update (REDESIGN-004.2): the landing page now uses responsive
+cards with real owner/template/update metadata and deferred authorized native
+content previews. Empty/unavailable previews use a neutral fallback; private
+images use glyphs without signing. Properties and Layers supersede the editor's
+Inspector/outline labels below. [Boards](BOARDS.md) owns current behavior and
+verification; the original audit and later-phase proposals remain historical.
+
 The list remains in AppShell. Provide compact preview/list options, title,
 template/type, last update, actual owner and meaningful collaborator metadata.
 An edit collaborator list is not live Presence; label them distinctly. Do not

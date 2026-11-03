@@ -15,6 +15,7 @@ import {
   undoWhiteboardHistory,
   type WhiteboardHistory,
 } from "@/modules/whiteboards/history";
+import { boardErrorMessages } from "@/modules/whiteboards/errors";
 import { boardOperationSchema } from "@/modules/whiteboards/schemas";
 import {
   expandedIds,
@@ -37,6 +38,8 @@ export function useBoardDocument(
   const [error, setError] = useState<string | null>(null);
   const errorRef = useRef<string | null>(null);
   const locked = useRef(false);
+  const rollback = useRef<WhiteboardHistory | null>(null);
+  const [reloadAvailable, setReloadAvailable] = useState(false);
   const retry = useRef<(() => Promise<void>) | null>(null);
   const active = useRef(new Set<string>());
   const queued = useRef(new Map<string, BoardElementRow>());
@@ -45,6 +48,7 @@ export function useBoardDocument(
   const committed = useRef(new Map(elements.map((row) => [row.id, row])));
   const retryScope = useRef(new Set<string>());
   const retryAllowed = useRef(true);
+  const failureCode = useRef<string | undefined>(undefined);
 
   const publish = useCallback((value: WhiteboardHistory) => {
     current.current = value;
@@ -91,9 +95,10 @@ export function useBoardDocument(
       revision.current++;
       if (errorRef.current && retryScope.current.has(row.id)) {
         const message =
-          "A collaborator changed an object while its save was failing. Reload the board before continuing.";
+          "This object changed elsewhere. Reload the latest version before retrying.";
         retry.current = null;
         setRetryAvailable(false);
+        setReloadAvailable(true);
         errorRef.current = message;
         setError(message);
       }
@@ -140,8 +145,10 @@ export function useBoardDocument(
       errorRef.current = null;
       setError(null);
       setFailed(false);
+      setReloadAvailable(false);
       setRetryAvailable(false);
       retryAllowed.current = true;
+      failureCode.current = undefined;
       revision.current++;
       try {
         await operation();
@@ -149,24 +156,40 @@ export function useBoardDocument(
         return true;
       } catch (caught) {
         const cause =
-          caught instanceof Error
+          failureCode.current && caught instanceof Error
             ? caught.message
-            : "The operation could not be saved.";
-        const message = retryAllowed.current
-          ? cause
-          : "The board changed before this save could be confirmed. Reload the board before continuing.";
+            : boardErrorMessages.INFRASTRUCTURE;
+        const saved = rollback.current;
+        if (saved) {
+          let restored = saved;
+          for (const row of committed.current.values()) {
+            const previous =
+              restored.present.find((item) => item.id === row.id) ?? null;
+            if (!sameElement(previous, row))
+              restored = reconcileRemoteElement(restored, row);
+          }
+          publish(restored);
+        }
+        const conflicted =
+          !retryAllowed.current &&
+          (!failureCode.current || failureCode.current === "CONFLICT");
+        const message = conflicted
+          ? "This object changed elsewhere. Reload the latest version before retrying."
+          : cause;
         errorRef.current = message;
         setError(message);
-        setFailed(true);
+        setFailed(false);
+        setReloadAvailable(conflicted);
         retry.current = retryAllowed.current ? operation : null;
         setRetryAvailable(retryAllowed.current);
         return false;
       } finally {
+        rollback.current = null;
         locked.current = false;
         setPending(false);
       }
     },
-    [canMutate],
+    [canMutate, publish],
   );
 
   const persist = useCallback(
@@ -181,7 +204,15 @@ export function useBoardDocument(
       let persisted: BoardElementRow[] = [];
       try {
         const result = await applyBoardOperationAction(payload);
-        if (result.status === "error") throw new Error(result.message);
+        if (result.status === "error") {
+          failureCode.current = result.code;
+          if (
+            result.code &&
+            !["INFRASTRUCTURE", "SCHEMA"].includes(result.code)
+          )
+            retryAllowed.current = false;
+          throw new Error(result.message);
+        }
         persisted = result.data;
       } finally {
         if (!persisted.length && [...ids].some((id) => queued.current.has(id)))
@@ -196,7 +227,7 @@ export function useBoardDocument(
   const commit = useCallback(
     (after: BoardElementRow[]) => {
       if (locked.current || !canMutate) return Promise.resolve(false);
-      if (errorRef.current) return Promise.resolve(false); // Retry/undo/reload first: never call an unsaved remainder "Saved".
+
       const before = current.current;
       const next = recordWhiteboardHistory(before, after);
       if (next === before) return Promise.resolve(true);
@@ -212,23 +243,48 @@ export function useBoardDocument(
         setError(String((caught as Error).message));
         return Promise.resolve(false);
       }
-      publish(next);
-      return run(() => persist(before.present, after));
+      const changed = new Set([
+        ...before.present
+          .filter(
+            (row) =>
+              !sameElement(
+                row,
+                after.find((item) => item.id === row.id) ?? null,
+              ),
+          )
+          .map((row) => row.id),
+        ...after
+          .filter((row) => !before.present.some((item) => item.id === row.id))
+          .map((row) => row.id),
+      ]);
+      const attempt = async () => {
+        rollback.current = current.current;
+        const merged = [
+          ...current.current.present.filter((row) => !changed.has(row.id)),
+          ...after.filter((row) => changed.has(row.id)),
+        ];
+        publish(recordWhiteboardHistory(current.current, merged));
+        await persist(before.present, after);
+      };
+      return run(attempt);
     },
     [board.id, canMutate, persist, publish, run],
   );
   const navigate = useCallback(
     (direction: "UNDO" | "REDO") => {
       if (locked.current || !canMutate) return;
-      if (errorRef.current && (direction !== "UNDO" || !retry.current)) return;
+
       const before = current.current;
       const next =
         direction === "UNDO"
           ? undoWhiteboardHistory(before)
           : redoWhiteboardHistory(before);
       if (next === before) return;
-      publish(next);
-      void run(() => persist(before.present, next.present));
+      void run(async () => {
+        rollback.current = current.current;
+        publish(next);
+        await persist(before.present, next.present);
+      });
     },
     [canMutate, persist, publish, run],
   );
@@ -261,12 +317,13 @@ export function useBoardDocument(
     [finish],
   );
   const isBusy = useCallback(() => locked.current, []);
-  const isDirty = useCallback(
-    () => locked.current || Boolean(errorRef.current),
-    [],
-  );
+  const isDirty = useCallback(() => locked.current, []);
   const dismissError = useCallback(() => {
-    if (!errorRef.current) setError(null);
+    errorRef.current = null;
+    retry.current = null;
+    setError(null);
+    setRetryAvailable(false);
+    setReloadAvailable(false);
   }, []);
   const getRows = useCallback(() => current.current.present, []);
   const getRevision = useCallback(() => revision.current, []);
@@ -274,7 +331,6 @@ export function useBoardDocument(
     (rows: BoardElementRow[], expectedRevision: number) => {
       if (
         locked.current ||
-        errorRef.current ||
         active.current.size ||
         revision.current !== expectedRevision
       )
@@ -333,6 +389,7 @@ export function useBoardDocument(
     isBusy,
     isDirty,
     dismissError,
-    hasRetry: failed && retryAvailable,
+    hasRetry: retryAvailable,
+    hasReload: reloadAvailable,
   };
 }

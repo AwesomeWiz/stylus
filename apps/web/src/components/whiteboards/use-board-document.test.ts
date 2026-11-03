@@ -153,7 +153,7 @@ describe("Board document concurrency", () => {
     });
     expect(result.current.rows).toHaveLength(0);
   });
-  it("requires reload instead of replaying a failed intent over a collaborator change", async () => {
+  it("keeps the confirmed board usable and disables unsafe retry after a collaborator change", async () => {
     const row = object();
     apply.mockResolvedValue({ status: "error", message: "Save failed" });
     const { result } = renderHook(() => useBoardDocument(board, [row], true));
@@ -169,8 +169,10 @@ describe("Board document concurrency", () => {
       }),
     );
     expect(result.current.hasRetry).toBe(false);
-    expect(result.current.dirty).toBe(true);
+    expect(result.current.dirty).toBe(false);
     expect(result.current.error).toMatch(/Reload/);
+    expect(result.current.rows[0]!.x).toBe(900);
+    expect(result.current.hasReload).toBe(true);
     act(() => {
       result.current.retry();
       result.current.navigate("REDO");

@@ -277,12 +277,30 @@ Explicit composite-scoped parent relationships retain world coordinates; bounded
 container operations and direct-write validation serialize on the active board.
 One logical move cannot partially save its descendants. Locked descendants block
 movement; container resize does not scale content. Initial editor reads omit
-comments and Storage signing; fresh authorized read actions load bounded comments
-and batched private previews after the canvas. Client state is keyed by account,
-organization, board and role; signed URLs remain local and transient. Duplicate/
-older Realtime events are ignored, and conflicting failed intents require reload
-rather than blind replay. [Boards](BOARDS.md) defines the object, control, image,
-history and verification contracts. Native plugin entities remain future scope.
+comments and Storage signing; fresh authorized read actions load bounded
+comments and batched private previews after the canvas. Client state is keyed by
+account, organization, board and role; signed URLs remain local and transient.
+Duplicate/ older Realtime events are ignored, and conflicting failed intents
+require a fresh authorized snapshot rather than blind replay.
+[Boards](BOARDS.md) defines the object, control, image, history and verification
+contracts. Native plugin entities remain future scope.
+
+REDESIGN-004.2 restores confirmed document/history state on mutation failure,
+merges received remote changes and retains unrelated history. Safe retries reuse
+identities; same-object conflicts use the existing authorized snapshot boundary
+without reloading the page. Error classification logs safe codes, never SQL
+bodies. Custom click handlers own Shift toggling; React Flow selection updates
+apply only during marquee. Context commands share pure bounded operation helpers
+with Properties, Layers and scoped shortcuts. No new server execution domain is
+added.
+
+Board landing cards defer `readBoardPreviewAction` until near the viewport. The
+action freshly validates membership/current organization/active board and
+projects at most 128 z-index/ID-ordered rows with geometry, content, style and
+parent IDs. Metadata, storage paths, comments and signed URLs are excluded.
+Thumbnails render simplified local SVG; private image glyphs require no Storage
+request. State stays in the component, without a shared tenant cache or
+persisted screenshot service.
 
 ---
 

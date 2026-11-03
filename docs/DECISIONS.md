@@ -1031,3 +1031,35 @@ no WebGL or continuous React pointer renders are necessary. Reduced motion,
 coarse/small screens and hidden documents stay static. Auth logic, schemas,
 Board data/Realtime, task behavior, database and domain boundaries are unchanged.
 See [Brand](BRAND.md) for sources, tokens and verification.
+
+## ADR-045 — Confirmed-state board recovery, one click-selection authority and bounded previews
+
+Date: 2026-11-03. Status: Accepted for REDESIGN-004.2.
+
+Hosted mutation failures came from two unapplied Boards migrations. The owner
+explicitly authorized the configured project as this task's development backend.
+Ledger inspection, source review and the supported CLI dry run preceded applying
+exactly those two forward files unchanged. A developer read-only diagnostic
+makes future schema mismatch explicit; no application action auto-migrates a
+database.
+
+Failed optimistic operations restore confirmed document/history state, preserve
+received remote work and keep the board usable. Retry uses stable identities;
+same-object conflicts require a freshly authorized snapshot instead of page
+reload or blind replay. Safe error categories cross the action boundary; raw
+SQL/provider bodies do not. Layout state and prior success never substitute for
+server authority.
+
+Custom click selection is the only authority for Shift toggles; React Flow
+select changes apply only during marquee. This removes competing updates without
+replacing the canvas library. Group means manipulation; Section means visible
+organization. Properties, Layers, context menus and shortcuts share bounded
+native operations and existing ownership. They introduce no second hierarchy or
+entity model.
+
+Landing previews are viewport-deferred, freshly authorized projections of at
+most 128 deterministic native objects, rendered locally as simplified
+geometry/text. Private image glyphs avoid signing for thumbnails. No persisted
+screenshots, privileged snapshots, external fetches, tenant-wide cache or new
+dependencies are needed. AI and canonical plugin references remain later
+explicitly approved work.

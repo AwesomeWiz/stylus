@@ -97,43 +97,66 @@ announce pending/result state. Restore focus to the opener or a surviving nearby
 control. Escape closes only the top active overlay; avoid nested modal layers.
 Destructive actions retain their specific confirmation and authorization rules.
 
-Inspectors describe the active object. Nothing selected may expose Board details
-on request; selection does not open a permanently empty inspector. Comments and
-inspector use one panel slot on Boards, with context preserved when switching.
+Properties describes the active object. Nothing selected may expose Board
+details on request; selection does not open a permanently empty panel. Layers,
+Properties and Comments use one panel slot on Boards, preserving context when
+switching.
 
 ## Boards and canvas
 
-REDESIGN-004 implements the native foundation below; [Boards](BOARDS.md) records
-the actual limits, keyboard behavior and verification. Native Stylus cards,
-conversions, AI, votes/reactions and comment resolution below remain future
-contracts. The implemented list uses compact real metadata rows without invented
-preview images; template diagrams appear only during explicit creation.
+REDESIGN-004 and REDESIGN-004.2 implement the native foundation and
+stabilization; [Boards](BOARDS.md) records actual limits, keyboard behavior and
+verification. Native Stylus entity cards, conversions, AI, votes/reactions and
+comment resolution remain future contracts. The landing page uses responsive
+cards with real metadata and deferred, freshly authorized bounded content
+previews. Empty/unavailable boards use neutral fallbacks; image glyphs avoid
+signing private images for thumbnails.
 
 The list uses normal AppShell and offers compact previews, actual metadata and
-focused templates. The editor switches to BoardShell: main sidebar/search absent,
-compact header, full canvas, left creation tools, optional right context and
-bottom-right zoom/fit controls. Open-main-navigation is an overlay, not a return
-to permanent global chrome. Save and channel connectivity remain distinct.
-Outline, Inspector and Comments share one optional slot. Desktop panels are
-nonmodal; narrower panels are modal and mobile uses the full width. The outline
-retains collapsed descendants and allows Shift-selection before inspection.
+focused templates. The editor switches to BoardShell: main sidebar/search
+absent, compact header, full canvas, left creation tools, optional right context
+and bottom-right zoom/fit controls. Open-main-navigation is an overlay, not a
+return to permanent global chrome. Save and channel connectivity remain
+distinct. Layers and Properties have visible tabs; Comments replaces the same
+optional slot. Desktop panels are nonmodal; narrower panels are modal and mobile
+uses the full width. Layers retains collapsed descendants and allows
+Shift-selection, rename, lock/unlock, contextual arrangement and Locate without
+a second hierarchy model.
 
 Tool icons have accessible names, focus-visible tooltips and selected states.
 Shapes is a named menu with basic geometry. Creation tools return to Select
 after one insert unless deliberately locked. Shortcuts operate only when canvas
 focus is appropriate, respect text editing and have a disable/help path.
 
-Selection is a set. Groups/sections, alignment, distribution, layers, locks and
-duplication act on that set through bounded authorized operations. Resize a
-section without scaling its content; move it with its children; keep outline
-membership explicit. Do not treat an overlapping rectangle as a secure parent.
-Persist at interaction completion, not pointer frequency. Undo remains local
-and conflict-aware; remote changes never become another user's undo operation.
+Selection is a set. Custom clicks own Shift toggling; React Flow selection
+changes apply only during marquee. Shift-marquee preserves earlier selection.
+Right-click, Shift+F10 and a visible action menu expose applicable commands with
+keyboard focus and Escape return. Internal Copy/Cut/Paste is scoped to the open
+board and never reads system clipboard text. Help uses grouped keycaps;
+grid/minimap live in View.
 
-Images support nondestructive crop/fit and authored descriptions/source metadata.
-Batch upload/paste gives per-file progress and recovery within private Storage
-policy. A URL never grants implicit retrieval. Rich previews use approved safe
-adapters only and fall back to ordinary links.
+Group = manipulation; Section = organization. Groups have no persistent frame;
+Sections are visible named regions. Create Section from selection preserves
+world coordinates and focuses its name after confirmation. Overlap never
+silently reparents. Resize bounds without scaling children; moving carries owned
+children atomically. Alignment uses rotated visual bounds; distribution spaces
+outer edges. Properties shows applicable controls, explicit decimal parsing and
+Enter/blur commit, Escape restore and inline validation. No native numeric-step
+popups or manual Save object action. Arrange/alignment controls use named icons
+and tooltips.
+
+Persist at interaction completion, not pointer frequency. A failed operation
+restores confirmed state/history, retaining unrelated and received remote work.
+Safe retry reuses identities; conflict recovery freshly reads latest state
+inside the board. No routine failure requires a page reload. Safe categories
+distinguish authorization, locks, limits, conflict, validation and
+infrastructure/schema faults. Undo remains local and conflict-aware; remote
+changes never become local undo.
+
+Images support nondestructive crop/fit and authored descriptions/source
+metadata. Batch upload/paste gives per-file progress and recovery within private
+Storage policy. A URL never grants implicit retrieval. Rich previews use
+approved safe adapters only and fall back to ordinary links.
 
 Native Stylus cards resolve canonical entities through public Core/plugin
 contracts and reauthorize on insertion/open/read. Unavailable references reveal
@@ -142,8 +165,8 @@ separate explicit submit; retries must not duplicate canonical work. AI acts on
 an explicitly reviewed bounded selection, with new execution separately scoped.
 Neither insertion nor conversion creates permanent Knowledge automatically.
 
-Canvas has an accessible object/section outline and inspector alternatives to
-dragging, plus named zoom/fit controls. Screen-reader announcements cover
+Canvas has accessible Layers hierarchy and Properties alternatives to dragging,
+plus named zoom/fit controls. Screen-reader announcements cover
 selection/results/errors, not pointer motion. Full keyboard and template/native
 entity contracts are in the product spec; the canvas is not exempt from NVDA QA.
 

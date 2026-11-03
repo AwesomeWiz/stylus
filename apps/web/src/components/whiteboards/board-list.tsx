@@ -15,6 +15,7 @@ import {
   renameBoardAction,
 } from "@/modules/whiteboards/actions";
 import { boardTemplate } from "@/modules/whiteboards/templates";
+import { BoardPreview } from "./board-preview";
 import { BoardTemplateChooser } from "./board-template-chooser";
 
 export function BoardList({
@@ -114,47 +115,65 @@ export function BoardList({
           ) : null}
         </div>
       ) : (
-        <ul className="divide-y border-y" aria-label="Boards">
+        <ul
+          className="grid gap-4 min-[768px]:grid-cols-2 min-[1200px]:grid-cols-3 min-[1600px]:grid-cols-4"
+          aria-label="Boards"
+        >
           {boards.map((board) => (
-            <li className="flex items-start gap-3 py-4" key={board.id}>
-              <div className="min-w-0 flex-1">
-                <Link
-                  className="text-sm font-medium break-words hover:underline"
-                  href={`/whiteboards/${board.id}` as Route}
-                >
-                  {board.title}
-                </Link>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {boardTemplate(board.template_key)?.name ?? "Board"} · Owner:{" "}
-                  {person(board.created_by)}
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Updated <ViewerLocalDateTime value={board.updated_at} /> ·{" "}
-                  {person(board.updated_by)}
-                </p>
-              </div>
-              {canMutate ? (
-                <div className="flex shrink-0">
-                  <Button
-                    aria-label={`Rename ${board.title}`}
-                    disabled={pending}
-                    onClick={() => setEditing(board)}
-                    size="icon"
-                    variant="ghost"
+            <li
+              className="bg-card hover:border-primary-border overflow-hidden rounded-lg border transition-colors"
+              key={board.id}
+            >
+              <Link
+                href={`/whiteboards/${board.id}` as Route}
+                aria-label={`Open ${board.title}`}
+              >
+                <BoardPreview
+                  key={board.id}
+                  boardId={board.id}
+                  organizationId={board.organization_id}
+                />
+              </Link>
+              <div className="flex items-start gap-2 p-4">
+                <div className="min-w-0 flex-1">
+                  <Link
+                    className="text-sm font-medium break-words hover:underline"
+                    href={`/whiteboards/${board.id}` as Route}
                   >
-                    <Pencil aria-hidden="true" className="size-4" />
-                  </Button>
-                  <Button
-                    aria-label={`Archive ${board.title}`}
-                    disabled={pending}
-                    onClick={() => archive(board)}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <Archive aria-hidden="true" className="size-4" />
-                  </Button>
+                    {board.title}
+                  </Link>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {boardTemplate(board.template_key)?.name ?? "Board"} ·
+                    Owner: {person(board.created_by)}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Updated <ViewerLocalDateTime value={board.updated_at} /> ·{" "}
+                    {person(board.updated_by)}
+                  </p>
                 </div>
-              ) : null}
+                {canMutate ? (
+                  <div className="flex shrink-0">
+                    <Button
+                      aria-label={`Rename ${board.title}`}
+                      disabled={pending}
+                      onClick={() => setEditing(board)}
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <Pencil aria-hidden="true" className="size-4" />
+                    </Button>
+                    <Button
+                      aria-label={`Archive ${board.title}`}
+                      disabled={pending}
+                      onClick={() => archive(board)}
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <Archive aria-hidden="true" className="size-4" />
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>

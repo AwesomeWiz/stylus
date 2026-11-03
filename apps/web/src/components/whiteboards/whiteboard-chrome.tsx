@@ -111,9 +111,9 @@ export function WhiteboardHeader({
           <Check aria-hidden="true" className="size-3.5" />
         )}
         {saveState === "SAVING"
-          ? "Saving"
+          ? "Saving…"
           : saveState === "ERROR"
-            ? "Not saved"
+            ? "Couldn’t save"
             : saveState === "UNSAVED"
               ? "Unsaved title"
               : "Saved"}

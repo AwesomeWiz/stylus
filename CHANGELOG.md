@@ -4,6 +4,17 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Stabilized hosted Board mutations against the two required forward migrations;
+  failed edits restore saved state with safe retry and specific recovery errors.
+- Fixed Shift-click/marquee selection and added keyboard/touch-accessible
+  context actions, autosaving Properties, icon alignment/arrangement and a
+  Layers panel.
+- Clarified Groups versus Sections, added Section-from-selection and drag-sized
+  Sections, internal clipboard shortcuts, compact shortcut help and dot-grid
+  view.
+- Replaced Board rows with responsive cards and deferred authorized real-content
+  previews; private image signing is not required for list thumbnails.
+
 - Established cobalt brand actions, warm neutral surfaces, self-hosted Geist and
   the approved blue–coral logo/wordmark variants across light/dark themes.
 - Rebuilt login/signup around a full-height geometric field with local tile

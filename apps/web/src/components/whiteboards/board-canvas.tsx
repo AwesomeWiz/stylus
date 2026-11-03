@@ -8,7 +8,7 @@ import {
   type ReactFlowInstance,
   type Viewport,
 } from "@xyflow/react";
-import { ListTree, Settings2 } from "lucide-react";
+import { ListTree, Settings2, MoreHorizontal } from "lucide-react";
 import {
   useImperativeHandle,
   useMemo,
@@ -41,6 +41,7 @@ const noMotion = () =>
 export interface BoardCanvasHandle {
   center: () => Point;
   locate: (id: string) => void;
+  fit: (selection?: boolean) => void;
 }
 type DocumentHandlers = Pick<
   ReturnType<typeof useBoardDocument>,
@@ -67,6 +68,25 @@ type Props = DocumentHandlers & {
   canRedo: boolean;
   shortcuts: boolean;
   minimap: boolean;
+  grid: boolean;
+  hasClipboard: boolean;
+  onClipboard: (command: "COPY" | "CUT" | "PASTE", point?: Point) => void;
+  onContext: (
+    event: {
+      clientX: number;
+      clientY: number;
+      preventDefault: () => void;
+      stopPropagation: () => void;
+    },
+    id: string | null,
+    point: Point,
+  ) => void;
+  onSectionDraw: (bounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }) => void;
   action: (action: SelectionAction) => void;
   onMove: (dx: number, dy: number) => void;
   onInsert: (point: Point) => void;
@@ -103,6 +123,11 @@ export function BoardCanvas({
   canRedo,
   shortcuts,
   minimap,
+  grid,
+  hasClipboard,
+  onClipboard,
+  onContext,
+  onSectionDraw,
   action,
   onMove,
   onInsert,
@@ -133,6 +158,16 @@ export function BoardCanvas({
       ids: string[];
       origin: Point;
     } | null>(null);
+  const marquee = useRef<{ additive: boolean; base: string[] } | null>(null);
+  const sectionDraw = useRef<{ x: number; y: number } | null>(null),
+    suppressPane = useRef(false);
+  const [region, setRegion] = useState<{
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    } | null>(null),
+    [dropSection, setDropSection] = useState<string | null>(null);
   const viewportKey = `stylus-board-viewport:${userId}:${board.organization_id}:${board.id}`;
   const selectedRows = selectionRoots(rows, selected);
   function insert(at: Point) {
@@ -150,6 +185,10 @@ export function BoardCanvas({
           grouped = parents.find((entry) => entry.element_type === "GROUP");
         return {
           id: row.id,
+          className:
+            dropSection === row.id
+              ? "outline outline-2 outline-primary outline-offset-4"
+              : undefined,
           type: "whiteboard",
           position: preview[row.id] ?? { x: row.x, y: row.y },
           selected: chosen.has(row.id),
@@ -188,6 +227,7 @@ export function BoardCanvas({
       preview,
       chosen,
       revealed,
+      dropSection,
       editable,
       tool,
       commentCounts,
@@ -226,6 +266,54 @@ export function BoardCanvas({
       return;
     const command = event.ctrlKey || event.metaKey,
       key = event.key.toLowerCase();
+    if (
+      event.key === "ContextMenu" ||
+      (event.shiftKey && event.key === "F10")
+    ) {
+      event.preventDefault();
+      const box = canvas.current!.getBoundingClientRect();
+      onContext(
+        {
+          preventDefault: () => {},
+          stopPropagation: () => {},
+          clientX: box.left + box.width / 2,
+          clientY: box.top + box.height / 2,
+        } as import("react").MouseEvent,
+        selected[0] ?? null,
+        center(),
+      );
+      return;
+    }
+    if (command && ["c", "x", "v"].includes(key)) {
+      if (key !== "v" || hasClipboard) {
+        event.preventDefault();
+        onClipboard(
+          key === "c" ? "COPY" : key === "x" ? "CUT" : "PASTE",
+          center(),
+        );
+      }
+      return;
+    }
+    if (
+      command &&
+      (event.code === "BracketLeft" ||
+        event.code === "BracketRight" ||
+        ["[", "]", "{", "}"].includes(event.key))
+    ) {
+      event.preventDefault();
+      const forward =
+        event.code === "BracketRight" || ["]", "}"].includes(event.key);
+      action(
+        event.shiftKey
+          ? forward
+            ? "FRONT"
+            : "BACK"
+          : forward
+            ? "FORWARD"
+            : "BACKWARD",
+      );
+      return;
+    }
     if (command && ["z", "y", "d", "g", "a"].includes(key)) {
       event.preventDefault();
       if (key === "a")
@@ -246,6 +334,7 @@ export function BoardCanvas({
       setTool("SELECT");
       setSpacePan(false);
       onPanel(null);
+      onSelection([]);
       return;
     }
     if (event.key === " ") {
@@ -308,13 +397,59 @@ export function BoardCanvas({
       });
   }
 
-  useImperativeHandle(ref, () => ({ center, locate }));
+  useImperativeHandle(ref, () => ({ center, locate, fit }));
   return (
     <div
       aria-label="Board canvas"
       className="focus-visible:ring-primary relative min-h-0 flex-1 outline-none focus-visible:ring-2 focus-visible:ring-inset"
       id="board-canvas"
       onBlur={() => setSpacePan(false)}
+      onPointerDownCapture={(event) => {
+        if (
+          tool === "SECTION" &&
+          editable &&
+          (event.target as Element).closest(".react-flow__pane") &&
+          event.button === 0
+        ) {
+          sectionDraw.current = { x: event.clientX, y: event.clientY };
+        }
+      }}
+      onPointerMoveCapture={(event) => {
+        const start = sectionDraw.current,
+          box = canvas.current?.getBoundingClientRect();
+        if (start && box)
+          setRegion({
+            x: Math.min(start.x, event.clientX) - box.left,
+            y: Math.min(start.y, event.clientY) - box.top,
+            width: Math.abs(start.x - event.clientX),
+            height: Math.abs(start.y - event.clientY),
+          });
+      }}
+      onPointerUpCapture={(event) => {
+        const start = sectionDraw.current;
+        sectionDraw.current = null;
+        setRegion(null);
+        if (
+          start &&
+          Math.hypot(start.x - event.clientX, start.y - event.clientY) > 12
+        ) {
+          const a = flow.current!.screenToFlowPosition(start),
+            b = flow.current!.screenToFlowPosition({
+              x: event.clientX,
+              y: event.clientY,
+            });
+          suppressPane.current = true;
+          setTimeout(() => {
+            suppressPane.current = false;
+          }, 0);
+          onSectionDraw({
+            x: Math.min(a.x, b.x),
+            y: Math.min(a.y, b.y),
+            width: Math.max(24, Math.abs(a.x - b.x)),
+            height: Math.max(24, Math.abs(a.y - b.y)),
+          });
+        }
+      }}
       onKeyDown={keys}
       onKeyUp={(event) => {
         if (event.key === " ") setSpacePan(false);
@@ -370,8 +505,8 @@ export function BoardCanvas({
         elementsSelectable={tool === "SELECT" && !spacePan}
         panOnDrag={tool === "PAN" || spacePan ? [0, 1, 2] : [1, 2]}
         selectionOnDrag={tool === "SELECT" && !spacePan}
-        selectionKeyCode="Shift"
-        multiSelectionKeyCode={["Meta", "Control", "Shift"]}
+        selectionKeyCode={null}
+        multiSelectionKeyCode="Shift"
         minZoom={0.1}
         maxZoom={4}
         onInit={(instance) => {
@@ -398,7 +533,37 @@ export function BoardCanvas({
             localStorage.setItem(viewportKey, JSON.stringify(next));
           } catch {}
         }}
+        onPaneContextMenu={(event) =>
+          onContext(
+            event,
+            null,
+            flow.current?.screenToFlowPosition({
+              x: event.clientX,
+              y: event.clientY,
+            }) ?? center(),
+          )
+        }
+        onNodeContextMenu={(event, node) => {
+          const row = getRows().find((r) => r.id === node.id),
+            group = row
+              ? ancestors(row, getRows()).find(
+                  (r) => r.element_type === "GROUP",
+                )
+              : undefined;
+          onContext(
+            event,
+            group?.id ?? node.id,
+            flow.current?.screenToFlowPosition({
+              x: event.clientX,
+              y: event.clientY,
+            }) ?? center(),
+          );
+        }}
         onPaneClick={(event) => {
+          if (suppressPane.current) {
+            suppressPane.current = false;
+            return;
+          }
           focusBoardCanvas();
           if (tool === "SELECT") onSelection([]);
           else
@@ -417,23 +582,30 @@ export function BoardCanvas({
                   (entry) => entry.element_type === "GROUP",
                 )
               : undefined;
-            select(
-              group?.id ?? node.id,
-              event.shiftKey || event.ctrlKey || event.metaKey,
-            );
+            select(group?.id ?? node.id, event.shiftKey);
           }
+        }}
+        onSelectionStart={(event) => {
+          marquee.current = { additive: event.shiftKey, base: selected };
+        }}
+        onSelectionEnd={() => {
+          marquee.current = null;
         }}
         onNodesChange={(changes: NodeChange<WhiteboardFlowNode>[]) => {
           const selectedChanges = changes.filter(
             (change) => change.type === "select",
           );
-          if (selectedChanges.length && !drag.current)
+          if (selectedChanges.length && !drag.current && marquee.current)
             onSelection((ids) => {
               const next = new Set(ids);
               for (const change of selectedChanges)
                 if (change.type === "select") {
                   if (change.selected) next.add(change.id);
-                  else next.delete(change.id);
+                  else if (
+                    !marquee.current?.additive ||
+                    !marquee.current.base.includes(change.id)
+                  )
+                    next.delete(change.id);
                 }
               return [...next];
             });
@@ -461,6 +633,21 @@ export function BoardCanvas({
               node.position.y - start.origin.y,
             );
             const moving = expandedIds(start.rows, start.ids);
+            const anchor = moved.find((r) => r.id === node.id);
+            setDropSection(
+              anchor
+                ? (start.rows.find(
+                    (r) =>
+                      r.element_type === "SECTION" &&
+                      !r.locked &&
+                      !moving.has(r.id) &&
+                      anchor.x + anchor.width / 2 >= r.x &&
+                      anchor.x + anchor.width / 2 <= r.x + r.width &&
+                      anchor.y + anchor.height / 2 >= r.y &&
+                      anchor.y + anchor.height / 2 <= r.y + r.height,
+                  )?.id ?? null)
+                : null,
+            );
             setPreview(
               Object.fromEntries(
                 moved
@@ -474,6 +661,7 @@ export function BoardCanvas({
           const start = drag.current;
           drag.current = null;
           setPreview({});
+          setDropSection(null);
           if (!start) return;
           try {
             const moved = moveObjects(
@@ -497,11 +685,14 @@ export function BoardCanvas({
         }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background
-          color="var(--border)"
-          gap={24}
-          variant={BackgroundVariant.Dots}
-        />
+        {grid ? (
+          <Background
+            color="var(--muted-foreground)"
+            size={1}
+            gap={24}
+            variant={BackgroundVariant.Dots}
+          />
+        ) : null}
         {minimap ? (
           <MiniMap
             ariaLabel="Board minimap"
@@ -512,6 +703,26 @@ export function BoardCanvas({
           />
         ) : null}
       </ReactFlow>
+      {region ? (
+        <div
+          aria-hidden
+          className="border-primary bg-primary/5 pointer-events-none absolute z-10 border-2"
+          style={{
+            left: region.x,
+            top: region.y,
+            width: region.width,
+            height: region.height,
+          }}
+        />
+      ) : null}
+      {dropSection ? (
+        <div
+          role="status"
+          className="bg-background absolute bottom-16 left-1/2 z-20 -translate-x-1/2 rounded border px-3 py-2 text-xs"
+        >
+          Use “Move to section” to place the selection here.
+        </div>
+      ) : null}
       <div className="absolute top-3 left-3 z-20">
         <WhiteboardToolbar
           activeTool={spacePan ? "PAN" : tool}
@@ -529,23 +740,43 @@ export function BoardCanvas({
       </div>
       <div className="absolute top-16 right-3 z-20 flex gap-1 md:top-3">
         <Button
-          aria-label="Open object outline"
+          aria-label="Open Layers"
           onClick={() => onPanel("OUTLINE")}
           size="icon"
-          title="Object outline"
+          title="Layers"
           variant="secondary"
         >
           <ListTree aria-hidden="true" className="size-4" />
         </Button>
         <Button
-          aria-label="Inspect selection"
-          disabled={!selectedRows.length}
+          aria-label="Open Properties"
           onClick={() => onPanel("INSPECTOR")}
           size="icon"
-          title="Inspect selection"
+          title="Properties"
           variant="secondary"
         >
           <Settings2 aria-hidden="true" className="size-4" />
+        </Button>
+        <Button
+          aria-label="Selection actions"
+          title="Selection actions"
+          size="icon"
+          variant="secondary"
+          onClick={(event) => {
+            const box = event.currentTarget.getBoundingClientRect();
+            onContext(
+              {
+                preventDefault: () => event.preventDefault(),
+                stopPropagation: () => event.stopPropagation(),
+                clientX: box.left,
+                clientY: box.bottom,
+              },
+              selected[0] ?? null,
+              center(),
+            );
+          }}
+        >
+          <MoreHorizontal aria-hidden className="size-4" />
         </Button>
       </div>
       {!rows.length ? (

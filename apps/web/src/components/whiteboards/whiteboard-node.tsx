@@ -149,9 +149,11 @@ function WhiteboardNodeComponent({
       {element.element_type === "SECTION" ||
       element.element_type === "GROUP" ? (
         <div
-          className={`h-full w-full rounded-md border-2 ${element.element_type === "GROUP" ? "border-dashed" : "bg-muted/20"}`}
+          className={`h-full w-full rounded-md border-2 ${element.element_type === "GROUP" ? (selected ? "border-dashed" : "border-transparent") : "bg-muted/20"}`}
         >
-          <div className="bg-background absolute -top-7 left-0 max-w-full truncate rounded border px-2 py-1 text-xs font-medium">
+          <div
+            className={`${element.element_type === "GROUP" && !selected ? "invisible" : ""} bg-background absolute -top-7 left-0 max-w-full truncate rounded border px-2 py-1 text-xs font-medium`}
+          >
             {String(element.content.title ?? element.element_type)}
             {element.locked ? " · Locked" : ""}
             {element.content.collapsed ? " · Collapsed" : ""}
@@ -302,7 +304,7 @@ function BoardImage({ data }: { data: WhiteboardNodeData }) {
         <div className="bg-muted text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-2 text-center text-sm">
           <p role="status">
             {data.imageUrl === undefined && !failed
-              ? "Loading image preview?"
+              ? "Loading image preview…"
               : "Image preview unavailable"}
           </p>
           <button

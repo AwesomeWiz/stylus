@@ -27,12 +27,14 @@ import {
   type UpdateElementInput,
   updateElementSchema,
 } from "./schemas";
+import { classifyBoardError, type BoardErrorCode } from "./errors";
 import { initializeTemplate } from "./templates";
 import { projectObject } from "./operations";
 import { isBoardImagePath } from "./elements";
 
 export type WhiteboardActionResult<T = undefined> =
-  { data: T; status: "success" } | { message: string; status: "error" };
+  | { data: T; status: "success" }
+  | { message: string; code?: BoardErrorCode; status: "error" };
 
 async function mutationContext() {
   const current = await getCurrentOrganizationContext();
@@ -512,23 +514,22 @@ export async function applyBoardOperationAction(
       .eq("organization_id", current.organization.id)
       .is("archived_at", null)
       .maybeSingle();
-    if (board.error || !board.data) throw new Error("Board unavailable");
+    if (board.error) throw board.error;
+    if (!board.data) throw { code: "42501" };
     const { data, error } = await supabase.rpc("apply_board_operation", {
       p_board_id: parsed.boardId,
       p_upserts: parsed.upserts,
       p_archive_ids: parsed.archiveIds,
     });
-    if (error || !data) throw new Error("Operation failed");
+    if (error) throw error;
+    if (!data) throw new Error("Operation failed");
     revalidatePath("/whiteboards");
     return { data, status: "success" };
   } catch (error) {
-    return {
-      status: "error",
-      message: actionError(
-        error,
-        "The operation could not be saved. Check access, unlock affected objects and keep each operation within 200 objects.",
-      ),
-    };
+    unstable_rethrow(error);
+    const safe = classifyBoardError(error);
+    console.warn("[boards.operation]", { code: safe.code });
+    return { status: "error", ...safe };
   }
 }
 

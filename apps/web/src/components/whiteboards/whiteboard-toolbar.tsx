@@ -213,9 +213,16 @@ export function WhiteboardToolbar({
       >
         {wide ? (
           <>
-            {tools.slice(0, 6).map((tool, index) => toolButton(tool, index))}
-            {shapesMenu(6)}
-            {tools.slice(6).map((tool, index) => toolButton(tool, index + 7))}
+            {tools.slice(0, 2).map((tool, index) => toolButton(tool, index))}
+            <div role="separator" className="my-1 border-t" />
+            {tools
+              .slice(2, 4)
+              .map((tool, index) => toolButton(tool, index + 2))}
+            {shapesMenu(4)}
+            {[tools[6]!, tools[7]!, tools[4]!, tools[5]!].map((tool, index) =>
+              toolButton(tool, index + 5),
+            )}
+            <div role="separator" className="my-1 border-t" />
           </>
         ) : (
           <>
