@@ -50,6 +50,7 @@ export function ExternalResearchWorkspace({
   runs,
   sourcePlanPreviews = [],
   sources,
+  selectedEvidenceId,
 }: {
   evidence: MarketingExternalResearchEvidenceRow[];
   initialInvocationKey: string;
@@ -58,8 +59,14 @@ export function ExternalResearchWorkspace({
   runs: MarketingExternalResearchRunRow[];
   sourcePlanPreviews?: FashionResearchPlanPreview[];
   sources: MarketingExternalResearchSourceRow[];
+  selectedEvidenceId?: string;
 }) {
   const router = useRouter();
+  useEffect(() => {
+    const item = evidence.find((row) => row.id === selectedEvidenceId);
+    if (item)
+      document.getElementById(`${item.run_id}-${item.evidence_id}`)?.focus();
+  }, [evidence, selectedEvidenceId]);
   const editable = canMutateMarketing(role);
   const [invocationKey, setInvocationKey] = useState(initialInvocationKey);
   const [intent, setIntent] =
@@ -233,6 +240,7 @@ export function ExternalResearchWorkspace({
         </p>
       )}
       <ResearchHistory
+        selectedEvidenceId={selectedEvidenceId}
         evidence={evidence}
         reports={reports}
         runs={runs}
@@ -243,11 +251,13 @@ export function ExternalResearchWorkspace({
 }
 
 function ResearchHistory({
+  selectedEvidenceId,
   evidence,
   reports,
   runs,
   sources,
 }: {
+  selectedEvidenceId?: string;
   evidence: MarketingExternalResearchEvidenceRow[];
   reports: MarketingExternalResearchReportRow[];
   runs: MarketingExternalResearchRunRow[];
@@ -294,7 +304,12 @@ function ResearchHistory({
               )
             ) : null}
             {runEvidence.length ? (
-              <details>
+              <details
+                open={
+                  runEvidence.some((item) => item.id === selectedEvidenceId) ||
+                  undefined
+                }
+              >
                 <summary className="cursor-pointer text-sm font-medium">
                   Evidence and sources
                 </summary>
@@ -308,6 +323,9 @@ function ResearchHistory({
                       <li
                         className="border-l pl-3 text-sm"
                         id={`${run.id}-${item.evidence_id}`}
+                        tabIndex={
+                          item.id === selectedEvidenceId ? -1 : undefined
+                        }
                         key={item.id}
                       >
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

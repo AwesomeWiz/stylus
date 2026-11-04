@@ -4,6 +4,13 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added native Board reference cards for Tasks, exact Research Evidence, Reel
+  Ideas, Competitors, Campaigns and human Creative Briefs. A scoped picker opens
+  real canonical records; unavailable or disabled items reveal no cached titles.
+  Reviewed Task, Idea and manual Research Note conversions retain source content
+  and recover partial failures without duplicate records. No AI execution or
+  Company Knowledge promotion is added.
+
 - Added visible Board voting with bounded per-person allocations, fresh role/tenant
   checks, live counts, explicit ending and deterministic results. Added local
   Section presentation with read-only input, keyboard/touch navigation, optional

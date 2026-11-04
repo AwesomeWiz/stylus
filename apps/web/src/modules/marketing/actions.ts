@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { invalidateMarketingRecord } from "./server/invalidation";
 import { redirect, unstable_rethrow } from "next/navigation";
 import type { z } from "zod";
 
@@ -50,9 +50,7 @@ async function context() {
   return { current, db: await createServerSupabaseClient() };
 }
 function done(path: string): MarketingActionState {
-  revalidatePath(path);
-  revalidatePath("/apps/marketing");
-  revalidatePath("/activity");
+  invalidateMarketingRecord(path);
   return { status: "success" };
 }
 async function execute(work: () => Promise<unknown>, path: string) {

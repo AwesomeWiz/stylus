@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { BoardElementType } from "@/lib/supabase/database.types";
 import { boardTypographySchema } from "./typography";
+import { entityReferenceSchema } from "@/core/entities/public";
 
 export const boardTitleSchema = z
   .string()
@@ -13,6 +14,7 @@ export const boardIdSchema = z.uuid();
 export const elementIdSchema = z.uuid();
 export const commentIdSchema = z.uuid();
 export const boardElementTypeSchema = z.enum([
+  "ENTITY_CARD",
   "TEXT",
   "STICKY",
   "IMAGE",
@@ -67,22 +69,41 @@ export const boardTemplateValues = [
 ] as const;
 export const boardTemplateSchema = z.enum(boardTemplateValues);
 
-export const createElementSchema = z.object({
-  id: elementIdSchema.optional(),
-  boardId: boardIdSchema,
-  content: jsonObject,
-  parentId: elementIdSchema.nullable().optional(),
-  locked: z.boolean().optional(),
-  elementType: boardElementTypeSchema,
-  height: dimension,
-  metadata: jsonObject.default({}),
-  rotation: z.number().finite().min(-360).max(360).default(0),
-  style: jsonObject,
-  width: dimension,
-  x: coordinate,
-  y: coordinate,
-  zIndex: z.number().int().min(-1_000_000).max(1_000_000),
-});
+export const createElementSchema = z
+  .object({
+    id: elementIdSchema.optional(),
+    boardId: boardIdSchema,
+    content: jsonObject,
+    parentId: elementIdSchema.nullable().optional(),
+    locked: z.boolean().optional(),
+    elementType: boardElementTypeSchema,
+    height: dimension,
+    metadata: jsonObject.default({}),
+    rotation: z.number().finite().min(-360).max(360).default(0),
+    style: jsonObject,
+    width: dimension,
+    x: coordinate,
+    y: coordinate,
+    zIndex: z.number().int().min(-1_000_000).max(1_000_000),
+  })
+  .superRefine((value, context) => {
+    if (
+      value.elementType === "ENTITY_CARD" &&
+      (!z
+        .object({ reference: entityReferenceSchema })
+        .strict()
+        .safeParse(value.content).success ||
+        Object.keys(value.style).length ||
+        Object.keys(value.metadata).some((key) => key !== "conversionId") ||
+        (value.metadata.conversionId !== undefined &&
+          !z.uuid().safeParse(value.metadata.conversionId).success))
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["content"],
+        message: "Native cards store only an authorized reference.",
+      });
+  });
 
 export const updateElementSchema = z
   .object({
@@ -158,6 +179,24 @@ export const operationElementSchema = z
     metadata: jsonObject,
   })
   .superRefine((value, context) => {
+    if (value.element_type === "ENTITY_CARD") {
+      const parsed = z
+        .object({ reference: entityReferenceSchema })
+        .strict()
+        .safeParse(value.content);
+      if (
+        !parsed.success ||
+        Object.keys(value.style).length ||
+        Object.keys(value.metadata).some((key) => key !== "conversionId") ||
+        (value.metadata.conversionId !== undefined &&
+          !z.uuid().safeParse(value.metadata.conversionId).success)
+      )
+        context.addIssue({
+          code: "custom",
+          path: ["content"],
+          message: "Native cards store only an authorized reference.",
+        });
+    }
     if (value.element_type === "ARROW") {
       if (
         value.content.label !== undefined &&

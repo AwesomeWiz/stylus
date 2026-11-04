@@ -1,10 +1,63 @@
 # Stylus — Project State
 
-Last Updated: 2026-11-04
+Last Updated: 2026-11-05
 
 ## Overall Status
 
-REDESIGN-004.3.3 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+REDESIGN-005 PASS / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-005 - Native Stylus entities in Boards
+
+Dedicated branch `codex/redesign-005-native-board-entities`, starting exactly at
+`8236b471592023faf6aa3b0136344071f7c93bcf`. Original checkout and completed
+004.* worktrees are preserved. Main agent only, sequential runners; no merge/push.
+
+Delivered: public Core reference/provider/projection/open/create contract, trusted
+plugin composition, six initial card adapters, exact immutable Evidence binding,
+private batched resolution, canonical openers and reviewed Task/Idea/manual
+Research Note conversions. Durable own-creator receipts recover failed linking,
+lost successful responses and reload without duplicate targets. Sources remain;
+explicit card archival and newer collaborator rows survive recovery. Manual Notes
+remain an existing separate domain. No AI or Knowledge promotion is introduced.
+Generic editor mechanics/design, voting and presentation architecture stay frozen.
+
+All three reviewed `202611040002*` forward migrations are applied to the authorized
+development project; all **42** local/remote versions match. Existing Board V2
+columns/RPCs and new receipts/domain RPCs were verified. No reset, DROP/TRUNCATE
+or unrelated hosted records were changed. Exact test-fixture cleanup verified
+absence of four accounts (including Auth 404 checks), two organizations, four
+Boards, 1,030 Board rows, 83 remaining canonical fixtures, nine immutable source/
+Evidence rows, one cancelled synthetic run/job and their scoped dependent data.
+Both immutable triggers are enabled. No model/worker job was executed or private
+asset uploaded. Task helpers are stopped; ignored evidence is never shipped.
+
+**Verification:** full web suite run once near completion: **227 files / 1,292
+tests PASS**. All six Board pgTAP suites pass against actual SQL in isolated
+PGlite: **246 assertions** (201 existing plus 45 native-reference/recovery).
+Web lint, worker/web typecheck and production web build pass. Scoped formatting,
+links, architecture/security/scope/secret/artifact and final diff checks pass.
+
+Real authenticated Supabase/browser checks cover all six inserts/openers, all
+four conversions, retry/reload/lost-response recovery, deleted-target refusal,
+tenant/role/revoked-member/plugin boundaries, archive labels, stale-title/search
+purging and re-enable. Shift-selection, Groups/Sections, alignment/distribution,
+lock/layers/duplicate, reference-only paste, actual comments/reactions and existing
+voting/presentation pass. Native voting remains deliberately ineligible.
+Both themes pass **16** responsive cases at 320/390/430/768/1024/1200/1440/1920px;
+keyboard/focus restoration and real touch-emulated picker checks pass.
+
+Three local production direct-entry samples per fixture show median canvas-ready
+times of 1,846ms at exact baseline vs 1,483ms current for 500 ordinary objects;
+500 objects including 50 native cards take 1,527ms. All 50 fresh authorized
+projections resolve at median 4,423ms through one discovery plus one 50-reference
+batch, with no resolution Long Tasks. Selection/search medians are 31.8/21.7ms.
+Existing canvas virtualization is retained. These small samples are observations,
+not cold/warm percentiles, causal speedup claims or SLAs. Manual Windows NVDA,
+other browser engines/devices and hosted end-to-end percentile budgets remain
+unverified. Optional source replacement/native voting, AI conversion, storyboard,
+follow/history, anonymous voting and richer connectors remain deferred.
+REDESIGN-006 is ready for its separately approved scope and remains unstarted.
+See [Native entities](docs/NATIVE_ENTITIES.md) for the contract and binding matrix.
 
 ## REDESIGN-004.3.3 — Board voting, Section presentation and visual color picker
 

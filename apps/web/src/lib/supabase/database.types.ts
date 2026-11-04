@@ -610,6 +610,7 @@ export type MarketingAskCouncilContextRefRow = {
   turn_id: string;
 };
 export type BoardElementType =
+  | "ENTITY_CARD"
   | "TEXT"
   | "STICKY"
   | "IMAGE"
@@ -619,6 +620,19 @@ export type BoardElementType =
   | "GROUP"
   | "LINK";
 
+export type BoardEntityConversionRow = {
+  id: string;
+  organization_id: string;
+  board_id: string | null;
+  created_by: string | null;
+  entity_type: string;
+  entity_id: string;
+  card_id: string;
+  input: Record<string, unknown>;
+  source_ids: string[];
+  state: "PREPARED" | "CREATED";
+  created_at: string;
+};
 export type BoardRow = {
   /** Absent only on legacy client snapshots; SQL defaults to null. */
   template_key?: string | null;
@@ -1124,6 +1138,12 @@ export type Database = {
         Update: Partial<AudienceProfileRow>;
         Relationships: [];
       };
+      board_entity_conversions: {
+        Row: BoardEntityConversionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       board_elements: {
         Row: BoardElementRow;
         Insert: Pick<
@@ -1308,13 +1328,13 @@ export type Database = {
         Relationships: [];
       };
       marketing_reel_ideas: {
-        Row: MarketingReelIdeaRow;
+        Row: MarketingReelIdeaRow & { board_conversion_id: string | null };
         Insert: MarketingInsert<MarketingReelIdeaRow>;
         Update: MarketingUpdate<MarketingReelIdeaRow>;
         Relationships: [];
       };
       marketing_research: {
-        Row: MarketingResearchRow;
+        Row: MarketingResearchRow & { board_conversion_id: string | null };
         Insert: MarketingInsert<MarketingResearchRow>;
         Update: MarketingUpdate<MarketingResearchRow>;
         Relationships: [];
@@ -1545,7 +1565,7 @@ export type Database = {
         Relationships: [];
       };
       tasks: {
-        Row: TaskRow;
+        Row: TaskRow & { board_conversion_id: string | null };
         Insert: Pick<
           TaskRow,
           "created_by" | "organization_id" | "title" | "updated_by"
@@ -1579,6 +1599,28 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      prepare_board_entity_conversion: {
+        Args: {
+          p_id: string;
+          p_board_id: string;
+          p_entity_type: string;
+          p_input: Record<string, unknown>;
+          p_source_ids: string[];
+        };
+        Returns: BoardEntityConversionRow;
+      };
+      create_task_from_board: {
+        Args: { p_conversion_id: string };
+        Returns: string;
+      };
+      create_marketing_idea_from_board: {
+        Args: { p_conversion_id: string };
+        Returns: string;
+      };
+      create_marketing_note_from_board: {
+        Args: { p_conversion_id: string };
+        Returns: string;
+      };
       start_board_voting: {
         Args: {
           p_board_id: string;

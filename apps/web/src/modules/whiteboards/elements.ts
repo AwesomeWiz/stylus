@@ -31,6 +31,7 @@ export const defaultElementSize: Record<
   BoardElementType,
   { height: number; width: number }
 > = {
+  ENTITY_CARD: { height: 180, width: 300 },
   SECTION: { height: 420, width: 640 },
   GROUP: { height: 200, width: 300 },
   LINK: { height: 120, width: 300 },
@@ -43,6 +44,8 @@ export const defaultElementSize: Record<
 
 export function defaultElementData(type: BoardElementType) {
   switch (type) {
+    case "ENTITY_CARD":
+      return { content: {}, style: {} }; // Insertion must supply a freshly authorized reference.
     case "SECTION":
       return {
         content: { title: "Section", collapsed: false },

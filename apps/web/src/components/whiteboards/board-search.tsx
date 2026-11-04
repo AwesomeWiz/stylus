@@ -3,6 +3,8 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { Search, X, LocateFixed } from "lucide-react";
 import type { BoardElementRow } from "@/lib/supabase/database.types";
 import { updateBoardSearchIndex } from "@/modules/whiteboards/search-index";
+import { nativeReference, useNativeEntities } from "./board-entity-store";
+import { entityReferenceKey } from "@/core/entities/public";
 export function BoardSearch({
   rows,
   onLocate,
@@ -15,9 +17,23 @@ export function BoardSearch({
   const [query, setQuery] = useState(""),
     search = useDeferredValue(query.trim().toLocaleLowerCase());
   const [index, setIndex] = useState(() => updateBoardSearchIndex([], rows));
+  const native = useNativeEntities();
+  const titles = useMemo(
+    () =>
+      new Map(
+        rows.flatMap((row) => {
+          const ref = nativeReference(row),
+            result = ref ? native.get(entityReferenceKey(ref)) : undefined;
+          return result?.status === "available"
+            ? [[row.id, result.projection.title] as const]
+            : [];
+        }),
+      ),
+    [rows, native],
+  );
   const nextIndex = useMemo(
-    () => updateBoardSearchIndex(index, rows),
-    [index, rows],
+    () => updateBoardSearchIndex(index, rows, titles),
+    [index, rows, titles],
   );
   if (nextIndex !== index) setIndex(nextIndex);
   const results = useMemo(

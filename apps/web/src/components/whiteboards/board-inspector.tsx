@@ -1,6 +1,10 @@
 ﻿"use client";
 import { Button } from "@/components/ui/button";
-import type { BoardElementRow } from "@/lib/supabase/database.types";
+import { BoardNativeCard } from "./board-native-card";
+import type {
+  BoardElementRow,
+  TaskMember,
+} from "@/lib/supabase/database.types";
 import {
   ancestors,
   canMoveObject,
@@ -44,6 +48,7 @@ export function BoardInspector({
   onMembership,
   onReplace,
   onSelect,
+  members,
 }: {
   rows: BoardElementRow[];
   selection: BoardElementRow[];
@@ -58,6 +63,7 @@ export function BoardInspector({
   onMembership: (id: string | null) => void;
   onReplace: (id: string) => void;
   onSelect: (id: string) => void;
+  members?: TaskMember[];
 }) {
   const row = selection.length === 1 ? selection[0] : undefined;
   const disabled = !canMutate || busy;
@@ -110,6 +116,9 @@ export function BoardInspector({
       ) : null}
       {row ? (
         <>
+          {row.element_type === "ENTITY_CARD" ? (
+            <BoardNativeCard row={row} properties members={members} />
+          ) : null}
           <fieldset>
             <legend className="mb-2 text-xs font-medium">Transform</legend>
             <div className="grid grid-cols-2 gap-2">

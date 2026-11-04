@@ -7,6 +7,7 @@ import { diffWhiteboardSnapshots } from "./history";
 
 export const BOARD_OPERATION_LIMIT = 200;
 export function objectTitle(row: BoardElementRow) {
+  if (row.element_type === "ENTITY_CARD") return "Stylus item";
   return String(
     row.metadata.label ??
       row.content.title ??
@@ -380,6 +381,7 @@ export function duplicateObjects(
     top = nextZIndex(rows);
   const copies = originals.map((row, index) => ({
     ...row,
+    metadata: row.element_type === "ENTITY_CARD" ? {} : row.metadata,
     id: newIds.get(row.id)!,
     parent_id: newIds.get(row.parent_id ?? "") ?? row.parent_id ?? null,
     x: row.x + 24,

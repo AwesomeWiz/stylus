@@ -1,3 +1,4 @@
+import { includeSelectedMarketingRecord } from "@/modules/marketing/server/data";
 import { MarketingPage } from "@/components/marketing/marketing-page";
 import { MarketingWorkspace } from "@/components/marketing/marketing-workspace";
 import { ExternalResearchWorkspace } from "@/components/marketing/external-research-workspace";
@@ -13,14 +14,26 @@ export const maxDuration = 60;
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string }>;
+  searchParams: Promise<{
+    archived?: string;
+    item?: string;
+    run?: string;
+    evidence?: string;
+  }>;
 }) {
   const { context } = await requireEnabledPlugin("marketing");
-  const archived = (await searchParams).archived === "true";
+  const params = await searchParams;
+  const archived = params.archived === "true";
   const [records, externalResearch] = await Promise.all([
     listMarketingResearch(context.organization.id, archived),
-    getExternalResearchHistory(context.organization.id),
+    getExternalResearchHistory(context.organization.id, params.run),
   ]);
+  const visibleRecords = await includeSelectedMarketingRecord(
+    records,
+    context.organization.id,
+    "marketing_research",
+    params.item,
+  );
   return (
     <MarketingPage
       activePath="/apps/marketing/research"
@@ -31,6 +44,7 @@ export default async function Page({
       <div className="space-y-10">
         <ExternalResearchWorkspace
           {...externalResearch}
+          selectedEvidenceId={params.evidence}
           initialInvocationKey={crypto.randomUUID()}
           role={context.membership.role}
           sourcePlanPreviews={getFashionResearchPlanPreviews()}
@@ -51,7 +65,8 @@ export default async function Page({
           <MarketingWorkspace
             area="research"
             archived={archived}
-            records={records}
+            records={visibleRecords}
+            selectedId={params.item}
             role={context.membership.role}
           />
         </section>

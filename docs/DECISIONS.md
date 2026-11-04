@@ -1180,3 +1180,40 @@ browser Origin against the received Host (including port), emits private/no-stor
 responses and exposes no mutations. The client validates output, applies a
 20-second timeout and discards stale generations. This changes transport, not
 read authority. Voting start/cast/end remain Server Actions and scoped RPCs.
+
+## ADR-050 - Public native entity references and recoverable domain creation
+
+Date: 2026-11-04. Status: Accepted for REDESIGN-005 implementation.
+
+Core owns a bounded entity-reference/provider/projection/opening contract. A
+trusted static application host composes Core Tasks and Marketing-owned adapters,
+checking declared plugin read capabilities. Core Boards import no private
+Marketing implementation. Browser metadata is declarative; it cannot execute
+plugin UI or provider code. Live domain objects resolve current authorized state;
+Evidence binds its exact immutable row/run/EVID identities, not an invented
+version or a mutable latest-record lookup.
+
+Native cards store references only. Current projections live in a Board-local
+store outside document/Flow state and are grouped in batches of at most 50.
+Fresh server membership, active-Board, plugin and entity checks plus RLS govern
+every data boundary. Focus/explicit refresh purges projections before loading;
+visible-tab polling bounds ordinary staleness at 30 seconds without per-card
+subscriptions. Unavailable titles/openers are removed from cards, Layers and
+search. Generic geometry/lifecycle remains usable for existing unavailable cards;
+new insertion/duplication/paste requires fresh target authority.
+
+Canonical creation and Board linking are separate domains. A durable own-creator
+receipt reserves target/card UUIDs and the reviewed bounded input/source mapping.
+Domain RPCs atomically create the real Task/Idea/manual Note plus the receipt's
+CREATED marker, preserving existing validation, lifecycle and activity triggers.
+Link failure/reload reuses those identities. Deleted targets are not recreated;
+archived Board cards are not resurrected and newer collaborator rows are not
+overwritten by recovery. Board deletion retains canonical targets and nulls its
+receipt association. Receipt mutation is denied outside bounded RPCs.
+
+Manual Research Notes already exist and receive a conversion-only provider,
+remaining distinct from immutable Research Evidence and permanent Knowledge.
+Source objects remain by default; optional replacement and native vote eligibility
+are deferred. Generic editor mechanics/design, voting and presentation remain
+frozen. No AI execution or automatic memory promotion follows entity insertion,
+resolution, opening or conversion. See [Native entities](NATIVE_ENTITIES.md).

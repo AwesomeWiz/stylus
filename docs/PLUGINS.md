@@ -12,6 +12,12 @@ plugins.
 
 ## Dependency Boundary
 
+Native Board integrations use the separate public Core entity provider contract
+and trusted static application host. Marketing registers bounded resolvers,
+canonical openers and domain creation adapters without a private import from
+Core Boards. Enabled-plugin and fresh entity authority gate discovery, resolution
+and creation. See [Native entities](NATIVE_ENTITIES.md).
+
 The allowed direction is:
 
 ```text

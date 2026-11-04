@@ -19,7 +19,9 @@ import {
 import type { BoardElementRow } from "@/lib/supabase/database.types";
 import type { LayerDrop } from "@/modules/whiteboards/layers";
 import { objectTitle } from "@/modules/whiteboards/operations";
+import { useNativeEntity } from "./board-entity-store";
 const icons = {
+  ENTITY_CARD: Link2,
   SECTION: Frame,
   GROUP: Group,
   IMAGE: ImageIcon,
@@ -86,6 +88,13 @@ export const BoardLayerRow = memo(function BoardLayerRow({
   events,
 }: Props) {
   const Icon = icons[row.element_type];
+  const native = useNativeEntity(row);
+  const title =
+    row.element_type === "ENTITY_CARD"
+      ? native?.status === "available"
+        ? native.projection.title
+        : "Item unavailable"
+      : objectTitle(row);
   return (
     <div
       role="treeitem"
@@ -183,13 +192,13 @@ export const BoardLayerRow = memo(function BoardLayerRow({
           tabIndex={-1}
           type="button"
           className="min-w-0 flex-1 truncate py-2 text-left text-xs"
-          title={objectTitle(row)}
+          title={title}
           onClick={(e) => {
             if (!ownSelected || e.shiftKey) events.onSelect(row.id, e.shiftKey);
           }}
           onDoubleClick={() => events.onRename(row.id)}
         >
-          {objectTitle(row)}
+          {title}
         </button>
       )}
       {childChosen ? (

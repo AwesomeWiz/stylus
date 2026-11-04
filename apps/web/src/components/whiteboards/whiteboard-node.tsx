@@ -1,5 +1,6 @@
 "use client";
 import { BoardVoteBadge } from "./board-voting-context";
+import { BoardNativeCard } from "./board-native-card";
 import { useBoardColorRow } from "./board-color-preview";
 
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
@@ -256,6 +257,13 @@ function WhiteboardNodeComponent({
             {element.content.collapsed ? " · Collapsed" : ""}
           </div>
         </div>
+      ) : null}
+      {element.element_type === "ENTITY_CARD" ? (
+        <BoardNativeCard
+          row={element}
+          members={data.members}
+          onActivate={data.onLinkActivate}
+        />
       ) : null}
       {element.element_type === "LINK" ? (
         <div className="bg-background flex h-full flex-col gap-2 overflow-hidden rounded-md border p-3">

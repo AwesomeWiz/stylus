@@ -6,6 +6,12 @@ Stylus begins as a modular monolith with external managed infrastructure.
 
 Avoid premature microservices.
 
+Native Board cards use a Core-owned reference/provider registry composed by the
+trusted application plugin host. Board-local projections remain outside saved
+objects. Private bounded reads reauthorize tenant/plugin/entity access; explicit
+domain creation uses durable receipts and separate recoverable Board linking.
+Core Boards have no Marketing-private imports. See [Native entities](NATIVE_ENTITIES.md).
+
 ---
 
 # Repository Layout

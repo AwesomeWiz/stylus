@@ -13,11 +13,15 @@ export type BoardSearchEntry = {
 export function updateBoardSearchIndex(
   previous: BoardSearchEntry[],
   rows: BoardElementRow[],
+  nativeTitles?: ReadonlyMap<string, string>,
 ) {
   const byId = new Map(previous.map((entry) => [entry.id, entry]));
   const next = rows.map((row) => {
     const old = byId.get(row.id),
-      title = objectTitle(row),
+      title =
+        row.element_type === "ENTITY_CARD"
+          ? (nativeTitles?.get(row.id) ?? "Stylus item")
+          : objectTitle(row),
       { text, note, alt } = row.content;
     if (
       old &&

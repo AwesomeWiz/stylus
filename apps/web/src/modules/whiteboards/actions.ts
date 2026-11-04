@@ -1,4 +1,5 @@
 "use server";
+import { validateNativeCardChanges } from "./server/entities";
 
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
@@ -244,6 +245,17 @@ export async function createBoardElementAction(
   try {
     const parsed = createElementSchema.parse(input);
     const current = await mutationContext();
+    await validateNativeCardChanges({
+      organizationId: current.organization.id,
+      boardId: parsed.boardId,
+      rows: [
+        {
+          id: parsed.id,
+          element_type: parsed.elementType,
+          content: parsed.content,
+        },
+      ],
+    });
     const supabase = await createServerSupabaseClient();
     const { data, error } = await supabase
       .from("board_elements")
@@ -588,6 +600,11 @@ export async function applyBoardOperationAction(
       .maybeSingle();
     if (board.error) throw board.error;
     if (!board.data) throw { code: "42501" };
+    await validateNativeCardChanges({
+      organizationId: current.organization.id,
+      boardId: parsed.boardId,
+      rows: parsed.upserts,
+    });
     const { data, error } = await supabase.rpc("apply_board_operation", {
       p_board_id: parsed.boardId,
       p_upserts: parsed.upserts,

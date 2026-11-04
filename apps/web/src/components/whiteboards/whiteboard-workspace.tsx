@@ -1,6 +1,21 @@
 "use client";
 import "./board-content-fonts.css";
-import { MessageSquare, Presentation } from "lucide-react";
+import {
+  MessageSquare,
+  Presentation,
+  PackagePlus,
+  RefreshCw,
+} from "lucide-react";
+import type { EntityReference } from "@/core/entities/public";
+import { createBoardEntityStore } from "./board-entity-store";
+import { BoardNativeProviders } from "./board-native-providers";
+import { useBoardEntities } from "./use-board-entities";
+import { BoardEntityDialog, type NativeRequest } from "./board-entity-dialog";
+import { nativeInsertionPoint } from "@/modules/whiteboards/native-placement";
+import {
+  copyNativeReferences,
+  pasteNativeReferences,
+} from "@/modules/whiteboards/native-clipboard";
 
 import { useRouter } from "next/navigation";
 import {
@@ -81,10 +96,7 @@ import { BoardVoting, type BoardVotingHandle } from "./board-voting";
 import { useBoardPresentation } from "./use-board-presentation";
 import { BoardPresentation } from "./board-presentation";
 import { presentationTitle } from "@/modules/whiteboards/presentation";
-import {
-  BoardColorPreviewContext,
-  createBoardColorPreview,
-} from "./board-color-preview";
+import { createBoardColorPreview } from "./board-color-preview";
 
 const anonymous = { displayName: "Current user", id: "" };
 const emptyMembers: TaskMember[] = [];
@@ -111,6 +123,14 @@ export function WhiteboardWorkspace({
   shell?: BoardNavigationState;
 }) {
   const router = useRouter();
+  const [entityStore] = useState(createBoardEntityStore);
+  const [nativeRequest, setNativeRequest] = useState<NativeRequest | null>(
+    null,
+  );
+  const entityScope = useMemo(
+    () => ({ organizationId: board.organization_id, boardId: board.id }),
+    [board.organization_id, board.id],
+  );
   const [votingStore] = useState(() =>
     createBoardVotingStore(currentUser.id, canMutate),
   );
@@ -143,6 +163,7 @@ export function WhiteboardWorkspace({
     getRevision,
     mergeSnapshot,
   } = useBoardDocument(board, elements, canMutate, currentUser.id);
+  const nativeItems = useBoardEntities(entityScope, rows, entityStore);
   const objectIndex = useMemo(() => indexBoardObjects(rows), [rows]);
   const [selected, setSelected] = useState<string[]>([]),
     [panel, setPanel] = useState<Panel>(null);
@@ -263,6 +284,68 @@ export function WhiteboardWorkspace({
     window.confirm(
       "This board has unsaved work. Stay to retry saving, or leave and discard unsaved changes?",
     );
+  const nativeBeforeOpen = useBoardEvent(beforeLeave);
+  async function insertNative(
+    reference: EntityReference,
+    id?: string,
+    conversionId?: string,
+  ) {
+    if (!canMutate || interactionBusy() || isDirty() || presenting)
+      return false;
+    const current = getRows();
+    if (id && current.some((row) => row.id === id)) {
+      setSelected([id]);
+      return true;
+    }
+    const one = selectedRows.length === 1 ? selectedRows[0] : undefined;
+    const parent =
+      one?.element_type === "SECTION" && !isObjectLocked(one, current)
+        ? one
+        : one?.parent_id
+          ? current.find(
+              (row) =>
+                row.id === one.parent_id &&
+                row.element_type === "SECTION" &&
+                !isObjectLocked(row, current),
+            )
+          : undefined;
+    const bounds =
+      selectedRows.length &&
+      !selectedRows.some((row) =>
+        ["SECTION", "GROUP"].includes(row.element_type),
+      )
+        ? objectBounds(selectedRows)
+        : undefined;
+    const point = nativeInsertionPoint(
+      current,
+      bounds
+        ? { x: bounds.x + bounds.width + 24, y: bounds.y }
+        : parent
+          ? { x: parent.x + 24, y: parent.y + 48 }
+          : (canvasApi.current?.center() ?? { x: 0, y: 0 }),
+    );
+    const row = createLocalObject(
+      "ENTITY_CARD",
+      board.id,
+      board.organization_id,
+      currentUser.id,
+      current,
+      point,
+      {
+        ...(id ? { id } : {}),
+        parent_id: parent?.id ?? null,
+        content: { reference },
+        style: {},
+        metadata: conversionId ? { conversionId } : {},
+      },
+    );
+    const saved = await commit([...current, row]);
+    if (saved) {
+      setSelected([row.id]);
+      nativeItems.refresh();
+    }
+    return saved;
+  }
   const receiveComment = reactions.receiveComment;
   const onComment = useCallback(
     (row: BoardCommentRow) => {
@@ -694,6 +777,11 @@ export function WhiteboardWorkspace({
   function clipboardAction(command: "COPY" | "CUT" | "PASTE", point?: Point) {
     if (command !== "PASTE") {
       const ids = expandedIds(getRows(), selected);
+      const nativeClipboard = copyNativeReferences(
+        getRows().filter((row) => ids.has(row.id)),
+      );
+      if (nativeClipboard)
+        void navigator.clipboard?.writeText(nativeClipboard).catch(() => {});
       setClipboard(
         getRows()
           .filter((row) => ids.has(row.id))
@@ -739,6 +827,11 @@ export function WhiteboardWorkspace({
     });
     const commands: BoardCommand[] = [];
     if (!selection.length) {
+      if (editable)
+        commands.push({
+          label: "Insert from Stylus",
+          run: () => setNativeRequest({ mode: "insert" }),
+        });
       if (editable && clipboard.length)
         commands.push({
           label: "Paste here",
@@ -802,6 +895,34 @@ export function WhiteboardWorkspace({
         })),
       });
     if (editable) {
+      const sources = selection.filter((row) =>
+        ["TEXT", "STICKY", "SHAPE", "ARROW", "LINK"].includes(row.element_type),
+      );
+      if (
+        sources.length === selection.length &&
+        sources.length <= 30 &&
+        sources.length > 0
+      ) {
+        const conversions = nativeItems.types.filter(
+          (type) =>
+            type.creatable &&
+            (type.creationSelection !== "single-sticky" ||
+              one?.element_type === "STICKY"),
+        );
+        if (conversions.length)
+          commands.push({
+            label: "Create from selection",
+            children: conversions.map((type) => ({
+              label: `Create ${type.label}`,
+              run: () =>
+                setNativeRequest({
+                  mode: "convert",
+                  entityType: type.id,
+                  sourceIds: sources.map((row) => row.id).sort(),
+                }),
+            })),
+          });
+      }
       if (allFree)
         commands.push({ label: "Cut", run: () => clipboardAction("CUT") });
       if (clipboard.length)
@@ -998,8 +1119,55 @@ export function WhiteboardWorkspace({
   });
   return (
     <BoardVotingContext.Provider value={votingStore}>
-      <BoardColorPreviewContext.Provider value={colorPreview}>
+      <BoardNativeProviders
+        types={nativeItems.types}
+        store={entityStore}
+        beforeOpen={nativeBeforeOpen}
+        colorPreview={colorPreview}
+      >
         <div
+          onPasteCapture={(event) => {
+            if (
+              !editable ||
+              (event.target as Element).closest(
+                "input,textarea,[contenteditable=true]",
+              )
+            )
+              return;
+            const items = pasteNativeReferences(
+              event.clipboardData.getData("text/plain"),
+              board.organization_id,
+            );
+            if (!items) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const current = getRows(),
+              point = canvasApi.current?.center() ?? { x: 0, y: 0 };
+            const copies = items.map((item, index) =>
+              createLocalObject(
+                "ENTITY_CARD",
+                board.id,
+                board.organization_id,
+                currentUser.id,
+                current,
+                { x: point.x + item.x, y: point.y + item.y },
+                {
+                  content: { reference: item.reference },
+                  style: {},
+                  metadata: {},
+                  width: item.width,
+                  height: item.height,
+                  z_index:
+                    Math.max(0, ...current.map((row) => row.z_index)) +
+                    index +
+                    1,
+                },
+              ),
+            );
+            void commit([...current, ...copies]).then((ok) => {
+              if (ok) setSelected(copies.map((row) => row.id));
+            });
+          }}
           onKeyDownCapture={(event) => {
             if (presenting) {
               if (event.key === "Escape") {
@@ -1092,6 +1260,27 @@ export function WhiteboardWorkspace({
               }
               actions={
                 <>
+                  {canMutate ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Insert from Stylus"
+                      title="Insert from Stylus"
+                      disabled={!editable}
+                      onClick={() => setNativeRequest({ mode: "insert" })}
+                    >
+                      <PackagePlus aria-hidden className="size-4" />
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Refresh linked items"
+                    aria-label="Refresh linked items"
+                    onClick={() => nativeItems.refresh(true)}
+                  >
+                    <RefreshCw aria-hidden className="size-4" />
+                  </Button>
                   <div className="hidden sm:block">
                     <WhiteboardCollaborators
                       connection={collaboration.connection}
@@ -1370,6 +1559,7 @@ export function WhiteboardWorkspace({
                   </div>
                 ) : (
                   <BoardInspector
+                    members={members}
                     key={selectedRows.map((row) => row.id).join(":")}
                     rows={rows}
                     selection={selectedRows}
@@ -1511,6 +1701,24 @@ export function WhiteboardWorkspace({
             />
           ) : null}
           <BoardHelp open={help} onOpenChange={setHelp} />
+          {nativeRequest && !presenting && canMutate ? (
+            <BoardEntityDialog
+              key={JSON.stringify(nativeRequest)}
+              scope={entityScope}
+              request={nativeRequest}
+              members={members}
+              onClose={() => setNativeRequest(null)}
+              onResume={(attemptId) =>
+                setNativeRequest({ mode: "recover", attemptId })
+              }
+              onInsert={insertNative}
+              onLinked={(row) => {
+                receive(row);
+                setSelected([row.id]);
+              }}
+              onRefresh={() => nativeItems.refresh(true)}
+            />
+          ) : null}
           <Dialog
             open={presentation.unavailable}
             onOpenChange={presentation.setUnavailable}
@@ -1524,7 +1732,7 @@ export function WhiteboardWorkspace({
             </div>
           </Dialog>
         </div>
-      </BoardColorPreviewContext.Provider>
+      </BoardNativeProviders>
     </BoardVotingContext.Provider>
   );
 }

@@ -161,6 +161,7 @@ export const BoardOutline = memo(function BoardOutline({
     requestAnimationFrame(() => rowElements.current.get(id)?.focus());
   }
   function rename(row: BoardElementRow) {
+    if (row.element_type === "ENTITY_CARD") return;
     if (!onUpdate || structure.immovable.has(row.id)) return;
     setRenaming(row.id);
     setDraft(objectTitle(row));

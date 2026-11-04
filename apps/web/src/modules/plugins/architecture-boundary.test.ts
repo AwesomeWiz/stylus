@@ -16,6 +16,27 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe("plugin architecture boundary", () => {
+  it("keeps Core native Board entities independent of Marketing-private modules", () => {
+    const files = [
+      "modules/whiteboards",
+      "components/whiteboards",
+      "core/entities",
+      "core/tasks",
+    ].flatMap((directory) => sourceFiles(join(sourceRoot, directory)));
+    for (const file of files) {
+      const imports = [
+        ...readFileSync(file, "utf8").matchAll(
+          /(?:from\s*|import\s*\()["']([^"']+)/g,
+        ),
+      ].map((match) => match[1]!);
+      expect(
+        imports.filter((specifier) =>
+          /modules\/marketing|plugins\/marketing/.test(specifier),
+        ),
+        relative(sourceRoot, file),
+      ).toEqual([]);
+    }
+  });
   it("keeps plugin implementations dependent on the public Core contract", () => {
     const implementationFiles = sourceFiles(join(sourceRoot, "plugins")).filter(
       (path) => /plugins[\\/](example|marketing)[\\/]/.test(path),

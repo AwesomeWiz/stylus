@@ -185,7 +185,10 @@ export async function listMarketingResearch(
   );
 }
 
-export async function getExternalResearchHistory(organizationId: string) {
+export async function getExternalResearchHistory(
+  organizationId: string,
+  selectedRunId?: string,
+) {
   const db = await createServerSupabaseClient();
   const runs = await rows<MarketingExternalResearchRunRow>(
     db
@@ -196,6 +199,20 @@ export async function getExternalResearchHistory(organizationId: string) {
       .limit(50),
     "External research history could not be loaded.",
   );
+  if (
+    selectedRunId &&
+    /^[0-9a-f-]{36}$/i.test(selectedRunId) &&
+    !runs.some((run) => run.id === selectedRunId)
+  ) {
+    const selected = await db
+      .from("marketing_external_research_runs")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .eq("id", selectedRunId)
+      .maybeSingle();
+    if (selected.error) throw Error("Selected research could not load.");
+    if (selected.data) runs.push(selected.data);
+  }
   if (!runs.length) return { evidence: [], reports: [], runs, sources: [] };
   const runIds = runs.map((run) => run.id);
   const [sources, evidence, reports] = await Promise.all([
@@ -227,6 +244,36 @@ export async function getExternalResearchHistory(organizationId: string) {
     ),
   ]);
   return { evidence, reports, runs, sources };
+}
+
+/** Exact canonical opener, independent of list ordering/archive changes or row caps. */
+export async function includeSelectedMarketingRecord<T extends { id: string }>(
+  records: T[],
+  organizationId: string,
+  table:
+    | "marketing_campaigns"
+    | "marketing_reel_ideas"
+    | "marketing_research"
+    | "marketing_creative_briefs",
+  id?: string,
+) {
+  if (
+    !id ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      id,
+    ) ||
+    records.some((row) => row.id === id)
+  )
+    return records;
+  const db = await createServerSupabaseClient();
+  const result = await db
+    .from(table)
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("id", id)
+    .maybeSingle();
+  if (result.error) throw Error("Selected item could not load.");
+  return result.data ? [result.data as unknown as T, ...records] : records;
 }
 export async function listMarketingCreativeBriefs(
   organizationId: string,

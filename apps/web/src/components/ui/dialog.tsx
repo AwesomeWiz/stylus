@@ -13,6 +13,7 @@ interface DialogProps {
   title: string;
   mobileSheet?: boolean;
   className?: string;
+  onCloseAutoFocus?: (event: Event) => void;
 }
 
 export function Dialog({
@@ -23,12 +24,14 @@ export function Dialog({
   title,
   mobileSheet = false,
   className,
+  onCloseAutoFocus,
 }: DialogProps) {
   return (
     <DialogPrimitive.Root onOpenChange={onOpenChange} open={open}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/35" />
         <DialogPrimitive.Content
+          onCloseAutoFocus={onCloseAutoFocus}
           className={cn(
             "bg-background fixed z-50 max-h-[92dvh] overflow-y-auto border shadow-xl focus:outline-none",
             mobileSheet

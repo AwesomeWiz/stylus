@@ -21,6 +21,11 @@ export const builtInPluginRegistry = createPluginRegistry([
   marketingPluginWithServerlessJobs,
 ]);
 
+/** Server-only provider composition is loaded only at authorized data boundaries. */
+export async function getBoardEntityRegistry() {
+  return (await import("./board-entities")).boardEntityRegistry;
+}
+
 export function getApplicationNavigation(
   enabledPluginIds: Iterable<string>,
 ): NavigationGroup[] {

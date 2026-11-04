@@ -1,5 +1,23 @@
 # Boards V2 interaction and creative usability
 
+## Native Stylus entities (REDESIGN-005)
+
+2026-11-05 Â· PASS. Six initial reference card types and
+reviewed Task/Idea/manual Research Note conversions use a public Core registry and
+trusted plugin host. Cards preserve canonical identity, exact Evidence provenance
+and fresh tenant/role/plugin authority. Durable receipts recover creation/linking
+failures without duplicate targets. Source objects remain; no AI or Knowledge
+promotion occurs. Generic editor mechanics, typography/colors, voting and
+presentation architecture remain frozen. See [Native entities](NATIVE_ENTITIES.md)
+for contracts, lifecycle, privacy, openers and recovery. Three forward migrations
+are applied; all 42 ledger versions match. Full web: **227 files / 1,292 tests**;
+Board SQL: **246 assertions**. Hosted persistence/security/recovery, six canonical
+openers, four conversions, native manipulation/comments/reactions, existing
+voting/presentation and 16 responsive cases pass. Three production samples per
+fixture preserve 500-object responsiveness; all 50 native projections resolve in
+one batch without resolution Long Tasks. Exact fixtures/helpers are cleaned up.
+See PROJECT_STATE for measured timings and manual NVDA/other-engine limits.
+
 ## Voting, Section presentation and visual colors (REDESIGN-004.3.3)
 
 2026-11-04 · PASS. Full web **220 files / 1,266 tests**, lint, typecheck and

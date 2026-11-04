@@ -2,6 +2,23 @@
 
 # Current
 
+## REDESIGN-005 - Native Stylus entities in Boards
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Approved exact baseline `8236b471592023faf6aa3b0136344071f7c93bcf`, dedicated
+branch `codex/redesign-005-native-board-entities`. Public reference/provider/open/
+create contracts, six initial adapters, native UI and durable explicit conversion
+recovery are implemented. Three forward migrations are applied; all 42 ledger
+versions match. Hosted persistence/isolation/recovery, all six canonical openers,
+four conversions, native editor integrations and 16 responsive cases pass.
+Full web: **227 files / 1,292 tests**; actual SQL: **246 assertions**.
+Lint, worker/web typecheck, production web build and scoped delivery checks pass.
+Exact isolated records/accounts and helpers are cleaned up. Performance probes
+show no repeatable native-resolution regression; small-sample/NVDA/other-engine
+limits are explicit in PROJECT_STATE. No AI, automatic Knowledge promotion,
+generic editor redesign, subagents, merge or push. REDESIGN-006 remains unstarted.
+
 ## REDESIGN-004.3.3 — Voting, Section presentation and visual color picker
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

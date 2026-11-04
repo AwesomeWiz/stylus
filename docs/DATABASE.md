@@ -4,6 +4,14 @@ This document defines the initial conceptual data model.
 
 Exact schemas are introduced through migrations during implementation.
 
+REDESIGN-005 adds `ENTITY_CARD`, `board_entity_conversions`, nullable scoped
+`board_conversion_id` links on Tasks/Marketing Ideas/manual Notes, strict native
+reference validation and four public preparation/domain-creation RPCs. Receipts
+are own-creator/editor SELECT-only under RLS; creation plus receipt state commits
+atomically and Board linking recovers separately. Forward migrations preserve
+existing records; no canonical snapshot or business-record cascade on Board
+deletion is introduced. See [Native entities](NATIVE_ENTITIES.md).
+
 ---
 
 # Identity
