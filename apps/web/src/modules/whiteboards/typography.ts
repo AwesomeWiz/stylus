@@ -1,22 +1,146 @@
 import type { CSSProperties } from "react";
 import { z } from "zod";
 export const boardFonts = [
-  { id: "geist", label: "Geist", css: "var(--font-sans)", italic: false },
+  {
+    id: "geist",
+    label: "Geist",
+    group: "Sans serif",
+    css: "var(--font-sans)",
+    italic: false,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "manrope",
+    label: "Manrope",
+    group: "Sans serif",
+    css: '"Stylus Board Manrope", sans-serif',
+    italic: false,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "plus-jakarta-sans",
+    label: "Plus Jakarta Sans",
+    group: "Sans serif",
+    css: '"Stylus Board Plus Jakarta Sans", sans-serif',
+    italic: true,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "space-grotesk",
+    label: "Space Grotesk",
+    group: "Sans serif",
+    css: '"Stylus Board Space Grotesk", sans-serif',
+    italic: false,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "dm-sans",
+    label: "DM Sans",
+    group: "Sans serif",
+    css: '"Stylus Board DM Sans", sans-serif',
+    italic: true,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "sora",
+    label: "Sora",
+    group: "Sans serif",
+    css: '"Stylus Board Sora", sans-serif',
+    italic: false,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "outfit",
+    label: "Outfit",
+    group: "Sans serif",
+    css: '"Stylus Board Outfit", sans-serif',
+    italic: false,
+    weights: [400, 500, 600, 700],
+  },
   {
     id: "lora",
     label: "Lora",
+    group: "Serif",
     css: '"Stylus Board Lora", Georgia, serif',
     italic: true,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "fraunces",
+    label: "Fraunces",
+    group: "Serif",
+    css: '"Stylus Board Fraunces", Georgia, serif',
+    italic: true,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "libre-baskerville",
+    label: "Libre Baskerville",
+    group: "Serif",
+    css: '"Stylus Board Libre Baskerville", Georgia, serif',
+    italic: true,
+    weights: [400, 700],
+  },
+  {
+    id: "cormorant-garamond",
+    label: "Cormorant Garamond",
+    group: "Serif",
+    css: '"Stylus Board Cormorant Garamond", Georgia, serif',
+    italic: true,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "bebas-neue",
+    label: "Bebas Neue",
+    group: "Display",
+    css: '"Stylus Board Bebas Neue", sans-serif',
+    italic: false,
+    weights: [400],
+  },
+  {
+    id: "playfair-display",
+    label: "Playfair Display",
+    group: "Display",
+    css: '"Stylus Board Playfair Display", Georgia, serif',
+    italic: true,
+    weights: [400, 500, 600, 700],
   },
   {
     id: "geist-mono",
     label: "Geist Mono",
+    group: "Monospace",
     css: '"Stylus Board Mono", monospace',
     italic: false,
+    weights: [400, 500, 600, 700],
+  },
+  {
+    id: "jetbrains-mono",
+    label: "JetBrains Mono",
+    group: "Monospace",
+    css: '"Stylus Board JetBrains Mono", monospace',
+    italic: true,
+    weights: [400, 500, 600, 700],
   },
 ] as const;
+export type BoardFontId = (typeof boardFonts)[number]["id"];
+export function nearestBoardWeight(family: string, value: number) {
+  const weights: readonly number[] = (
+    boardFonts.find((f) => f.id === family) ?? boardFonts[0]
+  ).weights;
+  return weights.reduce((closest, weight) =>
+    Math.abs(weight - value) < Math.abs(closest - value) ? weight : closest,
+  );
+}
+export const boardFontOptions = boardFonts.map((font) => ({
+  value: font.id,
+  label: font.label,
+  group: font.group,
+  preview: font.id === "geist" ? '"Geist", sans-serif' : font.css,
+}));
 export const boardTypographySchema = z.object({
-  family: z.enum(["geist", "lora", "geist-mono"]),
+  family: z.enum(
+    boardFonts.map((f) => f.id) as [BoardFontId, ...BoardFontId[]],
+  ),
   weight: z.union([
     z.literal(400),
     z.literal(500),
@@ -55,7 +179,11 @@ export function boardTypography(style: Record<string, unknown>) {
     const parsed = boardTypographySchema.shape[key].safeParse(style[key]);
     if (parsed.success) Object.assign(value, { [key]: parsed.data });
   }
-  return boardTypographySchema.parse(value);
+  const parsed = boardTypographySchema.parse(value);
+  return {
+    ...parsed,
+    weight: nearestBoardWeight(parsed.family, parsed.weight),
+  };
 }
 export function boardTextStyle(style: Record<string, unknown>): CSSProperties {
   const text = boardTypography(style),

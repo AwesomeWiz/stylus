@@ -2,6 +2,24 @@
 
 # Current
 
+## REDESIGN-004.3.2 — Boards UI and input polish
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Continued from `9e678586dd34b87dcd1e8fcc0712fc8aad0ffd58` on the requested
+task branch. Fonts/Properties/controls, Group insertion/extraction, links,
+natural input and View polish are verified. Added Group-child drill-in preserves
+selection/Properties/Layers, locks and ownership. Native QA also corrected CSS
+frame layer order and Space-pan object dragging. Full web **211 files / 1,206
+tests**, lint/typecheck/production build and scoped final checks pass. Real
+authenticated input/persistence, two-theme six-width QA, 72-phase production
+comparison per build and targeted performance/font checks pass; measured limits
+remain documented. Exact hosted fixtures were removed and absence verified.
+Main agent only, sequential; no schema/dependency change, merge/push or
+REDESIGN-005. See PROJECT_STATE and docs/BOARDS.md.
+
+---
+
 ## REDESIGN-004.3.1 — Large Board performance hardening
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

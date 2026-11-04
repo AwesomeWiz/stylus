@@ -2,7 +2,7 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-004.3.1 COMPLETE / VERIFIED
+Status: REDESIGN-004.3.2 COMPLETE / VERIFIED
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -49,7 +49,13 @@ thread resolution and local search/Section focus. Its two forward migrations and
 real authenticated tests pass; all task fixtures are removed. Large-document
 latency/payload and manual NVDA/additional engines remain explicit limits. Voting,
 presentation, native integrations and AI remain deferred. Later follow-up tasks
-are not started. See
+are not started. REDESIGN-004.3.2 polishes Board Properties, the licensed local
+15-font library, custom colors/controls, Group layer insertion/extraction,
+canvas child drill-in, links and natural input. Authenticated persistence,
+responsive/keyboard/font-network checks, production regression comparison and
+full web 211 files / 1,206 tests pass. All exact fixtures/helpers are cleaned up;
+no schema change or new workflow scope is introduced. Manual NVDA/other engines
+and measured initial-render/large-selection costs remain explicit limits. See
 [V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) for scope, dependency
 order, security invariants and acceptance. Earlier product milestones below
 remain historical; no existing feature or hosted QA requirement is removed.

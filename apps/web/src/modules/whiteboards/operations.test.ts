@@ -7,6 +7,7 @@ import {
   distributeObjects,
   duplicateObjects,
   groupObjects,
+  indexBoardObjects,
   isObjectLocked,
   layerObjects,
   matchObjectSize,
@@ -18,6 +19,28 @@ import { boardOperationSchema } from "./schemas";
 import { boardTemplates, initializeTemplate } from "./templates";
 
 describe("Board V2 operations", () => {
+  it("projects negative persisted layers to valid integer CSS order behind owned children", () => {
+    const section = object({ element_type: "SECTION", z_index: 30 });
+    const group = object({
+      element_type: "GROUP",
+      parent_id: section.id,
+      z_index: 20,
+    });
+    const child = object({ parent_id: group.id, z_index: -333336 });
+    const top = object({ parent_id: group.id, z_index: -333335 });
+    const outside = object({ z_index: 50 });
+    const rows = [section, group, child, top, outside];
+    const { layers } = indexBoardObjects(rows);
+    expect(
+      [...layers.values()].every((z) => Number.isInteger(z) && z > 0),
+    ).toBe(true);
+    expect(layers.get(section.id)).toBeLessThan(layers.get(group.id)!);
+    expect(layers.get(group.id)).toBeLessThan(layers.get(child.id)!);
+    expect(layers.get(child.id)).toBeLessThan(layers.get(top.id)!);
+    expect(layers.get(top.id)).toBeLessThan(layers.get(outside.id)!);
+    expect(child.z_index).toBe(-333336);
+    expect(group.z_index).toBe(20);
+  });
   it("moves a Section, its Group and nested children exactly once", () => {
     const section = object({
         element_type: "SECTION",

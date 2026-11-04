@@ -4,6 +4,13 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Polished Board Properties with 15 licensed local fonts, searchable family and
+  supported-weight pickers, numeric presets/custom values, contextual Appearance
+  and exact HEX colors. Added direct Group-child drill-in with synchronized
+  Layers/Properties, Group layer insertion/extraction, safe bare-domain links,
+  natural wheel panning and consistent keyboard/outside dismissal for View and
+  property popovers. Existing locks, atomic persistence and local history remain.
+
 - Hardened large Boards with stable node callbacks, indexed/memoized Layers and
   search, retained sidebar trees, offscreen rendering containment and cheaper
   text-style defaults. Supplied typography still validates; save-time gestures

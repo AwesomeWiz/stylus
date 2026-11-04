@@ -13,6 +13,11 @@ import { BoardPropertyField } from "./board-property-field";
 import { BoardArrangeControls } from "./board-arrange-controls";
 import { shapeChoices } from "./whiteboard-toolbar";
 import { BoardTypography } from "./board-typography";
+import { BoardSelect } from "./board-select";
+import {
+  normalizeBoardLinkInput,
+  boardLinkInputError,
+} from "@/modules/whiteboards/link-input";
 export type SelectionAction =
   | "GROUP"
   | "UNGROUP"
@@ -75,15 +80,28 @@ export function BoardInspector({
         label={label}
         value={String(row.content[key] ?? "")}
         multiline={multiline}
+        validate={
+          row.element_type === "LINK" && key === "url"
+            ? (value) => boardLinkInputError(String(value))
+            : undefined
+        }
         disabled={disabled || locked}
         onCommit={(value) =>
-          update({ content: { ...row.content, [key]: value } })
+          update({
+            content: {
+              ...row.content,
+              [key]:
+                row.element_type === "LINK" && key === "url"
+                  ? normalizeBoardLinkInput(String(value))
+                  : value,
+            },
+          })
         }
       />
     );
   }
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 [&>fieldset]:border-t [&>fieldset]:pt-4">
       <p className="text-muted-foreground text-xs">
         {selection.length} selected{!canMutate ? " · Read only" : ""}
       </p>
@@ -242,23 +260,18 @@ export function BoardInspector({
               {field("alt", "Image description")}
               {field("caption", "Caption", true)}
               {field("sourceUrl", "Source URL")}
-              <label className="block text-xs">
-                Fit
-                <select
-                  aria-label="Image fit"
-                  className="bg-background mt-1 h-10 w-full rounded border px-2"
-                  value={String(row.style.objectFit ?? "contain")}
-                  disabled={disabled || locked}
-                  onChange={(e) =>
-                    void update({
-                      style: { ...row.style, objectFit: e.target.value },
-                    })
-                  }
-                >
-                  <option value="contain">Contain</option>
-                  <option value="cover">Cover</option>
-                </select>
-              </label>
+              <BoardSelect
+                label="Image fit"
+                value={String(row.style.objectFit ?? "contain")}
+                disabled={disabled || locked}
+                options={[
+                  { value: "contain", label: "Contain" },
+                  { value: "cover", label: "Cover" },
+                ]}
+                onChange={(objectFit) =>
+                  void update({ style: { ...row.style, objectFit } })
+                }
+              />
               <label className="flex min-h-10 items-center gap-2 text-xs">
                 <input
                   type="checkbox"
@@ -308,33 +321,24 @@ export function BoardInspector({
             </fieldset>
           ) : null}
           {row.element_type === "SHAPE" ? (
-            <label className="block text-xs">
-              Shape
-              <select
-                aria-label="Shape"
-                className="bg-background mt-1 h-10 w-full rounded border px-2"
-                value={String(row.content.shape ?? "rectangle")}
-                disabled={disabled || locked}
-                onChange={(e) =>
-                  void update({
-                    content: { ...row.content, shape: e.target.value },
-                  })
-                }
-              >
-                {shapeChoices
+            <BoardSelect
+              label="Shape"
+              value={String(row.content.shape ?? "rectangle")}
+              disabled={disabled || locked}
+              options={[
+                ...shapeChoices
                   .filter(([v]) => !["line", "arrow"].includes(v))
-                  .map(([v, label]) => (
-                    <option key={v} value={v}>
-                      {label}
-                    </option>
-                  ))}
-                {row.content.shape === "ellipse" ? (
-                  <option value="ellipse">Ellipse</option>
-                ) : null}
-              </select>
-            </label>
+                  .map(([value, label]) => ({ value, label })),
+                ...(row.content.shape === "ellipse"
+                  ? [{ value: "ellipse", label: "Ellipse" }]
+                  : []),
+              ]}
+              onChange={(shape) =>
+                void update({ content: { ...row.content, shape } })
+              }
+            />
           ) : null}
-          {["TEXT", "STICKY", "SHAPE", "ARROW"].includes(row.element_type) ? (
+          {["STICKY", "SHAPE", "ARROW"].includes(row.element_type) ? (
             <fieldset>
               <legend className="mb-2 text-xs font-medium">Appearance</legend>
               <WhiteboardInspector
@@ -371,25 +375,18 @@ export function BoardInspector({
             </Button>
           ) : null}
           {membership ? (
-            <label className="block text-xs font-medium">
-              Move to section
-              <select
-                aria-label="Move to section"
-                className="bg-background mt-2 h-10 w-full rounded border px-2"
-                disabled={busy}
-                value={row?.parent_id ?? ""}
-                onChange={(e) => onMembership(e.target.value || null)}
-              >
-                <option value="">Loose objects</option>
-                {rows
+            <BoardSelect
+              label="Move to section"
+              disabled={busy}
+              value={row?.parent_id ?? ""}
+              options={[
+                { value: "", label: "Loose objects" },
+                ...rows
                   .filter((r) => r.element_type === "SECTION" && !r.locked)
-                  .map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {objectTitle(r)}
-                    </option>
-                  ))}
-              </select>
-            </label>
+                  .map((r) => ({ value: r.id, label: objectTitle(r) })),
+              ]}
+              onChange={(value) => onMembership(value || null)}
+            />
           ) : null}
         </>
       ) : null}

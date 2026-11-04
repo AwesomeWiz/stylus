@@ -56,6 +56,10 @@ import type { SelectionAction } from "./board-inspector";
 import type { useBoardDocument } from "./use-board-document";
 import type { useBoardCollaboration } from "./use-board-collaboration";
 import { useBoardEvent } from "./use-board-event";
+import {
+  selectedGroupContext,
+  canvasSelectionTarget,
+} from "@/modules/whiteboards/canvas-selection";
 type FlowProps = ReactFlowProps<WhiteboardFlowNode>;
 const nodeTypes = { whiteboard: WhiteboardNode };
 const noReactions: BoardReactionSummary[] = [];
@@ -267,6 +271,37 @@ export function BoardCanvas({
     () => objectIndex ?? indexBoardObjects(rows),
     [objectIndex, rows],
   );
+  const groupContext = selectedGroupContext(structure, selected);
+  const doubleClickStart = useRef<{ id: string; active: boolean } | null>(null);
+  const activateText = useBoardEvent((id: string) => {
+    const group = (structure.parents.get(id) ?? []).find(
+      (row) => row.element_type === "GROUP",
+    );
+    if (
+      group &&
+      !(
+        groupContext === group.id &&
+        selected.length === 1 &&
+        selected[0] === id
+      )
+    ) {
+      onSelection([id]);
+      return false;
+    }
+    return true;
+  });
+  const exitGroup = useBoardEvent((id: string) => {
+    const group = (structure.parents.get(id) ?? []).find(
+      (row) => row.element_type === "GROUP",
+    );
+    if (group) onSelection([group.id]);
+  });
+  const canOpenLink = useBoardEvent((id: string) => {
+    const group = (structure.parents.get(id) ?? []).find(
+      (row) => row.element_type === "GROUP",
+    );
+    return !group || (groupContext === group.id && selected.includes(id));
+  });
   const handleResizePreview = useCallback(
     (
       id: string,
@@ -356,8 +391,11 @@ export function BoardCanvas({
           draggable:
             canMutate &&
             tool === "SELECT" &&
+            !spacePan &&
             !structure.immovable.has(row.id) &&
-            (!grouped || chosen.has(grouped.id)),
+            (!grouped ||
+              chosen.has(grouped.id) ||
+              (groupContext === grouped.id && selectedIds.has(row.id))),
           zIndex: structure.layers.get(row.id),
           style: { width: row.width, height: row.height },
           width: row.width,
@@ -384,6 +422,9 @@ export function BoardCanvas({
             imageUrl: imageUrl(row),
             onImageRetry: retryImage,
             onContentCommit,
+            onTextActivate: activateText,
+            onTextEscape: exitGroup,
+            onLinkActivate: canOpenLink,
             onResizeCommit,
             onResizePreview: handleResizePreview,
             isBusy,
@@ -409,6 +450,7 @@ export function BoardCanvas({
       highlighted,
       canMutate,
       tool,
+      spacePan,
       commentCounts,
       onObjectComment,
       byReaction,
@@ -418,6 +460,10 @@ export function BoardCanvas({
       imageUrl,
       retryImage,
       onContentCommit,
+      activateText,
+      exitGroup,
+      canOpenLink,
+      groupContext,
       onResizeCommit,
     ],
   );
@@ -440,7 +486,7 @@ export function BoardCanvas({
     );
     onContext(
       event,
-      group?.id ?? node.id,
+      group && groupContext !== group.id ? group.id : node.id,
       flow.current?.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -452,17 +498,26 @@ export function BoardCanvas({
     void
   >((event, node) => {
     if (tool === "SELECT") {
-      const group = (structure.parents.get(node.id) ?? []).find(
-        (row) => row.element_type === "GROUP",
+      if (event.detail !== 2)
+        doubleClickStart.current = {
+          id: node.id,
+          active:
+            selected.length === 1 && selected[0] === node.id && !!groupContext,
+        };
+      const target = canvasSelectionTarget(
+        structure,
+        selected,
+        node.id,
+        event.shiftKey,
       );
-      select(group?.id ?? node.id, event.shiftKey);
+      select(target.id, target.additive);
     }
   });
   const handleNodeDragStart = useBoardEvent<
     Parameters<NonNullable<FlowProps["onNodeDragStart"]>>,
     void
   >((event, node) => {
-    if (!editable || isBusy()) return;
+    if (!editable || isBusy() || spacePan || tool !== "SELECT") return;
     setManipulating(true);
     const original = getRows(),
       immovable = indexBoardObjects(original).immovable,
@@ -727,7 +782,7 @@ export function BoardCanvas({
       setTool("SELECT");
       setSpacePan(false);
       onPanel(null);
-      onSelection([]);
+      onSelection(groupContext ? [groupContext] : []);
       return;
     }
     if (event.key === " ") {
@@ -738,7 +793,16 @@ export function BoardCanvas({
     if (event.key === "Enter") {
       event.preventDefault();
       if (tool !== "SELECT" && tool !== "PAN") insert(center());
-      else if (selected.length) onPanel("INSPECTOR");
+      else if (
+        selected.length === 1 &&
+        structure.byId.get(selected[0]!)?.element_type === "GROUP"
+      ) {
+        const child = [...(structure.children.get(selected[0]!) ?? [])].sort(
+          (a, b) => b.z_index - a.z_index || a.id.localeCompare(b.id),
+        )[0];
+        if (child) onSelection([child.id]);
+        else onPanel("INSPECTOR");
+      } else if (selected.length) onPanel("INSPECTOR");
       return;
     }
     if (
@@ -796,7 +860,38 @@ export function BoardCanvas({
       aria-label="Board canvas"
       className="focus-visible:ring-primary relative min-h-0 flex-1 outline-none focus-visible:ring-2 focus-visible:ring-inset"
       id="board-canvas"
-      onBlur={() => setSpacePan(false)}
+      onDoubleClickCapture={(event) => {
+        if (
+          tool !== "SELECT" ||
+          (event.target as Element).closest(
+            "input,textarea,select,button,summary,[data-board-popup]",
+          )
+        )
+          return;
+        const id = (event.target as Element).closest<HTMLElement>(
+          ".react-flow__node",
+        )?.dataset.id;
+        if (
+          !id ||
+          !(structure.parents.get(id) ?? []).some(
+            (row) => row.element_type === "GROUP",
+          )
+        )
+          return;
+        // The browser's hit target already resolves visible z-order, including overlaps.
+        if (
+          doubleClickStart.current?.id !== id ||
+          !doubleClickStart.current.active
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          onSelection([id]);
+        }
+      }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget))
+          setSpacePan(false);
+      }}
       onPointerDownCapture={(event) => {
         handlePendingPointer(event);
         if (event.defaultPrevented) return;
@@ -900,6 +995,12 @@ export function BoardCanvas({
         nodesDraggable={canMutate && tool === "SELECT" && !spacePan}
         elementsSelectable={tool === "SELECT" && !spacePan}
         panOnDrag={tool === "PAN" || spacePan ? [0, 1, 2] : [1, 2]}
+        panOnScroll
+        panOnScrollSpeed={1}
+        zoomOnScroll={false}
+        zoomOnPinch
+        zoomActivationKeyCode={["Control", "Meta"]}
+        zoomOnDoubleClick={false}
         selectionOnDrag={tool === "SELECT" && !spacePan}
         selectionKeyCode={null}
         selectNodesOnDrag={false}

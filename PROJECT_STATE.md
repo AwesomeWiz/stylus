@@ -4,6 +4,98 @@ Last Updated: 2026-11-04
 
 ## Overall Status
 
+REDESIGN-004.3.2 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-004.3.2 — Boards UI and input polish
+
+Branch `codex/redesign-004-3-2-boards-ui-polish` starts clean at
+`9e678586dd34b87dcd1e8fcc0712fc8aad0ffd58`, in its own matching worktree.
+Main agent only; original checkout and other worktrees preserved. The continuation
+brief adds direct Group-child drill-in; all original requirements remain in scope.
+No schema change, REDESIGN-005, AI/native cards, merge or push is authorized here.
+
+Implemented and verified: 15 local OFL Board families (12 added
+from official Google Fonts with license/source/hash records), categorized search,
+supported weight selection, editable numeric presets and compact exact-HEX color
+controls. Board-local overlay controls replace native Properties selects and
+the persistent View details menu. Properties uses a 320px desktop dock and hides
+empty Text Appearance. Bare-domain input normalizes at the user input boundary;
+strict stored/action URL validation remains and malformed URLs fail safely.
+
+Layers accepts valid Group insertion/extraction using existing parent identities
+and atomic operations, with indexed destination checks and explicit no-drop/
+Group/Section/reorder feedback. Natural wheel/touchpad panning and modified zoom
+use existing React Flow input paths. Group context derives from canonical
+selection: single click targets the Group; double-click targets the actual hit
+child without entering text edit; a subsequent intended double-click edits text.
+Escape returns to parent; sibling Shift selection, Layers expansion, child
+Properties and inherited locks remain synchronized. Selection does not save.
+
+Relevant verification: 45 Board files passed; the remaining new drop-cue file
+passed its focused rerun after fixing JSDOM's synthetic DragEvent coordinates
+(46 files / 279 tests in aggregate before two final regressions). Negative layer
+projection and Space-pan regressions pass focused operation/Group tests. Existing
+assertions for replaced native controls/old prohibited extraction now exercise
+the approved behavior; security/persistence assertions remain. Web lint with zero
+warnings, typecheck and the final production build pass. The single final full
+web run passes **211 files / 1,206 tests** with one worker and no file parallelism
+(726.78s); no skipped/weakened assertions or timeout changes. This includes all
+46 Board files / 281 tests after the two final regressions. Scoped formatting,
+local-link, secret/artifact, scope and diff checks pass. The requested commit is
+`fix: polish Board properties and canvas input`; no merge/push or REDESIGN-005.
+
+Authenticated production checks pass: all five Group child types, native topmost
+overlap, sibling Shift selection, inherited locks, first versus subsequent text
+double-click, no selection writes, actual text/geometry edits and reload with
+ownership intact. Native HTML5 Layer drag inserts/extracts; Group bounds expand
+without translating old children. Custom Text/Sticky/Shape colors, four normalized
+link edits with unchanged title, invalid-scheme rejection, numeric preset/custom/
+Escape/validation, View dismissal/navigation and font request checks pass. The
+12-case light/dark 390/768/1024/1200/1440/1920 Properties matrix passes, including
+paired control geometry, popup bounds and modal focus/Tab behavior. Native child
+drag/resize, Shift-wheel, Space/H panning without writes, panel wheel isolation
+and custom-color outside-blur saving pass on the final build.
+
+Native QA found two corrected input defects: invalid fractional CSS frame layers
+could intercept negatively ordered children; render-only integer projection
+fixes the hit target. Space-pan could start an object drag; temporary draggability
+and a committed-event guard now prevent it. Neither fix changes persistence or
+the hierarchy schema.
+
+Performance: ordinary production before/final runs complete all 72 phases each
+across identical 200/300/500 fixtures, with zero browser exceptions. First-node
+times are 1420/1435/1756ms before and 1472/1455/1658ms final. Single phase samples
+vary (including four 59–68ms final 500-object marquee tasks); no general speedup,
+p95 or latency SLA is claimed. Five matched empty-pane marquee runs per build
+select 92 objects and write zero operations: nine total Long Tasks/max86ms before,
+eight/max75ms after. Seven Layers collapse/expand trials per build record one
+task each (136ms before, 99ms after); seven native Group drill-ins have zero Long
+Tasks and retain mounted node DOM identity. The comparison found no new
+repeatable interaction regression. Font browsing requests zero unused faces;
+five representative selections request exactly those five local files, and a
+Geist-only 500-object board requests zero Board font files. Details/limits are
+in [Boards](docs/BOARDS.md).
+
+Temporary helpers/artifacts live in ignored `.next/cache/redesign-004-3-2-qa`.
+Authenticated QA used two isolated task accounts, one organization, four boards
+(200/300/500 mixed objects plus a 14-object interaction fixture), seven private
+assets and three comments. All were removed and absence verified, including
+1,014 elements. Only checked task-owned Next helpers on 3345/3346 and task-profile
+Chrome 9345 were stopped. Exact inventory/credentials/artifacts remain ignored;
+no unrelated records or helpers were touched. Optional
+font/color recents are omitted to keep this a finishing pass. Do not rerun the
+download codemods or reset this worktree during continuation.
+
+Limits: manual NVDA, physical touchpad feel and additional browser engines are
+not claimed. Chrome native input/keyboard and responsive/modal checks pass.
+Large initial-render/selection costs remain measured; small local samples are
+not a p95, broad speedup claim or production SLA. Database schema/configuration,
+dependencies, auth and other product areas are unchanged. Hosted writes were
+isolated QA only and fully cleaned up. Ready for a separately approved
+REDESIGN-005; no future feature was started.
+
+## Previous verified milestone
+
 REDESIGN-004.3.1 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
 
 ## REDESIGN-004.3.1 — Large Board performance hardening

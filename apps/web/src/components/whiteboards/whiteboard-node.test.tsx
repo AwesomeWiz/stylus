@@ -74,6 +74,15 @@ function nodeData(overrides: Partial<WhiteboardNodeData> = {}) {
 }
 
 describe("WhiteboardNode", () => {
+  it("does not arm text editing through a lock and open it later on unlock", () => {
+    const data = nodeData({ canMutate: false });
+    const view = render(<WhiteboardNode {...props(data)} />);
+    fireEvent.doubleClick(screen.getByLabelText("Sticky note: Original"));
+    view.rerender(<WhiteboardNode {...props({ ...data, canMutate: true })} />);
+    expect(
+      screen.queryByRole("textbox", { name: "Edit sticky note" }),
+    ).not.toBeInTheDocument();
+  });
   it("does not draw independent selection controls for a selected container descendant", () => {
     const { container } = render(
       <WhiteboardNode {...props(nodeData({ selectionRoot: false }))} />,

@@ -1112,3 +1112,26 @@ removed from focus/accessibility navigation. Existing account/organization/Board
 keys discard these local projections. No new shared cache, data model, migration,
 authorization shortcut or AI/memory operation is introduced. Measurements and
 remaining initial-render/marquee costs are documented in [Boards](BOARDS.md).
+
+## ADR-048 — Board content controls and Group selection context
+
+Date: 2026-11-04. Status: Accepted for REDESIGN-004.3.2.
+
+Extend the existing bounded Board style schema and local font-face assets rather
+than add a font package, runtime CDN or global typography change. The curated
+registry owns categories and real supported weights. Picker previews only use
+already-loaded faces. Shared Board-local popovers stay inside an enclosing
+modal's focus boundary and provide consistent keyboard/outside dismissal.
+
+Group drill-in is derived from canonical selected IDs and the existing ownership
+index, not persisted or stored in a second object model. First double-click
+selects a browser-hit child; later text activation edits it. Keep native z-order,
+stable node/event identities, inherited locks and keyboard Layers access. Group
+insertion uses the existing atomic operation and expands bounds without changing
+child world coordinates. No hierarchy migration, authorization shortcut, shared
+cache, AI execution or memory promotion is introduced.
+
+Project quarter-step frame offsets to positive integer CSS layers in the same
+index. Browsers reject fractional z-index; leaving those frames at `auto` can
+intercept children after a negative persisted reorder. Keep persisted layer
+values unchanged and verify both ordered projection and native pointer editing.

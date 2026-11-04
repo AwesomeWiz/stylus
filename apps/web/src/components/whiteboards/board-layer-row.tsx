@@ -60,6 +60,7 @@ type Props = {
   renaming: boolean;
   draft: string;
   place: LayerDrop | null;
+  dropError?: string | null;
   canUpdate: boolean;
   canDrop: boolean;
   hasContext: boolean;
@@ -78,6 +79,7 @@ export const BoardLayerRow = memo(function BoardLayerRow({
   renaming,
   draft,
   place,
+  dropError,
   canUpdate,
   canDrop,
   hasContext,
@@ -101,7 +103,18 @@ export const BoardLayerRow = memo(function BoardLayerRow({
       aria-label={`${row.element_type.toLowerCase()} ${objectTitle(row)}${row.locked ? ", locked" : ""}${childChosen ? ", selected child" : ""}`}
       tabIndex={tabStop ? 0 : -1}
       data-layer-id={row.id}
-      className={`group/layer relative flex min-h-10 items-center gap-1 rounded px-1 outline-offset-[-2px] ${ownSelected ? "bg-primary-subtle" : parentChosen ? "bg-muted/60" : "hover:bg-muted/50"} ${place === "inside" ? "ring-primary ring-2 ring-inset" : ""}`}
+      data-drop-kind={
+        dropError
+          ? "rejected"
+          : place === "inside"
+            ? row.element_type === "GROUP"
+              ? "group"
+              : "section"
+            : place
+              ? "reorder"
+              : undefined
+      }
+      className={`group/layer relative flex min-h-10 items-center gap-1 rounded px-1 outline-offset-[-2px] ${ownSelected ? "bg-primary-subtle" : parentChosen ? "bg-muted/60" : "hover:bg-muted/50"} ${dropError ? "ring-destructive ring-2 ring-inset" : place === "inside" ? "ring-primary ring-2 ring-inset" : ""}`}
       onFocus={() => events.onFocus(row.id)}
       onMouseEnter={() => events.onHover(row.id)}
       onMouseLeave={() => events.onHover(null)}
@@ -124,11 +137,19 @@ export const BoardLayerRow = memo(function BoardLayerRow({
       onDragOver={(event) => events.onDragOver(row.id, event)}
       onDrop={(event) => events.onDrop(row.id, event)}
     >
-      {place === "before" || place === "after" ? (
+      {!dropError && (place === "before" || place === "after") ? (
         <span
           aria-hidden
           className={`bg-primary pointer-events-none absolute inset-x-0 h-0.5 ${place === "before" ? "top-0" : "bottom-0"}`}
         />
+      ) : null}
+      {place === "inside" || dropError ? (
+        <span className="bg-popover absolute right-1 -bottom-3 z-10 max-w-48 truncate rounded border px-1 text-[10px]">
+          {dropError ??
+            (row.element_type === "GROUP"
+              ? "Add to Group"
+              : "Move into Section")}
+        </span>
       ) : null}
       {container ? (
         <button

@@ -2,6 +2,35 @@ import { describe, it, expect } from "vitest";
 import { object } from "@/test/board-fixtures";
 import { dropLayer, layerNamePatch } from "./layers";
 describe("atomic layer manipulation", () => {
+  it("adds ordinary objects to an existing Group and extracts to its Section with exact geometry", () => {
+    const section = object({ element_type: "SECTION" }),
+      group = object({ element_type: "GROUP", parent_id: section.id }),
+      existing = object({ parent_id: group.id }),
+      loose = object({ x: 123.5, y: 77.25, parent_id: section.id, z_index: 5 });
+    const rows = [section, group, existing, loose],
+      added = dropLayer(rows, loose.id, group.id, "inside");
+    expect(added.find((r) => r.id === loose.id)).toMatchObject({
+      id: loose.id,
+      parent_id: group.id,
+      x: 123.5,
+      y: 77.25,
+    });
+    const out = dropLayer(added, loose.id, group.id, "before");
+    expect(out.find((r) => r.id === loose.id)).toMatchObject({
+      parent_id: section.id,
+      x: 123.5,
+      y: 77.25,
+    });
+    expect(existing.parent_id).toBe(group.id);
+    expect(loose.parent_id).toBe(section.id);
+    expect(() => dropLayer(rows, group.id, existing.id, "inside")).toThrow(
+      /itself/,
+    );
+    const other = object({ element_type: "GROUP" });
+    expect(() =>
+      dropLayer([...rows, other], group.id, other.id, "inside"),
+    ).toThrow(/Groups cannot/);
+  });
   it("reorders a layer above/below a neighbor while retaining world geometry", () => {
     const a = object({ z_index: 1 }),
       b = object({ z_index: 2 }),
@@ -43,15 +72,15 @@ describe("atomic layer manipulation", () => {
     expect(next[2]!.parent_id).toBe(group.id);
     expect(next[2]!.x).toBe(child.x);
   });
-  it("rejects partial Group reparenting, nested Sections, self/cycles and locks without mutating input", () => {
+  it("allows Group extraction but rejects nested Sections, self/cycles and locks without mutating input", () => {
     const group = object({ element_type: "GROUP" }),
       child = object({ parent_id: group.id }),
       section = object({ element_type: "SECTION" }),
       locked = object({ locked: true });
     const rows = [group, child, section, locked];
-    expect(() => dropLayer(rows, child.id, null, "root")).toThrow(
-      /whole Group/,
-    );
+    expect(
+      dropLayer(rows, child.id, null, "root").find((r) => r.id === child.id),
+    ).toMatchObject({ parent_id: null, x: child.x, y: child.y });
     expect(() => dropLayer(rows, section.id, group.id, "inside")).toThrow(
       /Sections/,
     );

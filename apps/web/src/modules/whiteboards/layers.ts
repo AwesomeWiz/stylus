@@ -67,11 +67,75 @@ export function visibleBoardLayers(
 }
 import {
   ancestors,
-  assignSection,
   canMoveObject,
   expandedIds,
+  indexBoardObjects,
+  type BoardObjectIndex,
+  objectBounds,
 } from "./operations";
 export type LayerDrop = "before" | "after" | "inside" | "root";
+
+/** Indexed hover validation; no full-board operation or mutation on pointer frames. */
+export function layerDropProblem(
+  index: BoardObjectIndex,
+  sourceId: string,
+  targetId: string | null,
+  place: LayerDrop,
+) {
+  const source = index.byId.get(sourceId),
+    target = targetId ? index.byId.get(targetId) : undefined;
+  if (!source || index.immovable.has(sourceId))
+    return "Unlock the layer and its children first.";
+  if (
+    targetId &&
+    (!target ||
+      targetId === sourceId ||
+      (index.parents.get(targetId) ?? []).some((r) => r.id === sourceId))
+  )
+    return "A layer cannot be dropped into itself or its children.";
+  const parentId =
+    place === "root"
+      ? null
+      : place === "inside"
+        ? targetId
+        : (target?.parent_id ?? null);
+  const parent = parentId ? index.byId.get(parentId) : undefined;
+  if (
+    parentId &&
+    (!parent ||
+      !["SECTION", "GROUP"].includes(parent.element_type) ||
+      index.immovable.has(parentId))
+  )
+    return "Choose an unlocked Group or Section.";
+  if (source.element_type === "SECTION" && parentId)
+    return "Sections cannot nest.";
+  if (
+    source.element_type === "GROUP" &&
+    parent &&
+    parent.element_type !== "SECTION"
+  )
+    return "Groups cannot contain other Groups.";
+  if (place === "inside" && !parent) return "Drop into a Group or Section.";
+  if (parent?.element_type === "GROUP" && source.parent_id !== parent.id) {
+    const bounds = objectBounds([parent, source]);
+    if (bounds.width > 10000 || bounds.height > 10000)
+      return "Move the object closer; this Group would exceed its maximum size.";
+  }
+  const oldAncestors = new Set(
+    (index.parents.get(sourceId) ?? []).map((r) => r.id),
+  );
+  const moving = 1 + (index.descendantCounts.get(sourceId) ?? 0);
+  for (const container of parent
+    ? [parent, ...(index.parents.get(parent.id) ?? [])]
+    : []) {
+    if (
+      !oldAncestors.has(container.id) &&
+      (index.descendantCounts.get(container.id) ?? 0) + moving > 199
+    )
+      return "A container supports at most 199 descendants.";
+  }
+  return null;
+}
 
 /** One bounded operation; coordinates and child identities never change. */
 export function dropLayer(
@@ -82,6 +146,13 @@ export function dropLayer(
 ) {
   const source = rows.find((r) => r.id === sourceId),
     target = rows.find((r) => r.id === targetId);
+  const problem = layerDropProblem(
+    indexBoardObjects(rows),
+    sourceId,
+    targetId,
+    place,
+  );
+  if (problem) throw Error(problem);
   if (!source || !canMoveObject(source, rows))
     throw Error("Unlock the layer and its children first.");
   const movingIds = expandedIds(rows, [sourceId]);
@@ -104,16 +175,27 @@ export function dropLayer(
     parent.element_type !== "SECTION"
   )
     throw Error("Groups cannot contain other Groups.");
-  const currentParent = rows.find((r) => r.id === source.parent_id);
-  if (currentParent?.element_type === "GROUP" && parentId !== source.parent_id)
-    throw Error("Move the whole Group or ungroup it first.");
-  if (parent?.element_type === "GROUP" && source.parent_id !== parent.id)
-    throw Error("Use Group selection to create group membership.");
   if (place === "inside" && !parent)
     throw Error("Drop into a Section or an existing Group.");
   let next = rows;
   if (parentId !== (source.parent_id ?? null))
-    next = assignSection(rows, [sourceId], parentId);
+    next = rows.map((row) =>
+      row.id === sourceId ? { ...row, parent_id: parentId } : row,
+    );
+  if (parent?.element_type === "GROUP" && parentId !== source.parent_id) {
+    // Union only expands bounds: changed dimensions avoid the database's
+    // container-translation rule and preserve every child's world coordinates.
+    const bounds = objectBounds([parent, source]);
+    if (
+      bounds.x !== parent.x ||
+      bounds.y !== parent.y ||
+      bounds.width !== parent.width ||
+      bounds.height !== parent.height
+    )
+      next = next.map((row) =>
+        row.id === parent.id ? { ...row, ...bounds } : row,
+      );
+  }
   const ordered = [...next].sort(
     (a, b) => a.z_index - b.z_index || a.id.localeCompare(b.id),
   );

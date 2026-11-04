@@ -19,3 +19,151 @@
   font-display: swap;
   src: url("/fonts/boards/geist-mono.woff2") format("woff2");
 }
+
+@font-face {
+  font-family: "Stylus Board Manrope";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/manrope.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Plus Jakarta Sans";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/plus-jakarta-sans-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/plus-jakarta-sans.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Space Grotesk";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/space-grotesk.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board DM Sans";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/dm-sans-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board DM Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/dm-sans.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Sora";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/sora.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Outfit";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/outfit.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Fraunces";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/fraunces-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Fraunces";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/fraunces.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Libre Baskerville";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/boards/libre-baskerville-italic-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Libre Baskerville";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/boards/libre-baskerville-italic-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Libre Baskerville";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/boards/libre-baskerville-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Libre Baskerville";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/boards/libre-baskerville-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Cormorant Garamond";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/cormorant-garamond-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Cormorant Garamond";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/cormorant-garamond.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Bebas Neue";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/boards/bebas-neue.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Playfair Display";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/playfair-display-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Playfair Display";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/playfair-display.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board JetBrains Mono";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/jetbrains-mono-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/jetbrains-mono.woff2") format("woff2");
+}

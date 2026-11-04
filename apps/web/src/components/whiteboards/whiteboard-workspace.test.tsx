@@ -458,7 +458,12 @@ describe("Boards V2 workspace", () => {
   it("saves contextual formatting and makes it undoable", async () => {
     mount();
     inspect();
-    fireEvent.click(screen.getByRole("button", { name: "Blue sticky" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Sticky fill: #fef3c7" }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Sticky fill: #dbeafe" }),
+    );
     expect(
       screen.queryByRole("button", { name: "Save object" }),
     ).not.toBeInTheDocument();
@@ -644,7 +649,7 @@ describe("Boards V2 workspace", () => {
     expect(screen.getByLabelText("Zoom level")).toHaveTextContent("75%");
     expect(mocks.operation).not.toHaveBeenCalled();
   });
-  it("fits an explicit selection, exposes optional minimap, and keeps zoom read-only-safe", () => {
+  it("fits an explicit selection, exposes optional minimap, and keeps zoom read-only-safe", async () => {
     mount([sticky], false);
     fireEvent.click(screen.getByRole("button", { name: "Select first" }));
     mocks.fit.mockClear();
@@ -658,11 +663,10 @@ describe("Boards V2 workspace", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
     expect(mocks.zoom).toHaveBeenCalled();
-    screen
-      .getByLabelText("View menu")
-      .closest("details")
-      ?.setAttribute("open", "");
-    fireEvent.click(screen.getByRole("button", { name: "Show minimap" }));
+    fireEvent.click(screen.getByRole("button", { name: "View menu" }));
+    fireEvent.click(
+      await screen.findByRole("menuitemcheckbox", { name: "Minimap" }),
+    );
     expect(screen.getByLabelText("Board minimap")).toBeInTheDocument();
     expect(mocks.operation).not.toHaveBeenCalled();
   });

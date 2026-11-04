@@ -21,12 +21,13 @@ import {
   visibleBoardLayers,
   layerNamePatch,
   type LayerDrop,
+  layerDropProblem,
 } from "@/modules/whiteboards/layers";
 import { BoardSearch } from "./board-search";
 import { BoardLayerRow, type BoardLayerEvents } from "./board-layer-row";
 import { useBoardEvent } from "./use-board-event";
 
-type Target = { id: string | null; place: LayerDrop };
+type Target = { id: string | null; place: LayerDrop; problem?: string | null };
 export const BoardOutline = memo(function BoardOutline({
   rows,
   objectIndex,
@@ -107,6 +108,20 @@ export const BoardOutline = memo(function BoardOutline({
   );
   const rowElements = useRef(new Map<string, HTMLDivElement>());
   const selectedId = selected[0];
+  useEffect(() => {
+    if (
+      !selected.some((id) =>
+        (structure.parents.get(id) ?? []).some(
+          (row) => row.element_type === "GROUP",
+        ),
+      )
+    )
+      return;
+    setCollapsed((ids) => {
+      const next = ids.filter((id) => !selectedAncestors.has(id));
+      return next.length === ids.length ? ids : next;
+    });
+  }, [selected, structure, selectedAncestors]);
   const selectedVisibleId = selectedId
     ? visiblePositions.has(selectedId)
       ? selectedId
@@ -176,9 +191,20 @@ export const BoardOutline = memo(function BoardOutline({
     if (!drag.current || !onDrop) return;
     event.preventDefault();
     event.stopPropagation();
-    event.dataTransfer.dropEffect = "move";
+    const problem = layerDropProblem(structure, drag.current, id, place);
+    event.dataTransfer.dropEffect = problem ? "none" : "move";
+    setMessage(
+      problem ??
+        (place === "inside"
+          ? structure.byId.get(id ?? "")?.element_type === "GROUP"
+            ? "Add to Group"
+            : "Move into Section"
+          : "Reorder layer"),
+    );
     setDrop((old) =>
-      old?.id === id && old.place === place ? old : { id, place },
+      old?.id === id && old.place === place && old.problem === problem
+        ? old
+        : { id, place, problem },
     );
     const hoverKey = id && place === "inside" ? id : null;
     if (hoverTarget.current !== hoverKey) {
@@ -213,6 +239,10 @@ export const BoardOutline = memo(function BoardOutline({
     const id = drag.current;
     cleanup();
     if (!id || !onDrop) return;
+    if (target.problem) {
+      setMessage(target.problem);
+      return;
+    }
     try {
       const saved = await onDrop(id, target.id, target.place);
       setMessage(
@@ -425,6 +455,7 @@ export const BoardOutline = memo(function BoardOutline({
                 renaming={renaming === id}
                 draft={renaming === id ? draft : ""}
                 place={drop?.id === id ? drop.place : null}
+                dropError={drop?.id === id ? drop.problem : null}
                 canUpdate={!!onUpdate}
                 canDrop={
                   !!onDrop && !structure.immovable.has(id) && renaming !== id
@@ -462,7 +493,7 @@ export const BoardOutline = memo(function BoardOutline({
           onDragOver={(event) => targetOver(event, null, "root")}
           onDrop={(event) => void dropped(event, { id: null, place: "root" })}
         >
-          Board root · drop here to detach from a Section
+          Board root · drop here to detach
         </div>
       ) : null}
       <p className="text-muted-foreground mt-2 text-xs" role="status">

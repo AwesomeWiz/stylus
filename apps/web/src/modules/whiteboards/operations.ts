@@ -69,6 +69,7 @@ export function indexBoardObjects(rows: BoardElementRow[]) {
   const parents = new Map<string, BoardElementRow[]>();
   const immovable = new Set<string>();
   const children = new Map<string, BoardElementRow[]>();
+  const descendantCounts = new Map<string, number>();
   const layers = new Map(rows.map((row) => [row.id, row.z_index]));
   for (const row of rows) {
     if (row.parent_id)
@@ -83,6 +84,8 @@ export function indexBoardObjects(rows: BoardElementRow[]) {
       parent = byId.get(parent.parent_id ?? "");
     }
     parents.set(row.id, chain);
+    for (const entry of chain)
+      descendantCounts.set(entry.id, (descendantCounts.get(entry.id) ?? 0) + 1);
     if (row.locked || chain.some((entry) => entry.locked)) {
       immovable.add(row.id);
       for (const entry of chain) immovable.add(entry.id);
@@ -104,7 +107,15 @@ export function indexBoardObjects(rows: BoardElementRow[]) {
             : row.z_index,
         );
       }
-  return { byId, children, parents, immovable, layers };
+  // CSS z-index accepts integers only. Quarter-step frame offsets must remain
+  // ordered even when a persisted reorder puts children below zero. Project to
+  // positive integers so invalid fractional frame values cannot become `auto`
+  // and intercept a visible child's pointer target. This is render-only order.
+  let lowest = 0;
+  for (const layer of layers.values()) lowest = Math.min(lowest, layer);
+  for (const [id, layer] of layers)
+    layers.set(id, Math.round((layer - lowest) * 4) + 1);
+  return { byId, children, parents, immovable, layers, descendantCounts };
 }
 export type BoardObjectIndex = ReturnType<typeof indexBoardObjects>;
 export function visualBounds(row: BoardElementRow) {

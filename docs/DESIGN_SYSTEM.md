@@ -110,9 +110,10 @@ with headings, short paragraphs, findings, citations and uncertainty. Use the
 same hierarchy as human content. No AI-specific font, tiny disclosures, raw JSON
 wall or giant specialist headings. Numeric metadata may use tabular numerals.
 
-Board-authored content has a narrow REDESIGN-004.3 exception to application
-typography: the existing Geist plus licensed self-hosted Lora and Geist Mono.
-Only used faces download; real weights and Lora italic are explicit and
+Board-authored content has a narrow REDESIGN-004.3.2 exception to application
+typography: 15 curated, licensed local families across sans, serif, display and
+monospace. Only used faces download; picker previews never fetch unused fonts.
+Real supported weights and true italic availability are explicit and
 synthetic styling is disabled. This does not change chrome, Auth or global
 brand tokens. See [font sources](../apps/web/public/fonts/boards/README.md).
 

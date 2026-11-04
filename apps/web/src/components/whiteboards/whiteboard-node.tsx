@@ -34,6 +34,9 @@ export type WhiteboardNodeData = Record<string, unknown> & {
   onImageRetry?: (elementId: string) => void;
   onInteractionCancel?: (elementId: string) => void;
   onInteractionStart?: (elementId: string) => void;
+  onTextActivate?: (elementId: string) => boolean;
+  onTextEscape?: (elementId: string) => void;
+  onLinkActivate?: (elementId: string) => boolean;
   onResizePreview?: (
     elementId: string,
     bounds: { x: number; y: number; width: number; height: number } | null,
@@ -118,6 +121,7 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
           if (event.key === "Escape") {
             cancelled.current = true;
             event.currentTarget.blur();
+            data.onTextEscape?.(element.id);
             requestAnimationFrame(focusBoardCanvas);
           }
           if (
@@ -143,7 +147,8 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
       aria-label={`${element.element_type === "STICKY" ? "Sticky note" : "Text"}: ${text || "Empty"}`}
       className="flex h-full w-full flex-col overflow-hidden p-3 whitespace-pre-wrap"
       onDoubleClick={() => {
-        if (data.isBusy?.()) return;
+        if (!data.canMutate || data.isBusy?.()) return;
+        if (data.onTextActivate?.(element.id) === false) return;
         if (data.canMutate) data.onInteractionStart?.(element.id);
         setEditing(true);
       }}
@@ -151,6 +156,7 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
         if (event.key === "Enter" && data.canMutate && !data.isBusy?.()) {
           event.preventDefault();
           event.stopPropagation();
+          if (data.onTextActivate?.(element.id) === false) return;
           data.onInteractionStart?.(element.id);
           setEditing(true);
         }
@@ -249,6 +255,10 @@ function WhiteboardNodeComponent({
       {element.element_type === "LINK" ? (
         <div className="bg-background flex h-full flex-col gap-2 overflow-hidden rounded-md border p-3">
           <a
+            onClick={(event) => {
+              if (data.onLinkActivate?.(element.id) === false)
+                event.preventDefault();
+            }}
             className="nodrag text-primary truncate text-sm font-medium underline"
             href={
               /^https?:\/\//i.test(String(element.content.url))

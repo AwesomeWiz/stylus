@@ -120,6 +120,25 @@ ownership/locks are rejected atomically. F2/double-click renames the display
 label inline without overwriting actual object text. Keyboard tree state,
 selection, parent/child indicators and Locate remain synchronized.
 
+REDESIGN-004.3.2 adds a 320px Properties dock and shared Board-local popovers.
+Typography has a full-width searchable family picker, paired weight/size and
+line-height/letter-spacing fields, preset/custom input and inline validation.
+Escape while editing restores confirmed values. Palette/HEX popovers use one
+swatch; empty Appearance sections are omitted. Modal popovers stay inside their
+sheet's focus scope. Escape restores the opener, outside click/focus dismisses,
+and Tab leaves a listbox for the next local control.
+
+Single-click on Group content selects the Group; first double-click drills into
+the native topmost child, then an intended subsequent text activation edits.
+Properties/Layers follow that child, revealing ancestors without refitting.
+Escape returns to parent then clears. Compatible sibling Shift selection is
+supported; cross-context selection exits predictably. Enter and Layers supply
+keyboard alternatives. Selecting never saves; locks still apply. Layers may
+insert/extract ordinary Group children with unchanged identities/world geometry.
+Wheel X/Y pans, Shift-wheel is horizontal, modified wheel/pinch zooms, Space/H
+pan without object mutations. Link normalization belongs only at explicit input;
+stored URLs retain strict HTTP(S)/no-credentials validation and never auto-fetch.
+
 Text content uses bounded family/weight/spacing/alignment/decorations and
 fixed/auto-height controls. Sticky Enter saves, Shift+Enter adds a line; Text
 Ctrl/Cmd+Enter saves; Escape cancels. Alt/Option drag creates one undoable copy

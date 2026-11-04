@@ -1,5 +1,100 @@
 # Boards V2 interaction and creative usability
 
+## UI and input polish (REDESIGN-004.3.2)
+
+2026-11-04 · PASS. Full web 211 files / 1,206 tests; lint, typecheck and production
+build pass. Relevant coverage includes 46 Board files / 281 tests. Scoped
+formatting, links, secret/artifact, scope and diff checks pass.
+
+The Properties dock is now 320px. Typography uses a full-width searchable family
+picker, paired Weight/Size and Line height/Letter spacing controls. Numeric
+presets and custom values share the same fields: Enter/blur commits, Escape while
+editing restores the confirmed value, and invalid input stays inline. Font size
+and letter spacing are board pixels; line height is a unitless multiplier.
+The [15-family font manifest](../apps/web/public/fonts/boards/README.md) records
+categories, actual supported weights, true italics, licenses and exact hashes.
+Only used faces load; searching/opening the picker never requests unused faces.
+The UI font is unchanged.
+
+Board-local selects use named popovers with arrow/Home/End navigation, Escape
+focus restoration, outside-click dismissal and a keyboard path to the next
+property. Narrow-screen popovers remain inside the existing modal focus scope.
+Appearance is absent when empty. Text ink, Sticky fill and Shape fill/stroke use
+one compact swatch, a preset palette and validated HEX, including alpha. Sticky
+fill changes preserve customized ink. No recent-color/font storage is added.
+
+Single-click on a Group child selects the Group. First double-click on a visible
+child selects that exact child without entering text edit; a subsequent intended
+double-click edits Text/Sticky. Native DOM hit testing resolves overlaps. Enter on
+a selected Group enters its highest-layer child; accessible Layers navigation
+remains available. Escape from a child selects its Group, then clears; sibling
+Shift-click adds/removes children. A cross-context click exits to an ordinary
+root/Group selection. Properties and Layers follow canonical selection, expanding
+ancestors without refitting the viewport. Selection alone never saves. Child
+movement/resizing retains ownership, and inherited locks still block mutations.
+
+Layers can insert ordinary objects into a Group or extract them to a Section or
+board root without changing world coordinates/IDs. A Group frame expands to
+include an inserted object; that bounds change does not translate old children.
+Group, Section, reorder and rejected drops have distinct cues. Existing bounded
+atomic operations, lock rules and nesting constraints remain authoritative.
+The local render index projects frame offsets and stored order to positive
+integer CSS layers. Fractional `z-index` is invalid CSS; this projection keeps
+frames behind owned children after negative-valued reorders as well. Stored
+layer values are never rewritten merely for rendering.
+
+Link forms accept bare domains and normalize them to HTTPS at the input boundary.
+Stored/action schemas still require full HTTP(S) URLs without credentials; unsafe
+schemes remain invalid. Titles are preserved and URLs do not trigger fetching.
+Wheel/touchpad X/Y pans directly, Shift-wheel pans horizontally, Control/Meta-wheel
+or pinch zooms, and Space-drag/H Pan remain. Panels keep their own scrolling.
+View closes on outside/canvas click, Escape, focus leaving or another Board
+popover; its stable checkable labels expose visual/input controls without routine
+connection diagnostics.
+
+Verification and measured limitations are recorded in PROJECT_STATE. Schema,
+tenant authorization, plugin/memory boundaries and existing public URLs are
+unchanged; this task adds no AI or REDESIGN-005 functionality.
+
+Production-bundled authenticated Chrome comparison against starting commit
+`9e678586dd34b87dcd1e8fcc0712fc8aad0ffd58` uses identical isolated 200/300/500
+mixed-object fixtures (20/30/50 image objects), 1440×900, the same account/backend
+and sequential runs. Each build completes 24 phases per fixture, including real
+mutation/Realtime/comment transport. Only browser Long Task/frame/layout observers
+are active; diagnostic React/CPU hooks are disabled in this comparison.
+
+| Objects | First nodes before / final (ms) | Largest initial task before / final (ms) |
+| --- | --- | --- |
+| 200 | 1420 / 1472 | 101 / 79 |
+| 300 | 1435 / 1455 | 119 / 142 |
+| 500 | 1756 / 1658 | 232 / 202 |
+
+Single phase samples vary: final 500-object Section focus has a 56ms task, and
+marquee has four 59–68ms tasks; the single baseline instead records a 52ms pointer
+task. Follow-up matched empty-pane marquee selects the same 92 objects with zero
+writes in all five runs/build: nine tasks total before (max86ms), eight after
+(max75ms). Seven repeated Layers collapse/expand operations per build record one
+task each, 136ms before and 99ms after. Seven native Group-child drill-ins record
+zero Long Tasks and retain mounted node DOM identity. This does not establish a
+general speedup or p95; initial rendering and large selection remain measured
+costs. No new repeatable interaction regression was identified.
+
+Font network QA observes zero additional requests when opening/searching the
+15-family picker, exactly the five selected representative family files across
+all categories, and zero Board font requests on the Geist-only 500-object fixture.
+The full two-theme 390/768/1024/1200/1440/1920 Properties matrix checks paired
+field alignment, 320px desktop dock, reflow, popup bounds, modal containment and
+keyboard focus/Tab. Authenticated native editing checks include overlapping and
+negatively reordered children, Group locks, text drill/edit separation, resize,
+reparenting, exact colors/links, wheel/Space/H input, reload and zero selection
+writes. Hardware touchpad feel, additional browser engines and manual Windows
+NVDA remain target-environment checks; synthetic wheel/pointer/touchpad-compatible
+Chrome input is not a manual assistive-technology session.
+
+All exact task fixtures are removed and absence verified: two accounts, one
+organization, four boards, 1,014 elements, three comments and seven private assets.
+No unrelated records, migrations, tables or database configuration were changed.
+
 REDESIGN-004.3 · 2026-11-03 · PASS; local and real authenticated verification complete.
 
 REDESIGN-004.2 stabilizes this foundation. The owner authorized the configured
@@ -23,7 +118,7 @@ fastest power-user path. Group means manipulation, Section means organization,
 Reaction means social feedback, and Vote means a structured decision. Voting is
 deferred.
 
-Desktop starts with 256px Layers left and 288px Properties right. They collapse
+Desktop starts with 256px Layers left and 320px Properties right. They collapse
 independently, with device/account-scoped boolean preferences. View and
 Ctrl/Cmd+Shift+Backslash toggle distraction-free mode; visible restore controls
 remain. Tablet/mobile use one modal panel rather than two squeezed docks.
@@ -49,11 +144,12 @@ Atomic actions return their bounded result without re-rendering the whole editor
 an account/organization-scoped boolean refreshes the list once on return. It
 stores no Board content and supplies no authorization.
 
-Text/Sticky content uses Geist, Lora or Geist Mono; application chrome remains
+Text/Sticky content uses the 15-family curated library; application chrome remains
 Geist. Licensed self-hosted Latin assets load only when used, with no runtime
 CDN/preload. See the [font sources and limits](../apps/web/public/fonts/boards/README.md).
-Controls cover family, real weights 400–700, size 8–256, alignment, line height,
-letter spacing, true Lora italic, underline/strikethrough, color, vertical
+Controls cover family, its supported weights within 400–700, size 8–256,
+alignment, line height, letter spacing, supported true italic,
+underline/strikethrough, color, vertical
 alignment and fixed/auto-height sizing. Auto-height uses local selected-face
 measurement and one content/geometry intent; remote changes cancel stale
 measurement. Sticky Enter saves/Shift+Enter inserts a line; Text Ctrl/Cmd+Enter
@@ -243,8 +339,8 @@ authority for clicks, while React Flow selection changes are consumed only
 during marquee gestures. Shift-marquee preserves the earlier selection.
 Ctrl/Cmd+A selects roots. Escape clears selection/exits a tool. Properties/Layer
 switching preserves selection. This fixes the former double-update between React
-Flow and custom click handlers. Group selection still normalizes child clicks to
-the Group.
+Flow and custom click handlers. REDESIGN-004.3.2 extends ordinary Group-normalized
+clicks with explicit child drill-in and sibling selection as described above.
 
 Right-click and Shift+F10/Context Menu open bounded keyboard menus. A visible
 Selection actions button supplies the same touch/keyboard alternative. Menus

@@ -10,8 +10,96 @@ import { useState } from "react";
 import { object } from "@/test/board-fixtures";
 import { BoardTypography } from "./board-typography";
 
-afterEach(cleanup);
+const originalFonts = Object.getOwnPropertyDescriptor(document, "fonts");
+afterEach(() => {
+  cleanup();
+  if (originalFonts) Object.defineProperty(document, "fonts", originalFonts);
+  else Reflect.deleteProperty(document, "fonts");
+});
 describe("Board typography controls", () => {
+  it.each([
+    ["Font size", "fontSize", 48, 53],
+    ["Line height", "lineHeight", 1.75, 1.63],
+    ["Letter spacing", "letterSpacing", 0.5, 0.75],
+  ] as const)(
+    "offers %s presets plus custom values and confirmed Escape restore",
+    async (label, key, preset, custom) => {
+      const changed = vi.fn();
+      function Editor() {
+        const [row, setRow] = useState(() => object({ element_type: "TEXT" }));
+        return (
+          <BoardTypography
+            row={row}
+            onChange={async (style) => {
+              changed(style);
+              setRow({ ...row, style });
+              return true;
+            }}
+          />
+        );
+      }
+      render(<Editor />);
+      fireEvent.click(screen.getByRole("button", { name: label + " presets" }));
+      fireEvent.click(
+        await screen.findByRole("option", { name: String(preset) }),
+      );
+      await waitFor(() =>
+        expect(changed).toHaveBeenLastCalledWith(
+          expect.objectContaining({ [key]: preset }),
+        ),
+      );
+      const field = screen.getByRole("combobox", { name: label });
+      field.focus();
+      fireEvent.change(field, { target: { value: String(custom) } });
+      fireEvent.blur(field);
+      await waitFor(() =>
+        expect(changed).toHaveBeenLastCalledWith(
+          expect.objectContaining({ [key]: custom }),
+        ),
+      );
+      field.focus();
+      fireEvent.change(field, { target: { value: "123" } });
+      fireEvent.keyDown(field, { key: "Escape" });
+      expect(field).toHaveValue(String(custom));
+      expect(changed).toHaveBeenCalledTimes(2);
+    },
+  );
+  it("searches categorized families without loading previews and constrains weights on family changes", async () => {
+    const load = vi.fn();
+    Object.defineProperty(document, "fonts", {
+      configurable: true,
+      value: {
+        check: vi.fn(() => false),
+        load,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    });
+    const changed = vi.fn();
+    render(
+      <BoardTypography
+        row={object({ element_type: "TEXT", style: { weight: 600 } })}
+        onChange={changed}
+      />,
+    );
+    fireEvent.click(screen.getByRole("combobox", { name: "Font family" }));
+    expect(await screen.findAllByRole("option")).toHaveLength(15);
+    expect(screen.getByRole("group", { name: "Serif" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Search fonts" }), {
+      target: { value: "bebas" },
+    });
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("option", { name: "Bebas Neue" }));
+    expect(changed).toHaveBeenCalledWith(
+      expect.objectContaining({
+        family: "bebas-neue",
+        weight: 400,
+        italic: false,
+      }),
+    );
+    expect(load).not.toHaveBeenCalled();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
   it("edits supported families, weights and text layout without synthetic italic", async () => {
     const changed = vi.fn();
     function Editor() {
@@ -31,12 +119,10 @@ describe("Board typography controls", () => {
     expect(
       screen.queryByRole("button", { name: "Italic" }),
     ).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Font family"), {
-      target: { value: "lora" },
-    });
-    fireEvent.change(screen.getByLabelText("Font weight"), {
-      target: { value: "600" },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: "Font family" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Lora" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Font weight" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Semibold" }));
     for (const [name, value] of [
       ["Font size", "31.5"],
       ["Line height", "1.8"],
@@ -49,13 +135,14 @@ describe("Board typography controls", () => {
     }
     for (const name of ["Align center", "Italic", "Underline", "Strikethrough"])
       fireEvent.click(screen.getByRole("button", { name }));
-    fireEvent.change(screen.getByLabelText("Vertical alignment"), {
-      target: { value: "bottom" },
-    });
-    fireEvent.change(screen.getByLabelText("Text sizing"), {
-      target: { value: "auto" },
-    });
-    const color = screen.getByLabelText("Text color picker");
+    fireEvent.click(
+      screen.getByRole("combobox", { name: "Vertical alignment" }),
+    );
+    fireEvent.click(await screen.findByRole("option", { name: "Bottom" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Text sizing" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Auto height" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Text color: #/ }));
+    const color = await screen.findByLabelText("Text color HEX");
     fireEvent.change(color, { target: { value: "#123456" } });
     fireEvent.blur(color);
     expect(changed).toHaveBeenLastCalledWith(
@@ -74,9 +161,8 @@ describe("Board typography controls", () => {
         color: "#123456",
       }),
     );
-    fireEvent.change(screen.getByLabelText("Font family"), {
-      target: { value: "geist-mono" },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: "Font family" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Geist Mono" }));
     expect(changed).toHaveBeenLastCalledWith(
       expect.objectContaining({ family: "geist-mono", italic: false }),
     );

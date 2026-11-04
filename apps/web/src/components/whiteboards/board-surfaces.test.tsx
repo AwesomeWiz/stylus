@@ -1,5 +1,6 @@
 import {
   cleanup,
+  createEvent,
   fireEvent,
   render,
   screen,
@@ -35,6 +36,70 @@ import { BoardOutline } from "./board-outline";
 import { BoardCanvasNavigation, BoardLinkDialog } from "./board-controls";
 describe("Board accessible surfaces", () => {
   afterEach(cleanup);
+  it("distinguishes Group, Section, reorder and rejected drop cues before persistence", () => {
+    const group = object({
+      element_type: "GROUP",
+      content: { title: "Concept" },
+    });
+    const section = object({
+      element_type: "SECTION",
+      content: { title: "Plan" },
+    });
+    const child = object({
+      element_type: "TEXT",
+      content: { text: "Heading" },
+    });
+    const drop = vi.fn();
+    const { container } = render(
+      <BoardOutline
+        rows={[group, section, child]}
+        selected={[]}
+        onSelect={vi.fn()}
+        onLocate={vi.fn()}
+        onDrop={drop}
+      />,
+    );
+    const source = container.querySelector(`[data-layer-id="${child.id}"]`)!;
+    const target = container.querySelector(`[data-layer-id="${group.id}"]`)!;
+    const region = container.querySelector(`[data-layer-id="${section.id}"]`)!;
+    const transfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
+    const rect = {
+      x: 0,
+      y: 0,
+      top: 0,
+      bottom: 40,
+      left: 0,
+      right: 200,
+      width: 200,
+      height: 40,
+      toJSON: () => ({}),
+    };
+    vi.spyOn(target, "getBoundingClientRect").mockReturnValue(rect);
+    vi.spyOn(region, "getBoundingClientRect").mockReturnValue(rect);
+    const over = (element: Element, clientY: number) => {
+      const event = createEvent.dragOver(element, { dataTransfer: transfer });
+      Object.defineProperty(event, "clientY", { value: clientY });
+      fireEvent(element, event);
+    };
+    fireEvent.dragStart(source, { dataTransfer: transfer });
+    over(target, 20);
+    expect(target).toHaveAttribute("data-drop-kind", "group");
+    expect(screen.getByRole("status")).toHaveTextContent("Add to Group");
+    over(region, 20);
+    expect(region).toHaveAttribute("data-drop-kind", "section");
+    over(target, 1);
+    expect(target).toHaveAttribute("data-drop-kind", "reorder");
+    fireEvent.dragEnd(source);
+    fireEvent.dragStart(region, { dataTransfer: transfer });
+    over(target, 20);
+    expect(target).toHaveAttribute("data-drop-kind", "rejected");
+    expect(transfer.dropEffect).toBe("none");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Sections cannot nest",
+    );
+    expect(drop).not.toHaveBeenCalled();
+    fireEvent.dragEnd(region);
+  });
   it("opens main navigation without consuming canvas space and restores focus on close", async () => {
     render(
       <>
@@ -167,7 +232,7 @@ describe("Board accessible surfaces", () => {
       screen.getByRole("button", { name: "Add link" }).closest("form")!,
     );
     await waitFor(() =>
-      expect(screen.getByRole("alert")).toHaveTextContent(/http or https/),
+      expect(screen.getByRole("alert")).toHaveTextContent(/http\/https/),
     );
     expect(create).not.toHaveBeenCalled();
   });

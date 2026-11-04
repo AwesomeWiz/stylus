@@ -37,12 +37,16 @@ export const safeBoardUrl = z
   .url()
   .max(2048)
   .refine((value) => {
-    const url = new URL(value);
-    return (
-      ["http:", "https:"].includes(url.protocol) &&
-      !url.username &&
-      !url.password
-    );
+    try {
+      const url = new URL(value);
+      return (
+        ["http:", "https:"].includes(url.protocol) &&
+        !url.username &&
+        !url.password
+      );
+    } catch {
+      return false;
+    }
   }, "Use an http or https URL without credentials.");
 export const boardShapeValues = [
   "rectangle",

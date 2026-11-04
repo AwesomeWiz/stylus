@@ -1,10 +1,18 @@
 "use client";
-import { useState } from "react";
-import { Maximize, Minus, ChevronDown, Plus } from "lucide-react";
+import { useId, useState } from "react";
+import { Maximize, Minus, ChevronDown, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { safeBoardUrl } from "@/modules/whiteboards/schemas";
+import {
+  normalizeBoardLinkInput,
+  boardLinkInputError,
+} from "@/modules/whiteboards/link-input";
+import {
+  BoardPopover,
+  useBoardPopup,
+  moveBoardOptionFocus,
+} from "./board-popover";
 import type { CollaborationConnectionState } from "@/modules/whiteboards/realtime";
 export function BoardMenu({
   onOutline,
@@ -13,7 +21,6 @@ export function BoardMenu({
   onShortcuts,
   minimap,
   onMinimap,
-  connection,
   grid = true,
   onGrid = () => {},
   onFit = () => {},
@@ -43,99 +50,97 @@ export function BoardMenu({
   snapGrid?: boolean;
   onSnapGrid?: () => void;
 }) {
+  const id = useId();
+  const { anchor, host, open, setOpen } = useBoardPopup<HTMLButtonElement>();
+  function close(restore: boolean) {
+    setOpen(false);
+    if (restore) anchor.current?.focus({ preventScroll: true });
+  }
+  function item(label: string, action: () => void, checked?: boolean) {
+    return (
+      <button
+        type="button"
+        role={checked === undefined ? "menuitem" : "menuitemcheckbox"}
+        aria-checked={checked}
+        className="hover:bg-muted focus:bg-muted flex min-h-10 w-full items-center gap-2 rounded px-2 text-left text-xs"
+        onClick={() => {
+          close(true);
+          action();
+        }}
+      >
+        <span className="flex size-4 items-center justify-center">
+          {checked ? <Check aria-hidden className="size-3.5" /> : null}
+        </span>
+        {label}
+      </button>
+    );
+  }
+  const heading = (title: string) => (
+    <p className="text-muted-foreground px-2 pt-3 pb-1 text-[11px] font-medium">
+      {title}
+    </p>
+  );
   return (
-    <details className="relative">
-      <summary
+    <>
+      <button
+        ref={anchor}
+        type="button"
         aria-label="View menu"
-        className="hover:bg-muted flex min-h-10 min-w-10 cursor-pointer list-none items-center justify-center gap-1 rounded px-2 max-md:min-h-11 max-md:min-w-11"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={id}
+        className="hover:bg-muted flex min-h-10 min-w-10 items-center justify-center gap-1 rounded px-2 max-md:min-h-11"
+        onClick={() => setOpen(!open)}
+        onKeyDown={(e) => {
+          if (["ArrowDown", "ArrowUp"].includes(e.key)) {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
       >
         <span className="text-xs">View</span>
-        <ChevronDown aria-hidden="true" className="size-3" />
-      </summary>
-      <div className="bg-popover absolute top-full right-0 z-40 w-56 rounded border p-1 shadow-sm">
-        <p className="px-3 py-2 text-xs font-semibold">View</p>
-        {onToggleSidebars ? (
-          <Button
-            className="w-full justify-start"
-            variant="ghost"
-            onClick={onToggleSidebars}
-          >
-            {sidebarsVisible ? "Hide sidebars" : "Show sidebars"}
-          </Button>
-        ) : null}
-        {onSnapObjects ? (
-          <label className="flex min-h-11 items-center gap-2 px-3 text-sm">
-            <input
-              type="checkbox"
-              checked={snapObjects}
-              onChange={onSnapObjects}
-            />
-            Snap to objects
-          </label>
-        ) : null}
-        {onSnapGrid ? (
-          <label className="flex min-h-11 items-center gap-2 px-3 text-sm">
-            <input type="checkbox" checked={snapGrid} onChange={onSnapGrid} />
-            Snap to grid
-          </label>
-        ) : null}
-        <Button
-          className="w-full justify-start"
-          onClick={() => onOutline()}
-          variant="ghost"
-        >
-          Layers
-        </Button>
-        <Button
-          className="w-full justify-start"
-          onClick={() => onHelp()}
-          variant="ghost"
-        >
-          Keyboard shortcuts
-        </Button>
-        <label className="flex min-h-11 items-center gap-2 px-3 text-sm">
-          <input
-            checked={shortcuts}
-            onChange={(event) => onShortcuts(event.target.checked)}
-            type="checkbox"
-          />
-          Single-key shortcuts
-        </label>
-        <Button
-          className="w-full justify-start"
-          onClick={() => onMinimap()}
-          variant="ghost"
-        >
-          {minimap ? "Hide" : "Show"} minimap
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full justify-start"
-          onClick={onGrid}
-        >
-          {grid ? "Hide" : "Show"} dot grid
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full justify-start"
-          onClick={onFit}
-        >
-          Fit board
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full justify-start"
-          onClick={onFitSelection}
-        >
-          Fit selection
-        </Button>
-        <p className="text-muted-foreground px-3 py-2 text-xs">
-          Collaboration: {connection.toLowerCase()}. Saving is reported
-          separately. Undo and clipboard stay local to this board. Failed saves
-          restore saved state; offline work is not durable.
-        </p>
-      </div>
-    </details>
+        <ChevronDown aria-hidden className="size-3" />
+      </button>
+      <BoardPopover
+        host={host}
+        open={open}
+        anchor={anchor}
+        onClose={close}
+        label="View"
+        id={id}
+        role="menu"
+        width={232}
+      >
+        <div onKeyDown={moveBoardOptionFocus}>
+          {heading("Sidebars")}
+          {onToggleSidebars
+            ? item(
+                sidebarsVisible ? "Hide sidebars" : "Show sidebars",
+                onToggleSidebars,
+              )
+            : null}
+          {item("Layers", onOutline)}
+          {heading("Canvas")}
+          {item("Dot grid", onGrid, grid)}
+          {onSnapObjects
+            ? item("Snap to objects", onSnapObjects, !!snapObjects)
+            : null}
+          {onSnapGrid ? item("Snap to grid", onSnapGrid, !!snapGrid) : null}
+          {item("Minimap", onMinimap, minimap)}
+          {heading("Navigation")}
+          {item("Fit board", onFit)}
+          {item("Fit selection", onFitSelection)}
+          {heading("Input")}
+          {item(
+            "Single-key shortcuts",
+            () => onShortcuts(!shortcuts),
+            shortcuts,
+          )}
+          {heading("Help")}
+          {item("Keyboard shortcuts", onHelp)}
+        </div>
+      </BoardPopover>
+    </>
   );
 }
 export function BoardCanvasNavigation({
@@ -262,6 +267,14 @@ export function BoardHelp({
       description="Focus the canvas to use shortcuts. Sticky: Enter saves, Shift+Enter adds a line. Text: Ctrl/⌘+Enter saves. Escape cancels text editing."
     >
       <div className="grid gap-6 p-5 sm:grid-cols-2">
+        <p className="text-muted-foreground text-sm sm:col-span-2">
+          Wheel or two-finger scroll pans the canvas; Ctrl/Cmd + wheel or pinch
+          zooms. Double-click a Group child to select it, then double-click
+          again to edit text. Enter on a selected Group enters its first child;
+          Escape returns to the Group. History and the internal clipboard stay
+          local to this board; failed saves restore confirmed state, and offline
+          work is not durable.
+        </p>
         {groups.map(([title, shortcuts]) => (
           <section key={title}>
             <h3 className="text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase">
@@ -318,15 +331,16 @@ export function BoardLinkDialog({
         onSubmit={(event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget),
-            url = safeBoardUrl.safeParse(data.get("url"));
-          if (!url.success) {
-            setError("Enter an http or https URL without credentials.");
+            rawUrl = String(data.get("url") ?? ""),
+            invalid = boardLinkInputError(rawUrl);
+          if (invalid) {
+            setError(invalid);
             return;
           }
           setError(null);
           void onCreate({
             title: String(data.get("title")),
-            url: url.data,
+            url: normalizeBoardLinkInput(rawUrl),
             note: String(data.get("note")),
           }).then((saved) => {
             if (!saved)
@@ -347,7 +361,9 @@ export function BoardLinkDialog({
             maxLength={2048}
             name="url"
             required
-            type="url"
+            type="text"
+            inputMode="url"
+            placeholder="stybay.com"
           />
         </label>
         <label className="block text-sm">
