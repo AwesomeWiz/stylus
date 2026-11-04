@@ -1,4 +1,6 @@
 "use client";
+import { BoardVoteBadge } from "./board-voting-context";
+import { useBoardColorRow } from "./board-color-preview";
 
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
 import { LockKeyhole, MessageSquare } from "lucide-react";
@@ -19,6 +21,7 @@ import {
 import { focusBoardCanvas } from "./board-navigation";
 
 export type WhiteboardNodeData = Record<string, unknown> & {
+  votingLocked?: boolean;
   canMutate: boolean;
   selectionRoot?: boolean;
   commentCount: number;
@@ -186,7 +189,8 @@ function WhiteboardNodeComponent({
   // Descendants stay selected for whole-container dragging. Only explicit
   // selection roots display individual outlines and resize controls.
   const selected = flowSelected && data.selectionRoot !== false;
-  const { element } = data;
+  const element = useBoardColorRow(data.element);
+  const renderedData = element === data.element ? data : { ...data, element };
   const fill = boardPaint(element.style.fill, "#f4f4f5");
   const stroke = boardPaint(element.style.stroke, "#71717a");
   const stickyColor =
@@ -209,6 +213,7 @@ function WhiteboardNodeComponent({
       }}
       style={{ transform: `rotate(${element.rotation}deg)` }}
     >
+      <BoardVoteBadge row={element} locked={data.votingLocked} />
       <NodeResizer
         color="var(--primary)"
         handleStyle={{ width: 10, height: 10, zIndex: 30 }}
@@ -293,7 +298,7 @@ function WhiteboardNodeComponent({
         </button>
       ) : null}
       {element.element_type === "TEXT" ? (
-        <EditableText data={data} key={textValue(element.content)} />
+        <EditableText data={renderedData} key={textValue(element.content)} />
       ) : null}
       {data.reactions?.some((row) => row.total > 0) ? (
         <div className="absolute -bottom-9 left-0 z-10">
@@ -312,7 +317,7 @@ function WhiteboardNodeComponent({
           className="h-full w-full border border-black/10 shadow-sm"
           style={{ backgroundColor: stickyColor }}
         >
-          <EditableText data={data} key={textValue(element.content)} />
+          <EditableText data={renderedData} key={textValue(element.content)} />
         </div>
       ) : null}
       {element.element_type === "SHAPE" ? (
@@ -404,7 +409,7 @@ function WhiteboardNodeComponent({
         </span>
       ) : null}
       {element.element_type === "IMAGE" ? (
-        <BoardImage data={data} key={data.imageUrl ?? "pending"} />
+        <BoardImage data={renderedData} key={data.imageUrl ?? "pending"} />
       ) : null}
     </div>
   );
@@ -471,6 +476,7 @@ export const WhiteboardNode = memo(
     previous.data.commentCount === next.data.commentCount &&
     previous.data.canMutate === next.data.canMutate &&
     previous.data.canReact === next.data.canReact &&
+    previous.data.votingLocked === next.data.votingLocked &&
     previous.data.reactions === next.data.reactions &&
     previous.data.reactionPending === next.data.reactionPending,
 );

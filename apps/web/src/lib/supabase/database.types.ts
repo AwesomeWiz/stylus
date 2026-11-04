@@ -658,6 +658,46 @@ export type BoardElementRow = {
 
 export type BoardReactionKind =
   "like" | "heart" | "fire" | "eyes" | "celebrate";
+export type BoardVotingSessionRow = {
+  id: string;
+  organization_id: string;
+  board_id: string;
+  status: "ACTIVE" | "ENDED";
+  allowance: number;
+  eligible_types: string[];
+  started_by: string | null;
+  ended_by: string | null;
+  created_at: string;
+  updated_at: string;
+  ended_at: string | null;
+  revision: number;
+};
+export type BoardVoteRow = {
+  organization_id: string;
+  board_id: string;
+  session_id: string;
+  voter_id: string;
+  slot: number;
+  element_id: string;
+  active: boolean;
+  version: number;
+  request_id: string;
+  updated_at: string;
+};
+export type BoardVoteSummary = {
+  element_id: string;
+  total: number;
+  mine: number;
+  participants: string[];
+  rank?: number;
+};
+export type BoardVotingSnapshot = {
+  session: BoardVotingSessionRow | null;
+  own_votes: BoardVoteRow[];
+  summaries: BoardVoteSummary[];
+  results: BoardVoteSummary[];
+  has_more: boolean;
+};
 export type BoardReactionRow = {
   organization_id: string;
   board_id: string;
@@ -1131,6 +1171,18 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      board_voting_sessions: {
+        Row: BoardVotingSessionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      board_votes: {
+        Row: BoardVoteRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       board_comments: {
         Row: BoardCommentRow;
         Insert: never;
@@ -1527,6 +1579,38 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      start_board_voting: {
+        Args: {
+          p_board_id: string;
+          p_allowance: number;
+          p_eligible_types: string[];
+        };
+        Returns: BoardVotingSessionRow;
+      };
+      set_board_vote: {
+        Args: {
+          p_session_id: string;
+          p_element_id: string;
+          p_slot: number;
+          p_active: boolean;
+          p_request_id: string;
+          p_expected_version: number;
+        };
+        Returns: BoardVoteRow;
+      };
+      end_board_voting: {
+        Args: { p_session_id: string };
+        Returns: BoardVotingSessionRow;
+      };
+      read_board_voting: {
+        Args: {
+          p_board_id: string;
+          p_element_ids: string[];
+          p_after_total?: number;
+          p_after_id?: string;
+        };
+        Returns: BoardVotingSnapshot;
+      };
       set_board_comment_resolution: {
         Args: { p_board_id: string; p_comment_id: string; p_resolved: boolean };
         Returns: BoardCommentRow;

@@ -83,6 +83,7 @@ type DocumentHandlers = Pick<
   | "isBusy"
 >;
 type Props = DocumentHandlers & {
+  presentationSectionId?: string | null;
   ref: Ref<BoardCanvasHandle>;
   board: BoardRow;
   userId: string;
@@ -156,6 +157,7 @@ type Props = DocumentHandlers & {
   ) => void;
 };
 export function BoardCanvas({
+  presentationSectionId = null,
   ref,
   board,
   userId,
@@ -255,6 +257,58 @@ export function BoardCanvas({
     } | null>(null),
     [dropSection, setDropSection] = useState<string | null>(null);
   const viewportKey = `stylus-board-viewport:${userId}:${board.organization_id}:${board.id}`;
+  const presentationRestore = useRef<{
+    viewport: Viewport;
+    revealed: string[];
+  } | null>(null);
+  const frameSection = useBoardEvent((id: string) => {
+    const target = flow.current?.getNode(id);
+    if (target)
+      void flow.current?.fitView({
+        nodes: [target],
+        padding: 0.15,
+        maxZoom: 1,
+        duration: noMotion() ? 0 : 150,
+      });
+  });
+  const changePresentation = useBoardEvent((id: string | null) => {
+    if (id) {
+      if (!presentationRestore.current)
+        presentationRestore.current = {
+          viewport: flow.current?.getViewport() ?? viewport,
+          revealed,
+        };
+      setRevealed([id]);
+      return requestAnimationFrame(() => frameSection(id));
+    }
+    const previous = presentationRestore.current;
+    if (previous) {
+      presentationRestore.current = null;
+      setRevealed(previous.revealed);
+      return requestAnimationFrame(
+        () =>
+          void flow.current?.setViewport(previous.viewport, { duration: 0 }),
+      );
+    }
+    return 0;
+  });
+  useEffect(() => {
+    let frame = changePresentation(presentationSectionId);
+    const observer =
+      presentationSectionId && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(() =>
+              frameSection(presentationSectionId),
+            );
+          })
+        : null;
+    if (observer && canvas.current) observer.observe(canvas.current);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
+  }, [presentationSectionId, changePresentation, frameSection]);
   const selectedRows = useMemo(
     () => selectionRoots(rows, selected),
     [rows, selected],
@@ -297,6 +351,7 @@ export function BoardCanvas({
     if (group) onSelection([group.id]);
   });
   const canOpenLink = useBoardEvent((id: string) => {
+    if (presentationSectionId) return true;
     const group = (structure.parents.get(id) ?? []).find(
       (row) => row.element_type === "GROUP",
     );
@@ -381,7 +436,9 @@ export function BoardCanvas({
               : undefined,
           type: "whiteboard",
           position: { x: row.x, y: row.y },
-          selected: copies.length ? copyIds.has(row.id) : chosen.has(row.id),
+          selected:
+            !presentationSectionId &&
+            (copies.length ? copyIds.has(row.id) : chosen.has(row.id)),
           hidden: parents.some(
             (parent) =>
               parent.element_type === "SECTION" &&
@@ -390,6 +447,7 @@ export function BoardCanvas({
           ),
           draggable:
             canMutate &&
+            !presentationSectionId &&
             tool === "SELECT" &&
             !spacePan &&
             !structure.immovable.has(row.id) &&
@@ -408,12 +466,18 @@ export function BoardCanvas({
             element: row,
             canMutate:
               canMutate &&
+              !presentationSectionId &&
               !row.locked &&
               !parents.some((entry) => entry.locked),
-            commentCount: commentCounts.get(row.id) ?? 0,
+            votingLocked: !!row.locked || parents.some((entry) => entry.locked),
+            commentCount: presentationSectionId
+              ? 0
+              : (commentCounts.get(row.id) ?? 0),
             onOpenComments: onObjectComment,
-            reactions: byReaction.get(row.id) ?? noReactions,
-            canReact: canMutate,
+            reactions: presentationSectionId
+              ? noReactions
+              : (byReaction.get(row.id) ?? noReactions),
+            canReact: canMutate && !presentationSectionId,
             reactionPending: reactionPending.filter((key) =>
               key.startsWith(row.id + ":"),
             ),
@@ -451,6 +515,7 @@ export function BoardCanvas({
       canMutate,
       tool,
       spacePan,
+      presentationSectionId,
       commentCounts,
       onObjectComment,
       byReaction,
@@ -481,6 +546,10 @@ export function BoardCanvas({
     Parameters<NonNullable<FlowProps["onNodeContextMenu"]>>,
     void
   >((event, node) => {
+    if (presentationSectionId) {
+      event.preventDefault();
+      return;
+    }
     const group = (structure.parents.get(node.id) ?? []).find(
       (row) => row.element_type === "GROUP",
     );
@@ -497,7 +566,7 @@ export function BoardCanvas({
     Parameters<NonNullable<FlowProps["onNodeClick"]>>,
     void
   >((event, node) => {
-    if (tool === "SELECT") {
+    if (tool === "SELECT" && !presentationSectionId) {
       if (event.detail !== 2)
         doubleClickStart.current = {
           id: node.id,
@@ -517,7 +586,14 @@ export function BoardCanvas({
     Parameters<NonNullable<FlowProps["onNodeDragStart"]>>,
     void
   >((event, node) => {
-    if (!editable || isBusy() || spacePan || tool !== "SELECT") return;
+    if (
+      !editable ||
+      isBusy() ||
+      spacePan ||
+      tool !== "SELECT" ||
+      presentationSectionId
+    )
+      return;
     setManipulating(true);
     const original = getRows(),
       immovable = indexBoardObjects(original).immovable,
@@ -686,14 +762,7 @@ export function BoardCanvas({
         : parents,
     );
     if (row.element_type === "SECTION") {
-      const target = flow.current?.getNode(id);
-      if (target)
-        void flow.current?.fitView({
-          nodes: [target],
-          padding: 0.15,
-          maxZoom: 1,
-          duration: noMotion() ? 0 : 150,
-        });
+      frameSection(id);
       return;
     }
     void flow.current?.setCenter(
@@ -706,6 +775,7 @@ export function BoardCanvas({
     );
   });
   function keys(event: KeyboardEvent<HTMLDivElement>) {
+    if (presentationSectionId) return;
     if (
       (event.target as HTMLElement).closest(
         "input,textarea,select,button,a,summary,[contenteditable=true]",
@@ -862,6 +932,7 @@ export function BoardCanvas({
       id="board-canvas"
       onDoubleClickCapture={(event) => {
         if (
+          !!presentationSectionId ||
           tool !== "SELECT" ||
           (event.target as Element).closest(
             "input,textarea,select,button,summary,[data-board-popup]",
@@ -893,6 +964,7 @@ export function BoardCanvas({
           setSpacePan(false);
       }}
       onPointerDownCapture={(event) => {
+        if (presentationSectionId) return;
         handlePendingPointer(event);
         if (event.defaultPrevented) return;
         if (
@@ -992,16 +1064,30 @@ export function BoardCanvas({
         onlyRenderVisibleElements
         deleteKeyCode={null}
         nodesConnectable={false}
-        nodesDraggable={canMutate && tool === "SELECT" && !spacePan}
-        elementsSelectable={tool === "SELECT" && !spacePan}
-        panOnDrag={tool === "PAN" || spacePan ? [0, 1, 2] : [1, 2]}
-        panOnScroll
+        nodesDraggable={
+          !presentationSectionId && canMutate && tool === "SELECT" && !spacePan
+        }
+        elementsSelectable={
+          !presentationSectionId && tool === "SELECT" && !spacePan
+        }
+        panOnDrag={
+          presentationSectionId
+            ? false
+            : tool === "PAN" || spacePan
+              ? [0, 1, 2]
+              : [1, 2]
+        }
+        panOnScroll={!presentationSectionId}
         panOnScrollSpeed={1}
         zoomOnScroll={false}
-        zoomOnPinch
-        zoomActivationKeyCode={["Control", "Meta"]}
+        zoomOnPinch={!presentationSectionId}
+        zoomActivationKeyCode={
+          presentationSectionId ? null : ["Control", "Meta"]
+        }
         zoomOnDoubleClick={false}
-        selectionOnDrag={tool === "SELECT" && !spacePan}
+        selectionOnDrag={
+          !presentationSectionId && tool === "SELECT" && !spacePan
+        }
         selectionKeyCode={null}
         selectNodesOnDrag={false}
         multiSelectionKeyCode="Shift"
@@ -1033,22 +1119,26 @@ export function BoardCanvas({
         onMove={(_event, next) => setViewport(next)}
         onMoveEnd={(_event, next) => {
           setSettledViewport(next);
+          if (presentationSectionId) return;
           try {
             localStorage.setItem(viewportKey, JSON.stringify(next));
           } catch {}
         }}
         onPaneContextMenu={(event) =>
-          onContext(
-            event,
-            null,
-            flow.current?.screenToFlowPosition({
-              x: event.clientX,
-              y: event.clientY,
-            }) ?? center(),
-          )
+          presentationSectionId
+            ? event.preventDefault()
+            : onContext(
+                event,
+                null,
+                flow.current?.screenToFlowPosition({
+                  x: event.clientX,
+                  y: event.clientY,
+                }) ?? center(),
+              )
         }
         onNodeContextMenu={handleNodeContextMenu}
         onPaneClick={(event) => {
+          if (presentationSectionId) return;
           if (suppressPane.current) {
             suppressPane.current = false;
             return;
@@ -1096,7 +1186,7 @@ export function BoardCanvas({
         onNodeDragStop={handleNodeDragStop}
         proOptions={{ hideAttribution: true }}
       >
-        {grid ? (
+        {grid && !presentationSectionId ? (
           <Background
             color="var(--muted-foreground)"
             size={1}
@@ -1114,150 +1204,155 @@ export function BoardCanvas({
           />
         ) : null}
       </ReactFlow>
-      <BoardGuides guides={guides} viewport={viewport} spacing={spacing} />
-      {onStyle && onReplace && !manipulating ? (
-        <BoardQuickActions
-          selection={selectedRows}
-          busy={busy}
-          canMutate={canMutate}
-          onAction={action}
-          onStyle={onStyle}
-          onComment={() => onPanel("COMMENTS")}
-          onReplace={onReplace}
-          reactions={reactions}
-          pending={reactionPending}
-          members={members}
-          onReaction={onReaction}
-          top={
-            selectedRows.length
-              ? Math.max(
-                  12,
-                  Math.min(
-                    objectBounds(selectedRows).y * viewport.zoom +
-                      viewport.y -
-                      64,
-                    180,
-                  ),
-                )
-              : 12
-          }
-          onMore={(event) => {
-            const box = event.currentTarget.getBoundingClientRect();
-            onContext(
-              {
-                preventDefault: () => event.preventDefault(),
-                stopPropagation: () => event.stopPropagation(),
-                clientX: box.left,
-                clientY: box.bottom,
-              },
-              selected[0] ?? null,
-              center(),
-            );
-          }}
-        />
-      ) : null}
-      {region ? (
-        <div
-          aria-hidden
-          className="border-primary bg-primary/5 pointer-events-none absolute z-10 border-2"
-          style={{
-            left: region.x,
-            top: region.y,
-            width: region.width,
-            height: region.height,
-          }}
-        />
-      ) : null}
-      {dropSection ? (
-        <div
-          role="status"
-          className="bg-background absolute bottom-16 left-1/2 z-20 -translate-x-1/2 rounded border px-3 py-2 text-xs"
-        >
-          Use “Move to section” to place the selection here.
+      <div
+        hidden={!!presentationSectionId}
+        className="contents [&[hidden]]:hidden"
+      >
+        <BoardGuides guides={guides} viewport={viewport} spacing={spacing} />
+        {onStyle && onReplace && !manipulating ? (
+          <BoardQuickActions
+            selection={selectedRows}
+            busy={busy}
+            canMutate={canMutate}
+            onAction={action}
+            onStyle={onStyle}
+            onComment={() => onPanel("COMMENTS")}
+            onReplace={onReplace}
+            reactions={reactions}
+            pending={reactionPending}
+            members={members}
+            onReaction={onReaction}
+            top={
+              selectedRows.length
+                ? Math.max(
+                    12,
+                    Math.min(
+                      objectBounds(selectedRows).y * viewport.zoom +
+                        viewport.y -
+                        64,
+                      180,
+                    ),
+                  )
+                : 12
+            }
+            onMore={(event) => {
+              const box = event.currentTarget.getBoundingClientRect();
+              onContext(
+                {
+                  preventDefault: () => event.preventDefault(),
+                  stopPropagation: () => event.stopPropagation(),
+                  clientX: box.left,
+                  clientY: box.bottom,
+                },
+                selected[0] ?? null,
+                center(),
+              );
+            }}
+          />
+        ) : null}
+        {region ? (
+          <div
+            aria-hidden
+            className="border-primary bg-primary/5 pointer-events-none absolute z-10 border-2"
+            style={{
+              left: region.x,
+              top: region.y,
+              width: region.width,
+              height: region.height,
+            }}
+          />
+        ) : null}
+        {dropSection ? (
+          <div
+            role="status"
+            className="bg-background absolute bottom-16 left-1/2 z-20 -translate-x-1/2 rounded border px-3 py-2 text-xs"
+          >
+            Use “Move to section” to place the selection here.
+          </div>
+        ) : null}
+        <div className="absolute bottom-[max(4.25rem,env(safe-area-inset-bottom))] left-1/2 z-20 -translate-x-1/2">
+          <WhiteboardToolbar
+            activeTool={spacePan ? "PAN" : tool}
+            canMutate={canMutate}
+            busy={busy}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onToolChange={setTool}
+            onImageRequest={() => imageRequest()}
+            onUndo={() => navigate("UNDO")}
+            onRedo={() => navigate("REDO")}
+            onComment={() => onPanel("COMMENTS")}
+            shape={shape}
+            onShapeChange={setShape}
+          />
         </div>
-      ) : null}
-      <div className="absolute bottom-[max(4.25rem,env(safe-area-inset-bottom))] left-1/2 z-20 -translate-x-1/2">
-        <WhiteboardToolbar
-          activeTool={spacePan ? "PAN" : tool}
-          canMutate={canMutate}
-          busy={busy}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          onToolChange={setTool}
-          onImageRequest={() => imageRequest()}
-          onUndo={() => navigate("UNDO")}
-          onRedo={() => navigate("REDO")}
-          onComment={() => onPanel("COMMENTS")}
-          shape={shape}
-          onShapeChange={setShape}
+        <div className="absolute top-16 right-3 z-20 flex gap-1 md:top-3">
+          <Button
+            aria-label="Open Layers"
+            onClick={() => onPanel("OUTLINE")}
+            size="icon"
+            title="Layers"
+            variant="secondary"
+          >
+            <ListTree aria-hidden="true" className="size-4" />
+          </Button>
+          <Button
+            aria-label="Open Properties"
+            onClick={() => onPanel("INSPECTOR")}
+            size="icon"
+            title="Properties"
+            variant="secondary"
+          >
+            <Settings2 aria-hidden="true" className="size-4" />
+          </Button>
+          <Button
+            aria-label="Selection actions"
+            title="Selection actions"
+            size="icon"
+            variant="secondary"
+            onClick={(event) => {
+              const box = event.currentTarget.getBoundingClientRect();
+              onContext(
+                {
+                  preventDefault: () => event.preventDefault(),
+                  stopPropagation: () => event.stopPropagation(),
+                  clientX: box.left,
+                  clientY: box.bottom,
+                },
+                selected[0] ?? null,
+                center(),
+              );
+            }}
+          >
+            <MoreHorizontal aria-hidden className="size-4" />
+          </Button>
+        </div>
+        {!rows.length ? (
+          <p className="text-muted-foreground pointer-events-none absolute top-1/2 left-1/2 max-w-[60%] -translate-x-1/2 -translate-y-1/2 text-center text-sm">
+            {canMutate
+              ? "Choose a tool, then click the canvas or press Enter to insert."
+              : "This board is empty. Viewers can inspect and read shared work."}
+          </p>
+        ) : null}
+        <WhiteboardCursors
+          colorAssignments={collaboration.colors}
+          currentUserId={userId}
+          cursors={collaboration.cursors}
+          presence={collaboration.presence}
+          viewport={viewport}
         />
-      </div>
-      <div className="absolute top-16 right-3 z-20 flex gap-1 md:top-3">
-        <Button
-          aria-label="Open Layers"
-          onClick={() => onPanel("OUTLINE")}
-          size="icon"
-          title="Layers"
-          variant="secondary"
-        >
-          <ListTree aria-hidden="true" className="size-4" />
-        </Button>
-        <Button
-          aria-label="Open Properties"
-          onClick={() => onPanel("INSPECTOR")}
-          size="icon"
-          title="Properties"
-          variant="secondary"
-        >
-          <Settings2 aria-hidden="true" className="size-4" />
-        </Button>
-        <Button
-          aria-label="Selection actions"
-          title="Selection actions"
-          size="icon"
-          variant="secondary"
-          onClick={(event) => {
-            const box = event.currentTarget.getBoundingClientRect();
-            onContext(
-              {
-                preventDefault: () => event.preventDefault(),
-                stopPropagation: () => event.stopPropagation(),
-                clientX: box.left,
-                clientY: box.bottom,
-              },
-              selected[0] ?? null,
-              center(),
-            );
-          }}
-        >
-          <MoreHorizontal aria-hidden className="size-4" />
-        </Button>
-      </div>
-      {!rows.length ? (
-        <p className="text-muted-foreground pointer-events-none absolute top-1/2 left-1/2 max-w-[60%] -translate-x-1/2 -translate-y-1/2 text-center text-sm">
-          {canMutate
-            ? "Choose a tool, then click the canvas or press Enter to insert."
-            : "This board is empty. Viewers can inspect and read shared work."}
+        <BoardCanvasNavigation
+          zoom={viewport.zoom}
+          hasSelection={Boolean(selectedRows.length)}
+          onZoomOut={() => void flow.current?.zoomOut()}
+          onZoomIn={() => void flow.current?.zoomIn()}
+          onFit={() => fit()}
+          onFitSelection={() => fit(true)}
+        />
+        <p aria-live="polite" className="sr-only">
+          {selectedRows.length} selected.
         </p>
-      ) : null}
-      <WhiteboardCursors
-        colorAssignments={collaboration.colors}
-        currentUserId={userId}
-        cursors={collaboration.cursors}
-        presence={collaboration.presence}
-        viewport={viewport}
-      />
-      <BoardCanvasNavigation
-        zoom={viewport.zoom}
-        hasSelection={Boolean(selectedRows.length)}
-        onZoomOut={() => void flow.current?.zoomOut()}
-        onZoomIn={() => void flow.current?.zoomIn()}
-        onFit={() => fit()}
-        onFitSelection={() => fit(true)}
-      />
-      <p aria-live="polite" className="sr-only">
-        {selectedRows.length} selected.
-      </p>
+      </div>
     </div>
   );
 }

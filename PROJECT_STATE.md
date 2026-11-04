@@ -4,6 +4,76 @@ Last Updated: 2026-11-04
 
 ## Overall Status
 
+REDESIGN-004.3.3 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-004.3.3 — Board voting, Section presentation and visual color picker
+
+Branch `codex/redesign-004-3-3-voting-presentation` starts at
+`1e7b8a1e3d41744603ad715bd924dc16e33b2d38`. Original checkout and completed
+004.3.2 remain preserved. Main agent only, sequential runners; no 005, AI/native
+cards, merge or push. Existing fixtures/work were continued, not recreated.
+
+Delivered: visible voting with default 3 / bounded 1–5 own slots, multiple votes
+per object, one active session, fresh role/tenant authority and SELECT-only RLS.
+Version/request identities protect real concurrent/delayed requests. Private
+revision events refresh bounded summaries/results; own-only optimistic rollback
+retains newer remote counts. Ending freezes casts/removals. Presentation uses
+existing Sections in Layers order, the same mounted canvas/fit path, read-only
+input guards, keyboard/touch controls, optional fullscreen and editor restoration.
+Remote content/order/removal preserve appropriate active context without a slide
+model. Visual popovers provide S/V, hue/alpha, HEX/presets/Shape None, per-object
+previews and one commit per completed gesture. Nested Escape retains Properties.
+Native EyeDropper is feature detected; Pick from Board is explicitly deferred.
+
+Both reviewed forward migrations are applied:
+`20261104000100_board_voting.sql` and
+`20261104000110_board_voting_conflict_response.sql`. The latter corrects the
+observed hosted PostgREST retry timeout with PT409, preserving the applied
+original, existing records, locks and grants. All **39** ledger versions match.
+Existing Board columns/template-operation RPCs, both new tables and four voting
+RPCs were explicitly verified. No reset, DROP/TRUNCATE, seed/role application
+or unrelated hosted data deletion occurred.
+
+**Verification:** full web suite run once near completion: **220 files / 1,266
+tests PASS**. Focused Board coverage passed 53 files/332 tests before the final
+read-transport addition; its nine client/route cases also pass in the full suite.
+All five Board pgTAP suites pass in isolated PGlite: **201 assertions**, including
+63 voting assertions and result pagination/caps. Web lint, typecheck and ordinary
+production build pass. Scoped formatting, links, secret/artifact/scope scans and
+final diff checks are part of the recorded delivery review.
+
+Hosted smoke passes ten lifecycle/concurrency/security groups. Real two-user
+UI voting, injected rollback/recovery, ending/results, presentation/input/
+fullscreen/restore, live Section updates/reorder/archive/restore, color gesture
+preview/commit/reload, VIEWER, safe links/touch and accessible names pass. Both
+themes pass all eight required widths. New private HTTP voting reads preserve
+fresh shared authorization but bypass the mutation Server Action queue; real
+member/foreign/revoked/signed-out boundaries pass. This corrects a measured save
+delay without changing permissions. Absent sessions are not reread just by panning.
+
+500-object production probes cover drag, Layers, Section focus, presentation and
+realtime voting. Individual vote updates render zero object bodies; color
+previews render one. Lightweight interaction probes show no repeatable new
+regression; final valid save observations are 3.124/2.462/1.825s against baseline
+3.101/2.550/1.895s. One 51ms Long Task appears in the final current trace. Small
+samples/hosted variation are not SLAs; diagnostic overhead/outliers and existing
+initial-render/marquee limits remain explicit in docs/BOARDS.md.
+
+Exact cleanup verified absence of four task users, two organizations, three
+Boards, 522 objects, three private assets, 25 votes and 11 sessions, including
+user 404 checks. Task helpers are stopped. Evidence/scripts/screenshots and the
+now-deleted-account credential inventory stay ignored under
+`.next/cache/redesign-004-3-3-qa`; no secrets/artifacts/dependencies are delivered.
+
+**Limits:** native OS EyeDropper capture, manual NVDA and other browser/device
+engines remain target-environment checks; headless Chrome plus deterministic
+API-contract tests do not claim those sessions. Pick from Board, full voting
+history analytics, public presentation URLs and new slide entities are deferred.
+Generic Board editor scope is frozen; REDESIGN-005 is ready for its own approved
+public entity/provider/conversion brief and is **not started**.
+
+## Previous verified milestone
+
 REDESIGN-004.3.2 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
 
 ## REDESIGN-004.3.2 — Boards UI and input polish

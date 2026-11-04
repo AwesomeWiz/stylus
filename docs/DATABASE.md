@@ -783,3 +783,36 @@ contains only that session ID and bounded flow coordinates. The receiver
 accepts a cursor only when the session resolves through current Presence to an
 authorized server-projected board member; names, roles and colors never come
 from the Broadcast payload.
+
+## Board voting (REDESIGN-004.3.3)
+
+`20261104000100_board_voting.sql` adds `board_voting_sessions` and `board_votes`.
+Sessions carry tenant/Board, ACTIVE/ENDED, starter/ender/times, allowance 1–5,
+allowed types and revision. A partial unique index permits one ACTIVE session
+per Board. Votes use `(session_id,voter_id,slot)` as their key with composite
+organization/Board/session/object foreign keys. Inactive versioned tombstones
+protect slot reuse; request UUIDs make the current request idempotent. No stored
+content copies, colors, slide records or model outputs are introduced.
+
+Authenticated users have SELECT-only grants and member/active-Board RLS. Four
+functions form the public contract: `start_board_voting`, `set_board_vote`,
+`end_board_voting`, `read_board_voting`. Mutations lock the Board and freshly
+validate active membership/editor role. Start validates bounded config; casts
+validate current same-tenant eligible unlocked objects and inherited locks.
+Only the current actor's slots can change; removals may reclaim an own allocation
+from an archived/locked object while the session is active. Starter editors or
+OWNER/ADMIN can end. Ended allocations reject further writes. VIEWER reads only.
+
+The aggregate RPC uses invoker RLS and one CTE snapshot: at most five own slots,
+200 requested object summaries, 100 ranked results plus has-more, and up to 20
+unique participant IDs per object. Ties share a dense rank; UUID orders display
+and keyset paging. Completed sessions remain audited; full history UI is deferred.
+Existing account/object hard-delete cascades apply; ordinary archive retains data.
+Session INSERT/UPDATE publication events invalidate authorized reads on the
+existing private Board channel.
+
+`20261104000110_board_voting_conflict_response.sql` is an applied forward-only
+replacement of `set_board_vote` that changes stale-version SQLSTATE `40001` to
+`PT409` (HTTP409). This avoids the observed hosted PostgREST serialization-retry
+timeout. Authorization, locking, data and grants are unchanged. Neither migration
+resets or drops existing schema/data. No color/presentation migration is needed.

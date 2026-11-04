@@ -29,6 +29,23 @@ const mocks = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
 }));
+vi.mock("@/modules/whiteboards/voting-client", () => ({
+  readBoardVoting: async () => ({
+    status: "success",
+    data: {
+      session: null,
+      own_votes: [],
+      summaries: [],
+      results: [],
+      has_more: false,
+    },
+  }),
+}));
+vi.mock("@/modules/whiteboards/voting-actions", () => ({
+  startBoardVotingAction: vi.fn(),
+  setBoardVoteAction: vi.fn(),
+  endBoardVotingAction: vi.fn(),
+}));
 vi.mock("@/modules/whiteboards/actions", () => ({
   applyBoardOperationAction: mocks.operation,
   renameBoardAction: mocks.rename,
@@ -262,6 +279,84 @@ describe("Boards V2 workspace", () => {
     mount();
     expect(screen.getByTestId("node-count")).toHaveTextContent("1");
     expect(screen.getByText("Saved")).toBeInTheDocument();
+  });
+  it("does not start an empty presentation or create records from its guidance", () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Present board" }));
+    expect(
+      screen.getByRole("dialog", {
+        name: "Create Sections to present this Board",
+      }),
+    ).toBeInTheDocument();
+    expect(mocks.operation).not.toHaveBeenCalled();
+  });
+  it("presents the selected Section, blocks editing, navigates and restores editor/viewport without saves", async () => {
+    const first = object({
+        element_type: "SECTION",
+        z_index: 1,
+        content: { title: "Section Alpha" },
+      }),
+      second = object({
+        element_type: "SECTION",
+        z_index: 2,
+        content: { title: "Section Beta" },
+      });
+    mount([first, second, sticky]);
+    fireEvent.click(screen.getByRole("button", { name: "Select first" }));
+    fireEvent.click(screen.getByRole("button", { name: "Present board" }));
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Section Alpha" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Presentation progress")).toHaveTextContent(
+      "2 / 2",
+    );
+    expect(
+      screen.queryByRole("button", { name: "View menu" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("complementary", { name: "Layers" }),
+    ).not.toBeInTheDocument();
+    const nodes = mocks.flowSnapshots.mock.lastCall![0];
+    expect(
+      nodes.every(
+        (node: { draggable: boolean; data: { canMutate: boolean } }) =>
+          !node.draggable && !node.data.canMutate,
+      ),
+    ).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Drag first" }));
+    fireEvent.click(screen.getByRole("button", { name: "Canvas pane" }));
+    const canvas = document.getElementById("board-canvas")!;
+    fireEvent.keyDown(canvas, { key: "Delete" });
+    fireEvent.keyDown(canvas, { key: "z", ctrlKey: true });
+    expect(mocks.operation).not.toHaveBeenCalled();
+    fireEvent.keyDown(canvas, { key: "ArrowLeft" });
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Section Beta" }),
+    ).toBeInTheDocument();
+    fireEvent.keyDown(canvas, { key: " " });
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Section Alpha" }),
+    ).toBeInTheDocument();
+    fireEvent.keyDown(canvas, { key: " ", shiftKey: true });
+    expect(screen.getByLabelText("Presentation progress")).toHaveTextContent(
+      "1 / 2",
+    );
+    fireEvent.keyDown(canvas, { key: "Escape" });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "View menu" }),
+      ).toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(mocks.setViewport).toHaveBeenCalledWith(
+        { x: 0, y: 0, zoom: 1 },
+        { duration: 0 },
+      ),
+    );
+    expect(
+      screen.getByRole("complementary", { name: "Layers" }),
+    ).toBeInTheDocument();
+    expect(mocks.operation).not.toHaveBeenCalled();
   });
   it("keeps an unrelated node identical while another object saves and confirms", async () => {
     const other = object({ content: { text: "Unaffected" } });

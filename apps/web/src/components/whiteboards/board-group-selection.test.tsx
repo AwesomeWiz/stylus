@@ -7,6 +7,23 @@ import {
 } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
+vi.mock("@/modules/whiteboards/voting-client", () => ({
+  readBoardVoting: async () => ({
+    status: "success",
+    data: {
+      session: null,
+      own_votes: [],
+      summaries: [],
+      results: [],
+      has_more: false,
+    },
+  }),
+}));
+vi.mock("@/modules/whiteboards/voting-actions", () => ({
+  startBoardVotingAction: vi.fn(),
+  setBoardVoteAction: vi.fn(),
+  endBoardVotingAction: vi.fn(),
+}));
 const api = vi.hoisted(() => ({
   operation: vi.fn(),
   images: vi.fn(),

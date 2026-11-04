@@ -297,3 +297,23 @@ The product spec defines phase gates. Each UI change requires relevant behavior,
 authorization/tenant/plugin and accessibility checks alongside lint, typecheck
 and applicable build verification. A visual reorganization must not broaden
 memory access, overwrite immutable history or add implicit side effects.
+
+## Board color gestures and presentation (REDESIGN-004.3.3)
+
+Visual color popovers float left of desktop Properties without changing its
+width; clamped narrow overlays remain inside the Properties modal. Saturation/
+brightness, hue, alpha, HEX and presets share one confirmed value. Raw pointer
+movement previews only the selected object. Completed gestures/Enter/outside
+commit one operation; Escape cancels the unfinished gesture to the latest
+confirmed color. Shape None uses transparent HEX. Native EyeDropper requires an
+explicit action and falls back to ordinary controls when unsupported/unavailable.
+Pick from Board remains deferred. Nested popup Escape must not close the sheet.
+
+Presentation uses existing Sections and the same canvas. Keep title/progress,
+previous/next/exit and optional fullscreen. Arrows, Space/Shift+Space navigate;
+Escape exits. Respect reduced motion, ordinary button activation and bounded
+endpoints. Hide editing controls and guard all mutation input paths, while safe
+links and canonical remote updates remain readable. Exit restores editor context.
+Voting is a distinct visible decision session, with explicit bounded configuration,
+own allowance, deterministic results and an explicit end confirmation. Reactions
+remain social feedback. Never announce every remote cursor or vote to the page.

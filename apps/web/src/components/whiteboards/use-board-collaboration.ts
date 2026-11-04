@@ -4,6 +4,7 @@ import type {
   BoardCommentRow,
   BoardElementRow,
   BoardReactionRow,
+  BoardVotingSessionRow,
   BoardRow,
   TaskMember,
 } from "@/lib/supabase/database.types";
@@ -25,6 +26,7 @@ export function useBoardCollaboration(
   onElement: (row: BoardElementRow) => void,
   onComment: (row: BoardCommentRow) => void,
   onReaction?: (row: BoardReactionRow) => void,
+  onVoting?: (row: BoardVotingSessionRow) => void,
 ) {
   const [presence, setPresence] = useState(() =>
     includeLocalBoardPresence([], currentUser, members),
@@ -48,6 +50,7 @@ export function useBoardCollaboration(
       onElement,
       onComment,
       onReaction,
+      onVoting,
       onConnection: setConnection,
       onCursor: (update) =>
         setCursors((rows) => [
@@ -77,6 +80,7 @@ export function useBoardCollaboration(
     onComment,
     onElement,
     onReaction,
+    onVoting,
   ]);
   return {
     presence,

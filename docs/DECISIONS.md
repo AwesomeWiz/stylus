@@ -1135,3 +1135,48 @@ Project quarter-step frame offsets to positive integer CSS layers in the same
 index. Browsers reject fractional z-index; leaving those frames at `auto` can
 intercept children after a negative persisted reorder. Keep persisted layer
 values unchanged and verify both ordered projection and native pointer editing.
+
+## ADR-049 — Visible Board voting, local presentation and color previews
+
+Date: 2026-11-04. Status: Accepted for REDESIGN-004.3.3.
+
+Voting uses one active persisted session per Board and one versioned allocation
+slot per participant/allowance position. Board-row locking, fresh editor authority,
+slot versions and request identities protect concurrent and delayed requests.
+Only scoped RPCs write; SELECT-only RLS protects reads. Ending freezes allocations.
+Session revision events on the existing private channel invalidate bounded,
+authorized aggregates. No client count, participant name or reaction is authority.
+Optimistic projection replaces only the current participant's allocation; failure
+removes that overlay while retaining newer remote counts. Per-object subscriptions
+keep vote updates outside canonical object/render/history state.
+
+Use `PT409` for an application version conflict. A hosted overlap test exposed
+PostgREST retry behavior when a serialization error (`40001`) is deliberately
+raised; an additional forward migration replaces only that response code.
+Applied migrations remain unchanged. See the
+[Supabase explanation](https://supabase.com/kb/troubleshooting/high-cpu-and-infinite-transaction-retries-when-using-custom-error-codes-in-rpc-functions).
+
+Presentation derives local stops from active top-level Sections in persisted
+Layers order. It retains the mounted Flow canvas, uses the existing Section-fit
+path and restores editor viewport/panels/selection. It neither creates slides
+nor changes routes or permissions. Remote content does not refit the viewport;
+active Section removal chooses the nearest surviving stop. Fullscreen is optional.
+
+Visual color gestures use a component-local, per-object style preview store.
+Pointer movement never writes canonical history or the database. Gesture completion,
+HEX submission or normal outside dismissal commits one existing operation;
+Escape restores the latest confirmed color for the unfinished gesture. Existing
+HEX-alpha fields encode opacity and transparent Shape paints. A Board-local
+popover floats left of Properties when space permits and stays inside narrow
+modal focus scopes. Native EyeDropper is explicit and feature detected. Board
+sampling is deferred because it needs a separate canvas input/sampling contract.
+No shared cache, provider access, AI execution or Knowledge promotion is added.
+
+Voting projections use private `POST /api/boards/voting`, rather than the client
+Server Action queue. A production trace showed background read actions delaying
+Board saves. The route delegates to the same fresh tenant/membership/active-Board
+check and bounded aggregate projection. It caps streamed JSON at 16KB, checks the
+browser Origin against the received Host (including port), emits private/no-store
+responses and exposes no mutations. The client validates output, applies a
+20-second timeout and discards stale generations. This changes transport, not
+read authority. Voting start/cast/end remain Server Actions and scoped RPCs.

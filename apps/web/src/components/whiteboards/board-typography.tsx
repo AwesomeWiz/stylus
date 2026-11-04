@@ -39,7 +39,9 @@ export function BoardTypography({
   row: BoardElementRow;
   disabled?: boolean;
   compact?: boolean;
-  onChange: (style: Record<string, unknown>) => Promise<boolean> | void;
+  onChange: (
+    style: Record<string, unknown>,
+  ) => Promise<boolean> | boolean | void;
 }) {
   const text = boardTypography(row.style),
     font = boardFonts.find((f) => f.id === text.family)!;
@@ -195,6 +197,13 @@ export function BoardTypography({
         </div>
       ) : null}
       <BoardColorPicker
+        elementId={row.id}
+        styleKey="color"
+        previewExtras={
+          row.element_type === "STICKY" && !row.style.background
+            ? { background: boardPaint(row.style.color, "#fef3c7") }
+            : undefined
+        }
         label="Text color"
         compact={compact}
         value={

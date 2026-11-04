@@ -1,5 +1,52 @@
 ﻿# Boards environment and migration verification
 
+## REDESIGN-004.3.3 development verification
+
+The expressly authorized Stylus development backend remains
+`otdofpjgccvnkcvkcjxx`. Its initial 37-version ledger matched the repository.
+Reviewed dry runs identified only `20261104000100_board_voting.sql`, then the
+necessary forward correction `20261104000110_board_voting_conflict_response.sql`.
+Both were applied with the supported CLI. Final inspection matches all 39 local/
+remote versions through `20261104000110`. Neither file resets, drops, truncates
+or rewrites existing data; no seed/role file or unrelated migration was applied.
+
+The correction changes only stale application-version errors from 40001 to PT409,
+preserving authorization, locks, records and grants. A real overlap test exposed
+the original hosted transaction-retry timeout; after correction, exactly one
+same-slot request succeeds and the stale request promptly returns 409. Current
+idempotency and delayed/reused-slot rejection also pass against the hosted RPC.
+The applied original migration was not edited.
+
+Read-only schema probes explicitly verify `boards.template_key`, element
+`parent_id`, `locked`, geometry/content/style/metadata/archive columns, both new
+voting tables and their fields. Actual authenticated fixtures/mutations exercise
+`create_board_from_template`, `apply_board_operation` and all four new voting
+RPCs: start, cast/remove, end and read. Permanent local SQL suites run actual
+repository migrations in isolated PGlite with the minimal Supabase bootstrap:
+34 foundation + 59 V2 + 24 reactions + 21 resolution + 63 voting = 201 assertions.
+Hosted tests separately verify real RLS/RPC/private Realtime transport; local
+SQL emulation is not presented as a hosted pgTAP run or a database reset.
+
+Four isolated users, two organizations and three Boards contain 21, 500 and 1
+objects respectively; three private assets serve images. Two authenticated
+browsers verify visible voting convergence, own allocations, injected optimistic
+failure recovery and ending. API cases cover budget/concurrency, UUID/version
+idempotency, role/tenant/anonymous/direct-write denial, locks and revocation.
+The final private read route additionally verifies member 200, foreign/revoked 403
+without data, private/no-store headers and signed-out proxy denial. Real Board
+operations verify color gesture commits/reload and remote Section changes.
+
+Cleanup verifies exact user email/UUID, organization name/creator, complete Board/
+asset inventory and memberships before removal. Only those task records were
+removed: four users, two organizations, three Boards, 522 elements, three private
+assets, 25 votes and 11 sessions. Queries verify all scoped Board/vote/reaction/
+comment/organization rows and assets absent, with user 404 responses. Task-only
+Chrome/local servers are stopped; unrelated data/accounts and development
+processes remain untouched. Credential inventories and traces are ignored under
+`.next/cache/redesign-004-3-3-qa`. See [Boards](BOARDS.md) for browser/performance
+scope and native OS/NVDA/other-engine verification limits.
+
+
 REDESIGN-004.2 / REDESIGN-004.3 · 2026-11-03.
 
 ## REDESIGN-004.3 development verification

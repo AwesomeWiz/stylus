@@ -1,6 +1,6 @@
 "use client";
 import "./board-content-fonts.css";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Presentation } from "lucide-react";
 
 import { useRouter } from "next/navigation";
 import {
@@ -75,6 +75,16 @@ import { BoardHelp, BoardLinkDialog, BoardMenu } from "./board-controls";
 import type { WhiteboardTool } from "./whiteboard-toolbar";
 import { BoardCanvas, type BoardCanvasHandle } from "./board-canvas";
 import { useBoardEvent } from "./use-board-event";
+import { createBoardVotingStore } from "@/modules/whiteboards/voting-store";
+import { BoardVotingContext } from "./board-voting-context";
+import { BoardVoting, type BoardVotingHandle } from "./board-voting";
+import { useBoardPresentation } from "./use-board-presentation";
+import { BoardPresentation } from "./board-presentation";
+import { presentationTitle } from "@/modules/whiteboards/presentation";
+import {
+  BoardColorPreviewContext,
+  createBoardColorPreview,
+} from "./board-color-preview";
 
 const anonymous = { displayName: "Current user", id: "" };
 const emptyMembers: TaskMember[] = [];
@@ -101,6 +111,11 @@ export function WhiteboardWorkspace({
   shell?: BoardNavigationState;
 }) {
   const router = useRouter();
+  const [votingStore] = useState(() =>
+    createBoardVotingStore(currentUser.id, canMutate),
+  );
+  const [colorPreview] = useState(createBoardColorPreview);
+  const votingApi = useRef<BoardVotingHandle>(null);
   const desktop = useBoardDesktop();
   const panels = useBoardPanels(currentUser.id);
   useEffect(() => {
@@ -131,6 +146,12 @@ export function WhiteboardWorkspace({
   const objectIndex = useMemo(() => indexBoardObjects(rows), [rows]);
   const [selected, setSelected] = useState<string[]>([]),
     [panel, setPanel] = useState<Panel>(null);
+  const presentation = useBoardPresentation(rows, selected);
+  const presenting = !!presentation.state;
+  useEffect(
+    () => votingStore.setPresentation(presenting),
+    [votingStore, presenting],
+  );
   const [hovered, setHovered] = useState<string | null>(null);
   const [textLayoutPending, setTextLayoutPending] = useState(false);
   const textLayoutBusy = useRef(false);
@@ -211,7 +232,7 @@ export function WhiteboardWorkspace({
   );
   const uploadFailed = uploads.items.some((item) => item.state === "Error");
   const busy = pending || uploads.pending || titlePending || textLayoutPending;
-  const editable = canMutate && !busy && !dirty;
+  const editable = canMutate && !busy && !dirty && !presenting;
   const focusName = useRef<string | null>(null);
   useEffect(() => {
     if (
@@ -254,6 +275,15 @@ export function WhiteboardWorkspace({
     },
     [board.id, board.organization_id, receiveComment],
   );
+  const receiveVoting = useBoardEvent(
+    (row: import("@/lib/supabase/database.types").BoardVotingSessionRow) => {
+      if (
+        row.board_id === board.id &&
+        row.organization_id === board.organization_id
+      )
+        votingApi.current?.invalidate();
+    },
+  );
   const collaboration = useBoardCollaboration(
     board,
     currentUser,
@@ -261,7 +291,12 @@ export function WhiteboardWorkspace({
     receive,
     onComment,
     reactions.receive,
+    receiveVoting,
   );
+  useEffect(() => {
+    if (collaboration.connection === "CONNECTED")
+      votingApi.current?.invalidate();
+  }, [collaboration.connection]);
   const refreshBoard = useCallback(() => {
     router.refresh();
     const revision = getRevision();
@@ -962,428 +997,534 @@ export function WhiteboardWorkspace({
     setContext({ x: event.clientX, y: event.clientY, point });
   });
   return (
-    <div
-      onKeyDownCapture={(event) => {
-        if (
-          (event.ctrlKey || event.metaKey) &&
-          event.shiftKey &&
-          event.code === "Backslash" &&
-          !(event.target as HTMLElement).closest(
-            "input,textarea,select,[contenteditable=true]",
-          )
-        ) {
-          event.preventDefault();
-          toggleSidebars();
-        }
-      }}
-      data-board-shell
-      className="bg-background flex h-dvh min-h-0 flex-col overflow-hidden max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
-    >
-      <a
-        className="bg-background focus:ring-ring sr-only fixed top-2 left-2 z-[60] rounded border px-4 py-2 focus:not-sr-only focus:ring-2"
-        href="#board-canvas"
-        onClick={(event) => {
-          event.preventDefault();
-          focusBoardCanvas();
-        }}
-      >
-        Skip to canvas
-      </a>
-      <WhiteboardHeader
-        canMutate={canMutate && !busy}
-        title={title}
-        setTitle={setTitle}
-        renaming={renaming}
-        onRenamingChange={setRenaming}
-        onRename={() => void rename()}
-        saveState={
-          documentError || uploadFailed
-            ? "ERROR"
-            : busy
-              ? "SAVING"
-              : renaming
-                ? "UNSAVED"
-                : "SAVED"
-        }
-        onRetry={hasRetry ? retry : undefined}
-        beforeLeave={beforeLeave}
-        navigation={
-          shell ? (
-            <BoardNavigation state={shell} beforeLeave={beforeLeave} />
-          ) : undefined
-        }
-        actions={
-          <>
-            <div className="hidden sm:block">
-              <WhiteboardCollaborators
-                connection={collaboration.connection}
-                colorAssignments={collaboration.colors}
-                currentUserId={currentUser.id}
-                presence={collaboration.presence}
-              />
-            </div>
-            <Button
-              aria-label="Open board comments"
-              aria-pressed={panel === "COMMENTS"}
-              onClick={() =>
-                openPanel(panel === "COMMENTS" ? null : "COMMENTS")
-              }
-              size="icon"
-              title="Comments"
-              variant="ghost"
-            >
-              <MessageSquare aria-hidden="true" className="size-4" />
-            </Button>
-            <BoardMenu
-              snapObjects={snapObjects}
-              onSnapObjects={() => setSnapObjects((value) => !value)}
-              snapGrid={snapGrid}
-              onSnapGrid={() => setSnapGrid((value) => !value)}
-              onToggleSidebars={toggleSidebars}
-              sidebarsVisible={
-                panels.layers || panels.properties || panel === "COMMENTS"
-              }
-              onOutline={() => openPanel("OUTLINE")}
-              grid={grid}
-              onGrid={() => setGrid((v) => !v)}
-              onFit={() => canvasApi.current?.fit()}
-              onFitSelection={() => canvasApi.current?.fit(true)}
-              onHelp={() => setHelp(true)}
-              shortcuts={shortcuts}
-              onShortcuts={setShortcuts}
-              minimap={minimap}
-              onMinimap={() => setMinimap((value) => !value)}
-              connection={collaboration.connection}
-            />
-          </>
-        }
-      />
-      {reactions.error ? (
+    <BoardVotingContext.Provider value={votingStore}>
+      <BoardColorPreviewContext.Provider value={colorPreview}>
         <div
-          role="alert"
-          className="bg-background flex items-center gap-2 border-b px-3 py-2 text-sm"
-        >
-          <p>{reactions.error}</p>
-          <Button variant="ghost" onClick={reactions.retry}>
-            Retry reactions
-          </Button>
-        </div>
-      ) : null}
-      {error || documentError || uploads.error ? (
-        <div
-          className="bg-background flex items-center justify-between gap-2 border-b px-3 py-2 text-sm"
-          role="alert"
-        >
-          <p>{error ?? documentError ?? uploads.error}</p>
-          <Button
-            onClick={() => {
-              setError(null);
-              dismissError();
-              uploads.dismiss();
-            }}
-            variant="ghost"
-          >
-            Dismiss
-          </Button>
-          {hasReload ? (
-            <Button
-              onClick={() => {
-                dismissError();
-                refreshBoard();
-              }}
-              variant="secondary"
-            >
-              Reload latest state
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
-      <main
-        className="relative flex min-h-0 flex-1"
-        aria-label="Board workspace"
-      >
-        {desktop || panel === "OUTLINE" ? (
-          <BoardPanel
-            title="Layers"
-            visible={!desktop || panels.layers}
-            docked
-            side="left"
-            tab="OUTLINE"
-            onTab={desktop ? undefined : openPanel}
-            onClose={() => (desktop ? panels.toggle("layers") : setPanel(null))}
-          >
-            <BoardOutline
-              active={!desktop || panels.layers}
-              rows={rows}
-              objectIndex={objectIndex}
-              selected={selected}
-              onUpdate={canMutate ? update : undefined}
-              onHover={setHovered}
-              onDrop={canMutate ? handleLayerDrop : undefined}
-              isBusy={handleLayerBusy}
-              onContext={handleLayerContext}
-              onSelect={select}
-              onLocate={handleLayerLocate}
-            />
-            <Button
-              className="mt-4 w-full"
-              disabled={!selectedRows.length}
-              onClick={() => setPanel("INSPECTOR")}
-              variant="secondary"
-            >
-              Inspect selected objects
-            </Button>
-          </BoardPanel>
-        ) : null}
-        <BoardCanvas
-          ref={canvasApi}
-          objectIndex={objectIndex}
-          board={board}
-          userId={currentUser.id}
-          rows={rows}
-          highlighted={hovered}
-          reactions={reactions.rows}
-          reactionPending={reactions.pending}
-          members={members}
-          onReaction={reactions.toggle}
-          onVisibleObjects={setVisibleObjectIds}
-          onStyle={handleStyle}
-          onReplace={imageRequest}
-          onObjectComment={handleObjectComment}
-          selected={selected}
-          select={select}
-          onSelection={setSelected}
-          tool={tool}
-          setTool={setTool}
-          shape={shape}
-          setShape={setShape}
-          editable={editable}
-          canMutate={canMutate}
-          busy={busy}
-          canUndo={history.past.length > 0}
-          canRedo={history.future.length > 0}
-          navigate={navigate}
-          action={action}
-          shortcuts={shortcuts}
-          onMove={(dx, dy) =>
-            report(() => moveObjects(getRows(), selected, dx, dy))
-          }
-          onInsert={insert}
-          onImageRequest={(position) => {
-            imagePosition.current = position;
-            replacement.current = undefined;
-            if (picker.current) picker.current.multiple = true;
-            picker.current?.click();
-          }}
-          onFiles={uploads.add}
-          onPanel={openPanel}
-          collaboration={collaboration}
-          minimap={minimap}
-          grid={grid}
-          snapObjects={snapObjects}
-          snapGrid={snapGrid}
-          onContext={handleCanvasContext}
-          onClipboard={clipboardAction}
-          hasClipboard={clipboard.length > 0}
-          onSectionDraw={(bounds) => {
-            const row = createLocalObject(
-              "SECTION",
-              board.id,
-              board.organization_id,
-              currentUser.id,
-              getRows(),
-              bounds,
-              bounds,
-            );
-            void commit([...getRows(), row]).then((ok) => {
-              if (ok) setSelected([row.id]);
-            });
-            setTool("SELECT");
-          }}
-          commentCounts={commentCounts}
-          imageUrl={imageUrl}
-          retryImage={retryImage}
-          onContentCommit={onContentCommit}
-          onResizeCommit={onResizeCommit}
-          startInteraction={startInteraction}
-          cancelInteraction={cancelInteraction}
-          getRows={getRows}
-          isBusy={interactionBusy}
-          commit={commit}
-          onError={setError}
-        />
-        {(
-          desktop
-            ? panels.properties && panel !== "COMMENTS"
-            : panel === "INSPECTOR"
-        ) ? (
-          <BoardPanel
-            title="Properties"
-            docked
-            tab="INSPECTOR"
-            onTab={desktop ? undefined : openPanel}
-            onClose={() =>
-              desktop ? panels.toggle("properties") : setPanel(null)
+          onKeyDownCapture={(event) => {
+            if (presenting) {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                presentation.exit();
+                requestAnimationFrame(focusBoardCanvas);
+              } else if (
+                !event.ctrlKey &&
+                !event.metaKey &&
+                !event.altKey &&
+                (["ArrowRight", "ArrowLeft"].includes(event.key) ||
+                  (event.key === " " &&
+                    !(event.target as Element).closest(
+                      "button,a,input,textarea",
+                    )))
+              ) {
+                event.preventDefault();
+                presentation.move(
+                  event.key === "ArrowLeft" ||
+                    (event.key === " " && event.shiftKey)
+                    ? -1
+                    : 1,
+                );
+              }
+              event.stopPropagation();
+              return;
             }
-          >
-            {!selectedRows.length ? (
-              <div className="space-y-4 text-sm">
-                <p className="font-medium">{title}</p>
-                <p className="text-muted-foreground">
-                  {rows.length} objects · Select on the canvas or in Layers to
-                  edit.
-                </p>
-                <Button
-                  variant="secondary"
-                  onClick={() => canvasApi.current?.fit()}
-                >
-                  Fit board
-                </Button>
-                <label className="flex min-h-10 items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={grid}
-                    onChange={() => setGrid((v) => !v)}
-                  />
-                  Dot grid
-                </label>
-              </div>
-            ) : (
-              <BoardInspector
-                key={selectedRows.map((row) => row.id).join(":")}
-                rows={rows}
-                selection={selectedRows}
-                canMutate={canMutate}
-                busy={busy || dirty}
-                onUpdate={update}
-                onAction={action}
-                onAlign={(alignment) =>
-                  report(() => alignObjects(getRows(), selected, alignment))
-                }
-                onMembership={(id) =>
-                  report(() => assignSection(getRows(), selected, id))
-                }
-                onReplace={imageRequest}
-                onSelect={(id) => select(id)}
-              />
-            )}
-          </BoardPanel>
-        ) : null}
-        <WhiteboardCommentsPanel
-          docked
-          onLocate={(id) => canvasApi.current?.locate(id)}
-          objectNames={new Map(rows.map((row) => [row.id, objectTitle(row)]))}
-          boardId={board.id}
-          canMutate={canMutate}
-          comments={comments}
-          currentUserId={currentUser.id}
-          members={members}
-          onComment={onComment}
-          selectedElementId={
-            selectedRows.length === 1 ? selectedRows[0]!.id : null
-          }
-          controlledOpen={panel === "COMMENTS"}
-          onOpenChange={(open) => openPanel(open ? "COMMENTS" : null)}
-          loading={commentsLoading}
-          loadError={commentsError}
-          onLoad={() => void loadComments(Boolean(beforeComment))}
-          hasEarlier={Boolean(beforeComment)}
-        />
-      </main>
-      {uploads.items.length ? (
-        <div
-          aria-label="Image uploads"
-          className="bg-background max-h-40 overflow-y-auto border-t px-3 py-2 text-xs"
+            if (
+              (event.ctrlKey || event.metaKey) &&
+              event.shiftKey &&
+              event.code === "Backslash" &&
+              !(event.target as HTMLElement).closest(
+                "input,textarea,select,[contenteditable=true]",
+              )
+            ) {
+              event.preventDefault();
+              toggleSidebars();
+            }
+          }}
+          data-board-shell
+          data-presentation={presenting || undefined}
+          className="bg-background flex h-dvh min-h-0 flex-col overflow-hidden max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
         >
-          <div className="flex items-center justify-between">
-            <p>Images · up to 10 MB each</p>
-            <Button
-              disabled={uploads.pending}
-              onClick={uploads.dismiss}
-              variant="ghost"
-            >
-              Dismiss uploads
-            </Button>
+          <a
+            className="bg-background focus:ring-ring sr-only fixed top-2 left-2 z-[60] rounded border px-4 py-2 focus:not-sr-only focus:ring-2"
+            href="#board-canvas"
+            onClick={(event) => {
+              event.preventDefault();
+              focusBoardCanvas();
+            }}
+          >
+            Skip to canvas
+          </a>
+          {presenting && presentation.section ? (
+            <BoardPresentation
+              title={presentationTitle(presentation.section)}
+              index={presentation.state!.index}
+              count={presentation.sections.length}
+              notice={presentation.state!.notice}
+              onMove={presentation.move}
+              onExit={() => {
+                presentation.exit();
+                requestAnimationFrame(focusBoardCanvas);
+              }}
+            />
+          ) : null}
+          <div hidden={presenting} className="contents [&[hidden]]:hidden">
+            <WhiteboardHeader
+              canMutate={canMutate && !busy}
+              title={title}
+              setTitle={setTitle}
+              renaming={renaming}
+              onRenamingChange={setRenaming}
+              onRename={() => void rename()}
+              saveState={
+                documentError || uploadFailed
+                  ? "ERROR"
+                  : busy
+                    ? "SAVING"
+                    : renaming
+                      ? "UNSAVED"
+                      : "SAVED"
+              }
+              onRetry={hasRetry ? retry : undefined}
+              beforeLeave={beforeLeave}
+              navigation={
+                shell ? (
+                  <BoardNavigation state={shell} beforeLeave={beforeLeave} />
+                ) : undefined
+              }
+              actions={
+                <>
+                  <div className="hidden sm:block">
+                    <WhiteboardCollaborators
+                      connection={collaboration.connection}
+                      colorAssignments={collaboration.colors}
+                      currentUserId={currentUser.id}
+                      presence={collaboration.presence}
+                    />
+                  </div>
+                  <Button
+                    aria-label="Open board comments"
+                    aria-pressed={panel === "COMMENTS"}
+                    onClick={() =>
+                      openPanel(panel === "COMMENTS" ? null : "COMMENTS")
+                    }
+                    size="icon"
+                    title="Comments"
+                    variant="ghost"
+                  >
+                    <MessageSquare aria-hidden="true" className="size-4" />
+                  </Button>
+                  <BoardVoting
+                    ref={votingApi}
+                    board={board}
+                    userId={currentUser.id}
+                    canMutate={canMutate}
+                    role={shell?.organization.role}
+                    members={members}
+                    ids={visibleIds}
+                    selected={selected}
+                    index={objectIndex}
+                    store={votingStore}
+                    onLocate={handleLayerLocate}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Present board"
+                    title="Present"
+                    disabled={busy || dirty}
+                    onClick={() => {
+                      if (interactionBusy() || isDirty()) {
+                        setError("Finish saving before presenting.");
+                        return;
+                      }
+                      setContext(null);
+                      setHelp(false);
+                      setLinkAt(null);
+                      setArchiveChoice(false);
+                      presentation.start();
+                      requestAnimationFrame(focusBoardCanvas);
+                    }}
+                  >
+                    <Presentation aria-hidden className="size-4" />
+                  </Button>
+                  <BoardMenu
+                    snapObjects={snapObjects}
+                    onSnapObjects={() => setSnapObjects((value) => !value)}
+                    snapGrid={snapGrid}
+                    onSnapGrid={() => setSnapGrid((value) => !value)}
+                    onToggleSidebars={toggleSidebars}
+                    sidebarsVisible={
+                      panels.layers || panels.properties || panel === "COMMENTS"
+                    }
+                    onOutline={() => openPanel("OUTLINE")}
+                    grid={grid}
+                    onGrid={() => setGrid((v) => !v)}
+                    onFit={() => canvasApi.current?.fit()}
+                    onFitSelection={() => canvasApi.current?.fit(true)}
+                    onHelp={() => setHelp(true)}
+                    shortcuts={shortcuts}
+                    onShortcuts={setShortcuts}
+                    minimap={minimap}
+                    onMinimap={() => setMinimap((value) => !value)}
+                    connection={collaboration.connection}
+                  />
+                </>
+              }
+            />
           </div>
-          {uploads.items.map((item) => (
-            <div className="flex items-center gap-2 py-1" key={item.id}>
-              <span className="min-w-0 flex-1 truncate">{item.file.name}</span>
-              <span role={item.state === "Error" ? "alert" : "status"}>
-                {item.error ?? item.state}
-              </span>
-              {item.state === "Error" ? (
-                <Button onClick={() => uploads.retry(item.id)} variant="ghost">
-                  Retry file
+          {presentation.notice ? (
+            <p role="status" className="border-b px-3 py-2 text-sm">
+              {presentation.notice}
+            </p>
+          ) : null}
+          {reactions.error && !presenting ? (
+            <div
+              role="alert"
+              className="bg-background flex items-center gap-2 border-b px-3 py-2 text-sm"
+            >
+              <p>{reactions.error}</p>
+              <Button variant="ghost" onClick={reactions.retry}>
+                Retry reactions
+              </Button>
+            </div>
+          ) : null}
+          {error || documentError || uploads.error ? (
+            <div
+              className="bg-background flex items-center justify-between gap-2 border-b px-3 py-2 text-sm"
+              role="alert"
+            >
+              <p>{error ?? documentError ?? uploads.error}</p>
+              <Button
+                onClick={() => {
+                  setError(null);
+                  dismissError();
+                  uploads.dismiss();
+                }}
+                variant="ghost"
+              >
+                Dismiss
+              </Button>
+              {hasReload ? (
+                <Button
+                  onClick={() => {
+                    dismissError();
+                    refreshBoard();
+                  }}
+                  variant="secondary"
+                >
+                  Reload latest state
                 </Button>
               ) : null}
             </div>
-          ))}
+          ) : null}
+          <main
+            className="relative flex min-h-0 flex-1"
+            aria-label="Board workspace"
+          >
+            {desktop || (!presenting && panel === "OUTLINE") ? (
+              <BoardPanel
+                title="Layers"
+                visible={!presenting && (!desktop || panels.layers)}
+                docked
+                side="left"
+                tab="OUTLINE"
+                onTab={desktop ? undefined : openPanel}
+                onClose={() =>
+                  desktop ? panels.toggle("layers") : setPanel(null)
+                }
+              >
+                <BoardOutline
+                  active={!desktop || panels.layers}
+                  rows={rows}
+                  objectIndex={objectIndex}
+                  selected={selected}
+                  onUpdate={canMutate ? update : undefined}
+                  onHover={setHovered}
+                  onDrop={canMutate ? handleLayerDrop : undefined}
+                  isBusy={handleLayerBusy}
+                  onContext={handleLayerContext}
+                  onSelect={select}
+                  onLocate={handleLayerLocate}
+                />
+                <Button
+                  className="mt-4 w-full"
+                  disabled={!selectedRows.length}
+                  onClick={() => setPanel("INSPECTOR")}
+                  variant="secondary"
+                >
+                  Inspect selected objects
+                </Button>
+              </BoardPanel>
+            ) : null}
+            <BoardCanvas
+              ref={canvasApi}
+              presentationSectionId={presentation.state?.id ?? null}
+              objectIndex={objectIndex}
+              board={board}
+              userId={currentUser.id}
+              rows={rows}
+              highlighted={hovered}
+              reactions={reactions.rows}
+              reactionPending={reactions.pending}
+              members={members}
+              onReaction={reactions.toggle}
+              onVisibleObjects={setVisibleObjectIds}
+              onStyle={handleStyle}
+              onReplace={imageRequest}
+              onObjectComment={handleObjectComment}
+              selected={selected}
+              select={select}
+              onSelection={setSelected}
+              tool={tool}
+              setTool={setTool}
+              shape={shape}
+              setShape={setShape}
+              editable={editable}
+              canMutate={canMutate && !presenting}
+              busy={busy}
+              canUndo={history.past.length > 0}
+              canRedo={history.future.length > 0}
+              navigate={navigate}
+              action={action}
+              shortcuts={shortcuts}
+              onMove={(dx, dy) =>
+                report(() => moveObjects(getRows(), selected, dx, dy))
+              }
+              onInsert={insert}
+              onImageRequest={(position) => {
+                imagePosition.current = position;
+                replacement.current = undefined;
+                if (picker.current) picker.current.multiple = true;
+                picker.current?.click();
+              }}
+              onFiles={uploads.add}
+              onPanel={openPanel}
+              collaboration={collaboration}
+              minimap={minimap}
+              grid={grid}
+              snapObjects={snapObjects}
+              snapGrid={snapGrid}
+              onContext={handleCanvasContext}
+              onClipboard={clipboardAction}
+              hasClipboard={clipboard.length > 0}
+              onSectionDraw={(bounds) => {
+                const row = createLocalObject(
+                  "SECTION",
+                  board.id,
+                  board.organization_id,
+                  currentUser.id,
+                  getRows(),
+                  bounds,
+                  bounds,
+                );
+                void commit([...getRows(), row]).then((ok) => {
+                  if (ok) setSelected([row.id]);
+                });
+                setTool("SELECT");
+              }}
+              commentCounts={commentCounts}
+              imageUrl={imageUrl}
+              retryImage={retryImage}
+              onContentCommit={onContentCommit}
+              onResizeCommit={onResizeCommit}
+              startInteraction={startInteraction}
+              cancelInteraction={cancelInteraction}
+              getRows={getRows}
+              isBusy={interactionBusy}
+              commit={commit}
+              onError={setError}
+            />
+            {!presenting &&
+            (desktop
+              ? panels.properties && panel !== "COMMENTS"
+              : panel === "INSPECTOR") ? (
+              <BoardPanel
+                title="Properties"
+                docked
+                tab="INSPECTOR"
+                onTab={desktop ? undefined : openPanel}
+                onClose={() =>
+                  desktop ? panels.toggle("properties") : setPanel(null)
+                }
+              >
+                {!selectedRows.length ? (
+                  <div className="space-y-4 text-sm">
+                    <p className="font-medium">{title}</p>
+                    <p className="text-muted-foreground">
+                      {rows.length} objects · Select on the canvas or in Layers
+                      to edit.
+                    </p>
+                    <Button
+                      variant="secondary"
+                      onClick={() => canvasApi.current?.fit()}
+                    >
+                      Fit board
+                    </Button>
+                    <label className="flex min-h-10 items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={grid}
+                        onChange={() => setGrid((v) => !v)}
+                      />
+                      Dot grid
+                    </label>
+                  </div>
+                ) : (
+                  <BoardInspector
+                    key={selectedRows.map((row) => row.id).join(":")}
+                    rows={rows}
+                    selection={selectedRows}
+                    canMutate={canMutate}
+                    busy={busy || dirty}
+                    onUpdate={update}
+                    onAction={action}
+                    onAlign={(alignment) =>
+                      report(() => alignObjects(getRows(), selected, alignment))
+                    }
+                    onMembership={(id) =>
+                      report(() => assignSection(getRows(), selected, id))
+                    }
+                    onReplace={imageRequest}
+                    onSelect={(id) => select(id)}
+                  />
+                )}
+              </BoardPanel>
+            ) : null}
+            <WhiteboardCommentsPanel
+              docked
+              onLocate={(id) => canvasApi.current?.locate(id)}
+              objectNames={
+                new Map(rows.map((row) => [row.id, objectTitle(row)]))
+              }
+              boardId={board.id}
+              canMutate={canMutate}
+              comments={comments}
+              currentUserId={currentUser.id}
+              members={members}
+              onComment={onComment}
+              selectedElementId={
+                selectedRows.length === 1 ? selectedRows[0]!.id : null
+              }
+              controlledOpen={!presenting && panel === "COMMENTS"}
+              onOpenChange={(open) => openPanel(open ? "COMMENTS" : null)}
+              loading={commentsLoading}
+              loadError={commentsError}
+              onLoad={() => void loadComments(Boolean(beforeComment))}
+              hasEarlier={Boolean(beforeComment)}
+            />
+          </main>
+          {uploads.items.length ? (
+            <div
+              aria-label="Image uploads"
+              className="bg-background max-h-40 overflow-y-auto border-t px-3 py-2 text-xs"
+            >
+              <div className="flex items-center justify-between">
+                <p>Images · up to 10 MB each</p>
+                <Button
+                  disabled={uploads.pending}
+                  onClick={uploads.dismiss}
+                  variant="ghost"
+                >
+                  Dismiss uploads
+                </Button>
+              </div>
+              {uploads.items.map((item) => (
+                <div className="flex items-center gap-2 py-1" key={item.id}>
+                  <span className="min-w-0 flex-1 truncate">
+                    {item.file.name}
+                  </span>
+                  <span role={item.state === "Error" ? "alert" : "status"}>
+                    {item.error ?? item.state}
+                  </span>
+                  {item.state === "Error" ? (
+                    <Button
+                      onClick={() => uploads.retry(item.id)}
+                      variant="ghost"
+                    >
+                      Retry file
+                    </Button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <input
+            accept="image/png,image/jpeg,image/webp"
+            aria-label="Upload board images"
+            className="sr-only"
+            onChange={(event) => {
+              const files = Array.from(event.currentTarget.files ?? []);
+              uploads.add(
+                replacement.current ? files.slice(0, 1) : files,
+                imagePosition.current,
+                replacement.current,
+              );
+              event.currentTarget.value = "";
+              replacement.current = undefined;
+            }}
+            ref={picker}
+            tabIndex={-1}
+            type="file"
+          />
+          <Dialog
+            className="max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
+            open={archiveChoice}
+            onOpenChange={setArchiveChoice}
+            title="Archive Section"
+            description="Choose what happens to its children. This is one atomic, undoable operation."
+          >
+            <div className="flex flex-wrap gap-2 p-5">
+              <Button onClick={() => archive(true)} variant="secondary">
+                Keep children on board
+              </Button>
+              <Button onClick={() => archive(false)} variant="destructive">
+                Archive Section and children
+              </Button>
+            </div>
+          </Dialog>
+          <BoardLinkDialog
+            open={Boolean(linkAt)}
+            onClose={() => setLinkAt(null)}
+            busy={busy}
+            onCreate={async (content) => {
+              const row = createLocalObject(
+                "LINK",
+                board.id,
+                board.organization_id,
+                currentUser.id,
+                getRows(),
+                linkAt ?? canvasApi.current?.center() ?? { x: 0, y: 0 },
+                { content },
+              );
+              const saved = await commit([...getRows(), row]);
+              if (saved) {
+                setSelected([row.id]);
+                setLinkAt(null);
+              }
+              return saved;
+            }}
+          />
+          {context ? (
+            <BoardContextMenu
+              position={context}
+              commands={contextCommands}
+              onClose={() => setContext(null)}
+            />
+          ) : null}
+          <BoardHelp open={help} onOpenChange={setHelp} />
+          <Dialog
+            open={presentation.unavailable}
+            onOpenChange={presentation.setUnavailable}
+            title="Create Sections to present this Board"
+            description="Sections organize related content and become presentation stops."
+          >
+            <div className="p-5">
+              <Button onClick={() => presentation.setUnavailable(false)}>
+                Back to Board
+              </Button>
+            </div>
+          </Dialog>
         </div>
-      ) : null}
-      <input
-        accept="image/png,image/jpeg,image/webp"
-        aria-label="Upload board images"
-        className="sr-only"
-        onChange={(event) => {
-          const files = Array.from(event.currentTarget.files ?? []);
-          uploads.add(
-            replacement.current ? files.slice(0, 1) : files,
-            imagePosition.current,
-            replacement.current,
-          );
-          event.currentTarget.value = "";
-          replacement.current = undefined;
-        }}
-        ref={picker}
-        tabIndex={-1}
-        type="file"
-      />
-      <Dialog
-        className="max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
-        open={archiveChoice}
-        onOpenChange={setArchiveChoice}
-        title="Archive Section"
-        description="Choose what happens to its children. This is one atomic, undoable operation."
-      >
-        <div className="flex flex-wrap gap-2 p-5">
-          <Button onClick={() => archive(true)} variant="secondary">
-            Keep children on board
-          </Button>
-          <Button onClick={() => archive(false)} variant="destructive">
-            Archive Section and children
-          </Button>
-        </div>
-      </Dialog>
-      <BoardLinkDialog
-        open={Boolean(linkAt)}
-        onClose={() => setLinkAt(null)}
-        busy={busy}
-        onCreate={async (content) => {
-          const row = createLocalObject(
-            "LINK",
-            board.id,
-            board.organization_id,
-            currentUser.id,
-            getRows(),
-            linkAt ?? canvasApi.current?.center() ?? { x: 0, y: 0 },
-            { content },
-          );
-          const saved = await commit([...getRows(), row]);
-          if (saved) {
-            setSelected([row.id]);
-            setLinkAt(null);
-          }
-          return saved;
-        }}
-      />
-      {context ? (
-        <BoardContextMenu
-          position={context}
-          commands={contextCommands}
-          onClose={() => setContext(null)}
-        />
-      ) : null}
-      <BoardHelp open={help} onOpenChange={setHelp} />
-    </div>
+      </BoardColorPreviewContext.Provider>
+    </BoardVotingContext.Provider>
   );
 }

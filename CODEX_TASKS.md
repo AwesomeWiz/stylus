@@ -2,6 +2,22 @@
 
 # Current
 
+## REDESIGN-004.3.3 — Voting, Section presentation and visual color picker
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Dedicated branch from `1e7b8a1e3d41744603ad715bd924dc16e33b2d38`. Visible
+voting, read-only Section presentation and visual color controls are delivered.
+Both reviewed forward migrations are applied; all 39 ledger versions match.
+Real hosted lifecycle/security/concurrency, two-user UI, failure recovery, color
+persistence, live presentation, VIEWER/touch and 16 responsive cases pass. Private
+authorized read transport avoids delaying mutation actions. Full web suite:
+**220 files / 1,266 tests**; Board SQL: **201 assertions**. Lint/typecheck/build
+and final scoped delivery checks pass. Exact fixtures/helpers are cleaned up.
+Pick from Board/native OS/NVDA/other-engine limits are documented. Generic Board
+scope is frozen and 005 is ready for a separately approved task, not started.
+Main agent only; no merge or push. See PROJECT_STATE and docs/BOARDS.md.
+
 ## REDESIGN-004.3.2 — Boards UI and input polish
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

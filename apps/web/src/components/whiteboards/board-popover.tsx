@@ -36,6 +36,8 @@ export function BoardPopover({
   role = "dialog",
   width = 256,
   host,
+  placement = "anchor",
+  maxHeight = 360,
 }: {
   open: boolean;
   onClose: (restoreFocus: boolean) => void;
@@ -46,6 +48,8 @@ export function BoardPopover({
   role?: "dialog" | "listbox" | "menu";
   width?: number;
   host: HTMLElement | null;
+  placement?: "anchor" | "color";
+  maxHeight?: number;
 }) {
   const popup = useRef<HTMLDivElement>(null);
   const close = useBoardEvent(onClose);
@@ -57,16 +61,39 @@ export function BoardPopover({
       if (!box || !element) return;
       const available = window.innerHeight - 16;
       element.style.width = `${Math.min(width, window.innerWidth - 16)}px`;
-      element.style.maxHeight = `${Math.min(360, available)}px`;
+      element.style.maxHeight = `${Math.min(maxHeight, available)}px`;
       const height = element.getBoundingClientRect().height;
       const below = window.innerHeight - box.bottom - 8;
-      const top =
+      let top =
         below >= height || below >= box.top - 8
           ? box.bottom + 4
           : Math.max(8, box.top - height - 4);
-      element.style.left = `${Math.max(8, Math.min(box.left, window.innerWidth - element.offsetWidth - 8))}px`;
+      let left = Math.max(
+        8,
+        Math.min(box.left, window.innerWidth - element.offsetWidth - 8),
+      );
+      if (placement === "color") {
+        const panel = anchor.current
+          ?.closest<HTMLElement>('[data-board-panel="right"],[role="dialog"]')
+          ?.getBoundingClientRect();
+        if (
+          window.innerWidth >= 768 &&
+          panel &&
+          panel.left >= element.offsetWidth + 16
+        ) {
+          left = panel.left - element.offsetWidth - 8;
+          top = Math.max(
+            8,
+            Math.min(box.top - 8, window.innerHeight - height - 8),
+          );
+        } else if (window.innerWidth < 768) {
+          left = Math.max(8, (window.innerWidth - element.offsetWidth) / 2);
+          top = Math.max(8, window.innerHeight - height - 8);
+        }
+      }
+      element.style.left = `${left}px`;
       element.style.top = `${top}px`;
-      element.style.maxHeight = `${Math.max(80, Math.min(360, window.innerHeight - top - 8))}px`;
+      element.style.maxHeight = `${Math.max(80, Math.min(maxHeight, window.innerHeight - top - 8))}px`;
       element.style.visibility = "visible";
     }
     position();
@@ -113,7 +140,7 @@ export function BoardPopover({
       window.removeEventListener("resize", position);
       window.removeEventListener("scroll", scroll, true);
     };
-  }, [open, host, anchor, width, close, id]);
+  }, [open, host, anchor, width, close, id, placement, maxHeight]);
   if (!open || !host) return null;
   return createPortal(
     <div

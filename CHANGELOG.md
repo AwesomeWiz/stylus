@@ -4,6 +4,14 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added visible Board voting with bounded per-person allocations, fresh role/tenant
+  checks, live counts, explicit ending and deterministic results. Added local
+  Section presentation with read-only input, keyboard/touch navigation, optional
+  fullscreen and editor restoration. Visual color popovers provide S/V, hue/alpha,
+  synchronized HEX, per-object previews, gesture commits and native EyeDropper
+  detection. Pick from Board remains deferred. Private voting reads bypass the
+  mutation action queue; two reviewed forward migrations preserve existing data.
+
 - Polished Board Properties with 15 licensed local fonts, searchable family and
   supported-weight pickers, numeric presets/custom values, contextual Appearance
   and exact HEX colors. Added direct Group-child drill-in with synchronized
@@ -27,7 +35,7 @@ All notable user-facing changes to Stylus will be documented here.
   copies and contextual quick actions. Application chrome remains Geist.
 - Added tenant-authorized social reactions and reversible root-thread resolution,
   open-thread badges, local Board search and Section focus. Two forward
-  migrations preserve existing records; voting/presentation remain deferred.
+  migrations preserve existing records; voting/presentation were deferred in that phase.
 - Deferred private image previews to visible/selected objects with independent
   bounded signing, retaining paste/drop, replacement history and recovery.
 

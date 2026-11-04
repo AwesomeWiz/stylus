@@ -866,3 +866,36 @@ account/session decisions and private-route guards are unchanged. BrandLogo
 centralizes supplied theme variants. Auth uses server-rendered deterministic
 CSS geometry with a small decorative client boundary for finite local pointer
 response; no WebGL, network artwork or account state. See [Brand](BRAND.md).
+
+### Board voting and local presentation (REDESIGN-004.3.3)
+
+Core owns visible voting through four scoped Server Actions and database RPCs.
+A Board-local external store separates authoritative snapshots and one pending
+own-slot overlay. Independent object badges subscribe to stable projections;
+counts do not alter Flow node data, saved content or undo history. The existing
+private Board channel invalidates aggregates through session revision events.
+Visible/selected object reads use independently authorized batches of 200 and
+publish a combined projection only when session identity/revision agree. Ranked
+results use deterministic 100-item keyset pages; participant projections cap at20.
+Access denial clears private voting state; Board/account/org keys discard stores.
+
+Presentation remains local view state over canonical Sections. The same mounted
+canvas and Section-fit function serve navigation; editing, creation, selection
+and editor shortcuts are guarded while presenting. Remote content updates retain
+the active stop and viewport; removed stops reconcile to a surviving Section.
+Fullscreen ownership and exit restore editor state without a slide/share model.
+
+A second Board-local store provides per-object color previews without document
+writes on pointer frames. Logical commits reuse atomic Board operations and
+failure recovery. Shared popovers stay inside modal focus scopes; the enclosing
+sheet yields the first Escape to a nested popup. No plugin, AI, memory, dependency
+or global design-system boundary changes. See [ADR-049](DECISIONS.md).
+
+Voting background projections use `POST /api/boards/voting` to bypass the
+browser's serialized Server Action queue; start/cast/end remain Server Actions.
+The internal read-only route shares server authorization/validation, bounds
+streamed JSON at 16KB, checks Origin against Host and returns private/no-store.
+The fetch client validates snapshots, times out after 20 seconds and uses existing
+generation/revision reconciliation. No persistent cache or authorization shortcut
+is introduced. Empty-session discovery still responds to channel/focus events;
+panning alone does not refetch a known absent session.

@@ -1,0 +1,47 @@
+.board-color-checker {
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0;
+}
+.board-color-slider {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding-block: 14px;
+  margin-block: 0;
+  background-clip: content-box;
+  background-origin: content-box;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.board-color-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #555;
+  box-shadow: 0 0 0 1px #444;
+}
+.board-color-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #555;
+  box-shadow: 0 0 0 1px #444;
+}
+.board-color-slider:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+}

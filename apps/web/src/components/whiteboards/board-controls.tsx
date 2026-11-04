@@ -215,6 +215,14 @@ export function BoardHelp({
 }) {
   const groups = [
     [
+      "Presentation",
+      [
+        ["← / →", "Previous / Next Section"],
+        ["Space / Shift + Space", "Next / Previous Section"],
+        ["Esc", "Exit presentation"],
+      ],
+    ],
+    [
       "Tools",
       [
         ["V", "Select"],

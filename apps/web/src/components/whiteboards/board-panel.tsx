@@ -88,6 +88,12 @@ export function BoardPanel({
           onInteractOutside={(event) => {
             if (desktop) event.preventDefault();
           }}
+          onEscapeKeyDown={(event) => {
+            // A nested Board popup owns the first Escape. Radix listens before
+            // React's popup handler; keep the Properties/ Layers sheet mounted.
+            if ((event.target as Element | null)?.closest("[data-board-popup]"))
+              event.preventDefault();
+          }}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             requestAnimationFrame(focusBoardCanvas);

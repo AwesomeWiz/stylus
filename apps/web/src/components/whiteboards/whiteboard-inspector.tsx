@@ -19,7 +19,9 @@ export function WhiteboardInspector({
   showTypography = true,
 }: {
   element: BoardElementRow;
-  onStyleChange: (style: Record<string, unknown>) => void;
+  onStyleChange: (
+    style: Record<string, unknown>,
+  ) => Promise<boolean> | boolean | void;
   pending: boolean;
   showTypography?: boolean;
 }) {
@@ -43,6 +45,8 @@ export function WhiteboardInspector({
       {element.element_type === "STICKY" ? (
         <BoardColorPicker
           label="Sticky fill"
+          elementId={element.id}
+          styleKey="background"
           value={
             typeof element.style.background === "string"
               ? boardPaint(element.style.background, "#fef3c7")
@@ -58,7 +62,7 @@ export function WhiteboardInspector({
               !element.style.background ||
               !element.style.color ||
               STICKY_COLORS.some((c) => c.color === element.style.color);
-            update({
+            return update({
               background,
               ...(choice && auto ? { color: choice.color } : {}),
             });
@@ -69,6 +73,9 @@ export function WhiteboardInspector({
         <>
           <BoardColorPicker
             label="Shape fill"
+            elementId={element.id}
+            styleKey="fill"
+            allowNone
             value={boardPaint(element.style.fill, "#f4f4f5")}
             colors={boardFillColors}
             disabled={pending}
@@ -76,6 +83,9 @@ export function WhiteboardInspector({
           />
           <BoardColorPicker
             label="Shape stroke"
+            elementId={element.id}
+            styleKey="stroke"
+            allowNone
             value={boardPaint(element.style.stroke, "#71717a")}
             disabled={pending}
             onChange={(stroke) => update({ stroke })}
@@ -85,6 +95,8 @@ export function WhiteboardInspector({
       {element.element_type === "ARROW" ? (
         <BoardColorPicker
           label="Arrow color"
+          elementId={element.id}
+          styleKey="color"
           value={boardPaint(element.style.color, "#52525b")}
           disabled={pending}
           onChange={(color) => update({ color })}

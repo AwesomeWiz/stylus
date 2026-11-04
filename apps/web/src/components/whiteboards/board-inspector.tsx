@@ -345,7 +345,7 @@ export function BoardInspector({
                 showTypography={false}
                 element={row}
                 pending={disabled || locked}
-                onStyleChange={(style) => void update({ style })}
+                onStyleChange={(style) => update({ style })}
               />
             </fieldset>
           ) : null}

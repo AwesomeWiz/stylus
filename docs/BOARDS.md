@@ -1,5 +1,149 @@
 # Boards V2 interaction and creative usability
 
+## Voting, Section presentation and visual colors (REDESIGN-004.3.3)
+
+2026-11-04 · PASS. Full web **220 files / 1,266 tests**, lint, typecheck and
+ordinary production build pass. Final scoped formatting/link/scope/secret/artifact
+and diff review are recorded in PROJECT_STATE. This phase adds visible decisions and local
+presentation to Core Boards. It adds no native entity cards, AI, memory promotion,
+public sharing or slide model. URLs and canonical Board objects are unchanged.
+
+### Voting
+
+The Board-header collaboration control opens a focused configuration/results
+surface. Editors choose 1–5 votes per person (default 3) and eligible Text, Sticky,
+Image, Shape and Group types. Multiple allocations to one object are allowed.
+Sections, connectors and locked/inherited-locked objects cannot receive new votes.
+One session may be active per Board. VIEWER reads; editor starters or OWNER/ADMIN
+may explicitly confirm ending. Ended casts/removals reject; completed records
+remain audited, with the latest session shown rather than a new analytics UI.
+
+`board_voting_sessions` and versioned `board_votes` slots are tenant/Board scoped.
+RPCs lock the Board and freshly validate membership/role/object authority. A slot
+belongs to its authenticated actor, not a client-supplied voter. Current request
+UUIDs are idempotent; slot versions reject delayed/concurrent overwrites. Inactive
+tombstones allow safe budget reuse. Own allocations on archived/locked targets
+can be reclaimed while active. A real overlapping-request test confirms only one
+of two casts can take the same slot; the stale request promptly returns PT409.
+
+The existing private Board channel sends session revision invalidations. Counts
+are freshly read, never accepted from cursors/Presence/Broadcast. A Board-local
+external store overlays only one pending own allocation and rolls back only that
+overlay on failure, retaining newer remote counts. After uncertain writes, refresh
+precedes another submission. Object badges subscribe independently; canonical
+rows, undo history and Flow node data do not change for votes. Directory identities
+are resolved locally; unavailable objects never display a stale title/excerpt.
+
+Visible/selected summaries use independently authorized batches of at most 200,
+published only when session identity/revision agree. Results have deterministic
+100-item keyset pages; equal totals share dense rank and UUID breaks display ties.
+Each result offers Locate and up to 20 unique participant IDs resolved through the
+current directory. Own records cap at five. Access denial purges private counts.
+
+Background reads use `POST /api/boards/voting` with a 16KB streamed body cap,
+Origin/Host check, private/no-store responses and a 20-second client timeout.
+The route delegates to the existing fresh server authorization and bounded output
+validation. This avoids queuing projections ahead of saves in Next's browser
+Server Action queue. Start/cast/end remain scoped actions/RPCs. A known absent
+session is rediscovered through channel/focus events, not every pan.
+
+### Section presentation
+
+The header Present control starts at the selected active top-level Section,
+otherwise the first in Layers' high-to-low stored order (UUID ties). No Sections
+shows focused guidance. Presentation retains the same mounted Flow canvas and
+existing Section-fit path, with title/progress, Previous/Next/Exit and optional
+fullscreen. Left/Right, Space/Shift+Space and Escape are documented in Help.
+Ordinary button/link keyboard activation remains; endpoints do not wrap.
+
+Editor chrome, selection, creation, drag/resize, paste/drop and mutation shortcuts
+are guarded. Canonical safe links remain usable, including inside Groups. No
+permission is expanded. The editor's panels, selection, revealed/collapsed context
+and viewport restore on exit. Presentation fits do not overwrite device-local
+editor viewport storage. Fullscreen is explicitly requested; its failure leaves
+windowed presentation usable, and browser fullscreen exit returns to the editor.
+Reduced motion uses immediate fits; ordinary fits use the existing short duration.
+
+Remote content remains live without refitting the viewport. Reordering preserves
+the active identity; removing it chooses the nearest surviving Section with a
+notice, or exits if none remain. This is local view state: no public URL, persisted
+slide copies, themes, animation editor or presentation-specific schema.
+
+### Visual color picker
+
+One reusable control serves Text ink, Sticky fill/ink, Shape fill/stroke and Arrow
+ink. Desktop opens a floating popover immediately left of Properties without
+resizing/reflow. Collision-aware tablet placement and a clamped mobile overlay
+stay inside existing modal focus scopes. The first Escape closes only the nested
+picker and restores its swatch focus; a later Escape can close the sheet.
+
+Saturation/value square and handle, hue, alpha, HEX and presets synchronize in
+both directions. Keyboard arrows and larger Shift steps provide a square input
+alternative. HEX3/4/6/8 uses existing bounded styles; Shape None commits transparent
+HEX. Actual per-object previews use a local store, so raw pointer frames write
+neither history nor the database. Completing a gesture, submitting HEX or normal
+outside dismissal commits one existing Board operation. Escape cancels the
+unfinished preview to the latest confirmed paint; prior completed gestures remain
+committed. Failure clears the overlay and retains canonical rollback/recovery.
+
+Native EyeDropper is feature detected, explicitly invoked and abortable; failure
+or unsupported browsers retain normal controls/HEX. Its RGB sample preserves the
+current alpha. Native OS sampling is not claimed from headless QA; deterministic
+API success and unsupported paths are covered by component tests.
+**Pick from Board is deferred**: a safe sampling/input-mode contract is separate
+scope. There is no fake sampling button or arbitrary image/canvas fetch.
+
+### Evidence and limits
+
+Two reviewed forward migrations were dry-run/applied through the supported CLI:
+`20261104000100_board_voting.sql` and
+`20261104000110_board_voting_conflict_response.sql`. The latter preserves the
+applied first migration while replacing application-conflict SQLSTATE 40001 with
+PT409 to avoid the observed hosted retry timeout. All39 local/remote versions
+match. Existing `template_key`, `parent_id`, `locked`, operation/template RPCs,
+new columns and all four voting RPCs were explicitly verified. No reset,
+DROP/TRUNCATE, seed/role application or unrelated data deletion occurred.
+
+All five permanent Board pgTAP suites pass in isolated PGlite: **201 assertions**,
+including **63 voting assertions**. SQL cases include roles/tenants/revocation,
+direct writes, budget/slot reuse/idempotency, target/ancestor locks, archival,
+ending, ties, participant uniqueness/caps and 105-result pagination. Hosted RPC
+smoke passes ten lifecycle/concurrency/security groups. Real two-user browser QA
+passes live counts, own allocations, injected failure/rollback, ending/results,
+presentation/input/fullscreen/restore, Section content/reorder/archive/restore,
+color preview/one-save gestures/reload, VIEWER, safe links and touch navigation.
+The final private read route passes real member, foreign, revocation and signed-out
+proxy-boundary checks. Both themes pass 320/390/430/768/1024/1200/1440/1920 px,
+including popover bounds, focus restoration, modal containment and control targets.
+
+The 500-object comparison uses ordinary production builds at 1440×1000 on Windows,
+Ryzen 7 3750H/8 logical CPUs/about 7 GiB RAM, Node 24.22.1 and headless Chrome 156.
+Three samples per phase compare the verified 004.3.2 baseline. Lightweight drag,
+Layers and Section-focus samples recorded no Long Tasks in either build; React
+instrumentation produced cold outliers that did not recur in the lighter probe.
+Voting diagnostics rendered **zero object bodies** per individual update; color
+preview rendered **one affected body**. Known image URLs and mounted nodes remain
+stable across votes. Presentation transitions use the same viewport/index path;
+only normal offscreen virtualization changes visible objects.
+
+A server trace identified projection actions ahead of saves. After the private
+read-route correction, three valid drag/save observations were **3.124/2.462/1.825s**
+against baseline **3.101/2.550/1.895s**. One 51ms Long Task occurred in the final
+current trace; it was not a repeated hot-path regression. These small, network-
+dependent samples include input, fixed settle time and persistence; they are not
+SLAs or general speedup claims. Invalid-origin diagnostic runs are excluded from
+acceptance. Existing large initial-render/marquee limits remain; no broad cache,
+new index, database rewrite or CRDT system is introduced.
+
+Task cleanup inventoried exact identities/ownership before removing four test
+users, two organizations, three Boards, 522 objects, three private assets, 25 votes
+and 11 sessions, then verified row/asset absence and user 404 responses. Task-only
+server/browser helpers are stopped. Temporary helpers, credential inventory,
+traces and screenshots remain ignored under `.next/cache/redesign-004-3-3-qa`.
+Manual NVDA, native OS EyeDropper sampling and other browser/device engines remain
+separately recorded target-environment checks; no such session is fabricated.
+
+
 ## UI and input polish (REDESIGN-004.3.2)
 
 2026-11-04 · PASS. Full web 211 files / 1,206 tests; lint, typecheck and production
