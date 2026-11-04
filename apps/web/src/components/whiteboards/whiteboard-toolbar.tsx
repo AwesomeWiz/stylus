@@ -14,6 +14,7 @@ import {
   StickyNote,
   Type,
   Undo2,
+  MessageSquare,
 } from "lucide-react";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ export function WhiteboardToolbar({
   onUndo,
   onShapeChange = () => undefined,
   shape = "rectangle",
+  onComment,
 }: {
   activeTool: WhiteboardTool;
   canMutate: boolean;
@@ -64,6 +66,7 @@ export function WhiteboardToolbar({
   onUndo: () => void;
   onShapeChange?: (shape: string) => void;
   shape?: string;
+  onComment?: () => void;
 }) {
   const wide = useBoardWideTools(),
     ref = useRef<HTMLDivElement>(null);
@@ -148,7 +151,7 @@ export function WhiteboardToolbar({
           <span
             role="tooltip"
             id={`board-tool-${tool.value}`}
-            className="bg-foreground text-background pointer-events-none invisible absolute top-1/2 left-full z-30 ml-3 -translate-y-1/2 rounded px-2 py-1 text-xs whitespace-nowrap group-focus-within/tool:visible group-hover/tool:visible"
+            className="bg-foreground text-background pointer-events-none invisible absolute bottom-full left-1/2 z-30 mb-3 -translate-x-1/2 rounded px-2 py-1 text-xs whitespace-nowrap group-focus-within/tool:visible group-hover/tool:visible"
           >
             {tool.label}
             {tool.key ? ` (${tool.key})` : ""}
@@ -173,14 +176,14 @@ export function WhiteboardToolbar({
         <span
           role="tooltip"
           id="board-shapes-tip"
-          className="bg-foreground text-background pointer-events-none invisible absolute left-full z-30 ml-2 rounded px-2 py-1 text-xs whitespace-nowrap group-focus-within/tool:visible group-hover/tool:visible"
+          className="bg-foreground text-background pointer-events-none invisible absolute bottom-full z-30 mb-3 rounded px-2 py-1 text-xs whitespace-nowrap group-focus-within/tool:visible group-hover/tool:visible"
         >
           Shapes
         </span>
         <div
           aria-label="Shapes"
           role="group"
-          className="bg-popover absolute top-0 left-full z-30 ml-2 min-w-48 rounded-md border p-1 shadow-sm"
+          className="bg-popover absolute bottom-full left-0 z-30 mb-2 min-w-48 rounded-md border p-1 shadow-sm"
         >
           {shapeChoices.map(([value, label]) => (
             <button
@@ -205,8 +208,8 @@ export function WhiteboardToolbar({
     <>
       <div
         aria-label="Board tools"
-        aria-orientation={wide ? "vertical" : "horizontal"}
-        className="bg-background flex gap-1 rounded-lg border p-1 shadow-sm md:flex-col"
+        aria-orientation="horizontal"
+        className="bg-background flex items-center gap-0.5 rounded-lg border p-1 shadow-sm"
         onKeyDown={keys}
         ref={ref}
         role="toolbar"
@@ -214,7 +217,11 @@ export function WhiteboardToolbar({
         {wide ? (
           <>
             {tools.slice(0, 2).map((tool, index) => toolButton(tool, index))}
-            <div role="separator" className="my-1 border-t" />
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              className="mx-1 h-6 border-l"
+            />
             {tools
               .slice(2, 4)
               .map((tool, index) => toolButton(tool, index + 2))}
@@ -222,7 +229,11 @@ export function WhiteboardToolbar({
             {[tools[6]!, tools[7]!, tools[4]!, tools[5]!].map((tool, index) =>
               toolButton(tool, index + 5),
             )}
-            <div role="separator" className="my-1 border-t" />
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              className="mx-1 h-6 border-l"
+            />
           </>
         ) : (
           <>
@@ -240,27 +251,42 @@ export function WhiteboardToolbar({
             </Button>
           </>
         )}
+        {onComment ? (
+          <Button
+            aria-label="Comment on selection"
+            title="Comment on selection"
+            data-board-tool={wide ? 9 : 3}
+            tabIndex={tab === (wide ? 9 : 3) ? 0 : -1}
+            variant="ghost"
+            size="icon"
+            onClick={onComment}
+          >
+            <MessageSquare aria-hidden className="size-4" />
+          </Button>
+        ) : null}
         <details className="group/tool relative">
           <summary
             aria-describedby="board-more-tip"
             aria-label="More tools"
             className="hover:bg-muted flex min-h-10 min-w-10 cursor-pointer list-none items-center justify-center rounded-md max-md:min-h-11 max-md:min-w-11"
-            data-board-tool={wide ? 9 : 3}
-            tabIndex={tab === (wide ? 9 : 3) ? 0 : -1}
+            data-board-tool={wide ? (onComment ? 10 : 9) : onComment ? 4 : 3}
+            tabIndex={
+              tab === (wide ? (onComment ? 10 : 9) : onComment ? 4 : 3) ? 0 : -1
+            }
           >
             <MoreHorizontal aria-hidden="true" className="size-4" />
           </summary>
           <span
             role="tooltip"
             id="board-more-tip"
-            className="bg-foreground text-background pointer-events-none invisible absolute left-full z-30 ml-2 rounded px-2 py-1 text-xs whitespace-nowrap group-focus-within/tool:visible group-hover/tool:visible"
+            className="bg-foreground text-background pointer-events-none invisible absolute right-0 bottom-full z-30 mb-3 rounded px-2 py-1 text-xs whitespace-nowrap group-focus-within/tool:visible group-hover/tool:visible"
           >
             More tools
           </span>
           <div
             aria-label="History"
             role="group"
-            className="bg-popover absolute top-full left-0 z-30 min-w-44 rounded-md border p-1 shadow-sm md:top-0 md:left-full md:ml-2"
+            className="bg-popover absolute right-0 bottom-full z-30 mb-2 min-w-44 rounded-md border p-1 shadow-sm"
           >
             <Button
               aria-label="Undo"

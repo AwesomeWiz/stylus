@@ -2,7 +2,7 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-004.2 COMPLETE / VERIFIED
+Status: REDESIGN-004.3 COMPLETE / VERIFIED
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -14,6 +14,7 @@ Status: REDESIGN-004.2 COMPLETE / VERIFIED
 - [x] REDESIGN-004: Boards foundation
 - [x] REDESIGN-004.1: brand identity, Geist typography and premium auth
 - [x] REDESIGN-004.2: Boards stabilization and UX polish
+- [x] REDESIGN-004.3: Boards interaction and creative usability
 - [ ] REDESIGN-005: Boards and Stylus integrations/collaboration
 - [ ] REDESIGN-006: Marketing shell and Creative Studio
 - [ ] REDESIGN-007: Research, Campaigns and secondary Marketing
@@ -41,7 +42,13 @@ menus, Properties, Layers, card previews and compact controls/help. All
 task-owned hosted fixtures were removed. Existing owner organization-deletion
 ordering needs a separate fix; see PROJECT_STATE. Signed-in transition timing
 and manual NVDA remain target-environment acceptance, not measured local claims.
-Later follow-up tasks are not started. See
+REDESIGN-004.3 adds stable drag, simultaneous desktop docks, bottom tools, direct
+Layers, content typography, guides/snapping, Alt copies, reactions, reversible
+thread resolution and local search/Section focus. Its two forward migrations and
+real authenticated tests pass; all task fixtures are removed. Large-document
+latency/payload and manual NVDA/additional engines remain explicit limits. Voting,
+presentation, native integrations and AI remain deferred. Later follow-up tasks
+are not started. See
 [V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) for scope, dependency
 order, security invariants and acceptance. Earlier product milestones below
 remain historical; no existing feature or hosted QA requirement is removed.

@@ -12,6 +12,7 @@ import { WhiteboardInspector } from "./whiteboard-inspector";
 import { BoardPropertyField } from "./board-property-field";
 import { BoardArrangeControls } from "./board-arrange-controls";
 import { shapeChoices } from "./whiteboard-toolbar";
+import { BoardTypography } from "./board-typography";
 export type SelectionAction =
   | "GROUP"
   | "UNGROUP"
@@ -158,6 +159,13 @@ export function BoardInspector({
           {["TEXT", "STICKY"].includes(row.element_type)
             ? field("text", "Content", true)
             : null}
+          {["TEXT", "STICKY"].includes(row.element_type) ? (
+            <BoardTypography
+              row={row}
+              disabled={disabled || locked}
+              onChange={(style) => update({ style })}
+            />
+          ) : null}
           {container ? (
             <fieldset className="space-y-2">
               <legend className="text-xs font-medium">
@@ -196,6 +204,28 @@ export function BoardInspector({
                     : "Collapse Section"}
                 </Button>
               ) : null}
+            </fieldset>
+          ) : null}
+          {row.element_type === "ARROW" ? (
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-medium">Arrow</legend>
+              {field("label", "Arrow label")}
+              <label className="flex min-h-10 items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={row.content.reverse === true}
+                  disabled={disabled || locked}
+                  onChange={(event) =>
+                    void update({
+                      content: {
+                        ...row.content,
+                        reverse: event.target.checked,
+                      },
+                    })
+                  }
+                />
+                Reverse direction
+              </label>
             </fieldset>
           ) : null}
           {row.element_type === "LINK" ? (
@@ -308,6 +338,7 @@ export function BoardInspector({
             <fieldset>
               <legend className="mb-2 text-xs font-medium">Appearance</legend>
               <WhiteboardInspector
+                showTypography={false}
                 element={row}
                 pending={disabled || locked}
                 onStyleChange={(style) => void update({ style })}

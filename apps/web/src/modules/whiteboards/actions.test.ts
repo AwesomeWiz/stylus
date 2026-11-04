@@ -164,6 +164,9 @@ describe("whiteboard actions", () => {
       p_upserts: [projectObject(element)],
       p_archive_ids: [],
     });
+    // The authoritative operation response updates the editor. List refresh is
+    // deferred to return navigation so a move does not render the whole Board.
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
     mocks.rpc.mockClear();
     mocks.builder.maybeSingle.mockResolvedValue({ data: null, error: null });
     expect(

@@ -197,6 +197,37 @@ WebP objects, and protected by organization-path membership/role policies.
 Archiving an image element retains its private object so non-destructive recovery
 remains possible; a future permanent purge workflow may remove archived assets.
 
+## Board feedback and resolution (REDESIGN-004.3)
+
+`20261103000100_board_reactions.sql` creates `board_reactions` with a composite
+organization/board/element/user/reaction primary key, same-tenant object FK,
+five-kind check, active state and timestamp. Authenticated clients have SELECT
+only; RLS freshly requires membership and active Board/object. The definer
+`set_board_reaction(uuid,uuid,text,boolean)` locks the Board, checks the current
+editor role and target and derives the actor from `auth.uid()`. Setting a desired
+state is idempotent. Invoker `read_board_reactions(uuid,uuid[])` uses RLS and a
+200-ID limit, exact counts, current-user state and at most 20 participant IDs.
+The existing realtime publication includes these rows, including inactive rows
+needed to reconcile removals. Archived targets hide feedback, revoked users lose
+access, and deleted accounts cascade their reaction records. No direct client
+write policy bypasses these checks.
+
+`20261103000110_board_comment_resolution.sql` adds nullable paired
+`resolved_at`/`resolved_by`, a same-organization resolver membership FK and an
+open-root-thread index. Existing content/provenance remains immutable.
+`set_board_comment_resolution(uuid,uuid,boolean)` freshly checks the active Board,
+editor role and unarchived root thread, then resolves/reopens idempotently.
+`read_board_comment_counts(uuid,uuid[])` returns only open root counts for up to
+200 active object IDs under invoker RLS, without comment bodies. VIEWER can read
+both feedback systems; mutation requires OWNER/ADMIN/MEMBER. Existing comment
+archive, reply, mention and notification rules remain.
+
+Both files were reviewed and applied unchanged through the linked CLI workflow
+to the expressly task-authorized development project. No reset/DROP/TRUNCATE or
+unrelated content modification. Permanent reaction/resolution suites add 24 and
+21 assertions to the existing 93 Board assertions. The read-only developer schema
+diagnostic now checks these columns/table and all six Board RPCs.
+
 ## Boards V2 relational foundation (REDESIGN-004)
 
 Forward migrations `20261102000100_board_v2_element_types.sql` and

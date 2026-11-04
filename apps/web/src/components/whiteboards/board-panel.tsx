@@ -1,6 +1,6 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { X, PanelLeftClose, PanelRightClose } from "lucide-react";
 import { useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { focusBoardCanvas } from "./board-navigation";
@@ -25,14 +25,47 @@ export function BoardPanel({
   onClose,
   tab,
   onTab,
+  docked = false,
+  side = "right",
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   tab?: "INSPECTOR" | "OUTLINE";
   onTab?: (tab: "INSPECTOR" | "OUTLINE") => void;
+  docked?: boolean;
+  side?: "left" | "right";
 }) {
   const desktop = useBoardDesktop();
+  if (desktop && docked) {
+    const Collapse = side === "left" ? PanelLeftClose : PanelRightClose;
+    return (
+      <aside
+        aria-label={title}
+        data-board-panel={side}
+        className={`bg-background flex min-h-0 shrink-0 flex-col ${side === "left" ? "w-64 border-r" : "w-72 border-l"}`}
+      >
+        <header className="flex min-h-12 shrink-0 items-center justify-between border-b px-3">
+          <h2 className="text-sm font-semibold">{title}</h2>
+          <Button
+            aria-label={`Collapse ${title.toLowerCase()}`}
+            title={`Collapse ${title}`}
+            size="icon"
+            variant="ghost"
+            onClick={onClose}
+          >
+            <Collapse aria-hidden className="size-4" />
+          </Button>
+        </header>
+        <div
+          data-board-scroll
+          className="min-h-0 flex-1 overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+        >
+          {children}
+        </div>
+      </aside>
+    );
+  }
   return (
     <Dialog.Root
       open
@@ -112,6 +145,7 @@ export function BoardPanel({
             </div>
           ) : null}
           <div
+            data-board-scroll
             role={tab ? "tabpanel" : undefined}
             id={tab ? `board-panel-${tab}` : undefined}
             aria-labelledby={tab ? `board-tab-${tab}` : undefined}

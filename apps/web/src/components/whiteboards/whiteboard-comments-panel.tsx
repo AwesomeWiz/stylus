@@ -1,7 +1,16 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Archive, MessageSquare, Reply, Send, X } from "lucide-react";
+import {
+  Archive,
+  MessageSquare,
+  Reply,
+  Send,
+  X,
+  Check,
+  RotateCcw,
+  LocateFixed,
+} from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
 import { BoardPanel } from "./board-panel";
@@ -14,6 +23,7 @@ import type {
 import {
   archiveBoardCommentAction,
   createBoardCommentAction,
+  setBoardCommentResolutionAction,
 } from "@/modules/whiteboards/actions";
 
 export function WhiteboardCommentsPanel({
@@ -30,6 +40,9 @@ export function WhiteboardCommentsPanel({
   loadError,
   onLoad,
   hasEarlier = false,
+  onLocate,
+  objectNames,
+  docked = false,
 }: {
   boardId: string;
   canMutate: boolean;
@@ -44,11 +57,21 @@ export function WhiteboardCommentsPanel({
   loadError?: string | null;
   onLoad?: () => void;
   hasEarlier?: boolean;
+  onLocate?: (id: string) => void;
+  objectNames?: Map<string, string>;
+  docked?: boolean;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
   const [elementOnly, setElementOnly] = useState(false);
+  const [previousOpen, setPreviousOpen] = useState(open);
+  if (previousOpen !== open) {
+    setPreviousOpen(open);
+    if (open) setElementOnly(!!selectedElementId);
+  }
+  const [showResolved, setShowResolved] = useState(false),
+    [resolving, setResolving] = useState<string | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const memberById = useMemo(
@@ -59,7 +82,9 @@ export function WhiteboardCommentsPanel({
     (comment) =>
       (elementOnly
         ? Boolean(selectedElementId) && comment.element_id === selectedElementId
-        : comment.element_id === null) && comment.parent_id === null,
+        : comment.element_id === null) &&
+      comment.parent_id === null &&
+      (showResolved || !comment.resolved_at),
   );
 
   const content = (
@@ -94,8 +119,16 @@ export function WhiteboardCommentsPanel({
           Selected element
         </Button>
       </div>
+      <label className="flex min-h-10 items-center gap-2 border-b px-4 text-xs">
+        <input
+          type="checkbox"
+          checked={showResolved}
+          onChange={(event) => setShowResolved(event.target.checked)}
+        />
+        Show resolved threads
+      </label>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
-        {loading ? <p role="status">Loading comments?</p> : null}
+        {loading ? <p role="status">Loading comments…</p> : null}
         {archiveError ? (
           <p role="alert" className="text-destructive text-sm">
             {archiveError}
@@ -129,6 +162,29 @@ export function WhiteboardCommentsPanel({
               key={comment.id}
               memberById={memberById}
               canReply={canMutate}
+              resolving={resolving !== null}
+              onResolve={async (resolved) => {
+                setResolving(comment.id);
+                try {
+                  const result = await setBoardCommentResolutionAction({
+                    boardId,
+                    commentId: comment.id,
+                    resolved,
+                  });
+                  if (result.status === "error")
+                    setArchiveError(result.message);
+                  else {
+                    onComment(result.data);
+                    setArchiveError(null);
+                  }
+                } catch {
+                  setArchiveError("Thread could not update. Retry.");
+                } finally {
+                  setResolving(null);
+                }
+              }}
+              onLocate={onLocate}
+              objectNames={objectNames}
               onArchive={async (id) => {
                 const result = await archiveBoardCommentAction(id);
                 if (result.status === "success") {
@@ -141,7 +197,7 @@ export function WhiteboardCommentsPanel({
           ))
         ) : (
           <p className="text-muted-foreground py-10 text-center text-sm">
-            {loading ? "Loading discussion?" : "No comments yet."}
+            {loading ? "Loading discussion…" : "No open threads here."}
           </p>
         )}
       </div>
@@ -165,7 +221,11 @@ export function WhiteboardCommentsPanel({
   );
   if (controlledOpen !== undefined)
     return open ? (
-      <BoardPanel title="Comments" onClose={() => setOpen(false)}>
+      <BoardPanel
+        title="Comments"
+        docked={docked}
+        onClose={() => setOpen(false)}
+      >
         {content}
       </BoardPanel>
     ) : null;
@@ -208,6 +268,10 @@ function CommentThread({
   onArchive,
   onReply,
   canReply,
+  resolving,
+  onResolve,
+  onLocate,
+  objectNames,
 }: {
   comment: BoardCommentRow;
   comments: BoardCommentRow[];
@@ -216,6 +280,10 @@ function CommentThread({
   onArchive: (id: string) => Promise<void>;
   onReply: () => void;
   canReply: boolean;
+  resolving?: boolean;
+  onResolve?: (resolved: boolean) => Promise<void>;
+  onLocate?: (id: string) => void;
+  objectNames?: Map<string, string>;
 }) {
   const replies = comments.filter(
     (candidate) => candidate.parent_id === comment.id,
@@ -225,6 +293,24 @@ function CommentThread({
   return (
     <article className="space-y-2">
       <div className="rounded-md border p-3">
+        {comment.element_id && onLocate ? (
+          <Button
+            className="mb-2 h-8 max-w-full justify-start truncate"
+            variant="ghost"
+            disabled={!objectNames?.has(comment.element_id)}
+            onClick={() => onLocate(comment.element_id!)}
+          >
+            <LocateFixed aria-hidden className="size-3" />
+            {objectNames?.get(comment.element_id) ??
+              "Archived or unavailable object"}
+          </Button>
+        ) : null}
+        {comment.resolved_at ? (
+          <p className="text-muted-foreground mb-2 flex items-center gap-1 text-xs">
+            <Check aria-hidden className="size-3" />
+            Resolved
+          </p>
+        ) : null}
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="font-medium">{author}</span>
           <time className="text-muted-foreground" dateTime={comment.created_at}>
@@ -242,6 +328,21 @@ function CommentThread({
         </p>
         {!comment.archived_at ? (
           <div className="mt-2 flex gap-1">
+            {canReply && onResolve ? (
+              <Button
+                className="h-8"
+                disabled={resolving}
+                variant="ghost"
+                onClick={() => void onResolve(!comment.resolved_at)}
+              >
+                {comment.resolved_at ? (
+                  <RotateCcw aria-hidden className="size-3.5" />
+                ) : (
+                  <Check aria-hidden className="size-3.5" />
+                )}
+                {comment.resolved_at ? "Reopen" : "Resolve"}
+              </Button>
+            ) : null}
             {canReply ? (
               <Button className="h-8" onClick={onReply} variant="ghost">
                 <Reply aria-hidden="true" className="size-3.5" /> Reply

@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   comments: vi.fn(),
   images: vi.fn(),
   snapshot: vi.fn(),
+  reactions: vi.fn(),
+  setReaction: vi.fn(),
   refresh: vi.fn(),
   subscribe: vi.fn(),
   unsubscribe: vi.fn(),
@@ -29,11 +31,13 @@ vi.mock("@/modules/whiteboards/actions", () => ({
   applyBoardOperationAction: mocks.operation,
   renameBoardAction: mocks.rename,
   uploadBoardImageAction: mocks.upload,
+  setBoardReactionAction: mocks.setReaction,
 }));
 vi.mock("@/modules/whiteboards/read-actions", () => ({
   readBoardCommentsAction: mocks.comments,
   readBoardImagesAction: mocks.images,
   readBoardSnapshotAction: mocks.snapshot,
+  readBoardReactionsAction: mocks.reactions,
 }));
 vi.mock("@/modules/whiteboards/realtime", () => ({
   subscribeToBoardCollaboration: mocks.subscribe,
@@ -152,6 +156,8 @@ import { board, object } from "@/test/board-fixtures";
 import { WhiteboardWorkspace } from "./whiteboard-workspace";
 const sticky = object();
 const comment: BoardCommentRow = {
+  resolved_at: null,
+  resolved_by: null,
   id: crypto.randomUUID(),
   board_id: board.id,
   organization_id: board.organization_id,
@@ -235,6 +241,8 @@ describe("Boards V2 workspace", () => {
       before: null,
     });
     mocks.images.mockResolvedValue({ status: "success", images: [] });
+    mocks.reactions.mockResolvedValue({ status: "success", rows: [] });
+    mocks.setReaction.mockResolvedValue({ status: "success" });
     mocks.snapshot.mockResolvedValue({
       status: "success",
       rows: [sticky],
@@ -249,6 +257,72 @@ describe("Boards V2 workspace", () => {
     mount();
     expect(screen.getByTestId("node-count")).toHaveTextContent("1");
     expect(screen.getByText("Saved")).toBeInTheDocument();
+  });
+  it("does not starve visible image previews behind the 200-object feedback limit", async () => {
+    const text = Array.from({ length: 205 }, () =>
+        object({ element_type: "TEXT" }),
+      ),
+      image = object({
+        element_type: "IMAGE",
+        metadata: {
+          storagePath: `${board.organization_id}/${board.id}/asset.png`,
+        },
+      });
+    mount([...text, image]);
+    await waitFor(() =>
+      expect(mocks.images).toHaveBeenCalledWith(
+        expect.objectContaining({ ids: [image.id] }),
+      ),
+    );
+    await waitFor(() => expect(mocks.reactions).toHaveBeenCalled());
+    expect(
+      mocks.reactions.mock.calls.every(([input]) => input.ids.length <= 200),
+    ).toBe(true);
+  });
+  it("docks Layers left and Properties right by default, with independent collapse and bottom tools", () => {
+    mount();
+    expect(
+      screen.getByRole("complementary", { name: "Layers" }),
+    ).toHaveAttribute("data-board-panel", "left");
+    expect(
+      screen.getByRole("complementary", { name: "Properties" }),
+    ).toHaveAttribute("data-board-panel", "right");
+    expect(
+      screen.getByRole("toolbar", { name: "Board tools" }),
+    ).toHaveAttribute("aria-orientation", "horizontal");
+    fireEvent.click(screen.getByRole("button", { name: "Collapse layers" }));
+    expect(
+      screen.queryByRole("complementary", { name: "Layers" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("complementary", { name: "Properties" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open Layers" }));
+    expect(
+      screen.getByRole("complementary", { name: "Layers" }),
+    ).toBeInTheDocument();
+  });
+  it("switches to one modal panel when the viewport becomes narrow", () => {
+    let width = 1440;
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("1200")
+        ? width >= 1200
+        : query.includes("768")
+          ? width >= 768
+          : false,
+    }));
+    mount();
+    expect(screen.getAllByRole("complementary")).toHaveLength(2);
+    act(() => {
+      width = 390;
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open Layers" }));
+    expect(screen.getByRole("dialog", { name: "Layers" })).toHaveAttribute(
+      "aria-modal",
+      "true",
+    );
   });
   it("maps loaded active comments to their canonical element", () => {
     mount([sticky], true, [comment]);
@@ -409,16 +483,18 @@ describe("Boards V2 workspace", () => {
     mount();
     expect(mocks.comments).not.toHaveBeenCalled();
     inspect();
-    expect(screen.getByRole("dialog", { name: "sticky" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("complementary", { name: "Properties" }),
+    ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Open board comments" }),
     );
     await waitFor(() => expect(mocks.comments).toHaveBeenCalledOnce());
     expect(
-      screen.queryByRole("dialog", { name: "Inspector" }),
+      screen.queryByRole("complementary", { name: "Properties" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("dialog", { name: "Comments" }),
+      screen.getByRole("complementary", { name: "Comments" }),
     ).toBeInTheDocument();
   });
   it("moves a Section and its children in one undoable operation", async () => {
@@ -482,7 +558,7 @@ describe("Boards V2 workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
     expect(mocks.zoom).toHaveBeenCalled();
     screen
-      .getByLabelText("Board menu")
+      .getByLabelText("View menu")
       .closest("details")
       ?.setAttribute("open", "");
     fireEvent.click(screen.getByRole("button", { name: "Show minimap" }));

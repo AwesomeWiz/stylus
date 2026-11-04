@@ -8,7 +8,8 @@ import { diffWhiteboardSnapshots } from "./history";
 export const BOARD_OPERATION_LIMIT = 200;
 export function objectTitle(row: BoardElementRow) {
   return String(
-    row.content.title ??
+    row.metadata.label ??
+      row.content.title ??
       row.content.text ??
       row.content.alt ??
       (

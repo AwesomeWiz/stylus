@@ -20,6 +20,7 @@ export default async function WhiteboardsPage() {
       boards={boards}
       canMutate={canMutateWhiteboards(context.membership.role)}
       currentUserId={context.user.id}
+      organizationId={context.organization.id}
       members={members.data ?? []}
     />
   );

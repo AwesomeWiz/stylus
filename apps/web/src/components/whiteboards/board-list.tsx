@@ -3,7 +3,7 @@ import { Archive, Pencil, Plus } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,19 +17,33 @@ import {
 import { boardTemplate } from "@/modules/whiteboards/templates";
 import { BoardPreview } from "./board-preview";
 import { BoardTemplateChooser } from "./board-template-chooser";
+import { consumeBoardListChange } from "./board-list-refresh";
 
 export function BoardList({
   boards,
   canMutate,
   currentUserId,
   members = [],
+  organizationId,
 }: {
   boards: BoardRow[];
   canMutate: boolean;
   currentUserId: string;
   members?: TaskMember[];
+  organizationId?: string;
 }) {
   const router = useRouter();
+  const currentOrganizationId =
+    organizationId ?? boards[0]?.organization_id ?? "";
+  useEffect(() => {
+    const refresh = () => {
+      if (consumeBoardListChange(currentUserId, currentOrganizationId))
+        router.refresh();
+    };
+    refresh();
+    window.addEventListener("pageshow", refresh);
+    return () => window.removeEventListener("pageshow", refresh);
+  }, [currentUserId, currentOrganizationId, router]);
   const [createOpen, setCreateOpen] = useState(false),
     [editing, setEditing] = useState<BoardRow | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -129,7 +143,7 @@ export function BoardList({
                 aria-label={`Open ${board.title}`}
               >
                 <BoardPreview
-                  key={board.id}
+                  key={`${board.id}:${board.updated_at}`}
                   boardId={board.id}
                   organizationId={board.organization_id}
                 />

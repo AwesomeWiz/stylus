@@ -102,7 +102,39 @@ details on request; selection does not open a permanently empty panel. Layers,
 Properties and Comments use one panel slot on Boards, preserving context when
 switching.
 
-## Boards and canvas
+## Current Board interaction contract (REDESIGN-004.3)
+
+Desktop uses simultaneous default-open Layers left and Properties right, with
+independent local account preferences and visible restore controls. View and
+Ctrl/Cmd+Shift+Backslash toggle both. Comments replaces Properties in its slot;
+tablet/mobile open only one modal panel. Creation tools float at bottom-center
+with roving focus and named flyouts; selected-object quick controls hide during
+drag/resize/save. This supersedes the historical vertical-tool/single-slot
+foundation description below.
+
+Layers owns structure/navigation, Canvas spatial manipulation, Properties
+attributes, bottom tools creation, context menus operations and keyboard speed.
+Native Layers drag has explicit between-row/container/root drop feedback,
+delayed expansion and edge scroll. World coordinates survive reparenting; invalid
+ownership/locks are rejected atomically. F2/double-click renames the display
+label inline without overwriting actual object text. Keyboard tree state,
+selection, parent/child indicators and Locate remain synchronized.
+
+Text content uses bounded family/weight/spacing/alignment/decorations and
+fixed/auto-height controls. Sticky Enter saves, Shift+Enter adds a line; Text
+Ctrl/Cmd+Enter saves; Escape cancels. Alt/Option drag creates one undoable copy
+intent. Guides and snapping are local; Ctrl/Cmd bypasses snapping while dragging.
+Group means manipulation; Section means organization. Reactions mean social
+feedback, use the specifically approved small emoji set with labels/counts and
+directory identities, and are distinct from structured voting (deferred).
+
+Object discussion badges show open-root counts without loading bodies. Resolve
+and Reopen preserve history, with resolved threads disclosed explicitly.
+Board-local search shows bounded results/Locate without becoming global search.
+Section Locate fits its bounds; reduced motion removes travel. No Board content
+is silently promoted to Knowledge. See [Boards](BOARDS.md) for scope and limits.
+
+## Boards and canvas (historical foundation)
 
 REDESIGN-004 and REDESIGN-004.2 implement the native foundation and
 stabilization; [Boards](BOARDS.md) records actual limits, keyboard behavior and

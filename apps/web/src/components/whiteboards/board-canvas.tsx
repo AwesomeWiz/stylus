@@ -11,6 +11,8 @@ import {
 import { ListTree, Settings2, MoreHorizontal } from "lucide-react";
 import {
   useImperativeHandle,
+  useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -18,15 +20,31 @@ import {
   type Ref,
 } from "react";
 import { Button } from "@/components/ui/button";
-import type { BoardElementRow, BoardRow } from "@/lib/supabase/database.types";
+import type {
+  BoardElementRow,
+  BoardRow,
+  BoardReactionSummary,
+  BoardReactionKind,
+  TaskMember,
+} from "@/lib/supabase/database.types";
 import {
   ancestors,
   expandedIds,
   indexBoardObjects,
   moveObjects,
   selectionRoots,
+  duplicateObjects,
+  objectBounds,
 } from "@/modules/whiteboards/operations";
+import {
+  buildGuideIndex,
+  guideMove,
+  type SmartGuide,
+} from "@/modules/whiteboards/guides";
+import { BoardGuides } from "./board-guides";
+import { BoardQuickActions } from "./board-quick-actions";
 import { WhiteboardNode, type WhiteboardFlowNode } from "./whiteboard-node";
+import { stabilizeFlowNodes, previewFlowNodes } from "./flow-nodes";
 import { WhiteboardCursors } from "./whiteboard-cursors";
 import { WhiteboardToolbar, type WhiteboardTool } from "./whiteboard-toolbar";
 import { BoardCanvasNavigation } from "./board-controls";
@@ -35,6 +53,9 @@ import type { SelectionAction } from "./board-inspector";
 import type { useBoardDocument } from "./use-board-document";
 import type { useBoardCollaboration } from "./use-board-collaboration";
 const nodeTypes = { whiteboard: WhiteboardNode };
+const noReactions: BoardReactionSummary[] = [];
+const noPending: string[] = [];
+const noMembers: TaskMember[] = [];
 type Point = { x: number; y: number };
 const noMotion = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -45,13 +66,27 @@ export interface BoardCanvasHandle {
 }
 type DocumentHandlers = Pick<
   ReturnType<typeof useBoardDocument>,
-  "getRows" | "commit" | "startInteraction" | "cancelInteraction" | "navigate"
+  | "getRows"
+  | "commit"
+  | "startInteraction"
+  | "cancelInteraction"
+  | "navigate"
+  | "isBusy"
 >;
 type Props = DocumentHandlers & {
   ref: Ref<BoardCanvasHandle>;
   board: BoardRow;
   userId: string;
   rows: BoardElementRow[];
+  highlighted?: string | null;
+  reactions?: BoardReactionSummary[];
+  reactionPending?: string[];
+  members?: TaskMember[];
+  onReaction?: (id: string, kind: BoardReactionKind) => void;
+  onVisibleObjects?: (ids: string[]) => void;
+  onStyle?: (id: string, style: Record<string, unknown>) => Promise<boolean>;
+  onReplace?: (id: string) => void;
+  onObjectComment?: (id: string) => void;
   selected: string[];
   select: (id: string, additive?: boolean) => void;
   onSelection: import("react").Dispatch<
@@ -69,6 +104,8 @@ type Props = DocumentHandlers & {
   shortcuts: boolean;
   minimap: boolean;
   grid: boolean;
+  snapObjects?: boolean;
+  snapGrid?: boolean;
   hasClipboard: boolean;
   onClipboard: (command: "COPY" | "CUT" | "PASTE", point?: Point) => void;
   onContext: (
@@ -92,13 +129,17 @@ type Props = DocumentHandlers & {
   onInsert: (point: Point) => void;
   onImageRequest: (point: Point) => void;
   onFiles: (files: File[], point: Point) => void;
-  onPanel: (panel: "INSPECTOR" | "OUTLINE" | null) => void;
+  onPanel: (panel: "INSPECTOR" | "OUTLINE" | "COMMENTS" | null) => void;
   onError: (error: string) => void;
   collaboration: ReturnType<typeof useBoardCollaboration>;
   commentCounts: Map<string, number>;
   imageUrl: (row: BoardElementRow) => string | undefined;
   retryImage: (id: string) => void;
-  onContentCommit: (id: string, content: Record<string, unknown>) => void;
+  onContentCommit: (
+    id: string,
+    content: Record<string, unknown>,
+    height?: number,
+  ) => void;
   onResizeCommit: (
     id: string,
     bounds: { x: number; y: number; width: number; height: number },
@@ -109,6 +150,15 @@ export function BoardCanvas({
   board,
   userId,
   rows,
+  highlighted,
+  reactions = noReactions,
+  reactionPending = noPending,
+  members = noMembers,
+  onReaction,
+  onVisibleObjects,
+  onStyle,
+  onReplace,
+  onObjectComment,
   selected,
   select,
   onSelection,
@@ -124,6 +174,8 @@ export function BoardCanvas({
   shortcuts,
   minimap,
   grid,
+  snapObjects = true,
+  snapGrid = false,
   hasClipboard,
   onClipboard,
   onContext,
@@ -146,17 +198,40 @@ export function BoardCanvas({
   getRows,
   commit,
   navigate,
+  isBusy,
 }: Props) {
   const [revealed, setRevealed] = useState<string[]>([]),
     [spacePan, setSpacePan] = useState(false),
     [preview, setPreview] = useState<Record<string, Point>>({}),
     [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
+  const [settledViewport, setSettledViewport] = useState<Viewport>({
+    x: 0,
+    y: 0,
+    zoom: 1,
+  });
+  const [copies, setCopies] = useState<BoardElementRow[]>([]);
+  const [manipulating, setManipulating] = useState(false);
+  const [guides, setGuides] = useState<SmartGuide[]>([]),
+    [spacing, setSpacing] = useState<{
+      x: number;
+      y: number;
+      gap: number;
+    } | null>(null);
+  const resizeGuideIndex = useRef<ReturnType<typeof buildGuideIndex> | null>(
+    null,
+  );
   const flow = useRef<ReactFlowInstance<WhiteboardFlowNode> | null>(null),
     canvas = useRef<HTMLDivElement>(null),
     drag = useRef<{
       rows: BoardElementRow[];
       ids: string[];
       origin: Point;
+      moving: BoardElementRow[];
+      sourceIds: string[];
+      duplicate: boolean;
+      bounds: ReturnType<typeof objectBounds>;
+      index: ReturnType<typeof buildGuideIndex>;
+      delta: { dx: number; dy: number };
     } | null>(null);
   const marquee = useRef<{ additive: boolean; base: string[] } | null>(null);
   const sectionDraw = useRef<{ x: number; y: number } | null>(null),
@@ -169,7 +244,11 @@ export function BoardCanvas({
     } | null>(null),
     [dropSection, setDropSection] = useState<string | null>(null);
   const viewportKey = `stylus-board-viewport:${userId}:${board.organization_id}:${board.id}`;
-  const selectedRows = selectionRoots(rows, selected);
+  const selectedRows = useMemo(
+    () => selectionRoots(rows, selected),
+    [rows, selected],
+  );
+  const selectedIds = useMemo(() => new Set(selected), [selected]);
   function insert(at: Point) {
     onInsert(at);
   }
@@ -178,20 +257,86 @@ export function BoardCanvas({
   }
   const chosen = useMemo(() => expandedIds(rows, selected), [rows, selected]);
   const structure = useMemo(() => indexBoardObjects(rows), [rows]);
-  const nodes: WhiteboardFlowNode[] = useMemo(
+  const handleResizePreview = useCallback(
+    (
+      id: string,
+      bounds: { x: number; y: number; width: number; height: number } | null,
+    ) => {
+      if (!bounds) {
+        resizeGuideIndex.current = null;
+        setGuides([]);
+        setSpacing(null);
+        setManipulating(false);
+        return;
+      }
+      setManipulating(true);
+      if (!resizeGuideIndex.current)
+        resizeGuideIndex.current = buildGuideIndex(
+          getRows(),
+          new Set([id]),
+          bounds,
+        );
+      const result = guideMove(resizeGuideIndex.current, bounds, 0, 0, {
+        zoom: flow.current?.getViewport?.().zoom ?? 1,
+        snap: false,
+      });
+      setGuides(result.guides);
+    },
+    [getRows],
+  );
+  const visualRows = useMemo(
+    () => [
+      ...rows,
+      ...copies.filter((copy) => !rows.some((row) => row.id === copy.id)),
+    ],
+    [rows, copies],
+  );
+  const copyIds = useMemo(() => new Set(copies.map((row) => row.id)), [copies]);
+  const copyRoots = useMemo(
     () =>
-      rows.map((row) => {
+      new Set(
+        selectionRoots(
+          copies,
+          copies.map((row) => row.id),
+        ).map((row) => row.id),
+      ),
+    [copies],
+  );
+  const byReaction = useMemo(() => {
+    const result = new Map<string, BoardReactionSummary[]>();
+    for (const row of reactions)
+      result.set(row.element_id, [...(result.get(row.element_id) ?? []), row]);
+    return result;
+  }, [reactions]);
+  useEffect(() => {
+    if (!onVisibleObjects) return;
+    const box = canvas.current?.getBoundingClientRect(),
+      view = settledViewport;
+    const ids = rows
+      .filter(
+        (row) =>
+          row.x + row.width >= -view.x / view.zoom &&
+          row.y + row.height >= -view.y / view.zoom &&
+          row.x < ((box?.width || 1200) - view.x) / view.zoom &&
+          row.y < ((box?.height || 900) - view.y) / view.zoom,
+      )
+      .map((row) => row.id);
+    onVisibleObjects(ids);
+  }, [rows, settledViewport, onVisibleObjects]);
+  const candidates: WhiteboardFlowNode[] = useMemo(
+    () =>
+      visualRows.map((row) => {
         const parents = structure.parents.get(row.id) ?? [],
           grouped = parents.find((entry) => entry.element_type === "GROUP");
         return {
           id: row.id,
           className:
-            dropSection === row.id
+            dropSection === row.id || highlighted === row.id
               ? "outline outline-2 outline-primary outline-offset-4"
               : undefined,
           type: "whiteboard",
-          position: preview[row.id] ?? { x: row.x, y: row.y },
-          selected: chosen.has(row.id),
+          position: { x: row.x, y: row.y },
+          selected: copies.length ? copyIds.has(row.id) : chosen.has(row.id),
           hidden: parents.some(
             (parent) =>
               parent.element_type === "SECTION" &&
@@ -205,37 +350,80 @@ export function BoardCanvas({
             (!grouped || chosen.has(grouped.id)),
           zIndex: structure.layers.get(row.id),
           style: { width: row.width, height: row.height },
+          width: row.width,
+          height: row.height,
+          measured: { width: row.width, height: row.height },
           data: {
+            selectionRoot: copies.length
+              ? copyRoots.has(row.id)
+              : selectedIds.has(row.id),
             element: row,
             canMutate:
-              editable && !row.locked && !parents.some((entry) => entry.locked),
+              canMutate &&
+              !row.locked &&
+              !parents.some((entry) => entry.locked),
             commentCount: commentCounts.get(row.id) ?? 0,
+            onOpenComments: onObjectComment,
+            reactions: byReaction.get(row.id) ?? noReactions,
+            canReact: canMutate,
+            reactionPending: reactionPending.filter((key) =>
+              key.startsWith(row.id + ":"),
+            ),
+            members,
+            onReaction,
             imageUrl: imageUrl(row),
             onImageRetry: retryImage,
             onContentCommit,
             onResizeCommit,
+            // This passes an event callback; node render never invokes it. The
+            // ref reads inside it happen only during React Flow resize events.
+            // eslint-disable-next-line react-hooks/refs
+            onResizePreview: handleResizePreview,
+            isBusy,
             onInteractionStart: startInteraction,
             onInteractionCancel: cancelInteraction,
           },
         };
       }),
     [
-      rows,
+      visualRows,
+      copies.length,
+      copyIds,
+      copyRoots,
+      handleResizePreview,
+      isBusy,
       structure,
       startInteraction,
       cancelInteraction,
-      preview,
       chosen,
+      selectedIds,
       revealed,
       dropSection,
+      highlighted,
       editable,
+      canMutate,
       tool,
       commentCounts,
+      onObjectComment,
+      byReaction,
+      reactionPending,
+      members,
+      onReaction,
       imageUrl,
       retryImage,
       onContentCommit,
       onResizeCommit,
     ],
+  );
+  const [stableNodes, setStableNodes] = useState(candidates);
+  const reconciled = useMemo(
+    () => stabilizeFlowNodes(stableNodes, candidates),
+    [stableNodes, candidates],
+  );
+  if (reconciled !== stableNodes) setStableNodes(reconciled);
+  const nodes = useMemo(
+    () => previewFlowNodes(reconciled, preview),
+    [reconciled, preview],
   );
   function center(): Point {
     const box = canvas.current?.getBoundingClientRect();
@@ -251,6 +439,17 @@ export function BoardCanvas({
     if (!row) return;
     select(id);
     setRevealed(ancestors(row, getRows()).map((entry) => entry.id));
+    if (row.element_type === "SECTION") {
+      const target = flow.current?.getNode(id);
+      if (target)
+        void flow.current?.fitView({
+          nodes: [target],
+          padding: 0.15,
+          maxZoom: 1,
+          duration: noMotion() ? 0 : 150,
+        });
+      return;
+    }
     void flow.current?.setCenter(
       row.x + row.width / 2,
       row.y + row.height / 2,
@@ -506,6 +705,7 @@ export function BoardCanvas({
         panOnDrag={tool === "PAN" || spacePan ? [0, 1, 2] : [1, 2]}
         selectionOnDrag={tool === "SELECT" && !spacePan}
         selectionKeyCode={null}
+        selectNodesOnDrag={false}
         multiSelectionKeyCode="Shift"
         minZoom={0.1}
         maxZoom={4}
@@ -525,10 +725,16 @@ export function BoardCanvas({
               return;
             }
           } catch {}
-          if (rows.length) void instance.fitView({ padding: 0.2, maxZoom: 1 });
+          if (rows.length)
+            requestAnimationFrame(() =>
+              requestAnimationFrame(
+                () => void instance.fitView({ padding: 0.2, maxZoom: 1 }),
+              ),
+            );
         }}
         onMove={(_event, next) => setViewport(next)}
         onMoveEnd={(_event, next) => {
+          setSettledViewport(next);
           try {
             localStorage.setItem(viewportKey, JSON.stringify(next));
           } catch {}
@@ -610,77 +816,140 @@ export function BoardCanvas({
               return [...next];
             });
         }}
-        onNodeDragStart={(_event, node) => {
-          const rows = getRows(),
-            ids = chosen.has(node.id)
-              ? selectionRoots(rows, selected).map((row) => row.id)
-              : [node.id];
+        onNodeDragStart={(event, node) => {
+          setManipulating(true);
+          const original = getRows(),
+            immovable = indexBoardObjects(original).immovable,
+            sourceIds = (
+              chosen.has(node.id)
+                ? selectionRoots(original, selected).map((row) => row.id)
+                : [node.id]
+            ).filter((id) => !immovable.has(id));
+          if (!sourceIds.length) {
+            setManipulating(false);
+            return;
+          }
+          if (!chosen.has(node.id)) onSelection(sourceIds);
+          let working = original,
+            ids = sourceIds,
+            duplicate = false;
+          if (
+            "altKey" in event &&
+            event.altKey &&
+            !sourceIds.some(
+              (id) =>
+                original.find((row) => row.id === id)?.element_type ===
+                "SECTION",
+            )
+          ) {
+            try {
+              const result = duplicateObjects(original, sourceIds, userId);
+              const created = result.rows
+                .filter((row) => !original.some((old) => old.id === row.id))
+                .map((row) => ({ ...row, x: row.x - 24, y: row.y - 24 }));
+              working = [...original, ...created];
+              ids = result.ids;
+              duplicate = true;
+              setCopies(created);
+            } catch (error) {
+              onError((error as Error).message);
+              return;
+            }
+          }
+          const movingIds = expandedIds(working, ids),
+            moving = working.filter((row) => movingIds.has(row.id)),
+            bounds = objectBounds(selectionRoots(working, ids));
           drag.current = {
-            rows,
+            rows: working,
             ids,
+            sourceIds,
+            duplicate,
             origin: { x: node.position.x, y: node.position.y },
+            moving,
+            bounds,
+            index: buildGuideIndex(original, movingIds, bounds),
+            delta: { dx: NaN, dy: NaN },
           };
           for (const id of ids) startInteraction(id);
         }}
-        onNodeDrag={(_event, node) => {
+        onNodeDrag={(event, node) => {
           const start = drag.current;
           if (!start) return;
-          try {
-            const moved = moveObjects(
-              start.rows,
-              start.ids,
-              node.position.x - start.origin.x,
-              node.position.y - start.origin.y,
-            );
-            const moving = expandedIds(start.rows, start.ids);
-            const anchor = moved.find((r) => r.id === node.id);
-            setDropSection(
-              anchor
-                ? (start.rows.find(
-                    (r) =>
-                      r.element_type === "SECTION" &&
-                      !r.locked &&
-                      !moving.has(r.id) &&
-                      anchor.x + anchor.width / 2 >= r.x &&
-                      anchor.x + anchor.width / 2 <= r.x + r.width &&
-                      anchor.y + anchor.height / 2 >= r.y &&
-                      anchor.y + anchor.height / 2 <= r.y + r.height,
-                  )?.id ?? null)
-                : null,
-            );
-            setPreview(
-              Object.fromEntries(
-                moved
-                  .filter((row) => moving.has(row.id))
-                  .map((row) => [row.id, { x: row.x, y: row.y }]),
+          const result = guideMove(
+            start.index,
+            start.bounds,
+            node.position.x - start.origin.x,
+            node.position.y - start.origin.y,
+            {
+              zoom: viewport.zoom,
+              snap: snapObjects,
+              grid: snapGrid,
+              bypass: !!(
+                "ctrlKey" in event &&
+                (event.ctrlKey || event.metaKey)
               ),
-            );
-          } catch {}
+            },
+          );
+          start.delta = { dx: result.dx, dy: result.dy };
+          setGuides(result.guides);
+          setSpacing(result.spacing);
+          const positions: Record<string, Point> = {};
+          for (const row of start.moving)
+            positions[row.id] = { x: row.x + result.dx, y: row.y + result.dy };
+          if (start.duplicate) {
+            const originals = expandedIds(getRows(), start.sourceIds);
+            for (const row of getRows())
+              if (originals.has(row.id))
+                positions[row.id] = { x: row.x, y: row.y };
+          }
+          setPreview(positions);
         }}
         onNodeDragStop={(_event, node) => {
           const start = drag.current;
           drag.current = null;
-          setPreview({});
+          setManipulating(false);
           setDropSection(null);
+          setGuides([]);
+          setSpacing(null);
           if (!start) return;
           try {
+            const delta = Number.isFinite(start.delta.dx)
+              ? start.delta
+              : {
+                  dx: node.position.x - start.origin.x,
+                  dy: node.position.y - start.origin.y,
+                };
             const moved = moveObjects(
                 start.rows,
                 start.ids,
-                node.position.x - start.origin.x,
-                node.position.y - start.origin.y,
+                delta.dx,
+                delta.dy,
               ),
               ids = expandedIds(start.rows, start.ids),
-              byId = new Map(moved.map((row) => [row.id, row]));
-            void commit(
-              getRows().map((row) =>
-                ids.has(row.id) ? (byId.get(row.id) ?? row) : row,
-              ),
-            ).finally(() => {
-              for (const id of start.ids) cancelInteraction(id);
-            });
-          } catch (caught) {
-            onError((caught as Error).message);
+              byId = new Map(
+                moved
+                  .filter((row) => ids.has(row.id))
+                  .map((row) => [row.id, row]),
+              );
+            const next = start.duplicate
+              ? [...getRows(), ...byId.values()]
+              : getRows().map((row) => byId.get(row.id) ?? row);
+            // The preview stays until confirmed state is visible, including rollback.
+            void commit(next)
+              .then((saved) => {
+                if (start.duplicate)
+                  onSelection(saved ? start.ids : start.sourceIds);
+              })
+              .finally(() => {
+                setCopies([]);
+                setPreview({});
+                for (const id of start.ids) cancelInteraction(id);
+              });
+          } catch (error) {
+            setCopies([]);
+            setPreview({});
+            for (const id of start.ids) cancelInteraction(id);
+            onError((error as Error).message);
           }
         }}
         proOptions={{ hideAttribution: true }}
@@ -703,6 +972,48 @@ export function BoardCanvas({
           />
         ) : null}
       </ReactFlow>
+      <BoardGuides guides={guides} viewport={viewport} spacing={spacing} />
+      {onStyle && onReplace && !manipulating ? (
+        <BoardQuickActions
+          selection={selectedRows}
+          busy={busy}
+          canMutate={canMutate}
+          onAction={action}
+          onStyle={onStyle}
+          onComment={() => onPanel("COMMENTS")}
+          onReplace={onReplace}
+          reactions={reactions}
+          pending={reactionPending}
+          members={members}
+          onReaction={onReaction}
+          top={
+            selectedRows.length
+              ? Math.max(
+                  12,
+                  Math.min(
+                    objectBounds(selectedRows).y * viewport.zoom +
+                      viewport.y -
+                      64,
+                    180,
+                  ),
+                )
+              : 12
+          }
+          onMore={(event) => {
+            const box = event.currentTarget.getBoundingClientRect();
+            onContext(
+              {
+                preventDefault: () => event.preventDefault(),
+                stopPropagation: () => event.stopPropagation(),
+                clientX: box.left,
+                clientY: box.bottom,
+              },
+              selected[0] ?? null,
+              center(),
+            );
+          }}
+        />
+      ) : null}
       {region ? (
         <div
           aria-hidden
@@ -723,7 +1034,7 @@ export function BoardCanvas({
           Use “Move to section” to place the selection here.
         </div>
       ) : null}
-      <div className="absolute top-3 left-3 z-20">
+      <div className="absolute bottom-[max(4.25rem,env(safe-area-inset-bottom))] left-1/2 z-20 -translate-x-1/2">
         <WhiteboardToolbar
           activeTool={spacePan ? "PAN" : tool}
           canMutate={canMutate}
@@ -734,6 +1045,7 @@ export function BoardCanvas({
           onImageRequest={() => imageRequest()}
           onUndo={() => navigate("UNDO")}
           onRedo={() => navigate("REDO")}
+          onComment={() => onPanel("COMMENTS")}
           shape={shape}
           onShapeChange={setShape}
         />

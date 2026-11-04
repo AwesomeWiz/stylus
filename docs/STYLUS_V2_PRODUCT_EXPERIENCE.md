@@ -16,6 +16,17 @@ contracts. Existing [Architecture](ARCHITECTURE.md), [Security](SECURITY.md),
 implemented system. V2 proposals below do not assert shipped behavior or authorize
 the next implementation task.
 
+Implementation update, 2026-11-03: explicitly approved REDESIGN-004.3 supersedes
+the earlier Board control arrangement with default Layers-left/Properties-right
+desktop docks and bottom creation tools. It delivers content typography,
+guides/snapping, direct Layers manipulation, reactions, comment resolution and
+Board-local search/Section focus under the existing bounded Core contracts.
+The [current Boards contract](BOARDS.md) records implementation and verification;
+the initial audit and later proposals below remain historical/specification
+material. Native entities/conversions and AI are still unstarted. REDESIGN-005
+must reuse the now-implemented feedback/resolution surfaces rather than create
+parallel systems. Voting and presentation are deferred.
+
 ## 1. Executive direction
 
 **Calm where people work. Expressive where the product speaks.** Stylus is a calm, professional operating

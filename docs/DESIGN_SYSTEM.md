@@ -110,6 +110,12 @@ with headings, short paragraphs, findings, citations and uncertainty. Use the
 same hierarchy as human content. No AI-specific font, tiny disclosures, raw JSON
 wall or giant specialist headings. Numeric metadata may use tabular numerals.
 
+Board-authored content has a narrow REDESIGN-004.3 exception to application
+typography: the existing Geist plus licensed self-hosted Lora and Geist Mono.
+Only used faces download; real weights and Lora italic are explicit and
+synthetic styling is disabled. This does not change chrome, Auth or global
+brand tokens. See [font sources](../apps/web/public/fonts/boards/README.md).
+
 ## Spacing and geometry
 
 Use the 8px-derived scale `4, 8, 12, 16, 24, 32, 40, 48, 64`. The 4px and 12px

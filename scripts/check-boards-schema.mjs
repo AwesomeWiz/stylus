@@ -26,9 +26,27 @@ const missing = [
   ...["parent_id", "locked"]
     .filter((c) => !columns.board_elements?.properties?.[c])
     .map((c) => "board_elements." + c),
-  ...["apply_board_operation", "create_board_from_template"].filter(
-    (r) => !paths["/rpc/" + r],
-  ),
+  ...["resolved_at", "resolved_by"]
+    .filter((c) => !columns.board_comments?.properties?.[c])
+    .map((c) => "board_comments." + c),
+  ...[
+    "organization_id",
+    "board_id",
+    "element_id",
+    "user_id",
+    "reaction",
+    "active",
+  ]
+    .filter((c) => !columns.board_reactions?.properties?.[c])
+    .map((c) => "board_reactions." + c),
+  ...[
+    "apply_board_operation",
+    "create_board_from_template",
+    "set_board_reaction",
+    "read_board_reactions",
+    "set_board_comment_resolution",
+    "read_board_comment_counts",
+  ].filter((r) => !paths["/rpc/" + r]),
 ];
 console.log({
   project: new URL(url).hostname,

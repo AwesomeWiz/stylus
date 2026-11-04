@@ -1,0 +1,21 @@
+@font-face {
+  font-family: "Stylus Board Lora";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/lora.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Lora";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/boards/lora-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Stylus Board Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/boards/geist-mono.woff2") format("woff2");
+}

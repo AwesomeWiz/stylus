@@ -10,6 +10,7 @@ export function BoardPropertyField({
   max = 1000000,
   multiline = false,
   disabled = false,
+  hideLabel = false,
   onCommit,
 }: {
   label: string;
@@ -19,6 +20,7 @@ export function BoardPropertyField({
   max?: number;
   multiline?: boolean;
   disabled?: boolean;
+  hideLabel?: boolean;
   onCommit: (value: string | number) => Promise<boolean>;
 }) {
   const format = (v: string | number) =>
@@ -98,14 +100,14 @@ export function BoardPropertyField({
   };
   return (
     <label className="text-muted-foreground block min-w-0 text-xs">
-      {label}
+      <span className={hideLabel ? "sr-only" : undefined}>{label}</span>
       {multiline ? (
         <Textarea {...props} className="text-foreground mt-1 min-h-20" />
       ) : (
         <Input
           {...props}
           type="text"
-          className="text-foreground mt-1 h-9 px-2"
+          className={`text-foreground h-9 px-2 ${hideLabel ? "" : "mt-1"}`}
         />
       )}
       {error ? (

@@ -7,6 +7,7 @@ export function useBoardImages(
   board: BoardRow,
   rows: BoardElementRow[],
   initial: Record<string, string>,
+  visibleIds?: string[],
 ) {
   const [urls, setUrls] = useState(initial);
   const paths = useRef(
@@ -86,21 +87,35 @@ export function useBoardImages(
     },
     [board.id, board.organization_id],
   );
+  const visibleSignature = visibleIds?.join("|") ?? null;
+  const eligible = useMemo(
+    () =>
+      visibleSignature === null
+        ? null
+        : new Set(visibleSignature ? visibleSignature.split("|") : []),
+    [visibleSignature],
+  );
   const signature = useMemo(
     () =>
       rows
-        .filter((row) => row.element_type === "IMAGE")
+        .filter(
+          (row) =>
+            row.element_type === "IMAGE" && (!eligible || eligible.has(row.id)),
+        )
         .map((row) => `${row.id}:${row.metadata.storagePath}`)
         .join("|"),
-    [rows],
+    [rows, eligible],
   );
   useEffect(() => {
     void resolve(
       rowsRef.current
-        .filter((row) => row.element_type === "IMAGE")
+        .filter(
+          (row) =>
+            row.element_type === "IMAGE" && (!eligible || eligible.has(row.id)),
+        )
         .map((row) => row.id),
     );
-  }, [resolve, signature]);
+  }, [resolve, signature, eligible]);
   const url = useCallback(
     (row: BoardElementRow) =>
       paths.current.get(row.id) === String(row.metadata.storagePath)

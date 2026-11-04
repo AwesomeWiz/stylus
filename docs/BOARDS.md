@@ -1,7 +1,6 @@
-# Boards V2 foundation and stabilization
+# Boards V2 interaction and creative usability
 
-REDESIGN-004 / REDESIGN-004.2 · 2026-11-03 · PASS; local and authenticated
-backend verification complete.
+REDESIGN-004.3 · 2026-11-03 · PASS; local and real authenticated verification complete.
 
 REDESIGN-004.2 stabilizes this foundation. The owner authorized the configured
 Stylus backend for this task; the two missing forward migrations are now
@@ -12,7 +11,96 @@ Boards is Core's visual workspace for turning research, inspiration and ideas
 into decisions and executable work. The public URLs remain `/whiteboards` and
 `/whiteboards/[boardId]`; SQL/module names stay unchanged. This phase creates
 board-native objects only. It adds no AI execution, Marketing-private imports,
-canonical entity cards, conversions, votes, reactions or memory promotion.
+canonical entity cards, conversions, votes or memory promotion. REDESIGN-004.3
+adds bounded reactions and reversible comment resolution.
+
+## Current interaction hierarchy (REDESIGN-004.3)
+
+Layers provides structure/navigation; Canvas provides spatial manipulation;
+Properties provides detailed attributes; the bottom toolbar provides creation;
+context menus provide contextual operations; keyboard shortcuts provide the
+fastest power-user path. Group means manipulation, Section means organization,
+Reaction means social feedback, and Vote means a structured decision. Voting is
+deferred.
+
+Desktop starts with 256px Layers left and 288px Properties right. They collapse
+independently, with device/account-scoped boolean preferences. View and
+Ctrl/Cmd+Shift+Backslash toggle distraction-free mode; visible restore controls
+remain. Tablet/mobile use one modal panel rather than two squeezed docks.
+Comments occupies the Properties slot and retains loaded discussion/selection.
+The horizontal bottom toolbar uses grouped tools, upward Shapes and More menus,
+named focus tooltips and roving focus. View owns grid, snapping, minimap and Help.
+
+Layers supports native row drag with explicit insertion/container/root targets,
+500ms hover expansion and gradual edge scrolling. Reparenting preserves IDs and
+world geometry, moves Groups as units and rejects invalid partial/nested
+ownership. Integer layer gaps avoid unrelated changes where possible; a dense
+reorder requiring more than 200 updates is rejected with recovery guidance.
+Double-click/F2 renames inline, Enter/valid blur saves, Escape cancels. Display
+labels use bounded metadata for content objects; actual text/alt stays separate.
+The keyboard tree supports arrows/Home/End/Enter/Space, Shift selection and
+Shift+F10, explicit expansion state, parent/child selection and Locate.
+
+Canvas candidates retain authored and measured dimensions, stable unchanged
+node/data identities and resize controls through saving. Pointer frames update
+only local positions; release submits one atomic operation. Confirmation/own
+echo does not remove and reinsert the node. Locked selected objects stay fixed.
+Atomic actions return their bounded result without re-rendering the whole editor;
+an account/organization-scoped boolean refreshes the list once on return. It
+stores no Board content and supplies no authorization.
+
+Text/Sticky content uses Geist, Lora or Geist Mono; application chrome remains
+Geist. Licensed self-hosted Latin assets load only when used, with no runtime
+CDN/preload. See the [font sources and limits](../apps/web/public/fonts/boards/README.md).
+Controls cover family, real weights 400–700, size 8–256, alignment, line height,
+letter spacing, true Lora italic, underline/strikethrough, color, vertical
+alignment and fixed/auto-height sizing. Auto-height uses local selected-face
+measurement and one content/geometry intent; remote changes cancel stale
+measurement. Sticky Enter saves/Shift+Enter inserts a line; Text Ctrl/Cmd+Enter
+saves; Escape cancels. Shape/Arrow geometry remains bounded; arrows add labels,
+direction and a larger transparent hit target, without attached relationships.
+
+Smart guides precompute up to 128 nearby nonmoving targets once per gesture.
+They show aligned edges/centers and horizontal equal-gap hints; optional object
+snapping uses a six-screen-pixel threshold, independent grid snapping uses 24
+Board units, and Ctrl/Cmd temporarily bypasses snapping. Guides never persist.
+Alt/Option drag copies Text/Sticky/Shape/Image/Group locally and saves all new
+identities as one undoable intent, retaining original geometry and image assets.
+Ctrl/Cmd+D keeps the existing 24-unit offset; repeated-offset memory is deferred.
+Selection quick actions expose relevant text/color/image, duplicate, lock,
+comment, Group/Section and reaction controls, hiding during manipulation/saving.
+
+Reactions are a small explicitly requested social emoji set (Like, Love, Great
+idea, Interested, Celebrate), separate from Lucide application controls. Each
+person/object/kind has one idempotently set active state. Members edit; VIEWER
+reads. Exact counts and bounded directory-resolved participants refresh on the
+private Board channel, with optimistic rollback and own-echo reconciliation.
+Archived targets hide feedback; removed members lose access while former-member
+feedback remains historical; account deletion cascades its reactions. There is
+no anonymous feedback model or automatic winning-object conversion.
+
+Root discussion threads can Resolve/Reopen without deleting content. Fresh role
+checks protect state changes; replies cannot be resolved separately. Object
+badges use bounded open-thread counts without fetching bodies; opening Comments
+loads the existing paged discussion. Resolved threads disclose on demand and
+Locate retains exact target identity. Local Board search covers names and safe
+text/notes/alt, showing the first 50 matches with an exact count. It uses no
+server/global index. Locate focuses Section bounds and respects reduced motion;
+presentation mode and free-floating comment pins are deferred.
+
+Image preview signing now waits for visible or selected objects, still in
+freshly authorized batches of at most 25. Existing paste/drop, independent retry,
+private originals, replacement identity, crop/fit and history remain. Reactions
+and open-thread summaries similarly use a reviewed visible/selected projection
+of at most 200 object IDs; no bodies or privileged snapshots enter Board JSON.
+
+The two forward migrations add `board_reactions`, `resolved_at`/`resolved_by`,
+their constraints/RLS/indexes and four scoped read/set RPCs. Existing records and
+applied migrations are preserved. See [database contracts](DATABASE.md) and
+[environment verification](BOARDS_ENVIRONMENT.md). The historical foundation
+sections below retain their original verification evidence; the interaction
+contract above supersedes their earlier vertical-toolbar/single-panel and
+unresolved-only discussion descriptions.
 
 ## List, creation and shell
 
@@ -235,6 +323,26 @@ local environment credentials. It reports safe schema compatibility/missing
 names and never auto-migrates or exposes keys. End-user errors reveal no SQL
 details.
 
+## REDESIGN-004.3 verification and limits
+
+Full web 202 files / 1,142 tests, Board coverage 37 / 217, lint/typecheck/build,
+four SQL suites / 138 assertions and final scoped checks pass. Real production
+Chrome QA covers both themes/eight widths, all seven required drag cases, actual
+Layers/Alt operations, comment/typography reload, private image workflows and
+offline rollback/retry. Ten hosted API checks independently verify fresh roles,
+revocation and tenant boundaries. All isolated fixtures and checked local helpers
+were cleaned up. See PROJECT_STATE and [environment notes](BOARDS_ENVIRONMENT.md).
+
+The 1,000-object / 20-image-object fixture uses one shared private image. All
+previews load; feedback projection limits do not starve image signing. Three
+uncontrolled production full-document samples reached first nodes in
+6,181 / 3,647 / 7,070 ms, with 91,835 transferred / 1,599,172 decoded document
+bytes. A 100-pointer-move probe wrote zero operations but recorded two Long Tasks
+(104 and 50 ms). This remains a measured large-document profiling opportunity;
+no general speedup, p95 or performance-budget pass is claimed. Manual NVDA and
+Firefox/Safari remain unperformed. Local font subsets use system fallback for
+other scripts. Voting, presentation and attached connectors remain deferred.
+
 ## Recommended REDESIGN-005 boundary — not started
 
 Prioritize public Core entity-reference, resolver, opener and creation contracts
@@ -244,8 +352,8 @@ tenant/plugin/entity authority, exact immutable versions where applicable and a
 generic unavailable state without stale excerpts. Deliver native insertion and
 explicit conversion previews with idempotency and recovery before optional P1
 breadth. Reuse existing creation APIs; failed board linking must reattach an
-already-created record. Then scope comment resolution and bounded visible
-voting/ reactions explicitly. Establish authorized selection/context-preview
+already-created record. Reuse the reactions and comment resolution delivered in
+004.3; scope bounded visible voting separately. Establish authorized selection/context-preview
 contracts; new AI execution, follow/history, anonymous voting and exact-version
 storyboard execution need their own explicit bounded acceptance. No board action
 promotes Company Knowledge or grants another memory domain.

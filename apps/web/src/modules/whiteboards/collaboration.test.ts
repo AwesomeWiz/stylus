@@ -41,6 +41,8 @@ const element = {
   z_index: 1,
 } satisfies BoardElementRow;
 const comment = {
+  resolved_at: null,
+  resolved_by: null,
   archived_at: null,
   author_id: "user-a",
   board_id: "board",

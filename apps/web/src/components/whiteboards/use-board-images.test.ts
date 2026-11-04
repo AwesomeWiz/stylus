@@ -1,5 +1,5 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const read = vi.hoisted(() => vi.fn());
 vi.mock("@/modules/whiteboards/read-actions", () => ({
   readBoardImagesAction: read,
@@ -7,7 +7,45 @@ vi.mock("@/modules/whiteboards/read-actions", () => ({
 import { board, object } from "@/test/board-fixtures";
 import { useBoardImages } from "./use-board-images";
 describe("Deferred private image previews", () => {
+  afterEach(cleanup);
   beforeEach(() => vi.clearAllMocks());
+  it("signs only newly visible/selected images and retains local previews without signing again", async () => {
+    const a = object({
+        element_type: "IMAGE",
+        metadata: { storagePath: `${board.organization_id}/${board.id}/a.png` },
+      }),
+      b = object({
+        element_type: "IMAGE",
+        metadata: { storagePath: `${board.organization_id}/${board.id}/b.png` },
+      }),
+      rows = [a, b];
+    read.mockImplementation(async ({ ids }: { ids: string[] }) => ({
+      status: "success",
+      images: ids.map((id) => ({
+        id,
+        path: rows.find((row) => row.id === id)!.metadata.storagePath,
+        url: "signed-" + id,
+      })),
+    }));
+    const view = renderHook(
+      ({ visible }) => useBoardImages(board, rows, {}, visible),
+      { initialProps: { visible: [] as string[] } },
+    );
+    expect(read).not.toHaveBeenCalled();
+    view.rerender({ visible: [a.id] });
+    await waitFor(() =>
+      expect(view.result.current.url(a)).toBe("signed-" + a.id),
+    );
+    expect(read.mock.calls[0]![0].ids).toEqual([a.id]);
+    expect(view.result.current.url(b)).toBeUndefined();
+    view.rerender({ visible: [b.id] });
+    await waitFor(() =>
+      expect(view.result.current.url(b)).toBe("signed-" + b.id),
+    );
+    view.rerender({ visible: [a.id, b.id] });
+    await act(async () => {});
+    expect(read).toHaveBeenCalledTimes(2);
+  });
   it("finishes a failed signing state honestly and retries without uploading", async () => {
     const row = object({
       element_type: "IMAGE",

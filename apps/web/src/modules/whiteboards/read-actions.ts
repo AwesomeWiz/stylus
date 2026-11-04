@@ -30,6 +30,35 @@ async function readContext(input: unknown) {
     canMutate: current.membership.role !== "VIEWER",
   };
 }
+export async function readBoardReactionsAction(input: unknown) {
+  try {
+    const parsed = scopeSchema
+        .extend({ ids: z.array(z.uuid()).max(200) })
+        .parse(input),
+      { supabase, boardId } = await readContext(parsed);
+    const result = await supabase.rpc("read_board_reactions", {
+      p_board_id: boardId,
+      p_element_ids: parsed.ids,
+    });
+    if (result.error) throw result.error;
+    const counts = await supabase.rpc("read_board_comment_counts", {
+      p_board_id: boardId,
+      p_element_ids: parsed.ids,
+    });
+    if (counts.error) throw counts.error;
+    return {
+      status: "success",
+      rows: result.data ?? [],
+      commentCounts: counts.data ?? [],
+    } as const;
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      status: "error",
+      message: "Reactions could not load. Check access and retry.",
+    } as const;
+  }
+}
 export async function readBoardSnapshotAction(input: unknown) {
   try {
     const { boardId, organizationId, supabase, canMutate } =

@@ -14,7 +14,7 @@ const TEXT_COLORS = [
   "#047857",
   "#7e22ce",
 ];
-const STICKY_COLORS = [
+export const STICKY_COLORS = [
   { background: "#fef3c7", color: "#713f12", label: "Yellow" },
   { background: "#dbeafe", color: "#1e3a8a", label: "Blue" },
   { background: "#dcfce7", color: "#14532d", label: "Green" },
@@ -70,10 +70,12 @@ export function WhiteboardInspector({
   element,
   onStyleChange,
   pending,
+  showTypography = true,
 }: {
   element: BoardElementRow;
   onStyleChange: (style: Record<string, unknown>) => void;
   pending: boolean;
+  showTypography?: boolean;
 }) {
   if (element.element_type === "IMAGE") return null;
   const updateStyle = (changes: Record<string, unknown>) =>
@@ -87,7 +89,8 @@ export function WhiteboardInspector({
       className="bg-background flex max-w-[calc(100vw-2rem)] flex-wrap items-center justify-center gap-2 rounded-lg border p-1.5 shadow-sm"
       role="toolbar"
     >
-      {element.element_type === "TEXT" || element.element_type === "STICKY" ? (
+      {showTypography &&
+      (element.element_type === "TEXT" || element.element_type === "STICKY") ? (
         <label className="text-muted-foreground flex items-center gap-1 text-xs">
           Size
           <select
@@ -107,7 +110,7 @@ export function WhiteboardInspector({
           </select>
         </label>
       ) : null}
-      {element.element_type === "TEXT" ? (
+      {showTypography && element.element_type === "TEXT" ? (
         <>
           <Palette
             colors={TEXT_COLORS}

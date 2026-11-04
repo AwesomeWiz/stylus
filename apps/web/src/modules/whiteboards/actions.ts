@@ -31,10 +31,82 @@ import { classifyBoardError, type BoardErrorCode } from "./errors";
 import { initializeTemplate } from "./templates";
 import { projectObject } from "./operations";
 import { isBoardImagePath } from "./elements";
+import { z } from "zod";
 
 export type WhiteboardActionResult<T = undefined> =
   | { data: T; status: "success" }
   | { message: string; code?: BoardErrorCode; status: "error" };
+
+export async function setBoardReactionAction(input: unknown) {
+  try {
+    const parsed = z
+      .object({
+        boardId: z.uuid(),
+        elementId: z.uuid(),
+        reaction: z.enum(["like", "heart", "fire", "eyes", "celebrate"]),
+        active: z.boolean(),
+      })
+      .parse(input);
+    const current = await mutationContext(),
+      supabase = await createServerSupabaseClient();
+    const board = await supabase
+      .from("boards")
+      .select("id")
+      .eq("id", parsed.boardId)
+      .eq("organization_id", current.organization.id)
+      .is("archived_at", null)
+      .maybeSingle();
+    if (board.error || !board.data) throw { code: "42501" };
+    const result = await supabase.rpc("set_board_reaction", {
+      p_board_id: parsed.boardId,
+      p_element_id: parsed.elementId,
+      p_reaction: parsed.reaction,
+      p_active: parsed.active,
+    });
+    if (result.error) throw result.error;
+    return { status: "success", data: result.data } as const;
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      status: "error",
+      message: "Reaction could not save. Your previous reaction was restored.",
+    } as const;
+  }
+}
+export async function setBoardCommentResolutionAction(input: unknown) {
+  try {
+    const parsed = z
+        .object({
+          boardId: z.uuid(),
+          commentId: z.uuid(),
+          resolved: z.boolean(),
+        })
+        .parse(input),
+      current = await mutationContext(),
+      supabase = await createServerSupabaseClient();
+    const board = await supabase
+      .from("boards")
+      .select("id")
+      .eq("id", parsed.boardId)
+      .eq("organization_id", current.organization.id)
+      .is("archived_at", null)
+      .maybeSingle();
+    if (board.error || !board.data) throw { code: "42501" };
+    const result = await supabase.rpc("set_board_comment_resolution", {
+      p_board_id: parsed.boardId,
+      p_comment_id: parsed.commentId,
+      p_resolved: parsed.resolved,
+    });
+    if (result.error) throw result.error;
+    return { status: "success", data: result.data } as const;
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      status: "error",
+      message: "Thread could not update. Check access and retry.",
+    } as const;
+  }
+}
 
 async function mutationContext() {
   const current = await getCurrentOrganizationContext();
@@ -523,7 +595,9 @@ export async function applyBoardOperationAction(
     });
     if (error) throw error;
     if (!data) throw new Error("Operation failed");
-    revalidatePath("/whiteboards");
+    // The explicit operation result and private Realtime reconcile the editor.
+    // Revalidating here would also render its full RSC page after every drag.
+    // A scoped device hint refreshes the list once when the user returns to it.
     return { data, status: "success" };
   } catch (error) {
     unstable_rethrow(error);

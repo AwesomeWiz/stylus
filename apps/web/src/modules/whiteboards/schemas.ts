@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { BoardElementType } from "@/lib/supabase/database.types";
+import { boardTypographySchema } from "./typography";
 
 export const boardTitleSchema = z
   .string()
@@ -153,6 +154,51 @@ export const operationElementSchema = z
     metadata: jsonObject,
   })
   .superRefine((value, context) => {
+    if (value.element_type === "ARROW") {
+      if (
+        value.content.label !== undefined &&
+        (typeof value.content.label !== "string" ||
+          value.content.label.length > 200)
+      )
+        context.addIssue({
+          code: "custom",
+          path: ["content", "label"],
+          message: "Keep arrow labels under 200 characters.",
+        });
+      if (
+        value.content.reverse !== undefined &&
+        typeof value.content.reverse !== "boolean"
+      )
+        context.addIssue({
+          code: "custom",
+          path: ["content", "reverse"],
+          message: "Choose a valid arrow direction.",
+        });
+    }
+    for (const key of Object.keys(
+      boardTypographySchema.shape,
+    ) as (keyof typeof boardTypographySchema.shape)[]) {
+      if (
+        value.style[key] !== undefined &&
+        !boardTypographySchema.shape[key].safeParse(value.style[key]).success
+      )
+        context.addIssue({
+          code: "custom",
+          path: ["style", key],
+          message: "Use a supported text property value.",
+        });
+    }
+    if (
+      value.metadata.label !== undefined &&
+      (typeof value.metadata.label !== "string" ||
+        !value.metadata.label.trim() ||
+        value.metadata.label.length > 200)
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["metadata", "label"],
+        message: "Use a layer name from 1 to 200 characters.",
+      });
     function issue(message: string) {
       context.addIssue({ code: "custom", message });
     }

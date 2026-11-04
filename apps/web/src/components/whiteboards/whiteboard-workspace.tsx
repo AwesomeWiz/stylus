@@ -1,4 +1,5 @@
 "use client";
+import "./board-content-fonts.css";
 import { MessageSquare } from "lucide-react";
 
 import { useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ import type {
 } from "@/lib/supabase/database.types";
 import { renameBoardAction } from "@/modules/whiteboards/actions";
 import { reconcileBoardComment } from "@/modules/whiteboards/collaboration";
+import { dropLayer } from "@/modules/whiteboards/layers";
 import {
   canMoveObject,
   alignObjects,
@@ -48,7 +50,12 @@ import {
   type BoardNavigationState,
 } from "./board-navigation";
 import { BoardOutline } from "./board-outline";
-import { BoardPanel } from "./board-panel";
+import { BoardPanel, useBoardDesktop } from "./board-panel";
+import { useBoardPanels } from "./use-board-view";
+import { useBoardReactions } from "./use-board-reactions";
+import { reactionChoices } from "./board-reactions";
+import { measureBoardText } from "./measure-board-text";
+import { sameElement } from "@/modules/whiteboards/history";
 import { useBoardCollaboration } from "./use-board-collaboration";
 import { useBoardDocument } from "./use-board-document";
 import { useBoardImages } from "./use-board-images";
@@ -85,6 +92,8 @@ export function WhiteboardWorkspace({
   shell?: BoardNavigationState;
 }) {
   const router = useRouter();
+  const desktop = useBoardDesktop();
+  const panels = useBoardPanels(currentUser.id);
   useEffect(() => {
     document.title = `${board.title} · Stylus`;
   }, [board.title]);
@@ -109,14 +118,33 @@ export function WhiteboardWorkspace({
     getRows,
     getRevision,
     mergeSnapshot,
-  } = useBoardDocument(board, elements, canMutate);
+  } = useBoardDocument(board, elements, canMutate, currentUser.id);
+  const [selected, setSelected] = useState<string[]>([]),
+    [panel, setPanel] = useState<Panel>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [textLayoutPending, setTextLayoutPending] = useState(false);
+  const textLayoutBusy = useRef(false);
+  const interactionBusy = useCallback(
+    () => isBusy() || textLayoutBusy.current,
+    [isBusy],
+  );
+  const [visibleObjectIds, setVisibleObjectIds] = useState<string[]>([]);
+  const visibleIds = useMemo(
+    () => [...new Set([...selected, ...visibleObjectIds])],
+    [selected, visibleObjectIds],
+  );
+  const reactionIds = useMemo(() => visibleIds.slice(0, 200), [visibleIds]);
+  const reactions = useBoardReactions(
+    board,
+    currentUser.id,
+    reactionIds,
+    canMutate,
+  );
   const {
     url: imageUrl,
     retry: retryImage,
     accept: acceptImage,
-  } = useBoardImages(board, rows, imageUrls);
-  const [selected, setSelected] = useState<string[]>([]),
-    [panel, setPanel] = useState<Panel>(null);
+  } = useBoardImages(board, rows, imageUrls, visibleIds);
   const [tool, setTool] = useState<WhiteboardTool>("SELECT"),
     [shape, setShape] = useState("rectangle");
   const [title, setTitle] = useState(board.title),
@@ -129,6 +157,8 @@ export function WhiteboardWorkspace({
     [linkAt, setLinkAt] = useState<Point | null>(null);
   const [minimap, setMinimap] = useState(false),
     [grid, setGrid] = useState(true);
+  const [snapObjects, setSnapObjects] = useState(true),
+    [snapGrid, setSnapGrid] = useState(false);
   const [context, setContext] = useState<{
     x: number;
     y: number;
@@ -148,7 +178,10 @@ export function WhiteboardWorkspace({
     picker = useRef<HTMLInputElement>(null);
   const imagePosition = useRef<Point>({ x: 0, y: 0 }),
     replacement = useRef<string | undefined>(undefined);
-  const selectedRows = selectionRoots(rows, selected);
+  const selectedRows = useMemo(
+    () => selectionRoots(rows, selected),
+    [rows, selected],
+  );
 
   const onUploaded = useCallback(
     (row: BoardElementRow, url: string, created: boolean) => {
@@ -167,7 +200,7 @@ export function WhiteboardWorkspace({
     onUploaded,
   );
   const uploadFailed = uploads.items.some((item) => item.state === "Error");
-  const busy = pending || uploads.pending || titlePending;
+  const busy = pending || uploads.pending || titlePending || textLayoutPending;
   const editable = canMutate && !busy && !dirty;
   const focusName = useRef<string | null>(null);
   useEffect(() => {
@@ -191,6 +224,7 @@ export function WhiteboardWorkspace({
   }, [busy, panel, selected, rows]);
   const beforeLeave = () =>
     (!isDirty() &&
+      !textLayoutBusy.current &&
       !uploads.pending &&
       !uploadFailed &&
       !titlePending &&
@@ -198,6 +232,7 @@ export function WhiteboardWorkspace({
     window.confirm(
       "This board has unsaved work. Stay to retry saving, or leave and discard unsaved changes?",
     );
+  const receiveComment = reactions.receiveComment;
   const onComment = useCallback(
     (row: BoardCommentRow) => {
       if (
@@ -205,8 +240,9 @@ export function WhiteboardWorkspace({
         row.board_id === board.id
       )
         setComments((rows) => reconcileBoardComment(rows, row));
+      receiveComment(row);
     },
-    [board.id, board.organization_id],
+    [board.id, board.organization_id, receiveComment],
   );
   const collaboration = useBoardCollaboration(
     board,
@@ -214,6 +250,7 @@ export function WhiteboardWorkspace({
     members,
     receive,
     onComment,
+    reactions.receive,
   );
   const refreshBoard = useCallback(() => {
     router.refresh();
@@ -253,6 +290,7 @@ export function WhiteboardWorkspace({
     const warn = (event: BeforeUnloadEvent) => {
       if (
         isDirty() ||
+        textLayoutPending ||
         uploads.pending ||
         uploadFailed ||
         titlePending ||
@@ -270,6 +308,7 @@ export function WhiteboardWorkspace({
     };
   }, [
     isDirty,
+    textLayoutPending,
     uploads.pending,
     uploadFailed,
     titlePending,
@@ -305,8 +344,15 @@ export function WhiteboardWorkspace({
     }
   }
   function openPanel(next: Panel) {
+    if (desktop && next === "OUTLINE") panels.show("layers");
+    if (desktop && next === "INSPECTOR") panels.show("properties");
     setPanel(next);
     if (next === "COMMENTS" && !commentsLoaded.current) void loadComments();
+  }
+  function toggleSidebars() {
+    if (panel === "COMMENTS") panels.hide();
+    else panels.toggleBoth();
+    setPanel(null);
   }
   function report(operation: () => BoardElementRow[]) {
     if (!editable) return;
@@ -327,7 +373,8 @@ export function WhiteboardWorkspace({
   }
   const update = useCallback(
     async (id: string, patch: Partial<BoardElementRow>) => {
-      if (!canMutate || isBusy() || isDirty()) return null;
+      if (!canMutate || isBusy() || isDirty() || textLayoutBusy.current)
+        return null;
       const rows = getRows(),
         row = rows.find((entry) => entry.id === id);
       if (
@@ -365,6 +412,33 @@ export function WhiteboardWorkspace({
           };
       }
       try {
+        if (
+          ["TEXT", "STICKY"].includes(next.element_type) &&
+          next.style.sizing === "auto" &&
+          patch.height === undefined
+        ) {
+          textLayoutBusy.current = true;
+          setTextLayoutPending(true);
+          try {
+            const height = await measureBoardText(next);
+            if (
+              isBusy() ||
+              !sameElement(
+                getRows().find((item) => item.id === id) ?? null,
+                row,
+              )
+            ) {
+              setError(
+                "This object changed while updating its text layout. Retry the property change.",
+              );
+              return null;
+            }
+            next = { ...next, height };
+          } finally {
+            textLayoutBusy.current = false;
+            setTextLayoutPending(false);
+          }
+        }
         let after = rows;
         if (
           (row.element_type === "SECTION" || row.element_type === "GROUP") &&
@@ -385,8 +459,8 @@ export function WhiteboardWorkspace({
     [canMutate, cancelInteraction, commit, getRows, isBusy, isDirty],
   );
   const onContentCommit = useCallback(
-    (id: string, content: Record<string, unknown>) => {
-      void update(id, { content });
+    (id: string, content: Record<string, unknown>, height?: number) => {
+      void update(id, { content, ...(height !== undefined ? { height } : {}) });
     },
     [update],
   );
@@ -395,17 +469,35 @@ export function WhiteboardWorkspace({
       id: string,
       bounds: { height: number; width: number; x: number; y: number },
     ) => {
-      void update(id, bounds);
+      const row = getRows().find((row) => row.id === id);
+      const fixed =
+        row &&
+        ["TEXT", "STICKY"].includes(row.element_type) &&
+        row.style.sizing === "auto" &&
+        bounds.height !== row.height;
+      void update(id, {
+        ...bounds,
+        ...(fixed ? { style: { ...row.style, sizing: "fixed" } } : {}),
+      });
     },
-    [update],
+    [update, getRows],
   );
   const commentCounts = useMemo(() => {
+    if (reactions.countsLoaded)
+      return new Map(
+        reactions.counts.map((row) => [row.element_id, row.total]),
+      );
     const counts = new Map<string, number>();
     for (const row of comments)
-      if (row.element_id && !row.archived_at)
+      if (
+        row.element_id &&
+        !row.archived_at &&
+        !row.parent_id &&
+        !row.resolved_at
+      )
         counts.set(row.element_id, (counts.get(row.element_id) ?? 0) + 1);
     return counts;
-  }, [comments]);
+  }, [comments, reactions.counts, reactions.countsLoaded]);
   function select(id: string, additive = false) {
     setSelected((ids) =>
       additive
@@ -655,6 +747,15 @@ export function WhiteboardWorkspace({
       return commands;
     }
     commands.push({ label: "Copy", run: () => clipboardAction("COPY") });
+    commands.push({ label: "Comment", run: () => openPanel("COMMENTS") });
+    if (canMutate && one)
+      commands.push({
+        label: "React",
+        children: reactionChoices.map((choice) => ({
+          label: choice.label,
+          run: () => void reactions.toggle(one.id, choice.kind),
+        })),
+      });
     if (editable) {
       if (allFree)
         commands.push({ label: "Cut", run: () => clipboardAction("CUT") });
@@ -812,6 +913,19 @@ export function WhiteboardWorkspace({
   }
   return (
     <div
+      onKeyDownCapture={(event) => {
+        if (
+          (event.ctrlKey || event.metaKey) &&
+          event.shiftKey &&
+          event.code === "Backslash" &&
+          !(event.target as HTMLElement).closest(
+            "input,textarea,select,[contenteditable=true]",
+          )
+        ) {
+          event.preventDefault();
+          toggleSidebars();
+        }
+      }}
       data-board-shell
       className="bg-background flex h-dvh min-h-0 flex-col overflow-hidden max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
     >
@@ -871,6 +985,14 @@ export function WhiteboardWorkspace({
               <MessageSquare aria-hidden="true" className="size-4" />
             </Button>
             <BoardMenu
+              snapObjects={snapObjects}
+              onSnapObjects={() => setSnapObjects((value) => !value)}
+              snapGrid={snapGrid}
+              onSnapGrid={() => setSnapGrid((value) => !value)}
+              onToggleSidebars={toggleSidebars}
+              sidebarsVisible={
+                panels.layers || panels.properties || panel === "COMMENTS"
+              }
               onOutline={() => openPanel("OUTLINE")}
               grid={grid}
               onGrid={() => setGrid((v) => !v)}
@@ -886,6 +1008,17 @@ export function WhiteboardWorkspace({
           </>
         }
       />
+      {reactions.error ? (
+        <div
+          role="alert"
+          className="bg-background flex items-center gap-2 border-b px-3 py-2 text-sm"
+        >
+          <p>{reactions.error}</p>
+          <Button variant="ghost" onClick={reactions.retry}>
+            Retry reactions
+          </Button>
+        </div>
+      ) : null}
       {error || documentError || uploads.error ? (
         <div
           className="bg-background flex items-center justify-between gap-2 border-b px-3 py-2 text-sm"
@@ -916,14 +1049,71 @@ export function WhiteboardWorkspace({
         </div>
       ) : null}
       <main
-        className="relative flex min-h-0 flex-1 flex-col"
+        className="relative flex min-h-0 flex-1"
         aria-label="Board workspace"
       >
+        {(desktop ? panels.layers : panel === "OUTLINE") ? (
+          <BoardPanel
+            title="Layers"
+            docked
+            side="left"
+            tab="OUTLINE"
+            onTab={desktop ? undefined : openPanel}
+            onClose={() => (desktop ? panels.toggle("layers") : setPanel(null))}
+          >
+            <BoardOutline
+              rows={rows}
+              selected={selected}
+              onUpdate={canMutate ? update : undefined}
+              onHover={setHovered}
+              onDrop={
+                editable
+                  ? async (id, target, place) =>
+                      commit(dropLayer(getRows(), id, target, place))
+                  : undefined
+              }
+              onContext={(id, x, y) => {
+                if (!selected.includes(id)) select(id);
+                setContext({
+                  x,
+                  y,
+                  point: canvasApi.current?.center() ?? { x: 0, y: 0 },
+                });
+              }}
+              onSelect={(id, additive) => select(id, additive)}
+              onLocate={(id) => {
+                canvasApi.current?.locate(id);
+                setPanel(null);
+                requestAnimationFrame(focusBoardCanvas);
+              }}
+            />
+            <Button
+              className="mt-4 w-full"
+              disabled={!selectedRows.length}
+              onClick={() => setPanel("INSPECTOR")}
+              variant="secondary"
+            >
+              Inspect selected objects
+            </Button>
+          </BoardPanel>
+        ) : null}
         <BoardCanvas
           ref={canvasApi}
           board={board}
           userId={currentUser.id}
           rows={rows}
+          highlighted={hovered}
+          reactions={reactions.rows}
+          reactionPending={reactions.pending}
+          members={members}
+          onReaction={reactions.toggle}
+          onVisibleObjects={setVisibleObjectIds}
+          onStyle={async (id, style) => !!(await update(id, { style }))}
+          onReplace={imageRequest}
+          onObjectComment={(id) => {
+            select(id);
+            openPanel("COMMENTS");
+          }}
           selected={selected}
           select={select}
           onSelection={setSelected}
@@ -954,6 +1144,8 @@ export function WhiteboardWorkspace({
           collaboration={collaboration}
           minimap={minimap}
           grid={grid}
+          snapObjects={snapObjects}
+          snapGrid={snapGrid}
           onContext={(event, id, point) => {
             event.preventDefault();
             event.stopPropagation();
@@ -986,8 +1178,86 @@ export function WhiteboardWorkspace({
           startInteraction={startInteraction}
           cancelInteraction={cancelInteraction}
           getRows={getRows}
+          isBusy={interactionBusy}
           commit={commit}
           onError={setError}
+        />
+        {(
+          desktop
+            ? panels.properties && panel !== "COMMENTS"
+            : panel === "INSPECTOR"
+        ) ? (
+          <BoardPanel
+            title="Properties"
+            docked
+            tab="INSPECTOR"
+            onTab={desktop ? undefined : openPanel}
+            onClose={() =>
+              desktop ? panels.toggle("properties") : setPanel(null)
+            }
+          >
+            {!selectedRows.length ? (
+              <div className="space-y-4 text-sm">
+                <p className="font-medium">{title}</p>
+                <p className="text-muted-foreground">
+                  {rows.length} objects · Select on the canvas or in Layers to
+                  edit.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => canvasApi.current?.fit()}
+                >
+                  Fit board
+                </Button>
+                <label className="flex min-h-10 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={grid}
+                    onChange={() => setGrid((v) => !v)}
+                  />
+                  Dot grid
+                </label>
+              </div>
+            ) : (
+              <BoardInspector
+                key={selectedRows.map((row) => row.id).join(":")}
+                rows={rows}
+                selection={selectedRows}
+                canMutate={canMutate}
+                busy={busy || dirty}
+                onUpdate={update}
+                onAction={action}
+                onAlign={(alignment) =>
+                  report(() => alignObjects(getRows(), selected, alignment))
+                }
+                onMembership={(id) =>
+                  report(() => assignSection(getRows(), selected, id))
+                }
+                onReplace={imageRequest}
+                onSelect={(id) => select(id)}
+              />
+            )}
+          </BoardPanel>
+        ) : null}
+        <WhiteboardCommentsPanel
+          docked
+          onLocate={(id) => canvasApi.current?.locate(id)}
+          objectNames={new Map(rows.map((row) => [row.id, objectTitle(row)]))}
+          boardId={board.id}
+          canMutate={canMutate}
+          comments={comments}
+          currentUserId={currentUser.id}
+          members={members}
+          onComment={onComment}
+          selectedElementId={
+            selectedRows.length === 1 ? selectedRows[0]!.id : null
+          }
+          controlledOpen={panel === "COMMENTS"}
+          onOpenChange={(open) => openPanel(open ? "COMMENTS" : null)}
+          loading={commentsLoading}
+          loadError={commentsError}
+          onLoad={() => void loadComments(Boolean(beforeComment))}
+          hasEarlier={Boolean(beforeComment)}
         />
       </main>
       {uploads.items.length ? (
@@ -1037,88 +1307,6 @@ export function WhiteboardWorkspace({
         ref={picker}
         tabIndex={-1}
         type="file"
-      />
-      {panel === "INSPECTOR" ? (
-        <BoardPanel
-          title={
-            selectedRows.length === 1
-              ? selectedRows[0]!.element_type.toLowerCase()
-              : `${selectedRows.length} objects`
-          }
-          tab="INSPECTOR"
-          onTab={openPanel}
-          onClose={() => setPanel(null)}
-        >
-          <BoardInspector
-            rows={rows}
-            selection={selectedRows}
-            canMutate={canMutate}
-            busy={busy || dirty}
-            onUpdate={update}
-            onAction={action}
-            onAlign={(alignment) =>
-              report(() => alignObjects(getRows(), selected, alignment))
-            }
-            onMembership={(id) =>
-              report(() => assignSection(getRows(), selected, id))
-            }
-            onReplace={imageRequest}
-            onSelect={(id) => select(id)}
-          />
-        </BoardPanel>
-      ) : null}
-      {panel === "OUTLINE" ? (
-        <BoardPanel
-          title="Layers"
-          tab="OUTLINE"
-          onTab={openPanel}
-          onClose={() => setPanel(null)}
-        >
-          <BoardOutline
-            rows={rows}
-            selected={selected}
-            onUpdate={canMutate ? update : undefined}
-            onContext={(id, x, y) => {
-              if (!selected.includes(id)) select(id);
-              setContext({
-                x,
-                y,
-                point: canvasApi.current?.center() ?? { x: 0, y: 0 },
-              });
-            }}
-            onSelect={(id, additive) => select(id, additive)}
-            onLocate={(id) => {
-              canvasApi.current?.locate(id);
-              setPanel(null);
-              requestAnimationFrame(focusBoardCanvas);
-            }}
-          />
-          <Button
-            className="mt-4 w-full"
-            disabled={!selectedRows.length}
-            onClick={() => setPanel("INSPECTOR")}
-            variant="secondary"
-          >
-            Inspect selected objects
-          </Button>
-        </BoardPanel>
-      ) : null}
-      <WhiteboardCommentsPanel
-        boardId={board.id}
-        canMutate={canMutate}
-        comments={comments}
-        currentUserId={currentUser.id}
-        members={members}
-        onComment={onComment}
-        selectedElementId={
-          selectedRows.length === 1 ? selectedRows[0]!.id : null
-        }
-        controlledOpen={panel === "COMMENTS"}
-        onOpenChange={(open) => openPanel(open ? "COMMENTS" : null)}
-        loading={commentsLoading}
-        loadError={commentsError}
-        onLoad={() => void loadComments(Boolean(beforeComment))}
-        hasEarlier={Boolean(beforeComment)}
       />
       <Dialog
         className="max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"

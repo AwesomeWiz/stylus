@@ -824,6 +824,28 @@ TASK-019 Web Agency Integration is deferred because the separate
 `ai-web-agency` implementation is not yet mature enough for a stable contract.
 
 
+## Board interaction and feedback (REDESIGN-004.3)
+
+The editor retains the modular Core boundary and existing atomic document model.
+Stable controlled React Flow nodes include authored/measured dimensions; local
+position previews never write during pointer frames. Save confirmation returns
+only bounded operation rows, avoiding route revalidation that rebuilt unchanged
+Board content. A scoped content-free device marker refreshes the landing list
+once on return. Fresh server membership and RLS remain authority.
+
+Pure Layers/guide/typography modules own bounded projections and geometry.
+Separate panels, quick controls, local search and content fonts introduce no
+plugin imports, global brand changes, AI or Company Knowledge promotion.
+Viewport/selection-scoped image signing and feedback metadata remain freshly
+authorized, bounded reads. Account/organization/Board keys and hook cleanup
+discard private state on authority changes.
+
+Reactions and root-thread resolution use dedicated guarded database setters;
+aggregate reads use invoker RLS. The existing private Board channel reconciles
+element, comment and reaction events, rather than adding public channels or
+client-trusted counts. Model execution and native entity cards remain out of
+scope. See [Boards](BOARDS.md) and [database contracts](DATABASE.md).
+
 ## Shared brand presentation (REDESIGN-004.1)
 
 Global semantic tokens and self-hosted Geist apply to existing workspace shells.

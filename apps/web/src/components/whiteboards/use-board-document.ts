@@ -21,12 +21,14 @@ import {
   expandedIds,
   operationPayload,
 } from "@/modules/whiteboards/operations";
+import { markBoardListChanged } from "./board-list-refresh";
 
 /** One local history operation and one database transaction per user intent. */
 export function useBoardDocument(
   board: BoardRow,
   elements: BoardElementRow[],
   canMutate: boolean,
+  userId = "",
 ) {
   const [history, setHistory] = useState(() =>
     createWhiteboardHistory(elements),
@@ -152,6 +154,7 @@ export function useBoardDocument(
       revision.current++;
       try {
         await operation();
+        markBoardListChanged(userId, board.organization_id);
         retry.current = null;
         return true;
       } catch (caught) {
@@ -189,7 +192,7 @@ export function useBoardDocument(
         setPending(false);
       }
     },
-    [canMutate, publish],
+    [canMutate, publish, userId, board.organization_id],
   );
 
   const persist = useCallback(
@@ -290,6 +293,7 @@ export function useBoardDocument(
   );
   const adopt = useCallback(
     (row: BoardElementRow, created = true) => {
+      markBoardListChanged(userId, board.organization_id);
       revision.current++;
       // Realtime can deliver a new image before the upload action returns.
       const base = current.current.present.filter((item) => item.id !== row.id);
@@ -300,7 +304,7 @@ export function useBoardDocument(
       echoes.current.set(row.id, row.updated_at);
       finish(row.id, row);
     },
-    [finish, publish],
+    [finish, publish, userId, board.organization_id],
   );
   const retrySave = useCallback(() => {
     if (retry.current) void run(retry.current);

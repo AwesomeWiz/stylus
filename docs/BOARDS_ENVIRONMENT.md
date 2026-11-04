@@ -1,6 +1,49 @@
 ﻿# Boards environment and migration verification
 
-REDESIGN-004.2 · 2026-11-03.
+REDESIGN-004.2 / REDESIGN-004.3 · 2026-11-03.
+
+## REDESIGN-004.3 development verification
+
+Section 39 of the attached 004.3 brief expressly authorizes the configured Stylus
+project for development, isolated authenticated tests and forward feedback /
+comment-resolution migrations. The linked ledger started with both 004 Board
+foundation migrations already applied. Reviewed dry runs identified only
+`20261103000100_board_reactions.sql`, then
+`20261103000110_board_comment_resolution.sql`; each was applied unchanged using
+the repository CLI workflow. They contain no DROP/TRUNCATE/reset and preserve
+all existing Board/content rows. The final ledger matches both files. Read-only
+API inspection confirms the reaction table, resolution columns and all six
+Board operation/template/feedback/count RPCs.
+
+Two isolated users, two organizations and three boards test real application
+actions, private images and two-user feedback. One fixture has 1,000 objects,
+including 20 image objects referencing one shared private asset; it does not
+represent 20 distinct images. Temporary passwords, credentials, screenshots,
+traces and runners remain ignored locally. Real VIEWER/revocation/foreign/
+anonymous checks pass in addition to permanent SQL tests. The four pgTAP suites
+pass 138 assertions in isolated PostgreSQL/PGlite; this is not hosted pgTAP or a
+substitute for actual network verification.
+
+Production-bundle Chrome QA covers the seven required drag cases with real
+atomic saves, no frame-level disappearance/node replacement/grid/selection loss,
+stable handles, no confirmation jump and one operation after release. A
+MutationObserver records synchronous DOM reorders of the same connected node;
+they are not claimed to be zero DOM mutations. Full editor RSC content is absent
+from the atomic move response (observed 21,921 bytes before versus 666 after on
+the small QA fixture). These are scoped observations, not hosted latency SLAs.
+The two-theme/eight-width layout matrix, image workflows, rollback/retry,
+Layers/Alt duplication, comment history and typography reload checks are
+recorded in PROJECT_STATE. Manual NVDA and additional browser engines remain
+explicit target-environment limits.
+
+Cleanup verified the exact two users, two organizations, three boards, 1,034
+active/archived elements, one comment and six private assets. Only those task
+records were removed, then absence verified. Existing organization-deletion
+audit-FK ordering required deleting the inventoried QA Board rows before the
+owner deletion RPC; unrelated data remained untouched. Task-local helpers were
+stopped and generated files restored.
+
+The sections below retain the earlier 004.2 migration/verification history.
 
 The owner explicitly authorized project **Stylus**, `otdofpjgccvnkcvkcjxx`, as
 the active development backend for this task, superseding the earlier production

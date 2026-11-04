@@ -1063,3 +1063,32 @@ geometry/text. Private image glyphs avoid signing for thumbnails. No persisted
 screenshots, privileged snapshots, external fetches, tenant-wide cache or new
 dependencies are needed. AI and canonical plugin references remain later
 explicitly approved work.
+
+## ADR-046 — Stable Board manipulation and bounded social feedback
+
+Date: 2026-11-03. Status: Accepted for REDESIGN-004.3.
+
+Retain React Flow and the bounded atomic document model. Authoritative Board
+selection owns click and drag intent; descendants participate in whole-container
+movement while only selection roots draw controls. Controlled nodes retain
+measured dimensions and unchanged identities, and save state does not remove
+resize handles. Local pointer previews persist once on release. Atomic actions
+return operation results rather than triggering full editor rendering. A
+content-free account/organization-local marker refreshes the landing list on
+return. This changes no authorization or shared server-cache policy.
+
+Layers and Properties become independent desktop docks, with one narrow-screen
+modal panel. Explicit Layers drops preserve world coordinates and relational
+ownership. Guides use a bounded per-gesture index. Three curated content font
+families cover sans/serif/mono; application chrome retains Geist. Self-hosted
+OFL assets are lazy and introduce no font dependency or runtime CDN.
+
+Social reactions use explicit idempotent state with composite uniqueness,
+fresh editor authorization and SELECT-only RLS reads. Counts are recomputed from
+authorized records after private realtime events, never trusted increments.
+Comment resolution is reversible root-thread state, separate from archival.
+Both systems use bounded object projections without loading discussion bodies
+or copying content into Board JSON. Small requested emoji feedback is content,
+separate from Lucide tool icons. Voting, presentation, attached connectors,
+canonical entity cards and AI execution remain deferred. No Board action
+promotes Company Knowledge or grants another memory domain.

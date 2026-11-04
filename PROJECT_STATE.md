@@ -4,6 +4,102 @@ Last Updated: 2026-11-03
 
 ## Overall Status
 
+REDESIGN-004.3 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-004.3 — Boards interaction and creative usability
+
+Status: **PASS — LOCAL AND REAL AUTHENTICATED VERIFICATION**.
+
+Branch `codex/redesign-004-3-boards-interaction`, isolated worktree
+`.worktrees/redesign-004-3-boards-interaction`, starts exactly at
+`eff9568c4b39c3ebffdd4abf33ab35afa667c7a0`. Main agent only; unrelated checkout
+changes preserved. No merge/push or REDESIGN-005 implementation.
+
+Desktop Layers-left/Properties-right docks default open and collapse independently
+with scoped device/account preferences. Bottom tools, View, quick actions, direct
+Layers reorder/reparent/inline rename and keyboard tree stay synchronized with
+canonical selection. Groups manipulate; Sections organize. Text uses lazy licensed
+Geist/Lora/Geist Mono content controls, safe auto-height, local guides/snapping and
+one-intent Alt-drag copies. Application chrome/brand and other feature areas stay
+unchanged. Comments share the right slot, resolve/reopen without deleting history,
+and use deferred bodies plus open-thread badges. Board-local search and Section
+focus are included; voting/presentation/attached connectors are deferred.
+
+Flicker investigation found lost measured node dimensions, save-time control
+removal, competing Group-child drag selection and full editor RSC rendering from
+list invalidation. Controlled identity/dimensions, root-only controls, explicit
+drag selection and operation-only responses correct those paths. All seven
+required production drag cases retain the same visible DOM nodes, grid, selection
+and handles, with no confirmation jump, zero pointer-frame writes and exactly one
+persisted operation after release. Synchronous DOM reorders still occur; zero DOM
+mutations is not claimed. A small-fixture move response changed from 21,921 bytes
+including unchanged Board content to 666 bytes containing the operation result.
+A scoped content-free marker refreshes the list on return. Visible image signing
+is independent from the 200-object feedback limit, preventing preview starvation
+on large text-heavy Boards; signing stays bounded to 25 per request.
+
+Section 39 of the 004.3 brief expressly authorizes the configured development
+project `otdofpjgccvnkcvkcjxx`. Reviewed forward migrations
+`20261103000100_board_reactions.sql` and
+`20261103000110_board_comment_resolution.sql` were applied unchanged through the
+supported linked CLI workflow. They preserve existing rows and enforce fresh
+roles, composite tenant/object identity, idempotency and RLS. The final ledger and
+read-only API diagnostic confirm all required columns/table and six operation/
+template/feedback/count RPCs. No reset, DROP, TRUNCATE or unrelated data deletion.
+
+Verification:
+
+- Full web suite: **202 files / 1,142 tests PASS**. Final Board coverage is
+  37 files / 217 tests, included in that full run; focused changes passed first.
+- Web lint (zero warnings), typecheck and final production build PASS. Scoped
+  formatting, diff/link/scope/secret/artifact checks are recorded below.
+- Four permanent pgTAP suites: **138 assertions PASS** (34 existing + 59 V2 +
+  24 reactions + 21 resolution) in isolated PostgreSQL/PGlite using repository
+  SQL/minimal Supabase bootstrap. Hosted pgTAP still requires unavailable Docker;
+  real hosted application/API checks are separate, not mocked transport.
+- Production Chrome: **109** two-theme/eight-width layout/focus/shortcut checks,
+  **36** seven-case drag checks, **25** Alt-copy/native Layers checks, **13**
+  comments/search/typography reload checks, **11** image/recovery checks and
+  **12** landing/navigation checks PASS, without unexpected browser exceptions.
+  Real API role/tenant/revocation/anonymous checks: **10 PASS**; large-fixture
+  readiness/pointer checks: **6 PASS**. Network errors deliberately induced for
+  rollback are identified separately from normal browser exceptions.
+- Isolated fixtures: two test accounts, two organizations, three boards,
+  1,034 total active/archived elements, one comment and six private assets were
+  exactly inventoried, removed and verified absent. No unrelated records targeted.
+  Only this task's checked Chrome/Next helper processes were stopped. Temporary
+  credentials/traces/screenshots/runners remain ignored, never committed.
+
+Measured limits: the 1,000-object fixture contains 20 image objects sharing one
+private asset. All 20 load after the viewport fix. Three sequential production
+full-document navigations in one authenticated session observed first nodes at
+6,181 / 3,647 / 7,070 ms; document transfer was 91,835 bytes and decoded document
+1,599,172 bytes (excluding later JS/actions/images). These uncontrolled local
+network/cache samples are not a cold/warm benchmark, p95, SLA or speedup claim.
+A 100-pointer-move probe wrote zero operations and observed two Long Tasks
+(104 ms and 50 ms). Large-document payload/initial rendering remains a measured
+profiling opportunity, not a claimed solved performance budget.
+
+Manual Windows NVDA and additional browser engines remain target-environment
+checks. Keyboard, semantic names/tree, focus restoration, reduced motion,
+320/390/430/768/1024/1200/1440/1920px reflow and both themes are automated/browser
+verified. Font subsets use fallback for non-Latin scripts. Dense layer reorders
+touching more than 200 rows reject safely. Existing owner organization-deletion
+audit-FK ordering remains separately scoped; cleanup used only inventoried QA Board
+rows before the existing owner deletion RPC. Native entities/conversions, AI,
+anonymous voting, presentation, persistent attached connectors, repeated-duplicate
+offset memory and global search are not introduced. REDESIGN-005 can proceed as a
+separately authorized task using the current feedback surfaces.
+
+Final repository checks: scoped formatting and local Markdown links PASS;
+`git diff --check` PASS; 77-file scope/credential-pattern/artifact audit PASS;
+font source hashes/byte sizes match. Dependencies, applied historical migrations,
+unrelated feature code and original checkout changes remain untouched. Generated
+Next type references are restored. These scans supplement review; they are not
+a claim of exhaustive credential detection.
+
+## Previous verified milestone
+
 REDESIGN-004.2 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
 
 ## REDESIGN-004.2 — Boards stabilization and UX polish

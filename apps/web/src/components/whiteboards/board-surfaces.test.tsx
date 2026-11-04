@@ -117,8 +117,8 @@ describe("Board accessible surfaces", () => {
         onLocate={locate}
       />,
     );
-    const child = screen.getByRole("button", {
-      name: /image.*Locked.*Warm palette/i,
+    const child = screen.getByRole("treeitem", {
+      name: /image.*Warm palette.*locked/i,
     });
     fireEvent.click(child, { shiftKey: true });
     expect(select).toHaveBeenCalledWith(image.id, true);

@@ -2,6 +2,22 @@
 
 # Current
 
+## REDESIGN-004.3 — Boards interaction and creative usability
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Dedicated branch starts at `eff9568c4b39c3ebffdd4abf33ab35afa667c7a0`.
+Desktop docks/bottom tools, stable drag and Group selection, direct Layers,
+typography, guides/snapping, Alt copies, reactions, reversible thread resolution,
+local search and Section focus pass local and real authenticated verification.
+Two reviewed forward migrations are applied to the explicitly task-authorized
+backend. Full web: 202 files / 1,142 tests; Board coverage: 37 / 217; pgTAP: 138.
+Lint/typecheck/build and production browser QA pass. Exact isolated hosted fixtures
+were removed. See PROJECT_STATE for measured performance/browser limits. Main
+agent only; no merge/push or REDESIGN-005 implementation.
+
+---
+
 ## REDESIGN-004.2 — Boards stabilization and UX polish
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

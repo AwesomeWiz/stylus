@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Maximize, Minus, MoreHorizontal, Plus } from "lucide-react";
+import { Maximize, Minus, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,12 @@ export function BoardMenu({
   onGrid = () => {},
   onFit = () => {},
   onFitSelection = () => {},
+  onToggleSidebars,
+  sidebarsVisible,
+  snapObjects,
+  onSnapObjects,
+  snapGrid,
+  onSnapGrid,
 }: {
   onOutline: () => void;
   onHelp: () => void;
@@ -30,16 +36,49 @@ export function BoardMenu({
   onGrid?: () => void;
   onFit?: () => void;
   onFitSelection?: () => void;
+  onToggleSidebars?: () => void;
+  sidebarsVisible?: boolean;
+  snapObjects?: boolean;
+  onSnapObjects?: () => void;
+  snapGrid?: boolean;
+  onSnapGrid?: () => void;
 }) {
   return (
     <details className="relative">
       <summary
-        aria-label="Board menu"
-        className="hover:bg-muted flex min-h-10 min-w-10 cursor-pointer list-none items-center justify-center rounded max-md:min-h-11 max-md:min-w-11"
+        aria-label="View menu"
+        className="hover:bg-muted flex min-h-10 min-w-10 cursor-pointer list-none items-center justify-center gap-1 rounded px-2 max-md:min-h-11 max-md:min-w-11"
       >
-        <MoreHorizontal aria-hidden="true" className="size-4" />
+        <span className="text-xs">View</span>
+        <ChevronDown aria-hidden="true" className="size-3" />
       </summary>
       <div className="bg-popover absolute top-full right-0 z-40 w-56 rounded border p-1 shadow-sm">
+        <p className="px-3 py-2 text-xs font-semibold">View</p>
+        {onToggleSidebars ? (
+          <Button
+            className="w-full justify-start"
+            variant="ghost"
+            onClick={onToggleSidebars}
+          >
+            {sidebarsVisible ? "Hide sidebars" : "Show sidebars"}
+          </Button>
+        ) : null}
+        {onSnapObjects ? (
+          <label className="flex min-h-11 items-center gap-2 px-3 text-sm">
+            <input
+              type="checkbox"
+              checked={snapObjects}
+              onChange={onSnapObjects}
+            />
+            Snap to objects
+          </label>
+        ) : null}
+        {onSnapGrid ? (
+          <label className="flex min-h-11 items-center gap-2 px-3 text-sm">
+            <input type="checkbox" checked={snapGrid} onChange={onSnapGrid} />
+            Snap to grid
+          </label>
+        ) : null}
         <Button
           className="w-full justify-start"
           onClick={() => onOutline()}
@@ -188,6 +227,7 @@ export function BoardHelp({
         ["⌘ / Ctrl + A", "Select all"],
         ["Esc", "Clear selection"],
         ["Shift + F10", "Context menu"],
+        ["F2 (Layers)", "Rename layer"],
       ],
     ],
     [
@@ -196,6 +236,7 @@ export function BoardHelp({
         ["⌘ / Ctrl + C / X", "Copy / Cut"],
         ["⌘ / Ctrl + V", "Paste"],
         ["⌘ / Ctrl + D", "Duplicate"],
+        ["Alt / Option + drag", "Drag a copy"],
         ["⌘ / Ctrl + G", "Group"],
         ["⌘ / Ctrl + Shift + G", "Ungroup"],
         ["Delete", "Delete"],
@@ -208,6 +249,8 @@ export function BoardHelp({
         ["⌘ / Ctrl + Shift + [ / ]", "Back / Front"],
         ["⌘ / Ctrl + Z", "Undo"],
         ["⌘ / Ctrl + Shift + Z", "Redo"],
+        ["⌘ / Ctrl while dragging", "Bypass snapping"],
+        ["⌘ / Ctrl + Shift + \\", "Toggle sidebars"],
       ],
     ],
   ] as const;
@@ -216,7 +259,7 @@ export function BoardHelp({
       open={open}
       onOpenChange={onOpenChange}
       title="Keyboard shortcuts"
-      description="Focus the canvas to use shortcuts. Shift+Enter adds a new line while editing text."
+      description="Focus the canvas to use shortcuts. Sticky: Enter saves, Shift+Enter adds a line. Text: Ctrl/⌘+Enter saves. Escape cancels text editing."
     >
       <div className="grid gap-6 p-5 sm:grid-cols-2">
         {groups.map(([title, shortcuts]) => (

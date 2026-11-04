@@ -656,7 +656,27 @@ export type BoardElementRow = {
   z_index: number;
 };
 
+export type BoardReactionKind =
+  "like" | "heart" | "fire" | "eyes" | "celebrate";
+export type BoardReactionRow = {
+  organization_id: string;
+  board_id: string;
+  element_id: string;
+  user_id: string;
+  reaction: BoardReactionKind;
+  active: boolean;
+  updated_at: string;
+};
+export type BoardReactionSummary = {
+  element_id: string;
+  reaction: BoardReactionKind;
+  total: number;
+  mine: boolean;
+  participants: string[];
+};
 export type BoardCommentRow = {
+  resolved_at: string | null;
+  resolved_by: string | null;
   archived_at: string | null;
   author_id: string;
   board_id: string;
@@ -1105,6 +1125,12 @@ export type Database = {
         >;
         Relationships: [];
       };
+      board_reactions: {
+        Row: BoardReactionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       board_comments: {
         Row: BoardCommentRow;
         Insert: never;
@@ -1501,6 +1527,27 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      set_board_comment_resolution: {
+        Args: { p_board_id: string; p_comment_id: string; p_resolved: boolean };
+        Returns: BoardCommentRow;
+      };
+      read_board_comment_counts: {
+        Args: { p_board_id: string; p_element_ids: string[] };
+        Returns: { element_id: string; total: number }[];
+      };
+      set_board_reaction: {
+        Args: {
+          p_board_id: string;
+          p_element_id: string;
+          p_reaction: string;
+          p_active: boolean;
+        };
+        Returns: BoardReactionRow;
+      };
+      read_board_reactions: {
+        Args: { p_board_id: string; p_element_ids: string[] };
+        Returns: BoardReactionSummary[];
+      };
       apply_board_operation: {
         Args: {
           p_board_id: string;

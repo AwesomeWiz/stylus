@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type {
   BoardCommentRow,
   BoardElementRow,
+  BoardReactionRow,
   BoardRow,
   TaskMember,
 } from "@/lib/supabase/database.types";
@@ -23,6 +24,7 @@ export function useBoardCollaboration(
   members: TaskMember[],
   onElement: (row: BoardElementRow) => void,
   onComment: (row: BoardCommentRow) => void,
+  onReaction?: (row: BoardReactionRow) => void,
 ) {
   const [presence, setPresence] = useState(() =>
     includeLocalBoardPresence([], currentUser, members),
@@ -45,6 +47,7 @@ export function useBoardCollaboration(
       members,
       onElement,
       onComment,
+      onReaction,
       onConnection: setConnection,
       onCursor: (update) =>
         setCursors((rows) => [
@@ -73,6 +76,7 @@ export function useBoardCollaboration(
     members,
     onComment,
     onElement,
+    onReaction,
   ]);
   return {
     presence,

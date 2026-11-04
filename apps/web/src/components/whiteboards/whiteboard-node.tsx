@@ -2,22 +2,46 @@
 
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
 import { LockKeyhole, MessageSquare } from "lucide-react";
-import { memo, useState } from "react";
+import { memo, useState, useRef } from "react";
 
-import type { BoardElementRow } from "@/lib/supabase/database.types";
+import type {
+  BoardElementRow,
+  BoardReactionSummary,
+  BoardReactionKind,
+  TaskMember,
+} from "@/lib/supabase/database.types";
+import { BoardReactions } from "./board-reactions";
 import { boardPaint } from "@/modules/whiteboards/elements";
+import {
+  boardTextStyle,
+  boardTypography,
+} from "@/modules/whiteboards/typography";
+import { focusBoardCanvas } from "./board-navigation";
 
 export type WhiteboardNodeData = Record<string, unknown> & {
   canMutate: boolean;
+  selectionRoot?: boolean;
   commentCount: number;
+  onOpenComments?: (id: string) => void;
   element: BoardElementRow;
   imageUrl?: string;
+  reactions?: BoardReactionSummary[];
+  canReact?: boolean;
+  isBusy?: () => boolean;
+  reactionPending?: string[];
+  members?: TaskMember[];
+  onReaction?: (id: string, kind: BoardReactionKind) => void;
   onImageRetry?: (elementId: string) => void;
   onInteractionCancel?: (elementId: string) => void;
   onInteractionStart?: (elementId: string) => void;
+  onResizePreview?: (
+    elementId: string,
+    bounds: { x: number; y: number; width: number; height: number } | null,
+  ) => void;
   onContentCommit: (
     elementId: string,
     content: Record<string, unknown>,
+    height?: number,
   ) => void;
   onResizeCommit: (
     elementId: string,
@@ -35,13 +59,8 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
   const { element } = data;
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(() => textValue(element.content));
-  const fontSize =
-    typeof element.style.fontSize === "number" ? element.style.fontSize : 18;
-  const textAlign = ["left", "center", "right"].includes(
-    String(element.style.align),
-  )
-    ? (element.style.align as "left" | "center" | "right")
-    : "left";
+  const cancelled = useRef(false);
+  const typography = boardTypography(element.style);
   const color =
     element.element_type === "STICKY" && !element.style.background
       ? "#713f12"
@@ -49,7 +68,7 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
           (!element.style.color || element.style.color === "#18181b")
         ? "var(--foreground)"
         : boardPaint(element.style.color, "#18181b");
-  const sharedStyle = { color, fontSize, textAlign };
+  const sharedStyle = { ...boardTextStyle(element.style), color };
 
   if (editing && data.canMutate) {
     return (
@@ -60,15 +79,50 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
         autoFocus
         className="nodrag nowheel h-full w-full resize-none bg-transparent p-3 outline-none"
         maxLength={5000}
-        onBlur={() => {
+        onBlur={(event) => {
           setEditing(false);
-          if (text !== textValue(element.content))
-            data.onContentCommit(element.id, { ...element.content, text });
-          else data.onInteractionCancel?.(element.id);
+          if (cancelled.current) {
+            cancelled.current = false;
+            setText(textValue(element.content));
+            data.onInteractionCancel?.(element.id);
+            return;
+          }
+          if (text !== textValue(element.content)) {
+            let height: number | undefined;
+            if (typography.sizing === "auto") {
+              event.currentTarget.style.height = "0px";
+              height = Math.min(
+                10000,
+                Math.max(24, event.currentTarget.scrollHeight),
+              );
+            }
+            if (height === undefined)
+              data.onContentCommit(element.id, { ...element.content, text });
+            else
+              data.onContentCommit(
+                element.id,
+                { ...element.content, text },
+                height,
+              );
+          } else data.onInteractionCancel?.(element.id);
         }}
         onChange={(event) => setText(event.currentTarget.value)}
         onKeyDown={(event) => {
-          if (event.key === "Escape") event.currentTarget.blur();
+          if (event.key === "Escape") {
+            cancelled.current = true;
+            event.currentTarget.blur();
+            requestAnimationFrame(focusBoardCanvas);
+          }
+          if (
+            event.key === "Enter" &&
+            (event.ctrlKey ||
+              event.metaKey ||
+              (element.element_type === "STICKY" && !event.shiftKey))
+          ) {
+            event.preventDefault();
+            event.currentTarget.blur();
+            requestAnimationFrame(focusBoardCanvas);
+          }
           event.stopPropagation();
         }}
         style={sharedStyle}
@@ -80,13 +134,14 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
   return (
     <div
       aria-label={`${element.element_type === "STICKY" ? "Sticky note" : "Text"}: ${text || "Empty"}`}
-      className="h-full w-full p-3 whitespace-pre-wrap"
+      className="flex h-full w-full flex-col overflow-hidden p-3 whitespace-pre-wrap"
       onDoubleClick={() => {
+        if (data.isBusy?.()) return;
         if (data.canMutate) data.onInteractionStart?.(element.id);
         setEditing(true);
       }}
       onKeyDown={(event) => {
-        if (event.key === "Enter" && data.canMutate) {
+        if (event.key === "Enter" && data.canMutate && !data.isBusy?.()) {
           event.preventDefault();
           event.stopPropagation();
           data.onInteractionStart?.(element.id);
@@ -94,7 +149,15 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
         }
       }}
       role={data.canMutate ? "button" : undefined}
-      style={sharedStyle}
+      style={{
+        ...sharedStyle,
+        justifyContent:
+          typography.verticalAlign === "middle"
+            ? "center"
+            : typography.verticalAlign === "bottom"
+              ? "flex-end"
+              : "flex-start",
+      }}
       tabIndex={data.canMutate ? 0 : -1}
       title={data.canMutate ? "Double-click to edit" : undefined}
     >
@@ -105,8 +168,11 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
 
 function WhiteboardNodeComponent({
   data,
-  selected,
+  selected: flowSelected,
 }: NodeProps<WhiteboardFlowNode>) {
+  // Descendants stay selected for whole-container dragging. Only explicit
+  // selection roots display individual outlines and resize controls.
+  const selected = flowSelected && data.selectionRoot !== false;
   const { element } = data;
   const fill = boardPaint(element.style.fill, "#f4f4f5");
   const stroke = boardPaint(element.style.stroke, "#71717a");
@@ -119,6 +185,15 @@ function WhiteboardNodeComponent({
     <div
       className={`relative h-full w-full ${selected ? "outline-primary outline-2 outline-offset-2" : ""}`}
       data-element-type={element.element_type}
+      onPointerDownCapture={(event) => {
+        if (
+          data.isBusy?.() &&
+          (event.target as HTMLElement).closest(".react-flow__resize-control")
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
       style={{ transform: `rotate(${element.rotation}deg)` }}
     >
       <NodeResizer
@@ -137,14 +212,18 @@ function WhiteboardNodeComponent({
         minHeight={24}
         minWidth={24}
         onResizeStart={() => data.onInteractionStart?.(element.id)}
-        onResizeEnd={(_event, params) =>
+        onResize={(_event, params) =>
+          data.onResizePreview?.(element.id, params)
+        }
+        onResizeEnd={(_event, params) => {
+          data.onResizePreview?.(element.id, null);
           data.onResizeCommit(element.id, {
             height: params.height,
             width: params.width,
             x: params.x,
             y: params.y,
-          })
-        }
+          });
+        }}
       />
       {element.element_type === "SECTION" ||
       element.element_type === "GROUP" ? (
@@ -183,17 +262,33 @@ function WhiteboardNodeComponent({
         </div>
       ) : null}
       {data.commentCount > 0 ? (
-        <div
-          aria-label={`${data.commentCount} ${data.commentCount === 1 ? "comment" : "comments"} on this element`}
-          className="bg-background text-foreground pointer-events-none absolute -top-3 -right-3 z-10 flex h-6 min-w-6 items-center justify-center gap-1 rounded-full border px-1.5 text-[11px] font-semibold shadow-sm"
-          role="status"
+        <button
+          type="button"
+          aria-label={`${data.commentCount} open ${data.commentCount === 1 ? "thread" : "threads"} on this object`}
+          className="nodrag nopan bg-background text-foreground absolute -top-3 -right-3 z-10 flex min-h-8 min-w-8 items-center justify-center gap-1 rounded border px-1.5 text-[11px] font-semibold"
+          onClick={(event) => {
+            event.stopPropagation();
+            data.onOpenComments?.(element.id);
+          }}
         >
           <MessageSquare aria-hidden="true" className="size-3" />
           {data.commentCount}
-        </div>
+        </button>
       ) : null}
       {element.element_type === "TEXT" ? (
         <EditableText data={data} key={textValue(element.content)} />
+      ) : null}
+      {data.reactions?.some((row) => row.total > 0) ? (
+        <div className="absolute -bottom-9 left-0 z-10">
+          <BoardReactions
+            elementId={element.id}
+            rows={data.reactions}
+            pending={data.reactionPending}
+            members={data.members}
+            canMutate={data.canReact ?? data.canMutate}
+            onToggle={data.onReaction}
+          />
+        </div>
       ) : null}
       {element.element_type === "STICKY" ? (
         <div
@@ -227,7 +322,7 @@ function WhiteboardNodeComponent({
       ) : null}
       {element.element_type === "ARROW" ? (
         <svg
-          aria-label="Arrow"
+          aria-label={`${element.content.line === true ? "Line" : "Arrow"}${element.content.label ? `: ${String(element.content.label)}` : ""}`}
           className="h-full w-full overflow-visible"
           role="img"
           viewBox={`0 0 ${element.width} ${element.height}`}
@@ -245,6 +340,15 @@ function WhiteboardNodeComponent({
             </marker>
           </defs>
           <line
+            x1="2"
+            x2={element.width - 8}
+            y1={element.height / 2}
+            y2={element.height / 2}
+            stroke="transparent"
+            strokeWidth="16"
+            pointerEvents="stroke"
+          />
+          <line
             markerEnd={
               element.content.line === true
                 ? undefined
@@ -256,11 +360,22 @@ function WhiteboardNodeComponent({
                 ? element.style.strokeWidth
                 : 2
             }
-            x1="2"
-            x2={element.width - 8}
+            x1={element.content.reverse === true ? element.width - 8 : 2}
+            x2={element.content.reverse === true ? 2 : element.width - 8}
             y1={element.height / 2}
             y2={element.height / 2}
           />
+          {element.content.label ? (
+            <text
+              x={element.width / 2}
+              y={Math.max(10, element.height / 2 - 8)}
+              textAnchor="middle"
+              fontSize="12"
+              fill={arrowColor}
+            >
+              {String(element.content.label).slice(0, 200)}
+            </text>
+          ) : null}
         </svg>
       ) : null}
       {element.locked ? (
@@ -333,8 +448,12 @@ export const WhiteboardNode = memo(
   WhiteboardNodeComponent,
   (previous, next) =>
     previous.selected === next.selected &&
+    previous.data.selectionRoot === next.data.selectionRoot &&
     previous.data.element === next.data.element &&
     previous.data.imageUrl === next.data.imageUrl &&
     previous.data.commentCount === next.data.commentCount &&
-    previous.data.canMutate === next.data.canMutate,
+    previous.data.canMutate === next.data.canMutate &&
+    previous.data.canReact === next.data.canReact &&
+    previous.data.reactions === next.data.reactions &&
+    previous.data.reactionPending === next.data.reactionPending,
 );

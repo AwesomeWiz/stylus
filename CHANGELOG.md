@@ -4,6 +4,19 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Refined Boards with default desktop Layers/Properties docks, bottom tools,
+  independent sidebar preferences, direct Layers reorder/reparent and inline
+  rename. Group and Section ownership stays atomic.
+- Fixed drag-time measured-node and Group-selection instability, retained
+  controls through saving and removed full editor re-rendering after movement.
+- Added lazy self-hosted content typography, local guides/snapping, Alt-drag
+  copies and contextual quick actions. Application chrome remains Geist.
+- Added tenant-authorized social reactions and reversible root-thread resolution,
+  open-thread badges, local Board search and Section focus. Two forward
+  migrations preserve existing records; voting/presentation remain deferred.
+- Deferred private image previews to visible/selected objects with independent
+  bounded signing, retaining paste/drop, replacement history and recovery.
+
 - Stabilized hosted Board mutations against the two required forward migrations;
   failed edits restore saved state with safe retry and specific recovery errors.
 - Fixed Shift-click/marquee selection and added keyboard/touch-accessible
