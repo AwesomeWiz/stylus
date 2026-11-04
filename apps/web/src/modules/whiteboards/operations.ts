@@ -104,8 +104,9 @@ export function indexBoardObjects(rows: BoardElementRow[]) {
             : row.z_index,
         );
       }
-  return { parents, immovable, layers };
+  return { byId, children, parents, immovable, layers };
 }
+export type BoardObjectIndex = ReturnType<typeof indexBoardObjects>;
 export function visualBounds(row: BoardElementRow) {
   const angle = (row.rotation * Math.PI) / 180,
     width =

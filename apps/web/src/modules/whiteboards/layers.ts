@@ -1,4 +1,70 @@
 import type { BoardElementRow } from "@/lib/supabase/database.types";
+
+type LayerStructure = Pick<
+  BoardElementRow,
+  "id" | "parent_id" | "z_index" | "element_type"
+>;
+export type BoardLayerIndex = {
+  records: LayerStructure[];
+  children: Map<string | null, string[]>;
+};
+/** Display-order projection of canonical ownership; no geometry/content snapshots. */
+export function indexBoardLayers(
+  previous: BoardLayerIndex | undefined,
+  rows: BoardElementRow[],
+): BoardLayerIndex {
+  if (
+    previous &&
+    rows.length === previous.records.length &&
+    rows.every((row, i) => {
+      const old = previous.records[i]!;
+      return (
+        row.id === old.id &&
+        row.parent_id === old.parent_id &&
+        row.z_index === old.z_index &&
+        row.element_type === old.element_type
+      );
+    })
+  )
+    return previous;
+  const records = rows.map(({ id, parent_id, z_index, element_type }) => ({
+    id,
+    parent_id,
+    z_index,
+    element_type,
+  }));
+  const groups = new Map<string | null, LayerStructure[]>();
+  for (const row of records) {
+    const key = row.parent_id ?? null,
+      list = groups.get(key);
+    if (list) list.push(row);
+    else groups.set(key, [row]);
+  }
+  const children = new Map<string | null, string[]>();
+  for (const [key, list] of groups)
+    children.set(
+      key,
+      list
+        .sort((a, b) => b.z_index - a.z_index || a.id.localeCompare(b.id))
+        .map((row) => row.id),
+    );
+  return { records, children };
+}
+export function visibleBoardLayers(
+  index: BoardLayerIndex,
+  collapsed: ReadonlySet<string>,
+) {
+  const result: { id: string; depth: number }[] = [];
+  function visit(parent: string | null, depth: number) {
+    if (depth > 2) return;
+    for (const id of index.children.get(parent) ?? []) {
+      result.push({ id, depth });
+      if (!collapsed.has(id)) visit(id, depth + 1);
+    }
+  }
+  visit(null, 0);
+  return result;
+}
 import {
   ancestors,
   assignSection,

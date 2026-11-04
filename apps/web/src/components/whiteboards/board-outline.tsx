@@ -1,42 +1,37 @@
 "use client";
-import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import {
-  ChevronRight,
-  ChevronDown,
-  Frame,
-  Group,
-  ImageIcon,
-  Type,
-  StickyNote,
-  Shapes,
-  ArrowRight,
-  Link2,
-  LockKeyhole,
-  Unlock,
-  MoreHorizontal,
-  LocateFixed,
-} from "lucide-react";
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+} from "react";
+
 import type { BoardElementRow } from "@/lib/supabase/database.types";
 import {
-  expandedIds,
   indexBoardObjects,
+  type BoardObjectIndex,
   objectTitle,
 } from "@/modules/whiteboards/operations";
-import { layerNamePatch, type LayerDrop } from "@/modules/whiteboards/layers";
+import {
+  indexBoardLayers,
+  visibleBoardLayers,
+  layerNamePatch,
+  type LayerDrop,
+} from "@/modules/whiteboards/layers";
 import { BoardSearch } from "./board-search";
-const icons = {
-  SECTION: Frame,
-  GROUP: Group,
-  IMAGE: ImageIcon,
-  TEXT: Type,
-  STICKY: StickyNote,
-  SHAPE: Shapes,
-  ARROW: ArrowRight,
-  LINK: Link2,
-};
+import { BoardLayerRow, type BoardLayerEvents } from "./board-layer-row";
+import { useBoardEvent } from "./use-board-event";
+
 type Target = { id: string | null; place: LayerDrop };
-export function BoardOutline({
+export const BoardOutline = memo(function BoardOutline({
   rows,
+  objectIndex,
+  active = true,
+  isBusy,
   selected,
   onSelect,
   onLocate,
@@ -46,6 +41,9 @@ export function BoardOutline({
   onHover,
 }: {
   rows: BoardElementRow[];
+  objectIndex?: BoardObjectIndex;
+  active?: boolean;
+  isBusy?: () => boolean;
   selected: string[];
   onSelect: (id: string, additive: boolean) => void;
   onLocate: (id: string) => void;
@@ -74,27 +72,58 @@ export function BoardOutline({
     scrollSpeed = useRef(0),
     saving = useRef(false),
     skipBlur = useRef(false);
-  const structure = useMemo(() => indexBoardObjects(rows), [rows]);
+  const structure = useMemo(
+    () => objectIndex ?? indexBoardObjects(rows),
+    [objectIndex, rows],
+  );
   const hoverTarget = useRef<string | null>(null);
-  const children = useMemo(() => {
-    const map = new Map<string | null, BoardElementRow[]>();
-    for (const row of rows) {
-      const key = row.parent_id ?? null;
-      map.set(key, [...(map.get(key) ?? []), row]);
-    }
-    for (const list of map.values())
-      list.sort((a, b) => b.z_index - a.z_index || a.id.localeCompare(b.id));
-    return map;
-  }, [rows]);
-  const visible: BoardElementRow[] = [];
-  function collect(parent: string | null, depth = 0) {
-    if (depth > 2) return;
-    for (const row of children.get(parent) ?? []) {
-      visible.push(row);
-      if (!collapsed.includes(row.id)) collect(row.id, depth + 1);
-    }
-  }
-  collect(null);
+  const [layerIndex, setLayerIndex] = useState(() =>
+    indexBoardLayers(undefined, rows),
+  );
+  const nextLayerIndex = useMemo(
+    () => indexBoardLayers(layerIndex, rows),
+    [layerIndex, rows],
+  );
+  if (nextLayerIndex !== layerIndex) setLayerIndex(nextLayerIndex);
+  const children = nextLayerIndex.children;
+  const collapsedIds = useMemo(() => new Set(collapsed), [collapsed]);
+  const selectedIds = useMemo(() => new Set(selected), [selected]);
+  const selectedAncestors = useMemo(
+    () =>
+      new Set(
+        selected.flatMap((id) =>
+          (structure.parents.get(id) ?? []).map((row) => row.id),
+        ),
+      ),
+    [structure, selected],
+  );
+  const visible = useMemo(
+    () => visibleBoardLayers(nextLayerIndex, collapsedIds),
+    [nextLayerIndex, collapsedIds],
+  );
+  const visiblePositions = useMemo(
+    () => new Map(visible.map((row, i) => [row.id, i])),
+    [visible],
+  );
+  const rowElements = useRef(new Map<string, HTMLDivElement>());
+  const selectedId = selected[0];
+  const selectedVisibleId = selectedId
+    ? visiblePositions.has(selectedId)
+      ? selectedId
+      : (structure.parents.get(selectedId) ?? []).find((row) =>
+          visiblePositions.has(row.id),
+        )?.id
+    : undefined;
+  useLayoutEffect(() => {
+    if (!active) return;
+    const element = selectedVisibleId
+      ? rowElements.current.get(selectedVisibleId)
+      : null;
+    element?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [active, selectedVisibleId, visiblePositions]);
+  useEffect(() => {
+    if (!active) onHover?.(null);
+  }, [active, onHover]);
   function cleanup() {
     hoverTarget.current = null;
     if (expand.current) clearTimeout(expand.current);
@@ -114,11 +143,7 @@ export function BoardOutline({
   );
   function focus(id: string) {
     setFocused(id);
-    requestAnimationFrame(() =>
-      root.current
-        ?.querySelector<HTMLElement>(`[data-layer-id="${id}"]`)
-        ?.focus(),
-    );
+    requestAnimationFrame(() => rowElements.current.get(id)?.focus());
   }
   function rename(row: BoardElementRow) {
     if (!onUpdate || structure.immovable.has(row.id)) return;
@@ -200,272 +225,214 @@ export function BoardOutline({
       setMessage((e as Error).message);
     }
   }
+  const handleElement = useBoardEvent(
+    (id: string, element: HTMLDivElement | null) => {
+      if (element) rowElements.current.set(id, element);
+      else rowElements.current.delete(id);
+    },
+  );
+  const handleFocus = useBoardEvent((id: string) => setFocused(id));
+  const handleHover = useBoardEvent((id: string | null) => onHover?.(id));
+  const handleKey = useBoardEvent(
+    (id: string, event: KeyboardEvent<HTMLDivElement>) => {
+      const row = structure.byId.get(id);
+      if (!row) return;
+      const container = ["SECTION", "GROUP"].includes(row.element_type);
+
+      if ((event.target as HTMLElement).tagName === "INPUT") return;
+      if (event.key === "F2") {
+        event.preventDefault();
+        rename(row);
+      } else if (
+        event.key === "ContextMenu" ||
+        (event.shiftKey && event.key === "F10")
+      ) {
+        event.preventDefault();
+        const b = event.currentTarget.getBoundingClientRect();
+        onContext?.(row.id, b.left, b.bottom);
+      } else if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onSelect(row.id, event.shiftKey);
+      } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const i = visiblePositions.get(row.id) ?? -1;
+        const next = visible[i + (event.key === "ArrowDown" ? 1 : -1)];
+        if (next) focus(next.id);
+      } else if (event.key === "Home" || event.key === "End") {
+        event.preventDefault();
+        const next = event.key === "Home" ? visible[0] : visible.at(-1);
+        if (next) focus(next.id);
+      } else if (event.key === "ArrowRight" && container) {
+        event.preventDefault();
+        if (collapsed.includes(row.id))
+          setCollapsed((ids) => ids.filter((id) => id !== row.id));
+        else if (children.get(row.id)?.[0]) focus(children.get(row.id)![0]!);
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        if (container && !collapsed.includes(row.id))
+          setCollapsed((ids) => [...ids, row.id]);
+        else if (row.parent_id) focus(row.parent_id);
+      }
+    },
+  );
+  const handleNameKey = useBoardEvent(
+    (id: string, e: KeyboardEvent<HTMLInputElement>) => {
+      const row = structure.byId.get(id);
+      if (!row) return;
+
+      e.stopPropagation();
+      if (e.key === "Enter") {
+        e.preventDefault();
+        e.currentTarget.blur();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        skipBlur.current = true;
+        setRenaming(null);
+        focus(row.id);
+        requestAnimationFrame(() => {
+          skipBlur.current = false;
+        });
+      }
+    },
+  );
+  const handleDragStart = useBoardEvent(
+    (id: string, event: DragEvent<HTMLDivElement>) => {
+      if (isBusy?.()) {
+        event.preventDefault();
+        return;
+      }
+      drag.current = id;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("application/x-stylus-layer", id);
+      setMessage(
+        "Drop on a container to move inside, or between rows to reorder.",
+      );
+    },
+  );
+  const handleDragOver = useBoardEvent(
+    (id: string, event: DragEvent<HTMLDivElement>) => {
+      const row = structure.byId.get(id);
+      if (!row) return;
+      const b = event.currentTarget.getBoundingClientRect(),
+        ratio = (event.clientY - b.top) / Math.max(1, b.height),
+        container = ["SECTION", "GROUP"].includes(row.element_type);
+      targetOver(
+        event,
+        id,
+        container && ratio > 0.25 && ratio < 0.75
+          ? "inside"
+          : ratio < 0.5
+            ? "before"
+            : "after",
+      );
+    },
+  );
+  const handleDrop = useBoardEvent(
+    (id: string, event: DragEvent<HTMLDivElement>) => {
+      void dropped(event, drop ?? { id, place: "before" });
+    },
+  );
+  const handleDragEnd = useBoardEvent(cleanup);
+  const handleToggle = useBoardEvent((id: string) =>
+    setCollapsed((ids) =>
+      ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id],
+    ),
+  );
+  const handleNameCommit = useBoardEvent((id: string) => {
+    const row = structure.byId.get(id);
+    if (row) void saveName(row);
+  });
+  const handleDraftChange = useBoardEvent((value: string) => setDraft(value));
+  const handleRename = useBoardEvent((id: string) => {
+    const row = structure.byId.get(id);
+    if (row) rename(row);
+  });
+  const handleSelect = useBoardEvent(onSelect);
+  const handleLocate = useBoardEvent(onLocate);
+  const handleContext = useBoardEvent((id: string, x: number, y: number) =>
+    onContext?.(id, x, y),
+  );
+  const handleLock = useBoardEvent((id: string, locked: boolean) => {
+    void onUpdate?.(id, { locked });
+  });
+  const events: BoardLayerEvents = useMemo(
+    () => ({
+      onElement: handleElement,
+      onFocus: handleFocus,
+      onHover: handleHover,
+      onKey: handleKey,
+      onNameKey: handleNameKey,
+      onDragStart: handleDragStart,
+      onDragOver: handleDragOver,
+      onDrop: handleDrop,
+      onDragEnd: handleDragEnd,
+      onToggle: handleToggle,
+      onNameCommit: handleNameCommit,
+      onDraftChange: handleDraftChange,
+      onRename: handleRename,
+      onSelect: handleSelect,
+      onLocate: handleLocate,
+      onContext: handleContext,
+      onLock: handleLock,
+    }),
+    [
+      handleElement,
+      handleFocus,
+      handleHover,
+      handleKey,
+      handleNameKey,
+      handleDragStart,
+      handleDragOver,
+      handleDrop,
+      handleDragEnd,
+      handleToggle,
+      handleNameCommit,
+      handleDraftChange,
+      handleRename,
+      handleSelect,
+      handleLocate,
+      handleContext,
+      handleLock,
+    ],
+  );
   function branch(parent: string | null, depth = 0): React.ReactNode {
     if (depth > 2) return null;
     return (
       <ul
         id={parent ? `layer-children-${parent}` : undefined}
-        role={depth ? "group" : undefined}
+        role={depth ? "group" : "none"}
         className={depth ? "ml-3 border-l pl-1" : ""}
       >
-        {(children.get(parent) ?? []).map((row) => {
+        {(children.get(parent) ?? []).map((id) => {
+          const row = structure.byId.get(id);
+          if (!row) return null;
           const container = ["SECTION", "GROUP"].includes(row.element_type),
-            Icon = icons[row.element_type],
-            ownSelected = selected.includes(row.id),
-            parentChosen = (structure.parents.get(row.id) ?? []).some((r) =>
-              selected.includes(r.id),
-            ),
-            childChosen =
-              collapsed.includes(row.id) &&
-              [...expandedIds(rows, [row.id])].some(
-                (id) => id !== row.id && selected.includes(id),
-              );
-          const place = drop?.id === row.id ? drop.place : null;
+            expanded = !collapsedIds.has(id);
           return (
-            <li role="none" key={row.id}>
-              <div
-                role="treeitem"
-                aria-owns={
-                  container && !collapsed.includes(row.id)
-                    ? `layer-children-${row.id}`
-                    : undefined
-                }
-                aria-level={depth + 1}
-                aria-selected={ownSelected}
-                aria-expanded={
-                  container ? !collapsed.includes(row.id) : undefined
-                }
-                aria-label={`${row.element_type.toLowerCase()} ${objectTitle(row)}${row.locked ? ", locked" : ""}${childChosen ? ", selected child" : ""}`}
-                tabIndex={
-                  focused === row.id || (!focused && visible[0]?.id === row.id)
-                    ? 0
-                    : -1
-                }
-                data-layer-id={row.id}
-                className={`group/layer relative flex min-h-10 items-center gap-1 rounded px-1 outline-offset-[-2px] ${ownSelected ? "bg-primary-subtle" : parentChosen ? "bg-muted/60" : "hover:bg-muted/50"} ${place === "inside" ? "ring-primary ring-2 ring-inset" : ""}`}
-                onFocus={() => setFocused(row.id)}
-                onMouseEnter={() => onHover?.(row.id)}
-                onMouseLeave={() => onHover?.(null)}
-                onClick={(event) => {
-                  if ((event.target as HTMLElement).closest("button,input"))
-                    return;
-                  if (!ownSelected || event.shiftKey)
-                    onSelect(row.id, event.shiftKey);
-                }}
-                onContextMenu={(event) => {
-                  if (onContext) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    onContext(row.id, event.clientX, event.clientY);
-                  }
-                }}
-                onKeyDown={(event) => {
-                  if ((event.target as HTMLElement).tagName === "INPUT") return;
-                  if (event.key === "F2") {
-                    event.preventDefault();
-                    rename(row);
-                  } else if (
-                    event.key === "ContextMenu" ||
-                    (event.shiftKey && event.key === "F10")
-                  ) {
-                    event.preventDefault();
-                    const b = event.currentTarget.getBoundingClientRect();
-                    onContext?.(row.id, b.left, b.bottom);
-                  } else if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onSelect(row.id, event.shiftKey);
-                  } else if (
-                    event.key === "ArrowDown" ||
-                    event.key === "ArrowUp"
-                  ) {
-                    event.preventDefault();
-                    const i = visible.findIndex((r) => r.id === row.id);
-                    const next =
-                      visible[i + (event.key === "ArrowDown" ? 1 : -1)];
-                    if (next) focus(next.id);
-                  } else if (event.key === "Home" || event.key === "End") {
-                    event.preventDefault();
-                    const next =
-                      event.key === "Home" ? visible[0] : visible.at(-1);
-                    if (next) focus(next.id);
-                  } else if (event.key === "ArrowRight" && container) {
-                    event.preventDefault();
-                    if (collapsed.includes(row.id))
-                      setCollapsed((ids) => ids.filter((id) => id !== row.id));
-                    else if (children.get(row.id)?.[0])
-                      focus(children.get(row.id)![0]!.id);
-                  } else if (event.key === "ArrowLeft") {
-                    event.preventDefault();
-                    if (container && !collapsed.includes(row.id))
-                      setCollapsed((ids) => [...ids, row.id]);
-                    else if (row.parent_id) focus(row.parent_id);
-                  }
-                }}
-                draggable={
-                  !!onDrop &&
-                  !structure.immovable.has(row.id) &&
-                  renaming !== row.id
-                }
-                onDragStart={(event) => {
-                  drag.current = row.id;
-                  event.dataTransfer.effectAllowed = "move";
-                  event.dataTransfer.setData(
-                    "application/x-stylus-layer",
-                    row.id,
-                  );
-                  setMessage(
-                    "Drop on a container to move inside, or between rows to reorder.",
-                  );
-                }}
-                onDragEnd={cleanup}
-                onDragOver={(event) => {
-                  const b = event.currentTarget.getBoundingClientRect(),
-                    ratio = (event.clientY - b.top) / Math.max(1, b.height);
-                  targetOver(
-                    event,
-                    row.id,
-                    container && ratio > 0.25 && ratio < 0.75
-                      ? "inside"
-                      : ratio < 0.5
-                        ? "before"
-                        : "after",
-                  );
-                }}
-                onDrop={(event) =>
-                  void dropped(event, drop ?? { id: row.id, place: "before" })
-                }
-              >
-                {place === "before" || place === "after" ? (
-                  <span
-                    aria-hidden
-                    className={`bg-primary pointer-events-none absolute inset-x-0 h-0.5 ${place === "before" ? "top-0" : "bottom-0"}`}
-                  />
-                ) : null}
-                {container ? (
-                  <button
-                    tabIndex={-1}
-                    type="button"
-                    className="flex size-6 shrink-0 items-center justify-center"
-                    aria-label={`${collapsed.includes(row.id) ? "Expand" : "Collapse"} ${objectTitle(row)} layers`}
-                    onClick={() =>
-                      setCollapsed((ids) =>
-                        ids.includes(row.id)
-                          ? ids.filter((id) => id !== row.id)
-                          : [...ids, row.id],
-                      )
-                    }
-                  >
-                    {collapsed.includes(row.id) ? (
-                      <ChevronRight aria-hidden className="size-3" />
-                    ) : (
-                      <ChevronDown aria-hidden className="size-3" />
-                    )}
-                  </button>
-                ) : null}
-                <Icon
-                  aria-hidden
-                  className="text-muted-foreground size-3.5 shrink-0"
-                />
-                {renaming === row.id ? (
-                  <input
-                    autoFocus
-                    aria-label="Layer name"
-                    className="bg-background text-foreground min-w-0 flex-1 rounded border px-1 py-1 text-xs"
-                    maxLength={200}
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onBlur={() => void saveName(row)}
-                    onKeyDown={(e) => {
-                      e.stopPropagation();
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        e.currentTarget.blur();
-                      }
-                      if (e.key === "Escape") {
-                        e.preventDefault();
-                        skipBlur.current = true;
-                        setRenaming(null);
-                        focus(row.id);
-                        requestAnimationFrame(() => {
-                          skipBlur.current = false;
-                        });
-                      }
-                    }}
-                  />
-                ) : (
-                  <button
-                    tabIndex={-1}
-                    type="button"
-                    className="min-w-0 flex-1 truncate py-2 text-left text-xs"
-                    title={objectTitle(row)}
-                    onClick={(e) => {
-                      if (!ownSelected || e.shiftKey)
-                        onSelect(row.id, e.shiftKey);
-                    }}
-                    onDoubleClick={() => rename(row)}
-                  >
-                    {objectTitle(row)}
-                  </button>
+            <li role="none" key={id}>
+              <BoardLayerRow
+                row={row}
+                depth={depth}
+                container={container}
+                expanded={expanded}
+                ownSelected={selectedIds.has(id)}
+                parentChosen={(structure.parents.get(id) ?? []).some((parent) =>
+                  selectedIds.has(parent.id),
                 )}
-                {childChosen ? (
-                  <span
-                    className="bg-primary size-1.5 shrink-0 rounded-full"
-                    aria-label="Selected child"
-                  />
-                ) : null}
-                {onUpdate ? (
-                  <button
-                    tabIndex={-1}
-                    type="button"
-                    aria-label={`${row.locked ? "Unlock" : "Lock"} ${objectTitle(row)}`}
-                    title={row.locked ? "Unlock" : "Lock"}
-                    className={`flex size-7 shrink-0 items-center justify-center ${row.locked ? "" : "opacity-0 group-focus-within/layer:opacity-100 group-hover/layer:opacity-100 max-md:opacity-100"}`}
-                    onClick={() =>
-                      void onUpdate(row.id, { locked: !row.locked })
-                    }
-                  >
-                    {row.locked ? (
-                      <LockKeyhole aria-hidden className="size-3" />
-                    ) : (
-                      <Unlock aria-hidden className="size-3" />
-                    )}
-                  </button>
-                ) : row.locked ? (
-                  <LockKeyhole aria-label="Locked" className="size-3" />
-                ) : null}
-                <button
-                  tabIndex={-1}
-                  type="button"
-                  aria-label={`Locate ${objectTitle(row)}`}
-                  title="Locate"
-                  className="flex size-7 shrink-0 items-center justify-center opacity-0 group-focus-within/layer:opacity-100 group-hover/layer:opacity-100 max-md:opacity-100"
-                  onClick={() => onLocate(row.id)}
-                >
-                  <LocateFixed aria-hidden className="size-3" />
-                </button>
-                {onContext ? (
-                  <button
-                    tabIndex={-1}
-                    type="button"
-                    aria-label={`Actions for ${objectTitle(row)}`}
-                    className="flex size-7 shrink-0 items-center justify-center"
-                    onClick={(event) => {
-                      const b = event.currentTarget.getBoundingClientRect();
-                      onContext(row.id, b.left, b.bottom);
-                    }}
-                  >
-                    <MoreHorizontal aria-hidden className="size-3" />
-                  </button>
-                ) : null}
-                <span className="sr-only">
-                  Position {Math.round(row.x)}, {Math.round(row.y)};{" "}
-                  {Math.round(row.width)} by {Math.round(row.height)}
-                  {parentChosen ? "; parent selected" : ""}
-                </span>
-              </div>
-              {container && !collapsed.includes(row.id)
-                ? branch(row.id, depth + 1)
-                : null}
+                childChosen={!expanded && selectedAncestors.has(id)}
+                tabStop={focused === id || (!focused && visible[0]?.id === id)}
+                renaming={renaming === id}
+                draft={renaming === id ? draft : ""}
+                place={drop?.id === id ? drop.place : null}
+                canUpdate={!!onUpdate}
+                canDrop={
+                  !!onDrop && !structure.immovable.has(id) && renaming !== id
+                }
+                hasContext={!!onContext}
+                events={events}
+              />
+              {container && expanded ? branch(id, depth + 1) : null}
             </li>
           );
         })}
@@ -473,7 +440,11 @@ export function BoardOutline({
     );
   }
   return (
-    <section aria-label="Board layers" ref={root}>
+    <section
+      aria-label="Board layers"
+      ref={root}
+      className="[--board-layer-row-size:40px] max-md:[--board-layer-row-size:44px]"
+    >
       <BoardSearch rows={rows} onLocate={onLocate}>
         {rows.length ? (
           <div role="tree" aria-label="Objects" aria-multiselectable>
@@ -499,4 +470,4 @@ export function BoardOutline({
       </p>
     </section>
   );
-}
+});

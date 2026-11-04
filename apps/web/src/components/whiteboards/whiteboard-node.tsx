@@ -2,7 +2,7 @@
 
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
 import { LockKeyhole, MessageSquare } from "lucide-react";
-import { memo, useState, useRef } from "react";
+import { memo, useMemo, useState, useRef } from "react";
 
 import type {
   BoardElementRow,
@@ -60,7 +60,14 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(() => textValue(element.content));
   const cancelled = useRef(false);
-  const typography = boardTypography(element.style);
+  const typography = useMemo(
+    () => boardTypography(element.style),
+    [element.style],
+  );
+  const textStyle = useMemo(
+    () => boardTextStyle(element.style),
+    [element.style],
+  );
   const color =
     element.element_type === "STICKY" && !element.style.background
       ? "#713f12"
@@ -68,7 +75,7 @@ function EditableText({ data }: { data: WhiteboardNodeData }) {
           (!element.style.color || element.style.color === "#18181b")
         ? "var(--foreground)"
         : boardPaint(element.style.color, "#18181b");
-  const sharedStyle = { ...boardTextStyle(element.style), color };
+  const sharedStyle = { ...textStyle, color };
 
   if (editing && data.canMutate) {
     return (

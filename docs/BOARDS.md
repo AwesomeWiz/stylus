@@ -343,6 +343,89 @@ no general speedup, p95 or performance-budget pass is claimed. Manual NVDA and
 Firefox/Safari remain unperformed. Local font subsets use system fallback for
 other scripts. Voting, presentation and attached connectors remain deferred.
 
+## Large Board performance (REDESIGN-004.3.1)
+
+The historical 104/50 ms observations had no saved stacks. Repeating their
+1,000-object probe before changes identified a 104.885 ms React commit and a
+51.858 ms browser task containing 32.26 ms Paint and 5.108 ms Layout. CPU samples
+showed broad React host/SVG updates, Lucide rendering and React Flow wrapper
+updates after metadata/selection changes. Geometry, guide lookup and search
+normalization were not dominant in those tasks. These are reproduced paths,
+not a claim to reconstruct the original unsaved stacks.
+
+Stable event callbacks now read the latest committed state without changing
+every node's props. Save state blocks new gestures at the event boundary while
+retaining node/control identity. Canvas and Layers share one canonical object
+index; Locate uses exact current geometry and ownership. Layers memoizes row
+controls and retains its structure projection until ownership/order changes.
+Search normalizes changed searchable fields only, retains its hidden tree and
+still caps displayed matches at 50. Desktop sidebar collapse retains that tree.
+Browser offscreen rendering containment avoids unnecessary row layout/paint;
+all logical rows remain in DOM and the accessible tree. No JavaScript row
+virtualization or dependency was added. The root list uses a presentation role
+so Chrome exposes Section roots as tree items.
+
+A follow-up Section-focus trace found text nodes constructing validation errors
+for every absent optional typography field. Missing values now use the same
+validated defaults; supplied values retain validation. Per-text style derivation
+is memoized. Guide/snapping algorithms, image authorization/signing, atomic
+operations, undo/redo and realtime conflict handling are unchanged.
+
+The before/after benchmark uses ordinary production builds with identifier
+mangling disabled equally, sandboxed headless Chrome at 1440×900 and the same
+authenticated hosted fixtures. Each 100-object block has a Section, a Group and
+98 mixed Text/Sticky/Shape/Image/Link/Arrow objects within supported ownership.
+Fixtures contain 200/300/500 objects and 20/30/50 private image objects. Each
+fixture/phase has one before and one final after sample; these are observations,
+not medians, p95, SLAs or a claim about every device. CPU/React profiling builds
+were used separately for attribution because their logging adds overhead.
+The paired search phase uses the same no-match query in both builds; separate
+final-build checks exercise 356 matches with exactly 50 displayed results in
+three trials, each without Long Tasks. Those are functional/current-build
+observations, not an additional before/after speedup claim.
+
+Maximum Long Task milliseconds below: `—` means none at or above 50 ms, not zero
+execution time. Each cell is before → after.
+
+| Phase | 200 objects | 300 objects | 500 objects |
+| --- | --- | --- | --- |
+| Initial document/render | 108 → 221 | 144 → 163 | 213 → 190 |
+| 100 pointer moves | — → — | 82 → — | 109 → — |
+| Layers hover / scroll | — / — → 59 / — | 65 / — → — / — | 96 / 87 → — / — |
+| Search / clear | — / 72 → — / — | — / 83 → — / — | 95 / 175 → — / — |
+| Locate / Section focus | — / 73 → — / 52 | 62 / 66 → — / — | 107 / 94 → — / — |
+| Pan / zoom | — / — → — / — | 50 / — → — / — | 82 / 59 → — / — |
+| Single / multi-object drag | 91 / 77 → — / — | 112 / 106 → — / — | 191 / 167 → — / — |
+| Marquee | 112 → — | 72 → 73 | 180 → 92 |
+| Properties commit | 79 → — | 150 → — | 230 → — |
+| Sidebar collapse/reopen | 80 → — | 98 → — | 133 → — |
+
+All 72 final phases complete without browser exceptions. At 500, reaction toggle,
+comment open/resolution, panel switching and remote move/rename have no Long
+Tasks; their baseline maxima were 83/53/54/64/71/72 ms. Properties drafts remain
+local. Marquee Long Task counts fall from 12 to 4 at 300 and 16 to 3 at 500;
+remaining work includes selection-dependent React Flow controls and browser
+rendering. Drag-frame maximum observed gaps at 500 fall from 217 to 33 ms; these
+are frame gaps, not a platform-independent dropped-frame count. First-node
+observations are 1,570 → 2,517 ms, 1,994 → 1,538 ms and 1,753 → 1,493 ms. Initial
+render remains expensive and variable; no general navigation speedup is claimed.
+Layout-shift observations remain during initial private-preview loading and
+Section selection/Properties changes. Stable chrome and drag identities are
+checked separately; a zero-CLS claim is not made.
+
+Real authenticated seven-case drag verification preserves node/grid/selection/
+handle identity and one operation per release. A held action blocks a second
+pointer mutation; marquee writes nothing; reload retains all 500 objects.
+The final ordinary build passes 36 accessible-tree/keyboard/native Layers/
+responsive checks, 26 drag checks including native Shift-click and six private
+image/matching-search checks. All 50 private previews load; unrelated selection
+retains the URL. Full web 205 files / 1,150 tests, focused Board 40 / 225,
+lint/typecheck/build and scoped checks pass; the full serial rerun changes no
+assertions/timeouts after an initial default-worker timeout. Exact isolated
+hosted fixtures and checked helpers were cleaned up. Details are recorded
+in PROJECT_STATE. Manual NVDA, Firefox/Safari and physical-device timing remain
+unperformed. No schema or server authorization change is required.
+
 ## Recommended REDESIGN-005 boundary — not started
 
 Prioritize public Core entity-reference, resolver, opener and creation contracts

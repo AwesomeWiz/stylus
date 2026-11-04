@@ -1092,3 +1092,23 @@ or copying content into Board JSON. Small requested emoji feedback is content,
 separate from Lucide tool icons. Voting, presentation, attached connectors,
 canonical entity cards and AI execution remain deferred. No Board action
 promotes Company Knowledge or grants another memory domain.
+
+## ADR-047 — Profiled Board rendering and local projections
+
+Date: 2026-11-04. Status: Accepted for REDESIGN-004.3.1.
+
+Keep React Flow, canonical Board rows and existing bounded atomic operations.
+Profiles identify broad host/SVG updates and repeated text-default validation;
+optimize those paths rather than replace the editor or change persistence.
+Share one local object index, retain structure/search projections while their
+inputs are unchanged, and use stable event identities that delegate to the
+latest committed callback. Never freeze a role, selection or tenant in a stale
+closure or ignore changed callbacks in an unsafe memo comparator.
+
+Retain the desktop Layers tree through collapse/search and use browser offscreen
+render containment instead of adding a virtualization dependency. Logical rows,
+keyboard navigation and accessible ownership remain available; hidden trees are
+removed from focus/accessibility navigation. Existing account/organization/Board
+keys discard these local projections. No new shared cache, data model, migration,
+authorization shortcut or AI/memory operation is introduced. Measurements and
+remaining initial-render/marquee costs are documented in [Boards](BOARDS.md).

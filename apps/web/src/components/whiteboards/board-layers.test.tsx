@@ -17,6 +17,27 @@ afterEach(() => {
   localStorage.clear();
 });
 describe("Layers selection and inline rename", () => {
+  it("retains the hierarchy DOM through search and restores the same accessible rows", async () => {
+    const row = object({ content: { text: "Needle" } });
+    const { container } = render(
+      <BoardOutline
+        rows={[row]}
+        selected={[]}
+        onSelect={() => {}}
+        onLocate={() => {}}
+      />,
+    );
+    const original = container.querySelector(`[data-layer-id="${row.id}"]`);
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Search this board" }),
+      { target: { value: "needle" } },
+    );
+    await screen.findByText("1 matches");
+    expect(original?.isConnected).toBe(true);
+    expect(original?.closest("[hidden]")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Clear Board search" }));
+    await waitFor(() => expect(screen.getByRole("treeitem")).toBe(original));
+  });
   it("has a keyboard tree, Shift selection, F2, trimmed blur save and Escape cancellation", async () => {
     const row = object({ content: { text: "Original text" } }),
       select = vi.fn(),

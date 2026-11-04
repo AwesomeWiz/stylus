@@ -27,6 +27,7 @@ export function BoardPanel({
   onTab,
   docked = false,
   side = "right",
+  visible = true,
 }: {
   title: string;
   children: ReactNode;
@@ -35,15 +36,17 @@ export function BoardPanel({
   onTab?: (tab: "INSPECTOR" | "OUTLINE") => void;
   docked?: boolean;
   side?: "left" | "right";
+  visible?: boolean;
 }) {
   const desktop = useBoardDesktop();
   if (desktop && docked) {
     const Collapse = side === "left" ? PanelLeftClose : PanelRightClose;
     return (
       <aside
+        hidden={!visible}
         aria-label={title}
         data-board-panel={side}
-        className={`bg-background flex min-h-0 shrink-0 flex-col ${side === "left" ? "w-64 border-r" : "w-72 border-l"}`}
+        className={`bg-background ${visible ? "flex" : "hidden"} min-h-0 shrink-0 flex-col ${side === "left" ? "w-64 border-r" : "w-72 border-l"}`}
       >
         <header className="flex min-h-12 shrink-0 items-center justify-between border-b px-3">
           <h2 className="text-sm font-semibold">{title}</h2>

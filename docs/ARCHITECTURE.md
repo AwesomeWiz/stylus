@@ -846,6 +846,18 @@ element, comment and reaction events, rather than adding public channels or
 client-trusted counts. Model execution and native entity cards remain out of
 scope. See [Boards](BOARDS.md) and [database contracts](DATABASE.md).
 
+### Board rendering boundaries (REDESIGN-004.3.1)
+
+Canvas and Layers share a component-local canonical object index. Layers caches
+only its ownership/order projection; search caches searchable fields. Stable
+event identities delegate to the latest committed callback, preserving fresh
+client role/selection state while avoiding unrelated node/row updates. Desktop
+collapse/search retain hidden tree DOM; browser containment skips offscreen
+render work without removing logical rows. These caches die with the existing
+account/organization/Board boundary. They are neither authorization nor a shared
+server cache. Fresh actions/RLS, atomic history and realtime arbitration remain
+unchanged. See [Boards](BOARDS.md) for measurements and limits.
+
 ## Shared brand presentation (REDESIGN-004.1)
 
 Global semantic tokens and self-hosted Geist apply to existing workspace shells.

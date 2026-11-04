@@ -49,6 +49,9 @@ export function boardTypography(style: Record<string, unknown>) {
   };
   const value = { ...defaults };
   for (const key of Object.keys(defaults) as (keyof typeof defaults)[]) {
+    // Absent optional styles use validated defaults. Constructing eleven Zod
+    // errors per text node made viewport entry/Section focus unnecessarily slow.
+    if (style[key] === undefined) continue;
     const parsed = boardTypographySchema.shape[key].safeParse(style[key]);
     if (parsed.success) Object.assign(value, { [key]: parsed.data });
   }

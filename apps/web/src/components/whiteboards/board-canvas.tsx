@@ -7,6 +7,7 @@ import {
   type NodeChange,
   type ReactFlowInstance,
   type Viewport,
+  type ReactFlowProps,
 } from "@xyflow/react";
 import { ListTree, Settings2, MoreHorizontal } from "lucide-react";
 import {
@@ -18,6 +19,8 @@ import {
   useState,
   type KeyboardEvent,
   type Ref,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Button } from "@/components/ui/button";
 import type {
@@ -28,13 +31,13 @@ import type {
   TaskMember,
 } from "@/lib/supabase/database.types";
 import {
-  ancestors,
   expandedIds,
   indexBoardObjects,
   moveObjects,
   selectionRoots,
   duplicateObjects,
   objectBounds,
+  type BoardObjectIndex,
 } from "@/modules/whiteboards/operations";
 import {
   buildGuideIndex,
@@ -52,6 +55,8 @@ import { focusBoardCanvas } from "./board-navigation";
 import type { SelectionAction } from "./board-inspector";
 import type { useBoardDocument } from "./use-board-document";
 import type { useBoardCollaboration } from "./use-board-collaboration";
+import { useBoardEvent } from "./use-board-event";
+type FlowProps = ReactFlowProps<WhiteboardFlowNode>;
 const nodeTypes = { whiteboard: WhiteboardNode };
 const noReactions: BoardReactionSummary[] = [];
 const noPending: string[] = [];
@@ -78,6 +83,7 @@ type Props = DocumentHandlers & {
   board: BoardRow;
   userId: string;
   rows: BoardElementRow[];
+  objectIndex?: BoardObjectIndex;
   highlighted?: string | null;
   reactions?: BoardReactionSummary[];
   reactionPending?: string[];
@@ -150,6 +156,7 @@ export function BoardCanvas({
   board,
   userId,
   rows,
+  objectIndex,
   highlighted,
   reactions = noReactions,
   reactionPending = noPending,
@@ -256,7 +263,10 @@ export function BoardCanvas({
     onImageRequest(center());
   }
   const chosen = useMemo(() => expandedIds(rows, selected), [rows, selected]);
-  const structure = useMemo(() => indexBoardObjects(rows), [rows]);
+  const structure = useMemo(
+    () => objectIndex ?? indexBoardObjects(rows),
+    [objectIndex, rows],
+  );
   const handleResizePreview = useCallback(
     (
       id: string,
@@ -344,7 +354,7 @@ export function BoardCanvas({
               !revealed.includes(parent.id),
           ),
           draggable:
-            editable &&
+            canMutate &&
             tool === "SELECT" &&
             !structure.immovable.has(row.id) &&
             (!grouped || chosen.has(grouped.id)),
@@ -375,9 +385,6 @@ export function BoardCanvas({
             onImageRetry: retryImage,
             onContentCommit,
             onResizeCommit,
-            // This passes an event callback; node render never invokes it. The
-            // ref reads inside it happen only during React Flow resize events.
-            // eslint-disable-next-line react-hooks/refs
             onResizePreview: handleResizePreview,
             isBusy,
             onInteractionStart: startInteraction,
@@ -400,7 +407,6 @@ export function BoardCanvas({
       revealed,
       dropSection,
       highlighted,
-      editable,
       canMutate,
       tool,
       commentCounts,
@@ -425,6 +431,185 @@ export function BoardCanvas({
     () => previewFlowNodes(reconciled, preview),
     [reconciled, preview],
   );
+  const handleNodeContextMenu = useBoardEvent<
+    Parameters<NonNullable<FlowProps["onNodeContextMenu"]>>,
+    void
+  >((event, node) => {
+    const group = (structure.parents.get(node.id) ?? []).find(
+      (row) => row.element_type === "GROUP",
+    );
+    onContext(
+      event,
+      group?.id ?? node.id,
+      flow.current?.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      }) ?? center(),
+    );
+  });
+  const handleNodeClick = useBoardEvent<
+    Parameters<NonNullable<FlowProps["onNodeClick"]>>,
+    void
+  >((event, node) => {
+    if (tool === "SELECT") {
+      const group = (structure.parents.get(node.id) ?? []).find(
+        (row) => row.element_type === "GROUP",
+      );
+      select(group?.id ?? node.id, event.shiftKey);
+    }
+  });
+  const handleNodeDragStart = useBoardEvent<
+    Parameters<NonNullable<FlowProps["onNodeDragStart"]>>,
+    void
+  >((event, node) => {
+    if (!editable || isBusy()) return;
+    setManipulating(true);
+    const original = getRows(),
+      immovable = indexBoardObjects(original).immovable,
+      sourceIds = (
+        chosen.has(node.id)
+          ? selectionRoots(original, selected).map((row) => row.id)
+          : [node.id]
+      ).filter((id) => !immovable.has(id));
+    if (!sourceIds.length) {
+      setManipulating(false);
+      return;
+    }
+    if (!chosen.has(node.id)) onSelection(sourceIds);
+    let working = original,
+      ids = sourceIds,
+      duplicate = false;
+    if (
+      "altKey" in event &&
+      event.altKey &&
+      !sourceIds.some(
+        (id) =>
+          original.find((row) => row.id === id)?.element_type === "SECTION",
+      )
+    ) {
+      try {
+        const result = duplicateObjects(original, sourceIds, userId);
+        const created = result.rows
+          .filter((row) => !original.some((old) => old.id === row.id))
+          .map((row) => ({ ...row, x: row.x - 24, y: row.y - 24 }));
+        working = [...original, ...created];
+        ids = result.ids;
+        duplicate = true;
+        setCopies(created);
+      } catch (error) {
+        onError((error as Error).message);
+        return;
+      }
+    }
+    const movingIds = expandedIds(working, ids),
+      moving = working.filter((row) => movingIds.has(row.id)),
+      bounds = objectBounds(selectionRoots(working, ids));
+    drag.current = {
+      rows: working,
+      ids,
+      sourceIds,
+      duplicate,
+      origin: { x: node.position.x, y: node.position.y },
+      moving,
+      bounds,
+      index: buildGuideIndex(original, movingIds, bounds),
+      delta: { dx: NaN, dy: NaN },
+    };
+    for (const id of ids) startInteraction(id);
+  });
+  const handleNodeDrag = useBoardEvent<
+    Parameters<NonNullable<FlowProps["onNodeDrag"]>>,
+    void
+  >((event, node) => {
+    const start = drag.current;
+    if (!start) return;
+    const result = guideMove(
+      start.index,
+      start.bounds,
+      node.position.x - start.origin.x,
+      node.position.y - start.origin.y,
+      {
+        zoom: flow.current?.getViewport().zoom ?? 1,
+        snap: snapObjects,
+        grid: snapGrid,
+        bypass: !!("ctrlKey" in event && (event.ctrlKey || event.metaKey)),
+      },
+    );
+    start.delta = { dx: result.dx, dy: result.dy };
+    setGuides(result.guides);
+    setSpacing(result.spacing);
+    const positions: Record<string, Point> = {};
+    for (const row of start.moving)
+      positions[row.id] = { x: row.x + result.dx, y: row.y + result.dy };
+    if (start.duplicate) {
+      const originals = expandedIds(getRows(), start.sourceIds);
+      for (const row of getRows())
+        if (originals.has(row.id)) positions[row.id] = { x: row.x, y: row.y };
+    }
+    setPreview(positions);
+  });
+  const handleNodeDragStop = useBoardEvent<
+    Parameters<NonNullable<FlowProps["onNodeDragStop"]>>,
+    void
+  >((_event, node) => {
+    const start = drag.current;
+    drag.current = null;
+    setManipulating(false);
+    setDropSection(null);
+    setGuides([]);
+    setSpacing(null);
+    if (!start) return;
+    try {
+      const delta = Number.isFinite(start.delta.dx)
+        ? start.delta
+        : {
+            dx: node.position.x - start.origin.x,
+            dy: node.position.y - start.origin.y,
+          };
+      const moved = moveObjects(start.rows, start.ids, delta.dx, delta.dy),
+        ids = expandedIds(start.rows, start.ids),
+        byId = new Map(
+          moved.filter((row) => ids.has(row.id)).map((row) => [row.id, row]),
+        );
+      const next = start.duplicate
+        ? [...getRows(), ...byId.values()]
+        : getRows().map((row) => byId.get(row.id) ?? row);
+      // The preview stays until confirmed state is visible, including rollback.
+      void commit(next)
+        .then((saved) => {
+          if (start.duplicate) onSelection(saved ? start.ids : start.sourceIds);
+        })
+        .finally(() => {
+          setCopies([]);
+          setPreview({});
+          for (const id of start.ids) cancelInteraction(id);
+        });
+    } catch (error) {
+      setCopies([]);
+      setPreview({});
+      for (const id of start.ids) cancelInteraction(id);
+      onError((error as Error).message);
+    }
+  });
+  const handlePendingPointer = useBoardEvent(
+    (
+      event:
+        ReactMouseEvent<HTMLDivElement> | ReactPointerEvent<HTMLDivElement>,
+    ) => {
+      if (
+        canMutate &&
+        tool === "SELECT" &&
+        !spacePan &&
+        (!editable || isBusy()) &&
+        event.button === 0 &&
+        (event.target as Element).closest(".react-flow__node") &&
+        !(event.target as Element).closest("button,input,textarea,a")
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+  );
   function center(): Point {
     const box = canvas.current?.getBoundingClientRect();
     return (
@@ -434,11 +619,17 @@ export function BoardCanvas({
       }) ?? { x: 0, y: 0 }
     );
   }
-  function locate(id: string) {
-    const row = getRows().find((entry) => entry.id === id);
+  const locate = useBoardEvent((id: string) => {
+    const row = structure.byId.get(id);
     if (!row) return;
     select(id);
-    setRevealed(ancestors(row, getRows()).map((entry) => entry.id));
+    const parents = (structure.parents.get(id) ?? []).map((row) => row.id);
+    setRevealed((previous) =>
+      previous.length === parents.length &&
+      previous.every((id, i) => id === parents[i])
+        ? previous
+        : parents,
+    );
     if (row.element_type === "SECTION") {
       const target = flow.current?.getNode(id);
       if (target)
@@ -453,9 +644,12 @@ export function BoardCanvas({
     void flow.current?.setCenter(
       row.x + row.width / 2,
       row.y + row.height / 2,
-      { zoom: Math.min(viewport.zoom, 1), duration: noMotion() ? 0 : 150 },
+      {
+        zoom: Math.min(flow.current?.getViewport().zoom ?? 1, 1),
+        duration: noMotion() ? 0 : 150,
+      },
     );
-  }
+  });
   function keys(event: KeyboardEvent<HTMLDivElement>) {
     if (
       (event.target as HTMLElement).closest(
@@ -604,6 +798,8 @@ export function BoardCanvas({
       id="board-canvas"
       onBlur={() => setSpacePan(false)}
       onPointerDownCapture={(event) => {
+        handlePendingPointer(event);
+        if (event.defaultPrevented) return;
         if (
           tool === "SECTION" &&
           editable &&
@@ -685,6 +881,7 @@ export function BoardCanvas({
           onFiles(files, center());
         }
       }}
+      onMouseDownCapture={handlePendingPointer}
       onPointerMove={(event) => {
         const point = flow.current?.screenToFlowPosition({
           x: event.clientX,
@@ -700,7 +897,7 @@ export function BoardCanvas({
         onlyRenderVisibleElements
         deleteKeyCode={null}
         nodesConnectable={false}
-        nodesDraggable={editable && tool === "SELECT" && !spacePan}
+        nodesDraggable={canMutate && tool === "SELECT" && !spacePan}
         elementsSelectable={tool === "SELECT" && !spacePan}
         panOnDrag={tool === "PAN" || spacePan ? [0, 1, 2] : [1, 2]}
         selectionOnDrag={tool === "SELECT" && !spacePan}
@@ -749,22 +946,7 @@ export function BoardCanvas({
             }) ?? center(),
           )
         }
-        onNodeContextMenu={(event, node) => {
-          const row = getRows().find((r) => r.id === node.id),
-            group = row
-              ? ancestors(row, getRows()).find(
-                  (r) => r.element_type === "GROUP",
-                )
-              : undefined;
-          onContext(
-            event,
-            group?.id ?? node.id,
-            flow.current?.screenToFlowPosition({
-              x: event.clientX,
-              y: event.clientY,
-            }) ?? center(),
-          );
-        }}
+        onNodeContextMenu={handleNodeContextMenu}
         onPaneClick={(event) => {
           if (suppressPane.current) {
             suppressPane.current = false;
@@ -780,17 +962,7 @@ export function BoardCanvas({
               }) ?? center(),
             );
         }}
-        onNodeClick={(event, node) => {
-          if (tool === "SELECT") {
-            const row = getRows().find((entry) => entry.id === node.id);
-            const group = row
-              ? ancestors(row, getRows()).find(
-                  (entry) => entry.element_type === "GROUP",
-                )
-              : undefined;
-            select(group?.id ?? node.id, event.shiftKey);
-          }
-        }}
+        onNodeClick={handleNodeClick}
         onSelectionStart={(event) => {
           marquee.current = { additive: event.shiftKey, base: selected };
         }}
@@ -813,145 +985,14 @@ export function BoardCanvas({
                   )
                     next.delete(change.id);
                 }
-              return [...next];
+              return next.size === ids.length && ids.every((id) => next.has(id))
+                ? ids
+                : [...next];
             });
         }}
-        onNodeDragStart={(event, node) => {
-          setManipulating(true);
-          const original = getRows(),
-            immovable = indexBoardObjects(original).immovable,
-            sourceIds = (
-              chosen.has(node.id)
-                ? selectionRoots(original, selected).map((row) => row.id)
-                : [node.id]
-            ).filter((id) => !immovable.has(id));
-          if (!sourceIds.length) {
-            setManipulating(false);
-            return;
-          }
-          if (!chosen.has(node.id)) onSelection(sourceIds);
-          let working = original,
-            ids = sourceIds,
-            duplicate = false;
-          if (
-            "altKey" in event &&
-            event.altKey &&
-            !sourceIds.some(
-              (id) =>
-                original.find((row) => row.id === id)?.element_type ===
-                "SECTION",
-            )
-          ) {
-            try {
-              const result = duplicateObjects(original, sourceIds, userId);
-              const created = result.rows
-                .filter((row) => !original.some((old) => old.id === row.id))
-                .map((row) => ({ ...row, x: row.x - 24, y: row.y - 24 }));
-              working = [...original, ...created];
-              ids = result.ids;
-              duplicate = true;
-              setCopies(created);
-            } catch (error) {
-              onError((error as Error).message);
-              return;
-            }
-          }
-          const movingIds = expandedIds(working, ids),
-            moving = working.filter((row) => movingIds.has(row.id)),
-            bounds = objectBounds(selectionRoots(working, ids));
-          drag.current = {
-            rows: working,
-            ids,
-            sourceIds,
-            duplicate,
-            origin: { x: node.position.x, y: node.position.y },
-            moving,
-            bounds,
-            index: buildGuideIndex(original, movingIds, bounds),
-            delta: { dx: NaN, dy: NaN },
-          };
-          for (const id of ids) startInteraction(id);
-        }}
-        onNodeDrag={(event, node) => {
-          const start = drag.current;
-          if (!start) return;
-          const result = guideMove(
-            start.index,
-            start.bounds,
-            node.position.x - start.origin.x,
-            node.position.y - start.origin.y,
-            {
-              zoom: viewport.zoom,
-              snap: snapObjects,
-              grid: snapGrid,
-              bypass: !!(
-                "ctrlKey" in event &&
-                (event.ctrlKey || event.metaKey)
-              ),
-            },
-          );
-          start.delta = { dx: result.dx, dy: result.dy };
-          setGuides(result.guides);
-          setSpacing(result.spacing);
-          const positions: Record<string, Point> = {};
-          for (const row of start.moving)
-            positions[row.id] = { x: row.x + result.dx, y: row.y + result.dy };
-          if (start.duplicate) {
-            const originals = expandedIds(getRows(), start.sourceIds);
-            for (const row of getRows())
-              if (originals.has(row.id))
-                positions[row.id] = { x: row.x, y: row.y };
-          }
-          setPreview(positions);
-        }}
-        onNodeDragStop={(_event, node) => {
-          const start = drag.current;
-          drag.current = null;
-          setManipulating(false);
-          setDropSection(null);
-          setGuides([]);
-          setSpacing(null);
-          if (!start) return;
-          try {
-            const delta = Number.isFinite(start.delta.dx)
-              ? start.delta
-              : {
-                  dx: node.position.x - start.origin.x,
-                  dy: node.position.y - start.origin.y,
-                };
-            const moved = moveObjects(
-                start.rows,
-                start.ids,
-                delta.dx,
-                delta.dy,
-              ),
-              ids = expandedIds(start.rows, start.ids),
-              byId = new Map(
-                moved
-                  .filter((row) => ids.has(row.id))
-                  .map((row) => [row.id, row]),
-              );
-            const next = start.duplicate
-              ? [...getRows(), ...byId.values()]
-              : getRows().map((row) => byId.get(row.id) ?? row);
-            // The preview stays until confirmed state is visible, including rollback.
-            void commit(next)
-              .then((saved) => {
-                if (start.duplicate)
-                  onSelection(saved ? start.ids : start.sourceIds);
-              })
-              .finally(() => {
-                setCopies([]);
-                setPreview({});
-                for (const id of start.ids) cancelInteraction(id);
-              });
-          } catch (error) {
-            setCopies([]);
-            setPreview({});
-            for (const id of start.ids) cancelInteraction(id);
-            onError((error as Error).message);
-          }
-        }}
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDrag={handleNodeDrag}
+        onNodeDragStop={handleNodeDragStop}
         proOptions={{ hideAttribution: true }}
       >
         {grid ? (

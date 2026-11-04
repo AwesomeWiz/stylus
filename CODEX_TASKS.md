@@ -2,6 +2,23 @@
 
 # Current
 
+## REDESIGN-004.3.1 — Large Board performance hardening
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Dedicated branch starts exactly at `2d767aa2bb743eed5497e2427304eebe12526d54`.
+Reproduced React/host/SVG, remount, typography-default and browser layout/paint
+costs are reduced with stable events, local projections and retained/contained
+Layers. All 72 before/final-after phases are recorded at 200/300/500 objects;
+initial-render/marquee limits remain explicit. Full web 205 files / 1,150 tests,
+focused Board 40 / 225, lint/typecheck/build and 68 final browser checks pass.
+The full single-worker rerun resolves an initial default-worker test timeout
+without altering assertions or timeouts. Exact hosted fixtures and checked local
+helpers were cleaned up. No schema changes, feature redesign, REDESIGN-005,
+subagents, merge or push. See PROJECT_STATE and [Boards](docs/BOARDS.md).
+
+---
+
 ## REDESIGN-004.3 — Boards interaction and creative usability
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

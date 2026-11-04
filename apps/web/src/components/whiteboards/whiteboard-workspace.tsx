@@ -3,7 +3,14 @@ import "./board-content-fonts.css";
 import { MessageSquare } from "lucide-react";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import type {
@@ -14,7 +21,7 @@ import type {
 } from "@/lib/supabase/database.types";
 import { renameBoardAction } from "@/modules/whiteboards/actions";
 import { reconcileBoardComment } from "@/modules/whiteboards/collaboration";
-import { dropLayer } from "@/modules/whiteboards/layers";
+import { dropLayer, type LayerDrop } from "@/modules/whiteboards/layers";
 import {
   canMoveObject,
   alignObjects,
@@ -35,6 +42,7 @@ import {
   moveObjects,
   selectionRoots,
   ungroupObjects,
+  indexBoardObjects,
 } from "@/modules/whiteboards/operations";
 import {
   readBoardCommentsAction,
@@ -66,6 +74,7 @@ import { WhiteboardCommentsPanel } from "./whiteboard-comments-panel";
 import { BoardHelp, BoardLinkDialog, BoardMenu } from "./board-controls";
 import type { WhiteboardTool } from "./whiteboard-toolbar";
 import { BoardCanvas, type BoardCanvasHandle } from "./board-canvas";
+import { useBoardEvent } from "./use-board-event";
 
 const anonymous = { displayName: "Current user", id: "" };
 const emptyMembers: TaskMember[] = [];
@@ -119,6 +128,7 @@ export function WhiteboardWorkspace({
     getRevision,
     mergeSnapshot,
   } = useBoardDocument(board, elements, canMutate, currentUser.id);
+  const objectIndex = useMemo(() => indexBoardObjects(rows), [rows]);
   const [selected, setSelected] = useState<string[]>([]),
     [panel, setPanel] = useState<Panel>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -498,7 +508,7 @@ export function WhiteboardWorkspace({
         counts.set(row.element_id, (counts.get(row.element_id) ?? 0) + 1);
     return counts;
   }, [comments, reactions.counts, reactions.countsLoaded]);
-  function select(id: string, additive = false) {
+  const select = useCallback((id: string, additive = false) => {
     setSelected((ids) =>
       additive
         ? ids.includes(id)
@@ -506,7 +516,7 @@ export function WhiteboardWorkspace({
           : [...ids, id]
         : [id],
     );
-  }
+  }, []);
   function imageRequest(id?: string) {
     if (!editable) return;
     replacement.current = id;
@@ -911,6 +921,46 @@ export function WhiteboardWorkspace({
       setTitlePending(false);
     }
   }
+  const handleLayerDrop = useBoardEvent(
+    (id: string, target: string | null, place: LayerDrop) => {
+      if (!editable || isBusy()) return Promise.resolve(false);
+      return commit(dropLayer(getRows(), id, target, place));
+    },
+  );
+  const handleLayerBusy = useBoardEvent(() => !editable || interactionBusy());
+  const handleLayerContext = useBoardEvent(
+    (id: string, x: number, y: number) => {
+      if (!selected.includes(id)) select(id);
+      setContext({
+        x,
+        y,
+        point: canvasApi.current?.center() ?? { x: 0, y: 0 },
+      });
+    },
+  );
+  const handleLayerLocate = useBoardEvent((id: string) => {
+    canvasApi.current?.locate(id);
+    setPanel(null);
+    requestAnimationFrame(focusBoardCanvas);
+  });
+  const handleObjectComment = useBoardEvent((id: string) => {
+    select(id);
+    openPanel("COMMENTS");
+  });
+  const handleStyle = useBoardEvent(
+    async (id: string, style: Record<string, unknown>) =>
+      !!(await update(id, { style })),
+  );
+  const handleCanvasContext = useBoardEvent<
+    Parameters<ComponentProps<typeof BoardCanvas>["onContext"]>,
+    void
+  >((event, id, point) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (id && !selected.includes(id)) select(id);
+    if (!id) setSelected([]);
+    setContext({ x: event.clientX, y: event.clientY, point });
+  });
   return (
     <div
       onKeyDownCapture={(event) => {
@@ -1052,9 +1102,10 @@ export function WhiteboardWorkspace({
         className="relative flex min-h-0 flex-1"
         aria-label="Board workspace"
       >
-        {(desktop ? panels.layers : panel === "OUTLINE") ? (
+        {desktop || panel === "OUTLINE" ? (
           <BoardPanel
             title="Layers"
+            visible={!desktop || panels.layers}
             docked
             side="left"
             tab="OUTLINE"
@@ -1062,30 +1113,17 @@ export function WhiteboardWorkspace({
             onClose={() => (desktop ? panels.toggle("layers") : setPanel(null))}
           >
             <BoardOutline
+              active={!desktop || panels.layers}
               rows={rows}
+              objectIndex={objectIndex}
               selected={selected}
               onUpdate={canMutate ? update : undefined}
               onHover={setHovered}
-              onDrop={
-                editable
-                  ? async (id, target, place) =>
-                      commit(dropLayer(getRows(), id, target, place))
-                  : undefined
-              }
-              onContext={(id, x, y) => {
-                if (!selected.includes(id)) select(id);
-                setContext({
-                  x,
-                  y,
-                  point: canvasApi.current?.center() ?? { x: 0, y: 0 },
-                });
-              }}
-              onSelect={(id, additive) => select(id, additive)}
-              onLocate={(id) => {
-                canvasApi.current?.locate(id);
-                setPanel(null);
-                requestAnimationFrame(focusBoardCanvas);
-              }}
+              onDrop={canMutate ? handleLayerDrop : undefined}
+              isBusy={handleLayerBusy}
+              onContext={handleLayerContext}
+              onSelect={select}
+              onLocate={handleLayerLocate}
             />
             <Button
               className="mt-4 w-full"
@@ -1099,6 +1137,7 @@ export function WhiteboardWorkspace({
         ) : null}
         <BoardCanvas
           ref={canvasApi}
+          objectIndex={objectIndex}
           board={board}
           userId={currentUser.id}
           rows={rows}
@@ -1108,12 +1147,9 @@ export function WhiteboardWorkspace({
           members={members}
           onReaction={reactions.toggle}
           onVisibleObjects={setVisibleObjectIds}
-          onStyle={async (id, style) => !!(await update(id, { style }))}
+          onStyle={handleStyle}
           onReplace={imageRequest}
-          onObjectComment={(id) => {
-            select(id);
-            openPanel("COMMENTS");
-          }}
+          onObjectComment={handleObjectComment}
           selected={selected}
           select={select}
           onSelection={setSelected}
@@ -1146,13 +1182,7 @@ export function WhiteboardWorkspace({
           grid={grid}
           snapObjects={snapObjects}
           snapGrid={snapGrid}
-          onContext={(event, id, point) => {
-            event.preventDefault();
-            event.stopPropagation();
-            if (id && !selected.includes(id)) select(id);
-            if (!id) setSelected([]);
-            setContext({ x: event.clientX, y: event.clientY, point });
-          }}
+          onContext={handleCanvasContext}
           onClipboard={clipboardAction}
           hasClipboard={clipboard.length > 0}
           onSectionDraw={(bounds) => {

@@ -2,7 +2,7 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { Search, X, LocateFixed } from "lucide-react";
 import type { BoardElementRow } from "@/lib/supabase/database.types";
-import { objectTitle } from "@/modules/whiteboards/operations";
+import { updateBoardSearchIndex } from "@/modules/whiteboards/search-index";
 export function BoardSearch({
   rows,
   onLocate,
@@ -14,25 +14,18 @@ export function BoardSearch({
 }) {
   const [query, setQuery] = useState(""),
     search = useDeferredValue(query.trim().toLocaleLowerCase());
-  const index = useMemo(
-    () =>
-      rows.map((row) => ({
-        row,
-        text: [
-          objectTitle(row),
-          row.content.text,
-          row.content.note,
-          row.content.alt,
-        ]
-          .filter((value) => typeof value === "string")
-          .join(" ")
-          .toLocaleLowerCase(),
-      })),
-    [rows],
+  const [index, setIndex] = useState(() => updateBoardSearchIndex([], rows));
+  const nextIndex = useMemo(
+    () => updateBoardSearchIndex(index, rows),
+    [index, rows],
   );
+  if (nextIndex !== index) setIndex(nextIndex);
   const results = useMemo(
-    () => (search ? index.filter((item) => item.text.includes(search)) : []),
-    [index, search],
+    () =>
+      search
+        ? nextIndex.filter((item) => item.normalized.includes(search))
+        : [],
+    [nextIndex, search],
   );
   return (
     <>
@@ -73,23 +66,22 @@ export function BoardSearch({
             {results.length > 50 ? " · first 50 shown; refine your search" : ""}
           </p>
           <ul>
-            {results.slice(0, 50).map(({ row }) => (
-              <li key={row.id}>
+            {results.slice(0, 50).map((entry) => (
+              <li key={entry.id}>
                 <button
                   type="button"
                   className="hover:bg-muted flex min-h-10 w-full items-center justify-between gap-2 rounded px-2 text-left text-xs"
-                  onClick={() => onLocate(row.id)}
+                  onClick={() => onLocate(entry.id)}
                 >
-                  <span className="min-w-0 truncate">{objectTitle(row)}</span>
+                  <span className="min-w-0 truncate">{entry.title}</span>
                   <LocateFixed aria-hidden className="size-3.5 shrink-0" />
                 </button>
               </li>
             ))}
           </ul>
         </>
-      ) : (
-        children
-      )}
+      ) : null}
+      <div hidden={Boolean(search)}>{children}</div>
     </>
   );
 }

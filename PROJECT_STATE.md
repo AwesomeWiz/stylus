@@ -1,8 +1,83 @@
 # Stylus — Project State
 
-Last Updated: 2026-11-03
+Last Updated: 2026-11-04
 
 ## Overall Status
+
+REDESIGN-004.3.1 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-004.3.1 — Large Board performance hardening
+
+Status: **PASS — MEASURED INTERACTION HARDENING; LIMITS RECORDED**.
+
+Branch `codex/redesign-004-3-1-board-performance`, isolated worktree
+`.worktrees/redesign-004-3-1-board-performance`, starts exactly at
+`2d767aa2bb743eed5497e2427304eebe12526d54` with clean status. Main agent only;
+unrelated checkout changes preserved. Performance only; no schema changes,
+product redesign, new features, REDESIGN-005, merge or push.
+
+The historical 104/50 ms observations contained no stacks. The same 1,000-object
+probe was reproduced with CPU/timeline attribution before application changes.
+Ordinary-production diagnostics identify broad React host/SVG updates and
+subsequent browser layout/paint; a reproduced 104.885 ms task is a React commit,
+and a 51.858 ms task includes 32.26 ms Paint plus 5.108 ms Layout. Diagnostic React
+profiling builds themselves add component-timing overhead, so those numbers are
+not used as the shipped-runtime baseline. Lightweight ordinary production
+measurements cover all flows at 200/300/500 objects, with no CPU profiler or React
+timing logger. At 500, hover has repeated 50–96 ms tasks, search clear 175 ms,
+marquee up to 180 ms and commit-time drag work up to 191 ms. Properties drafts
+remain local. Raw traces stay ignored, outside product docs.
+
+Implemented: stable committed event closures, shared canonical object lookup,
+memoized Layers controls, structure/search projections, retained hidden trees,
+offscreen-render containment and save-time event guards. A follow-up CPU trace
+found repeated Zod errors for absent typography options during Section focus;
+missing values now use the same validated defaults, with supplied values still
+validated. Chrome also exposed a pre-existing root-list role issue; a presentation
+role restores Section roots as tree items. No schema/server authorization change.
+
+The final ordinary-production benchmark completes 72 phases at 200/300/500 with
+no browser exceptions. At 500, hover/scroll/search/clear/Locate/Section focus/
+pan/zoom/single and multi-drag/Properties commit/feedback/realtime/sidebar phases
+have no Long Tasks. Marquee improves from 16 tasks / 180 ms maximum to 3 / 92 ms;
+300 drops from 12 to 4 tasks with a 73 ms maximum. Initial document/render tasks
+remain (221/163/190 ms at 200/300/500); first-node timings are variable and do not
+establish a general speedup. Detailed before/after observations and limitations
+are in [Boards](docs/BOARDS.md).
+
+Verification:
+
+- Focused Board suite: **40 files / 225 tests PASS**. Eight added regressions
+  cover committed callback authority, structural/search cache invalidation,
+  retained tree identity, save-time node identity and fresh Locate geometry.
+- Full web: **205 files / 1,150 tests PASS**, sequentially with one worker. The
+  initial default-worker run had 204 passing files / 1,149 tests and one
+  five-second undo/redo timeout. The full serial rerun changes no assertions,
+  skips, configuration or timeouts; no application/test workaround was added.
+- Web lint with zero warnings, typecheck and ordinary production build PASS.
+  Scoped formatting, local-link, diff, scope, secret and artifact checks PASS.
+- Final ordinary-production browser QA: **36 accessibility/interaction checks**
+  PASS, including all 500 tree items in both themes at 1200/1440/1920 px,
+  keyboard traversal/rename, native persisted Layers reorder, search/tree
+  retention and modal focus/reflow at 390/768/1024 px. **26 drag checks** PASS
+  across seven cases including native Shift-click, stable grid/node/selection/
+  handles, one save per release, held-save guard, write-free marquee and reload.
+  **Six image/search checks** PASS: all 50 private previews load, unrelated
+  selection retains the URL and three 356-match searches cap display at 50
+  without Long Tasks. No browser exceptions in these final passes.
+- Exact isolated hosted inventory was removed and verified absent: **two users,
+  one organization, four boards, 2,000 elements, four comments and seven private
+  assets**. No schema/reset/migration or unrelated records were targeted.
+  Only checked task Next/Chrome helpers on 3344/9344 were stopped. Credentials,
+  scripts, screenshots and traces remain ignored, never committed.
+
+Limits: one before/final-after sample per phase/fixture; no p95 or general speedup
+claim. Initial rendering, some selection/Properties layout shifts and marquee
+remain measured costs. The historical unsaved stacks cannot be reconstructed;
+reproduced paths are documented instead. Manual NVDA, Firefox/Safari and physical
+device timing remain unperformed. No REDESIGN-005 implementation, merge or push.
+
+## Previous verified milestone
 
 REDESIGN-004.3 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
 

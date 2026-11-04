@@ -4,6 +4,13 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Hardened large Boards with stable node callbacks, indexed/memoized Layers and
+  search, retained sidebar trees, offscreen rendering containment and cheaper
+  text-style defaults. Supplied typography still validates; save-time gestures
+  remain guarded. Section roots retain accessible tree semantics. Measured
+  200/300/500-object results and remaining initial-render/marquee limits are in
+  the Boards documentation.
+
 - Refined Boards with default desktop Layers/Properties docks, bottom tools,
   independent sidebar preferences, direct Layers reorder/reparent and inline
   rename. Group and Section ownership stays atomic.

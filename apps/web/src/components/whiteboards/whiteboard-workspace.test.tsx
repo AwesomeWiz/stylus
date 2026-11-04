@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   setViewport: vi.fn(),
   fit: vi.fn(),
   zoom: vi.fn(),
+  center: vi.fn(),
+  flowSnapshots: vi.fn(),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
@@ -77,13 +79,16 @@ vi.mock("@xyflow/react", () => ({
     ) => void;
     children: React.ReactNode;
   }) => {
+    mocks.flowSnapshots(nodes);
     onInit({
       screenToFlowPosition: (p: unknown) => p,
       fitView: mocks.fit,
       setViewport: mocks.setViewport,
       zoomIn: mocks.zoom,
       zoomOut: mocks.zoom,
-      setCenter: vi.fn(),
+      setCenter: mocks.center,
+      getViewport: () => ({ x: 0, y: 0, zoom: 1 }),
+      getNode: (id: string) => nodes.find((node) => node.id === id),
     });
     return (
       <div>
@@ -258,6 +263,98 @@ describe("Boards V2 workspace", () => {
     expect(screen.getByTestId("node-count")).toHaveTextContent("1");
     expect(screen.getByText("Saved")).toBeInTheDocument();
   });
+  it("keeps an unrelated node identical while another object saves and confirms", async () => {
+    const other = object({ content: { text: "Unaffected" } });
+    let confirm!: (value: unknown) => void;
+    mocks.operation.mockReturnValue(
+      new Promise((resolve) => {
+        confirm = resolve;
+      }),
+    );
+    mount([sticky, other]);
+    const before = mocks.flowSnapshots.mock.calls
+      .at(-1)![0]
+      .find((node: { id: string }) => node.id === other.id);
+    fireEvent.click(screen.getByRole("button", { name: "Drag first" }));
+    await waitFor(() =>
+      expect(screen.getByText("Saving…")).toBeInTheDocument(),
+    );
+    const during = mocks.flowSnapshots.mock.calls
+      .at(-1)![0]
+      .find((node: { id: string }) => node.id === other.id);
+    expect(during).toBe(before);
+    expect(during.draggable).toBe(true);
+    await act(async () =>
+      confirm({
+        status: "success",
+        data: [
+          { ...sticky, x: 250, y: 310, updated_at: "2026-11-04T01:00:00Z" },
+        ],
+      }),
+    );
+    await waitFor(() => expect(screen.getByText("Saved")).toBeInTheDocument());
+    expect(
+      mocks.flowSnapshots.mock.calls
+        .at(-1)![0]
+        .find((node: { id: string }) => node.id === other.id),
+    ).toBe(before);
+  });
+  it("locates exact current geometry and focuses a resized Section without modifying children", async () => {
+    const section = object({
+        element_type: "SECTION",
+        content: { title: "Focus section" },
+        width: 600,
+        height: 400,
+      }),
+      child = object({
+        parent_id: section.id,
+        x: 80,
+        y: 90,
+        content: { text: "Located child" },
+      });
+    render(
+      <WhiteboardWorkspace
+        board={board}
+        canMutate
+        elements={[section, child]}
+        comments={[]}
+        imageUrls={{}}
+        currentUser={{ id: board.created_by, displayName: "Member" }}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Locate Located child" }),
+    );
+    expect(mocks.center).toHaveBeenCalledWith(
+      child.x + child.width / 2,
+      child.y + child.height / 2,
+      expect.objectContaining({ zoom: 1 }),
+    );
+    const channel = mocks.subscribe.mock.calls[0]![0];
+    act(() =>
+      channel.onElement({
+        ...section,
+        width: 900,
+        updated_at: "2026-11-04T01:00:00Z",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Locate Focus section" }),
+    );
+    expect(mocks.fit).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        nodes: [
+          expect.objectContaining({
+            id: section.id,
+            data: expect.objectContaining({
+              element: expect.objectContaining({ width: 900 }),
+            }),
+          }),
+        ],
+      }),
+    );
+    expect(mocks.operation).not.toHaveBeenCalled();
+  });
   it("does not starve visible image previews behind the 200-object feedback limit", async () => {
     const text = Array.from({ length: 205 }, () =>
         object({ element_type: "TEXT" }),
@@ -281,6 +378,7 @@ describe("Boards V2 workspace", () => {
   });
   it("docks Layers left and Properties right by default, with independent collapse and bottom tools", () => {
     mount();
+    const layers = screen.getByRole("tree", { name: "Objects" });
     expect(
       screen.getByRole("complementary", { name: "Layers" }),
     ).toHaveAttribute("data-board-panel", "left");
@@ -294,6 +392,8 @@ describe("Boards V2 workspace", () => {
     expect(
       screen.queryByRole("complementary", { name: "Layers" }),
     ).not.toBeInTheDocument();
+    expect(layers).toBeInTheDocument();
+    expect(layers).not.toBeVisible();
     expect(
       screen.getByRole("complementary", { name: "Properties" }),
     ).toBeInTheDocument();
@@ -301,6 +401,7 @@ describe("Boards V2 workspace", () => {
     expect(
       screen.getByRole("complementary", { name: "Layers" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("tree", { name: "Objects" })).toBe(layers);
   });
   it("switches to one modal panel when the viewport becomes narrow", () => {
     let width = 1440;

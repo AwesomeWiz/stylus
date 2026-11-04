@@ -2,7 +2,7 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-004.3 COMPLETE / VERIFIED
+Status: REDESIGN-004.3.1 COMPLETE / VERIFIED
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -15,6 +15,7 @@ Status: REDESIGN-004.3 COMPLETE / VERIFIED
 - [x] REDESIGN-004.1: brand identity, Geist typography and premium auth
 - [x] REDESIGN-004.2: Boards stabilization and UX polish
 - [x] REDESIGN-004.3: Boards interaction and creative usability
+- [x] REDESIGN-004.3.1: measured large Board performance hardening
 - [ ] REDESIGN-005: Boards and Stylus integrations/collaboration
 - [ ] REDESIGN-006: Marketing shell and Creative Studio
 - [ ] REDESIGN-007: Research, Campaigns and secondary Marketing
