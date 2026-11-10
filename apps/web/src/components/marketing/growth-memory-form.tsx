@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,7 @@ export function GrowthMemoryForm({
       ) : null}
       <label className="block text-sm">
         Memory type
-        <select
+        <Select
           className={growthControl}
           value={kind}
           onChange={(e) => setKind(e.target.value)}
@@ -64,7 +65,7 @@ export function GrowthMemoryForm({
               {growthLabel(k)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label className="block text-sm">
         Memory title *

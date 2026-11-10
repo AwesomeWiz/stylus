@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { useRouter } from "next/navigation";
 import {
@@ -138,7 +139,7 @@ export function CreativeStudio({
             <input name="idempotencyKey" type="hidden" value={idempotencyKey} />
             <label className="block max-w-xl">
               <span className="mb-1 block text-sm font-medium">Reel Idea</span>
-              <select
+              <Select
                 className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
                 disabled={!editable || pending}
                 name="sourceReelIdeaId"
@@ -151,7 +152,7 @@ export function CreativeStudio({
                     {item.title} · {item.status}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             <ContextSummary companyContext={companyContext} idea={idea} />

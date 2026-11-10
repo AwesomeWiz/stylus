@@ -4,6 +4,15 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added action-led Home attention, Task prerequisites and minimal Milestones,
+  bounded Core working Notes with explicit reviewed Memory promotion, and
+  recoverable eight-step onboarding drafts. Exact execution provenance and a
+  live native Note card preserve canonical records and tenant permissions.
+- Unified normal form selects through shared UI, including Tasks, Marketing and
+  onboarding. Polished Board screen-space context menus, stable hover/keyboard
+  submenus, safe focused-node Delete/Backspace and native entity card hierarchy.
+  Existing Board persistence and entity contracts remain intact; no new AI runs.
+
 - Added a Marketing growth workflow: Evidence → Hypothesis → Experiment →
   reviewed Learning, canonical Task/Campaign/creative/result links, exact research
   provenance and separate explicit Company Memory confirmation. New native Board

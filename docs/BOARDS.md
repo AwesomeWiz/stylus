@@ -1,5 +1,38 @@
 # Boards V2 interaction and creative usability
 
+## Approved interaction polish (REDESIGN-007 continuation)
+
+Context menus portal outside the transformed canvas, into an enclosing modal
+focus scope when present and otherwise into the document body. Screen-coordinate
+placement compensates for translated modal containers. Menus measure their
+actual height, clamp to the viewport, scroll only when needed, and place each
+adjacent submenu independently, flipping left near the right edge. Pointer
+opening focuses the menu container without selecting an item; actual pointer
+movement activates hover/submenus. Keyboard opening focuses the first command;
+arrows enter/return, Escape closes the current level and restores focus. Touch
+opens a submenu by tapping. Leaving a parent does not immediately close its child.
+Escape closes the innermost menu before its enclosing sheet. Targets use 40px on
+desktop and 44px at narrow widths.
+
+Delete/Backspace now accepts focus on a canvas node as well as the canvas region.
+Inputs, editable text, comboboxes, dialogs and external portal content retain
+their own keys. The existing authorized atomic archive/Section-choice/undo paths
+enforce locks, Group ownership, VIEWER and Presentation restrictions.
+
+Native cards use a muted type label, stronger title, readable enum/status text,
+bounded metadata and a compact semantic Open link. The opener stays visible at
+the existing card size; full metadata remains in Properties. This changes no
+resolver, reference, authorization, batching, selection or persistence contract.
+The reusable anchored popup now lives in shared UI; Board-specific positioning
+and focus-scope configuration stays in its wrapper. Normal application forms use
+the shared Select with existing option values, change events and form payloads.
+
+Real hosted/browser checks pass all seven zoom samples, new edge objects,
+submenu/viewport/modal boundaries, Delete/Backspace/undo, editing/lock/read-only
+safety and native card states in both themes. Final web suite: 252 files / 1,409
+tests PASS; lint/typecheck/build pass. All task fixtures are removed. Manual NVDA,
+physical devices and other engines remain explicit limits in PROJECT_STATE.
+
 ## Native Stylus entities (REDESIGN-005)
 
 REDESIGN-006 adds Hypothesis, Experiment and Learning cards and explicit growth

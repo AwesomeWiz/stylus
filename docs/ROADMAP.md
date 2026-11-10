@@ -2,7 +2,7 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-006 COMPLETE / VERIFIED
+Status: REDESIGN-007 VERIFIED / REDESIGN-008 NOT STARTED
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -20,11 +20,14 @@ Status: REDESIGN-006 COMPLETE / VERIFIED
 - [x] REDESIGN-004.3.3: visible voting, Section presentation and visual colors
 - [x] REDESIGN-005: native entities, canonical openers and recoverable conversions
 - [x] REDESIGN-006: startup growth and learning workflow (approved revised scope)
-- [ ] REDESIGN-007: Research, Campaigns and secondary Marketing
+- [x] REDESIGN-007: Core execution and startup essentials (approved revised scope)
 - [ ] REDESIGN-008: Settings and advanced surfaces
 - [ ] REDESIGN-009: profiling, responsive/NVDA/accessibility and final QA
 
-Generic Board editor scope is frozen after 004.3.3. Pick from Board, full voting
+Generic Board editor scope is frozen after 004.3.3 except for the explicitly
+approved REDESIGN-007 select/menu/Delete/native-card presentation corrections.
+Persistence, entity contracts, selection mechanics, voting and Presentation stay
+unchanged. Pick from Board, full voting
 analytics and public slide/sharing features remain deferred. Native OS EyeDropper,
 manual NVDA and other browser/device engines remain explicitly recorded QA limits.
 005 native integration is verified; optional native voting/source replacement stay
@@ -32,6 +35,16 @@ deferred. REDESIGN-006 delivers the approved growth/learning scope with exact
 provenance, explicit Memory and native integration. Verification/cleanup and
 remaining environment limits are recorded in PROJECT_STATE and Growth and learning.
 See [Boards](BOARDS.md) for final verification and performance observations.
+
+REDESIGN-007 delivers action-led attention, bounded Task prerequisites, minimal
+Milestones, working Notes with explicit Memory confirmation, recoverable setup
+and exact execution provenance. Goals are deferred after the existing-domain
+audit. The explicit continuation also polishes shared selects and narrow Board
+menu/input/card paths. Final web verification passes 252 files / 1,409 tests;
+SQL, hosted/browser, responsive checks, lint/typecheck/build and exact fixture
+cleanup pass. Large-list payload, secondary-detail latency and manual NVDA/device/
+engine limits are recorded in [Core execution](CORE_EXECUTION.md). No new AI or
+future business module is delivered; 008 requires its own approved scope.
 
 REDESIGN-001 is the completed specification milestone; REDESIGN-002 implements
 the verified shell/auth/performance foundation. REDESIGN-003 adds attention-led

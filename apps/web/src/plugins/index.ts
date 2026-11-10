@@ -22,6 +22,13 @@ export const builtInPluginRegistry = createPluginRegistry([
 ]);
 
 /** Server-only provider composition is loaded only at authorized data boundaries. */
+export async function getWorkspaceAttention(
+  organizationId: string,
+  now: string,
+) {
+  const { workspacePluginAttention } = await import("./attention");
+  return workspacePluginAttention(organizationId, now);
+}
 export async function getEntityProvenance(input: unknown) {
   return (await import("./entity-provenance")).readEntityProvenance(input);
 }

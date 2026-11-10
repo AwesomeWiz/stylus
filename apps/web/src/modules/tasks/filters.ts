@@ -18,6 +18,7 @@ export interface TaskFilters {
   query?: string;
   status?: TaskStatus;
   selectedTaskId?: string;
+  milestoneId?: string;
   view: TaskView;
 }
 
@@ -83,6 +84,8 @@ export function filterTasks<T extends TaskListItem>(
   const threshold = recentCompletionThreshold(now).getTime();
   const normalizedQuery = filters.query?.trim().toLocaleLowerCase();
   const matchingTasks = tasks.filter((task) => {
+    if (filters.milestoneId && task.milestone_id !== filters.milestoneId)
+      return false;
     if (
       filters.view === "my" &&
       (task.assignee_id !== currentUserId || !isActiveTask(task))

@@ -125,6 +125,7 @@ type Props = DocumentHandlers & {
       clientY: number;
       preventDefault: () => void;
       stopPropagation: () => void;
+      keyboard?: boolean;
     },
     id: string | null,
     point: Point,
@@ -776,9 +777,10 @@ export function BoardCanvas({
   });
   function keys(event: KeyboardEvent<HTMLDivElement>) {
     if (presentationSectionId) return;
+    if (!event.currentTarget.contains(event.target as Node)) return;
     if (
       (event.target as HTMLElement).closest(
-        "input,textarea,select,button,a,summary,[contenteditable=true]",
+        "input,textarea,select,button,a,summary,[contenteditable]:not([contenteditable=false]),[role=textbox],[role=combobox],[role=dialog]",
       )
     )
       return;
@@ -796,7 +798,8 @@ export function BoardCanvas({
           stopPropagation: () => {},
           clientX: box.left + box.width / 2,
           clientY: box.top + box.height / 2,
-        } as import("react").MouseEvent,
+          keyboard: true,
+        },
         selected[0] ?? null,
         center(),
       );
@@ -875,10 +878,7 @@ export function BoardCanvas({
       } else if (selected.length) onPanel("INSPECTOR");
       return;
     }
-    if (
-      ["Delete", "Backspace"].includes(event.key) &&
-      event.target === event.currentTarget
-    ) {
+    if (["Delete", "Backspace"].includes(event.key) && editable && canMutate) {
       event.preventDefault();
       action("ARCHIVE");
       return;
@@ -1243,6 +1243,7 @@ export function BoardCanvas({
                   stopPropagation: () => event.stopPropagation(),
                   clientX: box.left,
                   clientY: box.bottom,
+                  keyboard: event.detail === 0,
                 },
                 selected[0] ?? null,
                 center(),
@@ -1318,6 +1319,7 @@ export function BoardCanvas({
                   stopPropagation: () => event.stopPropagation(),
                   clientX: box.left,
                   clientY: box.bottom,
+                  keyboard: event.detail === 0,
                 },
                 selected[0] ?? null,
                 center(),

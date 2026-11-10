@@ -41,31 +41,28 @@ describe("home server data", () => {
   it("loads a bounded organization-scoped dashboard projection", async () => {
     const organizationId = "10000000-0000-4000-8000-000000000001";
     await expect(
-      getHomeCoreData(
-        organizationId,
-        "viewer",
-        new Date("2026-11-01T12:00:00Z"),
-      ),
+      getHomeCoreData(organizationId, new Date("2026-11-01T12:00:00Z")),
     ).resolves.toEqual({
       activity: [],
       members: [],
-      tasks: [],
+      attention: [],
     });
 
-    expect(mocks.from).toHaveBeenNthCalledWith(1, "tasks");
-    expect(mocks.from).toHaveBeenNthCalledWith(5, "activity_events");
+    expect(mocks.from).toHaveBeenNthCalledWith(1, "activity_events");
     for (const result of mocks.from.mock.results) {
       expect(result.value.eq).toHaveBeenCalledWith(
         "organization_id",
         organizationId,
       );
     }
-    expect(mocks.from).toHaveBeenCalledTimes(5);
+    expect(mocks.from).toHaveBeenCalledTimes(1);
     for (const result of mocks.from.mock.results)
       expect(result.value.limit).toHaveBeenCalledWith(6);
-    expect(mocks.from.mock.results[0]!.value.select).not.toHaveBeenCalledWith(
-      "*",
-    );
+    expect(mocks.rpc).toHaveBeenCalledWith("daily_core_attention", {
+      p_organization_id: organizationId,
+      p_now: "2026-11-01T12:00:00.000Z",
+    });
+    expect(mocks.rpc).toHaveBeenCalledTimes(2);
     expect(mocks.rpc).toHaveBeenCalledWith("list_organization_task_members", {
       p_organization_id: organizationId,
     });

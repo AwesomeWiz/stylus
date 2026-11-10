@@ -4,11 +4,15 @@ const mocks = vi.hoisted(() => ({
   getContext: vi.fn(),
   revalidatePath: vi.fn(),
   rpc: vi.fn(),
+  setCookie: vi.fn(),
+  redirect: vi.fn<(path: string) => never>(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
-vi.mock("next/headers", () => ({ cookies: vi.fn() }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ set: mocks.setCookie }),
+}));
+vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/modules/organizations/server/context", () => ({
   getCurrentOrganizationContext: mocks.getContext,
 }));
@@ -16,19 +20,50 @@ vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: vi.fn(async () => ({ rpc: mocks.rpc })),
 }));
 
-import { inviteTeamMemberAction } from "./team-actions";
+import { inviteTeamMemberAction, acceptInvitationAction } from "./team-actions";
 
 const organizationId = "10000000-0000-4000-8000-000000000001";
 
 describe("organization invitation actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.redirect.mockImplementation((path) => {
+      throw Error("redirect:" + path);
+    });
     mocks.getContext.mockResolvedValue({
       membership: { role: "OWNER" },
       organization: { id: organizationId },
       user: { id: "00000000-0000-4000-8000-000000000001" },
     });
     mocks.rpc.mockResolvedValue({ data: "invite-id", error: null });
+  });
+
+  it("accepts through the existing verified RPC/cookie boundary and enters Home", async () => {
+    mocks.rpc.mockResolvedValue({ data: organizationId, error: null });
+    const form = new FormData();
+    form.set("token", "a".repeat(43));
+    await expect(acceptInvitationAction(form)).rejects.toThrow("redirect:/");
+    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith(
+      "accept_organization_invitation",
+      { p_token: "a".repeat(43) },
+    );
+    expect(mocks.setCookie).toHaveBeenCalledWith(
+      "stylus_organization_id",
+      organizationId,
+      expect.objectContaining({ httpOnly: true, sameSite: "lax" }),
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/", "layout");
+  });
+  it("never changes current organization or enters Home on rejected acceptance", async () => {
+    mocks.rpc.mockResolvedValue({ data: null, error: { code: "42501" } });
+    const token = "b".repeat(43),
+      form = new FormData();
+    form.set("token", token);
+    await expect(acceptInvitationAction(form)).rejects.toThrow(
+      "redirect:/invite/" + token + "?error=invalid",
+    );
+    expect(mocks.setCookie).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
   it.each(["MEMBER", "VIEWER"] as const)(

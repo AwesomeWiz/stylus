@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import {
   useActionState,
@@ -127,7 +128,7 @@ export function ExternalResearchWorkspace({
           </Field>
           <div className="space-y-4">
             <Field label="Primary marketing intent">
-              <select
+              <Select
                 className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
                 disabled={pending || active}
                 name="intent"
@@ -144,7 +145,7 @@ export function ExternalResearchWorkspace({
                     {label(researchIntent)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
             <Field label="Query terms (1–5)">
               <div className="grid gap-2 sm:grid-cols-2">
@@ -166,7 +167,7 @@ export function ExternalResearchWorkspace({
           </div>
           {intent === "FASHION_TECH" ? (
             <Field label="Hacker News stream">
-              <select
+              <Select
                 className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
                 defaultValue="new"
                 disabled={pending || active}
@@ -175,7 +176,7 @@ export function ExternalResearchWorkspace({
                 <option value="new">New stories</option>
                 <option value="top">Top stories</option>
                 <option value="ask">Ask HN</option>
-              </select>
+              </Select>
             </Field>
           ) : null}
           <div className="space-y-2 lg:col-span-2">

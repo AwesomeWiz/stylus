@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 import Link from "next/link";
 import type { Route } from "next";
 import { useState } from "react";
@@ -72,7 +73,7 @@ export function SourceLinkForm({ hypothesisId }: { hypothesisId: string }) {
       <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">
         Link a source
       </summary>
-      <select
+      <Select
         aria-label="Source type"
         className={growthControl}
         value={kind}
@@ -84,7 +85,7 @@ export function SourceLinkForm({ hypothesisId }: { hypothesisId: string }) {
         <option value="evidence">Research Evidence</option>
         <option value="note">Manual Research Note</option>
         <option value="opportunity">Content Opportunity candidate</option>
-      </select>
+      </Select>
       <GrowthChoicePicker
         key={kind}
         kind={kind}
@@ -116,7 +117,7 @@ export function ExecutionLinkForm({ experimentId }: { experimentId: string }) {
       <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">
         Link execution or result
       </summary>
-      <select
+      <Select
         aria-label="Execution or result type"
         className={growthControl}
         value={kind}
@@ -134,7 +135,7 @@ export function ExecutionLinkForm({ experimentId }: { experimentId: string }) {
                 : growthLabel(k.replaceAll("-", "_"))}
           </option>
         ))}
-      </select>
+      </Select>
       <GrowthChoicePicker
         key={kind}
         kind={kind}

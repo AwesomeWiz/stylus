@@ -177,5 +177,5 @@ export async function acceptInvitationAction(formData: FormData) {
     secure: serverEnv.NODE_ENV === "production",
   });
   revalidatePath("/", "layout");
-  redirect("/team?accepted=1" as Route);
+  redirect("/");
 }

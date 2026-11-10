@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
@@ -13,6 +14,38 @@ import type { TaskFilters, TaskView } from "@/modules/tasks/filters";
 import { taskPriorityValues, taskStatusValues } from "@/modules/tasks/schemas";
 import { taskHref } from "@/modules/tasks/url-state";
 import { taskLabel, taskMemberName } from "./presentation";
+import { ExecutionChoicePicker } from "@/components/execution/choice-picker";
+
+function MilestoneFilterField({ initial }: { initial?: string }) {
+  const [selected, setSelected] = useState(initial ?? ""),
+    [title, setTitle] = useState(
+      initial ? "Selected Milestone" : "Any Milestone",
+    );
+  return (
+    <section className="space-y-2">
+      <input type="hidden" name="milestone" value={selected} />
+      <p className="text-sm font-medium">Milestone: {title}</p>
+      {selected ? (
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setSelected("");
+            setTitle("Any Milestone");
+          }}
+        >
+          Clear Milestone
+        </Button>
+      ) : null}
+      <ExecutionChoicePicker
+        kind="milestone"
+        onSelect={(choice) => {
+          setSelected(choice.id);
+          setTitle(choice.title);
+        }}
+      />
+    </section>
+  );
+}
 
 const primary = [
   ["My tasks", "my"],
@@ -40,7 +73,7 @@ export function TaskToolbar({
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const patch: Record<string, string | null> = {};
-    for (const key of ["query", "assignee", "status", "priority"])
+    for (const key of ["query", "assignee", "status", "priority", "milestone"])
       if (data.has(key))
         patch[key] = String(data.get(key) ?? "").trim() || null;
     router.push(taskHref(query, patch), { scroll: false });
@@ -62,6 +95,7 @@ export function TaskToolbar({
     );
   }
   const chips = [
+    { key: "milestone", value: filters.milestoneId, label: "Milestone" },
     { key: "query", value: filters.query, label: `Search: ${filters.query}` },
     {
       key: "assignee",
@@ -89,6 +123,12 @@ export function TaskToolbar({
         className="mt-5 flex flex-wrap items-center gap-x-1 border-b"
       >
         {primary.map(([label, view]) => viewLink(label, view))}
+        <Link
+          href="/tasks?milestones=1"
+          className="text-muted-foreground inline-flex min-h-11 items-center px-2 text-sm underline"
+        >
+          Milestones
+        </Link>
         <details className="relative ml-1">
           <summary className="text-muted-foreground hover:text-foreground flex min-h-10 cursor-pointer items-center px-2 text-sm">
             {secondary.find(([, view]) => view === filters.view)?.[0] ??
@@ -159,7 +199,7 @@ export function TaskToolbar({
         <form className="space-y-4 p-6" onSubmit={apply}>
           <label className="block text-sm font-medium">
             Assignee
-            <select
+            <Select
               className="border-input bg-background mt-1.5 h-11 w-full rounded-md border px-3"
               defaultValue={filters.assigneeId ?? ""}
               name="assignee"
@@ -174,11 +214,11 @@ export function TaskToolbar({
                   {member.display_name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="block text-sm font-medium">
             Status
-            <select
+            <Select
               className="border-input bg-background mt-1.5 h-11 w-full rounded-md border px-3"
               defaultValue={filters.status ?? ""}
               name="status"
@@ -189,11 +229,11 @@ export function TaskToolbar({
                   {taskLabel(status)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="block text-sm font-medium">
             Priority
-            <select
+            <Select
               className="border-input bg-background mt-1.5 h-11 w-full rounded-md border px-3"
               defaultValue={filters.priority ?? ""}
               name="priority"
@@ -204,8 +244,9 @@ export function TaskToolbar({
                   {taskLabel(priority)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
+          <MilestoneFilterField initial={filters.milestoneId} />
           <Button className="w-full" type="submit">
             Apply filters
           </Button>

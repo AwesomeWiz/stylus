@@ -1,6 +1,7 @@
 import "server-only";
 import { EntityRegistry } from "@/core/entities/public";
 import { taskEntityProvider } from "@/core/tasks/server";
+import { noteEntityProvider } from "@/core/notes/server";
 import { marketingEntityProviders } from "@/modules/marketing/server/board-entities";
 import { growthEntityProviders } from "@/modules/marketing/server/growth-entities";
 import { marketingPlugin } from "./marketing";
@@ -20,6 +21,7 @@ for (const provider of [
 }
 export const boardEntityRegistry = new EntityRegistry([
   taskEntityProvider,
+  noteEntityProvider,
   ...marketingEntityProviders,
   ...growthEntityProviders,
 ]);

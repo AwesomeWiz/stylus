@@ -4,6 +4,18 @@ REDESIGN-005, 2026-11-05. PASS; manual NVDA and other-engine checks remain expli
 
 ## Public Core contract and trusted registration
 
+REDESIGN-007 registers live `core.note` through `@/core/notes/server`. Its bounded
+adapter projects title, updated time and archive state, never the body. Search
+and exact `/notes?note=<id>` opening reuse current tenant/RLS authority and work
+with Marketing disabled. It is a general working Note, distinct from Marketing's
+Research Note and Company Memory. There is no Note conversion, new AI operation
+or generic editor change from this provider. The explicitly approved continuation
+polishes existing card presentation only: muted type/icon, strongest bounded
+title, readable neutral status, compact high-value metadata and a semantic Open
+link. Canvas metadata is bounded to complete rows; Properties retains fuller
+authorized details. Resolution, batching, references, persistence and canonical
+openers are unchanged. See [Core execution](CORE_EXECUTION.md).
+
 REDESIGN-006 adds live Hypothesis, Experiment and Learning adapters and reviewed
 Evidence/text selection → Hypothesis and Hypothesis → Experiment creation through
 these same public contracts. A bounded provider preview may supply reviewed field

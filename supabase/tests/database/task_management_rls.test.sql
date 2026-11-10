@@ -26,8 +26,8 @@ values
   ('10000000-0000-0000-0000-000000000022', '00000000-0000-0000-0000-000000000024', 'OWNER');
 
 set local role anon;
-select is_empty($$ select id from public.tasks $$, 'anonymous users cannot read tasks');
-select is_empty($$ select id from public.task_comments $$, 'anonymous users cannot read task comments');
+select throws_ok($$ select id from public.tasks $$, '42501', null, 'anonymous users cannot read tasks');
+select throws_ok($$ select id from public.task_comments $$, '42501', null, 'anonymous users cannot read task comments');
 
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);

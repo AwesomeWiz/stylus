@@ -109,6 +109,20 @@ export function TaskRowItem({
         >
           {task.title}
         </span>
+        {(task.blocked_count ?? 0) > 0 &&
+        task.status !== "COMPLETED" &&
+        task.status !== "CANCELLED" ? (
+          <span className="text-muted-foreground text-xs">
+            Blocked · {task.blocked_count} unfinished prerequisite
+            {task.blocked_count === 1 ? "" : "s"}
+          </span>
+        ) : null}
+        {task.milestone_title ? (
+          <span className="text-muted-foreground block max-w-full truncate text-xs">
+            Milestone: {task.milestone_title}
+            {task.milestone_archived ? " · Archived" : ""}
+          </span>
+        ) : null}
         <span className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
           <span className="inline-flex items-center gap-1">
             <UserRound aria-hidden="true" className="size-3" />

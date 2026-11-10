@@ -47,7 +47,7 @@ export type BoardLayerEvents = {
   onRename: (id: string) => void;
   onSelect: (id: string, additive: boolean) => void;
   onLocate: (id: string) => void;
-  onContext: (id: string, x: number, y: number) => void;
+  onContext: (id: string, x: number, y: number, keyboard?: boolean) => void;
   onLock: (id: string, locked: boolean) => void;
 };
 type Props = {
@@ -243,7 +243,7 @@ export const BoardLayerRow = memo(function BoardLayerRow({
           className="flex size-7 shrink-0 items-center justify-center"
           onClick={(event) => {
             const b = event.currentTarget.getBoundingClientRect();
-            events.onContext(row.id, b.left, b.bottom);
+            events.onContext(row.id, b.left, b.bottom, event.detail === 0);
           }}
         >
           <MoreHorizontal aria-hidden className="size-3" />

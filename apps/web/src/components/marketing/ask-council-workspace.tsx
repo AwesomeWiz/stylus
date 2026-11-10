@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -256,7 +257,7 @@ function Composer({
       <div className="grid gap-3 sm:grid-cols-[11rem_minmax(0,1fr)]">
         <label>
           <span className="sr-only">Council intent</span>
-          <select
+          <Select
             className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
             defaultValue="AUTO"
             name="intent"
@@ -267,7 +268,7 @@ function Composer({
                 {safeLabel(intent)}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <Textarea
           aria-label="Marketing question"
@@ -376,7 +377,7 @@ function ContextSelect({
   return (
     <label>
       <span className="mb-1 block text-xs font-medium">{label}</span>
-      <select
+      <Select
         className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm"
         defaultValue=""
         name={name}
@@ -387,7 +388,7 @@ function ContextSelect({
             {option.label}
           </option>
         ))}
-      </select>
+      </Select>
     </label>
   );
 }

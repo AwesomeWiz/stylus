@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -218,7 +219,7 @@ export function GrowthRecordForm({
       {kind !== "learning" ? (
         <label className="block text-sm">
           Status
-          <select
+          <Select
             className={growthControl}
             disabled={frozen}
             value={String(values.status)}
@@ -234,13 +235,13 @@ export function GrowthRecordForm({
                 {growthLabel(s)}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       ) : null}
       {kind !== "experiment" ? (
         <label className="block text-sm">
           Confidence
-          <select
+          <Select
             className={growthControl}
             value={String(values.confidence)}
             onChange={(e) =>
@@ -255,13 +256,13 @@ export function GrowthRecordForm({
                 {growthLabel(c)}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       ) : null}
       {kind !== "learning" ? (
         <label className="block text-sm">
           Owner
-          <select
+          <Select
             className={growthControl}
             disabled={frozen}
             value={String(values.ownerId)}
@@ -273,7 +274,7 @@ export function GrowthRecordForm({
                 {m.display_name}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       ) : null}
       {kind === "hypothesis" && !record ? (
@@ -295,7 +296,7 @@ export function GrowthRecordForm({
             <>
               <label className="block text-sm">
                 Source type
-                <select
+                <Select
                   className={growthControl}
                   value={sourceKind}
                   onChange={(e) => setSourceKind(e.target.value)}
@@ -305,7 +306,7 @@ export function GrowthRecordForm({
                   <option value="opportunity">
                     Content Opportunity candidate
                   </option>
-                </select>
+                </Select>
               </label>
               <GrowthChoicePicker
                 key={sourceKind}

@@ -32,12 +32,16 @@ values
   ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'OWNER');
 
 set local role anon;
-select is_empty(
+-- The canonical auth migration revokes anonymous table SELECT entirely.
+-- Assert that stronger boundary instead of expecting an RLS-filtered empty set.
+select throws_ok(
   $$ select id from public.organizations $$,
+  '42501', null,
   'unauthenticated users cannot read organizations'
 );
-select is_empty(
+select throws_ok(
   $$ select organization_id from public.memberships $$,
+  '42501', null,
   'unauthenticated users cannot read memberships'
 );
 

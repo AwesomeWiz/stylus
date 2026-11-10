@@ -33,6 +33,22 @@ function task(overrides: Partial<TaskRow> = {}): TaskRow {
 }
 
 describe("task views and filters", () => {
+  it("combines an explicit Milestone with existing views and filters", () => {
+    const milestone = crypto.randomUUID(),
+      matching = task({ milestone_id: milestone, title: "Launch checkpoint" });
+    expect(
+      filterTasks(
+        [
+          matching,
+          task({ id: crypto.randomUUID(), milestone_id: crypto.randomUUID() }),
+          task({ id: crypto.randomUUID() }),
+        ],
+        { view: "all", milestoneId: milestone, query: "checkpoint" },
+        currentUserId,
+        now,
+      ),
+    ).toEqual([matching]);
+  });
   it("derives overdue state for active work at and after its deadline", () => {
     const pastDue = "2026-08-25T11:59:59.999Z";
     const futureDue = "2026-08-25T12:00:00.001Z";

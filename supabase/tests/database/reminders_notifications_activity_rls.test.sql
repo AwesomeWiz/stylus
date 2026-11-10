@@ -35,8 +35,8 @@ values
   ('20000000-0000-0000-0000-000000000054', '10000000-0000-0000-0000-000000000051', 'Unassigned task', null, '2026-08-25 12:30:00+00', 'TODO', '00000000-0000-0000-0000-000000000051', '00000000-0000-0000-0000-000000000051');
 
 set local role anon;
-select is_empty($$ select id from public.notifications $$, 'anonymous users cannot read notifications');
-select is_empty($$ select id from public.activity_events $$, 'anonymous users cannot read activity');
+select throws_ok($$ select id from public.notifications $$, '42501', null, 'anonymous users cannot read notifications');
+select throws_ok($$ select id from public.activity_events $$, '42501', null, 'anonymous users cannot read activity');
 
 set local role service_role;
 select lives_ok(

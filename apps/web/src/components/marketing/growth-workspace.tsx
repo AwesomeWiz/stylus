@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 import { GrowthEvaluationForm } from "./growth-evaluation-form";
 import { GrowthMemoryForm } from "./growth-memory-form";
 import { GrowthDetailContent } from "./growth-detail";
@@ -151,7 +152,7 @@ export function GrowthWorkspace({
         {kind !== "learning" ? (
           <label className="text-sm">
             Status
-            <select
+            <Select
               className={growthControl}
               name="status"
               defaultValue={list.status}
@@ -165,7 +166,7 @@ export function GrowthWorkspace({
                   {growthLabel(s)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         ) : null}
         {list.archived ? (

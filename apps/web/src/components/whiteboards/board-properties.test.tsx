@@ -76,6 +76,7 @@ describe("keyboard context menus", () => {
       <>
         <div id="board-canvas" tabIndex={0} />
         <BoardContextMenu
+          keyboard
           position={{ x: 100, y: 100 }}
           onClose={close}
           commands={[

@@ -31,20 +31,24 @@ function Section({
   editable,
   edit,
   title,
+  returnToReview = false,
 }: {
   children: ReactNode;
   editable: boolean;
   edit: string;
   title: string;
+  returnToReview?: boolean;
 }) {
-  const href = `/onboarding/${edit}?edit=1` as Route;
+  const href =
+    `/onboarding/${edit}?edit=1${returnToReview ? "&return=review" : ""}` as Route;
   return (
     <section className="border-border border-b pb-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold">{title}</h2>
         {editable ? (
           <Link
-            className="text-primary inline-flex items-center gap-1 text-sm font-medium"
+            aria-label={`Edit ${title}`}
+            className="text-primary inline-flex min-h-11 items-center gap-1 text-sm font-medium"
             href={href}
           >
             <Pencil aria-hidden="true" className="size-3.5" /> Edit
@@ -59,14 +63,21 @@ function Section({
 export function OnboardingReview({
   canEdit = true,
   data,
+  returnToReview = false,
 }: {
   canEdit?: boolean;
   data: StepData;
+  returnToReview?: boolean;
 }) {
   const { audience, brand, company, competitors, marketing } = data;
   return (
     <div className="space-y-6">
-      <Section editable={canEdit} edit="company" title="Company">
+      <Section
+        editable={canEdit}
+        returnToReview={returnToReview}
+        edit="company"
+        title="Company"
+      >
         <dl className="grid gap-4 sm:grid-cols-2">
           <Item label="Name" value={company?.company_name} />
           <Item label="Industry" value={company?.industry} />
@@ -79,7 +90,12 @@ export function OnboardingReview({
           />
         </dl>
       </Section>
-      <Section editable={canEdit} edit="problem" title="Problem & idea">
+      <Section
+        editable={canEdit}
+        returnToReview={returnToReview}
+        edit="problem"
+        title="Problem & idea"
+      >
         <dl className="space-y-4">
           <Item label="Problem" value={company?.problem_statement} />
           <Item label="Who experiences it" value={company?.affected_audience} />
@@ -94,7 +110,12 @@ export function OnboardingReview({
           </div>
         </dl>
       </Section>
-      <Section editable={canEdit} edit="product" title="Product concept">
+      <Section
+        editable={canEdit}
+        returnToReview={returnToReview}
+        edit="product"
+        title="Product concept"
+      >
         <dl className="space-y-4">
           <Item label="Concept" value={company?.product_concept} />
           <Item label="Value proposition" value={company?.value_proposition} />
@@ -108,7 +129,12 @@ export function OnboardingReview({
           </div>
         </dl>
       </Section>
-      <Section editable={canEdit} edit="audience" title="Primary audience">
+      <Section
+        editable={canEdit}
+        returnToReview={returnToReview}
+        edit="audience"
+        title="Primary audience"
+      >
         <dl className="space-y-4">
           <Item label="Segment" value={audience?.name} />
           <Item label="Description" value={audience?.description} />
@@ -132,6 +158,7 @@ export function OnboardingReview({
       </Section>
       <Section
         editable={canEdit}
+        returnToReview={returnToReview}
         edit="positioning-brand"
         title="Positioning & brand"
       >
@@ -152,7 +179,12 @@ export function OnboardingReview({
           <Item label="Visual direction" value={brand?.visual_direction} />
         </dl>
       </Section>
-      <Section editable={canEdit} edit="marketing" title="Marketing">
+      <Section
+        editable={canEdit}
+        returnToReview={returnToReview}
+        edit="marketing"
+        title="Marketing"
+      >
         <dl className="space-y-4">
           <Item
             label="Primary objective"
@@ -172,7 +204,12 @@ export function OnboardingReview({
           />
         </dl>
       </Section>
-      <Section editable={canEdit} edit="competitors" title="Competitors">
+      <Section
+        editable={canEdit}
+        returnToReview={returnToReview}
+        edit="competitors"
+        title="Competitors"
+      >
         {competitors.length ? (
           <ul className="divide-border divide-y">
             {competitors.map((competitor) => (

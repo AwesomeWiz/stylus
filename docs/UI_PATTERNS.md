@@ -3,6 +3,34 @@
 Status: DEFINED; implement only in the approved follow-up task. The current
 application is not assumed to implement these patterns.
 
+REDESIGN-007's implemented Core contracts are recorded in
+[Core execution](CORE_EXECUTION.md): compact personal/team attention with textual
+reasons; lazy related work in Task detail; minimal delivery checkpoints; bounded
+working Notes with a safe Markdown preview and separate Memory confirmation;
+and an accessible setup rail/mobile menu with recoverable debounced drafts.
+Item/provenance links avoid speculative detail prefetch. Local dates use the
+hydration-safe shared viewer component. This does not assert completion of every
+future pattern below. The explicit continuation additionally implements shared
+form selects and the bounded Board UI/input fixes described below.
+
+Shared `ui/select` keeps native form values and option sets behind a labeled
+combobox, using the popup layer extracted from Boards. Use the same neutral
+surfaces, focus ring, 44px field height, bounded scrolling, disabled state and
+12px chevron inset (13px including the border). Support pointer selection,
+arrows/Home/End, typeahead, Enter/Space, Escape and Tab. Close the inner popup
+before an enclosing dialog; restore its trigger on cancellation. Board-specific
+panel configuration remains in its wrapper, outside the public UI primitive.
+
+Board context menus are screen-space overlays outside canvas transforms. Pointer
+opening starts without an active item; keyboard opening focuses an action.
+Hover opens adjacent submenus with stable pointer transfer; touch uses tap.
+Right/Left enters/returns and Escape closes one level. Measure actual bounds,
+clamp within usable viewport chrome, flip submenus independently and scroll only
+when the viewport cannot contain them. A modal portal compensates its translated
+origin and remains in the focus scope. Canvas Delete/Backspace accepts focused
+nodes while excluding editing fields, locks and read-only states; it delegates
+to existing authorized atomic archive/undo operations.
+
 [Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) owns route/feature direction
 and phases; [Design System](DESIGN_SYSTEM.md) owns tokens, geometry and typography.
 This document defines reusable interaction behavior without creating a second

@@ -1,9 +1,11 @@
-import type { ReactNode, SelectHTMLAttributes } from "react";
+"use client";
+import { cloneElement, isValidElement, type ReactNode } from "react";
+import { useOnboardingDraft, useOnboardingErrors } from "./draft-context";
 
 export function FormField({
   children,
   description,
-  error,
+  error: providedError,
   label,
   name,
   required,
@@ -15,8 +17,22 @@ export function FormField({
   name: string;
   required?: boolean;
 }) {
+  const errors = useOnboardingErrors(),
+    error = providedError ?? errors?.[name]?.[0];
   const descriptionId = description ? `${name}-description` : undefined;
   const errorId = error ? `${name}-error` : undefined;
+  const draft = useOnboardingDraft();
+  const control = isValidElement<Record<string, unknown>>(children)
+    ? cloneElement(children, {
+        "aria-describedby":
+          [descriptionId, errorId].filter(Boolean).join(" ") || undefined,
+        "aria-invalid": !!error || undefined,
+        "aria-required": required || undefined,
+        ...(draft?.[name] && !("value" in children.props)
+          ? { defaultValue: draft[name][0] ?? "" }
+          : {}),
+      })
+    : children;
   return (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium" htmlFor={name}>
@@ -35,7 +51,7 @@ export function FormField({
           [descriptionId, errorId].filter(Boolean).join(" ") || undefined
         }
       >
-        {children}
+        {control}
       </div>
       {error ? (
         <p className="text-destructive text-xs" id={errorId} role="alert">
@@ -46,16 +62,4 @@ export function FormField({
   );
 }
 
-export function Select({
-  children,
-  ...props
-}: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select
-      className="border-input bg-background focus:border-ring h-10 w-full rounded-md border px-3 text-sm focus:outline-none"
-      {...props}
-    >
-      {children}
-    </select>
-  );
-}
+export { Select } from "@/components/ui/select";

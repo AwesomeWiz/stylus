@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { Archive, BookOpen, FilePenLine, Plus, RotateCcw } from "lucide-react";
 import Link from "next/link";
@@ -72,7 +73,7 @@ function MemoryForm({
       </label>
       <label className="grid gap-1.5 text-sm">
         <span className="font-medium">Type</span>
-        <select
+        <Select
           className="bg-background h-10 rounded-md border px-3"
           defaultValue={memory?.kind ?? "FACT"}
           name="kind"
@@ -82,7 +83,7 @@ function MemoryForm({
               {label(kind)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label className="grid gap-1.5 text-sm">
         <span className="font-medium">Knowledge</span>
@@ -209,7 +210,7 @@ export function MemoryWorkspace({
           name="search"
           placeholder="Search company memory"
         />
-        <select
+        <Select
           className="bg-background h-9 rounded-md border px-3 text-sm"
           defaultValue={filters.kind ?? ""}
           name="kind"
@@ -220,8 +221,8 @@ export function MemoryWorkspace({
               {label(kind)}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           className="bg-background h-9 rounded-md border px-3 text-sm"
           defaultValue={filters.provenance ?? ""}
           name="provenance"
@@ -232,7 +233,7 @@ export function MemoryWorkspace({
               {label(source)}
             </option>
           ))}
-        </select>
+        </Select>
         <div className="flex gap-2">
           <input
             name="archived"

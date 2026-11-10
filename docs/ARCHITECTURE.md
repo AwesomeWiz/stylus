@@ -2,6 +2,20 @@
 
 ## Architectural Style
 
+REDESIGN-007 adds Core execution/working Notes in the existing monolith. Home
+consumes a generic attention contract through the trusted plugin host; Core does
+not understand Marketing persistence. Task relationships/progress are batched.
+Temporary onboarding drafts are manager-only and excluded from canonical Company
+Knowledge and AI context. Atomic commit preserves existing profile schemas and
+progress. Notes use the public entity registry and reviewed company-memory
+create-once boundary; AI execution stays unchanged. The explicit continuation
+extracts the generic popup and stable event hook into public UI; Board wrappers
+retain private panel/focus configuration. Shared form selects preserve native
+payloads and events. Board screen-space menus, focused-node Delete/Backspace and
+native-card visual hierarchy are the only approved editor changes; persistence,
+entity contracts, selection mechanics, voting and Presentation remain frozen. See
+[Core execution](CORE_EXECUTION.md) for delivery and verification limits.
+
 REDESIGN-006 keeps Hypotheses, Experiments and reviewed team Learnings inside
 Marketing. Core owns Task and company-memory contracts, generic native references
 and the public provenance host. The trusted plugin composition supplies Marketing

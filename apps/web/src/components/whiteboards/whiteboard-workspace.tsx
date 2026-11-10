@@ -215,6 +215,7 @@ export function WhiteboardWorkspace({
     x: number;
     y: number;
     point: Point;
+    keyboard?: boolean;
   } | null>(null);
   const [clipboard, setClipboard] = useState<BoardElementRow[]>([]);
   const [comments, setComments] = useState(initialComments),
@@ -1089,12 +1090,13 @@ export function WhiteboardWorkspace({
   );
   const handleLayerBusy = useBoardEvent(() => !editable || interactionBusy());
   const handleLayerContext = useBoardEvent(
-    (id: string, x: number, y: number) => {
+    (id: string, x: number, y: number, keyboard: boolean = false) => {
       if (!selected.includes(id)) select(id);
       setContext({
         x,
         y,
         point: canvasApi.current?.center() ?? { x: 0, y: 0 },
+        keyboard,
       });
     },
   );
@@ -1119,7 +1121,12 @@ export function WhiteboardWorkspace({
     event.stopPropagation();
     if (id && !selected.includes(id)) select(id);
     if (!id) setSelected([]);
-    setContext({ x: event.clientX, y: event.clientY, point });
+    setContext({
+      x: event.clientX,
+      y: event.clientY,
+      point,
+      keyboard: event.keyboard,
+    });
   });
   return (
     <BoardVotingContext.Provider value={votingStore}>
@@ -1699,6 +1706,7 @@ export function WhiteboardWorkspace({
           />
           {context ? (
             <BoardContextMenu
+              keyboard={context.keyboard}
               position={context}
               commands={contextCommands}
               onClose={() => setContext(null)}

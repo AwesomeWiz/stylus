@@ -2,6 +2,23 @@
 
 # Current
 
+## REDESIGN-007 - Core execution and startup essentials
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Approved baseline `6afe70c7ffa07b61187ebc8eefd304318de02fba`, dedicated
+`codex/redesign-007-core-execution` branch. See docs/CORE_EXECUTION.md for the
+audit, bounded implementation plan and Goals deferral. Main agent only;
+sequential runners, no new AI, merge or push. The explicit continuation adds only
+shared selects and bounded Board menu/Delete/native-card visual fixes; all other
+generic editor contracts remain frozen. Final complete web validation passes
+252 files / 1,409 tests on the corrected final tree. Related SQL: 13 suites /
+455 assertions; hosted/browser, 192 initial plus 96 changed-control responsive
+cases, lint, worker/web typecheck and production build pass. Exact task fixtures,
+accounts and helpers are cleaned up. All 49 migration versions and unchanged
+applied hashes are verified. See PROJECT_STATE for performance/manual QA limits.
+REDESIGN-008 is not started; no merge or push.
+
 ## REDESIGN-006 - Startup growth and learning workflow
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

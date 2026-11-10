@@ -64,9 +64,11 @@ describe("AI page", () => {
     render(await AIPage());
 
     expect(screen.getByRole("heading", { name: "AI" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("combobox", { name: "Execution mode" }),
-    ).toHaveValue("DISABLED");
+    const mode = screen.getByRole("combobox", { name: "Execution mode" });
+    expect(mode).toHaveTextContent("Disabled");
+    expect(new FormData(mode.closest("form")!).get("executionMode")).toBe(
+      "DISABLED",
+    );
     expect(mocks.getPolicy).toHaveBeenCalledWith(
       "10000000-0000-4000-8000-000000000001",
     );

@@ -176,12 +176,12 @@ const outside = object({
   content: { shape: "diamond" },
 });
 let saved: Map<string, BoardElementRow>;
-function mount(rows = [group, ...children, outside]) {
+function mount(rows = [group, ...children, outside], canMutate = true) {
   saved = new Map(rows.map((r) => [r.id, r]));
   return render(
     <WhiteboardWorkspace
       board={board}
-      canMutate
+      canMutate={canMutate}
       elements={rows}
       imageUrls={{}}
     />,
@@ -236,6 +236,85 @@ beforeEach(() => {
   }));
 });
 describe("canvas Group drill-in", () => {
+  it("archives a Shift selection atomically from the focused node", async () => {
+    mount();
+    doubleClick(children[2]!.id);
+    fireEvent.click(node(children[3]!.id), { shiftKey: true, detail: 1 });
+    fireEvent.keyDown(node(children[3]!.id), { key: "Delete" });
+    await waitFor(() => expect(api.operation).toHaveBeenCalledOnce());
+    expect(new Set(api.operation.mock.calls[0]![0].archiveIds)).toEqual(
+      new Set([children[2]!.id, children[3]!.id]),
+    );
+    expect(saved.get(group.id)).toEqual(group);
+  });
+  it.each(["Delete", "Backspace"])(
+    "%s from a focused node uses atomic archive and existing undo",
+    async (key) => {
+      mount([outside]);
+      fireEvent.click(node(outside.id));
+      fireEvent.keyDown(node(outside.id), { key });
+      await waitFor(() => expect(api.operation).toHaveBeenCalledOnce());
+      expect(api.operation.mock.calls[0]![0].archiveIds).toEqual([outside.id]);
+      await waitFor(() =>
+        expect(document.getElementById("board-canvas")).toBeInTheDocument(),
+      );
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "Undo" })).toBeEnabled(),
+      );
+      fireEvent.keyDown(document.getElementById("board-canvas")!, {
+        key: "z",
+        ctrlKey: true,
+      });
+      await waitFor(() => expect(api.operation).toHaveBeenCalledTimes(2));
+      expect(
+        api.operation.mock.calls[1]![0].upserts.map(
+          (r: { id: string }) => r.id,
+        ),
+      ).toContain(outside.id);
+    },
+  );
+  it("deletes only the drilled-in child and retains Group ownership/history", async () => {
+    mount();
+    const child = children[2]!;
+    doubleClick(child.id);
+    fireEvent.keyDown(node(child.id), { key: "Delete" });
+    await waitFor(() => expect(api.operation).toHaveBeenCalledOnce());
+    expect(api.operation.mock.calls[0]![0].archiveIds).toEqual([child.id]);
+    expect(saved.get(group.id)).toEqual(group);
+  });
+  it("does not archive while editing text or a Properties input", () => {
+    mount();
+    const target = screen.getByRole("button", { name: "Text: Heading" });
+    for (let i = 0; i < 2; i++) {
+      fireEvent.click(target, { detail: 1 });
+      fireEvent.click(target, { detail: 2 });
+      fireEvent.doubleClick(target);
+    }
+    const input = screen.getByRole("textbox", { name: "Edit text" });
+    fireEvent.keyDown(input, { key: "Delete" });
+    fireEvent.keyDown(input, { key: "Backspace" });
+    expect(api.operation).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: "Escape" });
+    doubleClick(children[2]!.id);
+    fireEvent.keyDown(screen.getByLabelText("X"), { key: "Delete" });
+    expect(api.operation).not.toHaveBeenCalled();
+  });
+  it.each(["object", "parent", "viewer"])(
+    "Delete cannot bypass %s protection",
+    async (mode) => {
+      mount(
+        mode === "object"
+          ? [{ ...outside, locked: true }]
+          : [{ ...group, locked: mode === "parent" }, ...children],
+        mode !== "viewer",
+      );
+      const id = mode === "object" ? outside.id : children[2]!.id;
+      if (mode === "object") fireEvent.click(node(id));
+      else doubleClick(id);
+      fireEvent.keyDown(node(id), { key: "Delete" });
+      expect(api.operation).not.toHaveBeenCalled();
+    },
+  );
   it("Escape cancels a text child draft and returns directly to the parent without persistence", () => {
     mount();
     const target = screen.getByRole("button", { name: "Text: Heading" });

@@ -1,5 +1,6 @@
 import { getWorkspaceContext } from "@/modules/onboarding/server/workspace";
 import { TaskWorkspace } from "@/components/tasks/task-workspace";
+import { MilestonesPage } from "@/components/execution/milestones-page";
 import type { TaskPriority, TaskStatus } from "@/lib/supabase/database.types";
 import { canMutateTasks } from "@/modules/tasks/authorization";
 import {
@@ -27,6 +28,7 @@ function parseFilters(params: Awaited<SearchParams>): TaskFilters {
   const selectedTaskId = single(params.task)?.slice(0, 64);
   return {
     assigneeId,
+    milestoneId: single(params.milestone)?.slice(0, 64),
     priority: taskPriorityValues.includes(requestedPriority as TaskPriority)
       ? (requestedPriority as TaskPriority)
       : undefined,
@@ -47,10 +49,21 @@ export default async function TasksPage({
   searchParams: SearchParams;
 }) {
   const context = await getWorkspaceContext();
+  const requested = await searchParams;
+  if (requested.milestones === "1")
+    return (
+      <MilestonesPage
+        params={Object.fromEntries(
+          Object.entries(requested).flatMap(([key, value]) =>
+            typeof value === "string" ? [[key, value]] : [],
+          ),
+        )}
+      />
+    );
 
   const [workspace, params] = await Promise.all([
     getTaskWorkspaceData(context.organization.id),
-    searchParams,
+    Promise.resolve(requested),
   ]);
   const now = new Date();
   const filters = parseFilters(params);
@@ -59,6 +72,7 @@ export default async function TasksPage({
 
   return (
     <TaskWorkspace
+      key={`${context.organization.id}:${context.user.id}:${context.membership.role}`}
       canMutate={canMutateTasks(context.membership.role)}
       currentUserId={context.user.id}
       filters={filters}

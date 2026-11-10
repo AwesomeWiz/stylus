@@ -68,6 +68,7 @@ export const settingsNavigation: NavigationItem[] = [
   },
   { label: "Team", href: "/team", icon: "team" },
   { label: "Knowledge / Memory", href: "/memory", icon: "knowledge" },
+  { label: "Knowledge / Working Notes", href: "/notes", icon: "knowledge" },
   { label: "AI", href: "/ai", icon: "ai" },
   { label: "Integrations / Apps", href: "/apps", icon: "blocks" },
   { label: "Workers", href: "/workers", icon: "workers" },

@@ -352,9 +352,8 @@ describe("task workspace", () => {
   it("discloses filters and preserves search, view and selection when applying", () => {
     renderWorkspace(true, [task], "view=my&query=launch&task=pending");
     fireEvent.click(screen.getByRole("button", { name: "Filter" }));
-    fireEvent.change(screen.getByLabelText("Assignee"), {
-      target: { value: "unassigned" },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: "Assignee" }));
+    fireEvent.click(screen.getByRole("option", { name: "Unassigned" }));
     fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
     expect(mocks.push).toHaveBeenCalledWith(
       "/tasks?view=my&query=launch&task=pending&assignee=unassigned",

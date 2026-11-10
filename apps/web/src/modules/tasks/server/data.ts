@@ -29,7 +29,18 @@ export async function getTaskWorkspaceData(
       if (afterId) query = query.gt("id", afterId);
       const { data, error } = await query.limit(pageSize);
       if (error) throw new Error("Task workspace could not be loaded.");
-      tasks.push(...(data ?? []));
+      const rows = data ?? [];
+      const summaries = rows.length
+        ? await supabase.rpc("task_execution_summaries", {
+            p_organization_id: organizationId,
+            p_ids: rows.map((row) => row.id),
+          })
+        : { data: [], error: null };
+      if (summaries.error) throw Error("Task related state could not load.");
+      const byId = new Map(
+        (summaries.data ?? []).map((row) => [row.task_id, row]),
+      );
+      tasks.push(...rows.map((row) => ({ ...row, ...byId.get(row.id) })));
       if ((data?.length ?? 0) < pageSize) return tasks;
       afterId = data!.at(-1)!.id;
     }

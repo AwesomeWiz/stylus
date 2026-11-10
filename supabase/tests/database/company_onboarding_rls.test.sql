@@ -37,8 +37,8 @@ values (
 );
 
 set local role anon;
-select is_empty($$ select organization_id from public.company_profiles $$, 'anonymous users cannot read company profiles');
-select is_empty($$ select organization_id from public.competitors $$, 'anonymous users cannot read competitors');
+select throws_ok($$ select organization_id from public.company_profiles $$, '42501', null, 'anonymous users cannot read company profiles');
+select throws_ok($$ select organization_id from public.competitors $$, '42501', null, 'anonymous users cannot read competitors');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000011', true);
@@ -93,18 +93,18 @@ select is_empty(
 
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000011', true);
 select throws_ok(
-  $$ select public.advance_onboarding_progress('10000000-0000-0000-0000-000000000011', 3) $$,
+  $$ select public.advance_onboarding_progress('10000000-0000-0000-0000-000000000011', 3::smallint) $$,
   '22023',
   'Onboarding steps cannot be skipped',
   'progress cannot skip invalid future steps'
 );
 select results_eq(
-  $$ select public.advance_onboarding_progress('10000000-0000-0000-0000-000000000011', 1)::integer $$,
+  $$ select public.advance_onboarding_progress('10000000-0000-0000-0000-000000000011', 1::smallint)::integer $$,
   array[2]::integer[],
   'one successful submission advances to the next step'
 );
 select results_eq(
-  $$ select public.advance_onboarding_progress('10000000-0000-0000-0000-000000000011', 1)::integer $$,
+  $$ select public.advance_onboarding_progress('10000000-0000-0000-0000-000000000011', 1::smallint)::integer $$,
   array[2]::integer[],
   'repeating the same submission does not advance twice'
 );

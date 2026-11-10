@@ -1023,6 +1023,7 @@ export type OnboardingProgressRow = {
 };
 
 export type TaskRow = {
+  milestone_id?: string | null;
   assignee_id: string | null;
   completed_at: string | null;
   created_at: string;
@@ -1163,9 +1164,88 @@ export type ExperimentLinkRow = {
   archived_at: string | null;
 };
 
+export type CoreExecutionAudit = {
+  id: string;
+  organization_id: string;
+  title: string;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+};
+export type MilestoneRow = CoreExecutionAudit & {
+  description: string;
+  target_date: string | null;
+  status: "PLANNED" | "ACTIVE" | "COMPLETE";
+  owner_id: string | null;
+};
+export type CoreNoteRow = CoreExecutionAudit & { content: string };
+export type CoreNoteLinkRow = {
+  id: string;
+  organization_id: string;
+  note_id: string;
+  task_id: string | null;
+  milestone_id: string | null;
+  created_by: string;
+  created_at: string;
+};
+export type TaskDependencyRow = {
+  organization_id: string;
+  task_id: string;
+  blocked_by_id: string;
+  created_by: string;
+  created_at: string;
+};
+export type TaskExecutionSummary = {
+  task_id: string;
+  blocked_count: number;
+  milestone_id: string | null;
+  milestone_title: string | null;
+  milestone_archived: boolean;
+};
+export type OnboardingDraftRow = {
+  organization_id: string;
+  step: string;
+  fields: Record<string, string[]>;
+  base_revision: string | null;
+  updated_by: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
+      milestones: {
+        Row: MilestoneRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      notes: {
+        Row: CoreNoteRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      note_links: {
+        Row: CoreNoteLinkRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      task_dependencies: {
+        Row: TaskDependencyRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      onboarding_drafts: {
+        Row: OnboardingDraftRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       marketing_hypotheses: {
         Row: GrowthRow;
         Insert: never;
@@ -1654,7 +1734,10 @@ export type Database = {
         Relationships: [];
       };
       tasks: {
-        Row: TaskRow & { board_conversion_id: string | null };
+        Row: TaskRow & {
+          board_conversion_id: string | null;
+          milestone_id: string | null;
+        };
         Insert: Pick<
           TaskRow,
           "created_by" | "organization_id" | "title" | "updated_by"
@@ -1688,6 +1771,127 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      daily_core_attention: {
+        Args: { p_organization_id: string; p_now: string };
+        Returns: unknown;
+      };
+      marketing_daily_attention: {
+        Args: { p_organization_id: string; p_now: string };
+        Returns: unknown;
+      };
+      save_milestone: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_title: string;
+          p_description: string;
+          p_target_date: string | null;
+          p_status: string;
+          p_owner_id: string | null;
+          p_archived: boolean;
+          p_expected_updated_at: string | null;
+        };
+        Returns: string;
+      };
+      set_task_milestone: {
+        Args: {
+          p_organization_id: string;
+          p_task_id: string;
+          p_milestone_id: string | null;
+        };
+        Returns: undefined;
+      };
+      set_task_dependency: {
+        Args: {
+          p_organization_id: string;
+          p_task_id: string;
+          p_blocked_by_id: string;
+          p_link: boolean;
+        };
+        Returns: undefined;
+      };
+      task_execution_summaries: {
+        Args: { p_organization_id: string; p_ids: string[] };
+        Returns: TaskExecutionSummary[];
+      };
+      milestone_progress: {
+        Args: { p_organization_id: string; p_ids: string[] };
+        Returns: { id: string; completed_count: number; total_count: number }[];
+      };
+      save_core_note: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_title: string;
+          p_content: string;
+          p_archived: boolean;
+          p_expected_updated_at: string | null;
+        };
+        Returns: string;
+      };
+      set_core_note_link: {
+        Args: {
+          p_organization_id: string;
+          p_note_id: string;
+          p_kind: string;
+          p_target_id: string;
+          p_link: boolean;
+        };
+        Returns: undefined;
+      };
+      promote_core_note: {
+        Args: {
+          p_organization_id: string;
+          p_note_id: string;
+          p_kind: MemoryKind;
+          p_title: string;
+          p_content: string;
+          p_expected_updated_at: string;
+        };
+        Returns: string;
+      };
+      read_onboarding_draft: {
+        Args: { p_organization_id: string; p_step: string };
+        Returns: {
+          fields: Record<string, string[]>;
+          updated_at: string | null;
+          base_revision: string | null;
+          conflicted: boolean;
+        }[];
+      };
+      save_onboarding_draft: {
+        Args: {
+          p_organization_id: string;
+          p_step: string;
+          p_fields: Record<string, string[]>;
+          p_base_revision: string | null;
+          p_expected_updated_at: string | null;
+        };
+        Returns: string;
+      };
+      resolve_onboarding_draft: {
+        Args: {
+          p_organization_id: string;
+          p_step: string;
+          p_expected_updated_at: string | null;
+          p_keep: boolean;
+        };
+        Returns: undefined;
+      };
+      commit_onboarding_step: {
+        Args: {
+          p_organization_id: string;
+          p_step: string;
+          p_fields: Record<string, unknown>;
+          p_base_revision: string | null;
+          p_draft_revision: string | null;
+        };
+        Returns: number;
+      };
+      finish_company_onboarding: {
+        Args: { p_organization_id: string };
+        Returns: undefined;
+      };
       marketing_growth_counts: {
         Args: { p_organization_id: string; p_ids: string[] };
         Returns: {

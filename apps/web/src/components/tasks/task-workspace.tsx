@@ -69,7 +69,11 @@ export function TaskWorkspace({
   }, [closeCreate, router]);
   const now = new Date(nowIso);
   const hasFilters = Boolean(
-    filters.query || filters.assigneeId || filters.status || filters.priority,
+    filters.query ||
+    filters.assigneeId ||
+    filters.status ||
+    filters.priority ||
+    filters.milestoneId,
   );
   useEffect(() => {
     if (!nextDeadlineIso) return;
@@ -137,6 +141,7 @@ export function TaskWorkspace({
                       assignee: null,
                       status: null,
                       priority: null,
+                      milestone: null,
                     }),
                     { scroll: false },
                   )

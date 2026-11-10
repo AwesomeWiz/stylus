@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -126,7 +127,7 @@ export function GrowthEvaluationForm({
           </label>
           <label className="block text-sm">
             Learning confidence
-            <select
+            <Select
               className={growthControl}
               value={confidence}
               onChange={(e) => setConfidence(e.target.value)}
@@ -136,7 +137,7 @@ export function GrowthEvaluationForm({
                   {growthLabel(c)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </>
       ) : null}

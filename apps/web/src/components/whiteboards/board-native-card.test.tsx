@@ -1,5 +1,5 @@
-import { act, render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, it, expect } from "vitest";
 import { createLocalObject } from "@/modules/whiteboards/operations";
 import {
   BoardEntityContext,
@@ -23,7 +23,36 @@ const row = createLocalObject(
   { x: 0, y: 0 },
   { content: { reference } },
 );
+afterEach(cleanup);
 describe("native card projections", () => {
+  it("humanizes enum status while retaining archived state and semantic canonical opener", () => {
+    const store = createBoardEntityStore();
+    store.set([
+      {
+        reference,
+        status: "available",
+        projection: {
+          title: "Reviewed title",
+          status: "IN_PROGRESS",
+          archived: true,
+          href: "/tasks?task=" + reference.entityId,
+          details: [{ label: "Priority", value: "HIGH" }],
+        },
+      },
+    ]);
+    render(
+      <BoardEntityContext.Provider value={store}>
+        <BoardNativeCard row={row} />
+      </BoardEntityContext.Provider>,
+    );
+    expect(screen.getByText("In progress")).toBeInTheDocument();
+    expect(screen.getByText("Archived")).toBeInTheDocument();
+    expect(screen.getByText("High")).toBeInTheDocument();
+    expect(screen.queryByText("IN_PROGRESS")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: /Open .*Reviewed title/ }),
+    ).toHaveAttribute("href", "/tasks?task=" + reference.entityId);
+  });
   it("purges privileged title and opener when access is unavailable, including Board search", () => {
     const store = createBoardEntityStore();
     store.set([

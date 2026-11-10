@@ -4,6 +4,16 @@ This document defines the initial conceptual data model.
 
 Exact schemas are introduced through migrations during implementation.
 
+REDESIGN-007 adds Core `milestones`, `task_dependencies`, `notes`, `note_links`,
+nullable tenant-constrained `tasks.milestone_id`, and manager-only
+`onboarding_drafts`. Working tables allow authenticated RLS reads and no direct
+browser writes. Bounded actor-derived RPCs own revisions, relationship changes,
+cycle checks and reviewed Note-to-company-Memory creation. Canonical setup commit
+writes profile rows, monotonic progress and draft removal atomically. Profile
+update revisions use actual write time. Core and plugin-owned attention RPCs
+return bounded content projections. See [Core execution](CORE_EXECUTION.md) for
+limits, roles and current verification status.
+
 REDESIGN-006 adds `marketing_hypotheses`, `marketing_hypothesis_sources`,
 `marketing_experiments`, `marketing_experiment_links` and `marketing_learnings`.
 Tenant-composite foreign keys preserve source/execution identity. RLS permits

@@ -1,166 +1,209 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const mocks = vi.hoisted(() => ({
-  createClient: vi.fn(),
-  from: vi.fn(),
-  getContext: vi.fn(),
-  maybeSingle: vi.fn(),
-  redirect: vi.fn<(path: string) => never>(),
+const m = vi.hoisted(() => ({
+  client: vi.fn(),
+  context: vi.fn(),
   rpc: vi.fn(),
-  upsert: vi.fn(),
+  redirect: vi.fn<(p: string) => never>(),
 }));
-
 vi.mock("@/lib/supabase/server", () => ({
-  createServerSupabaseClient: mocks.createClient,
+  createServerSupabaseClient: m.client,
 }));
 vi.mock("@/modules/organizations/server/context", () => ({
-  getCurrentOrganizationContext: mocks.getContext,
+  getCurrentOrganizationContext: m.context,
 }));
-vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
-
-import { saveOnboardingStepAction } from "./actions";
+vi.mock("next/navigation", () => ({
+  redirect: m.redirect,
+  unstable_rethrow: () => {},
+}));
+import {
+  saveOnboardingStepAction,
+  saveOnboardingDraftAction,
+  resolveOnboardingDraftAction,
+  completeOnboardingAction,
+} from "./actions";
 import { OnboardingMutationDeniedError } from "./authorization";
-import { initialOnboardingActionState } from "./schemas";
-
-describe("onboarding actions", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    const profileQuery = {
-      eq: vi.fn(() => profileQuery),
-      maybeSingle: mocks.maybeSingle,
-      select: vi.fn(() => profileQuery),
-      upsert: mocks.upsert,
-    };
-    mocks.from.mockReturnValue(profileQuery);
-    mocks.createClient.mockResolvedValue({
-      from: mocks.from,
-      rpc: mocks.rpc,
-    });
-    mocks.getContext.mockResolvedValue({
-      membership: { role: "OWNER" },
-      organization: { id: "10000000-0000-4000-8000-000000000001" },
-      user: { id: "00000000-0000-4000-8000-000000000001" },
-    });
-    mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
-    mocks.upsert.mockResolvedValue({ error: null });
-    mocks.rpc.mockResolvedValue({ data: 2, error: null });
-    mocks.redirect.mockImplementation((path) => {
-      throw new Error(`redirect:${path}`);
-    });
+import { initialOnboardingActionState as initial } from "./schemas";
+const org = "10000000-0000-4000-8000-000000000001",
+  stamp = "2026-11-10T12:00:00.123456Z";
+function form() {
+  const f = new FormData();
+  Object.entries({
+    step: "company",
+    mode: "onboarding",
+    organizationId: org,
+    companyName: "Northstar",
+    industry: "Software",
+    shortDescription: "A useful workspace for small teams.",
+    stage: "PRE_PRODUCT",
+    baseRevision: stamp,
+    draftRevision: stamp,
+  }).forEach(([k, v]) => f.set(k, v));
+  return f;
+}
+beforeEach(() => {
+  vi.clearAllMocks();
+  m.client.mockResolvedValue({ rpc: m.rpc });
+  m.context.mockResolvedValue({
+    organization: { id: org },
+    membership: { role: "OWNER" },
+    user: { id: "actor" },
   });
-
-  function validCompanyForm() {
-    const formData = new FormData();
-    formData.set("step", "company");
-    formData.set("mode", "onboarding");
-    formData.set("companyName", "Acme");
-    formData.set("industry", "Software");
-    formData.set(
-      "shortDescription",
-      "A useful startup description for small teams.",
+  m.rpc.mockResolvedValue({ data: 2, error: null });
+  m.redirect.mockImplementation((p) => {
+    throw Error("redirect:" + p);
+  });
+});
+describe("atomic canonical onboarding actions", () => {
+  it("commits canonical fields and absolute progress in one freshly authorized transaction", async () => {
+    await expect(saveOnboardingStepAction(initial, form())).rejects.toThrow(
+      "redirect:/onboarding/problem",
     );
-    formData.set("stage", "PRE_PRODUCT");
-    return formData;
-  }
-
-  it("persists and advances to the correct next route on the first submission", async () => {
-    await expect(
-      saveOnboardingStepAction(
-        initialOnboardingActionState,
-        validCompanyForm(),
-      ),
-    ).rejects.toThrow("redirect:/onboarding/problem");
-
-    expect(mocks.upsert).toHaveBeenCalledOnce();
-    expect(mocks.createClient).toHaveBeenCalledOnce();
-    expect(mocks.rpc).toHaveBeenCalledOnce();
-    expect(mocks.rpc).toHaveBeenCalledWith("advance_onboarding_progress", {
-      p_completed_step: 1,
-      p_organization_id: "10000000-0000-4000-8000-000000000001",
+    expect(m.rpc).toHaveBeenCalledExactlyOnceWith(
+      "commit_onboarding_step",
+      expect.objectContaining({
+        p_organization_id: org,
+        p_step: "company",
+        p_fields: expect.objectContaining({
+          companyName: "Northstar",
+          website: "",
+        }),
+        p_base_revision: stamp,
+        p_draft_revision: stamp,
+      }),
+    );
+  });
+  it("links inline validation to fields without writing or advancing", async () => {
+    const f = form();
+    f.set("companyName", "A");
+    expect(await saveOnboardingStepAction(initial, f)).toMatchObject({
+      status: "error",
+      fieldErrors: { companyName: expect.any(Array) },
     });
-    expect(mocks.redirect).toHaveBeenCalledOnce();
+    expect(m.rpc).not.toHaveBeenCalled();
+    expect(m.redirect).not.toHaveBeenCalled();
   });
-
-  it("does not persist or advance when validation fails", async () => {
-    const formData = validCompanyForm();
-    formData.set("companyName", "A");
-
-    await expect(
-      saveOnboardingStepAction(initialOnboardingActionState, formData),
-    ).resolves.toMatchObject({ status: "error" });
-    expect(mocks.upsert).not.toHaveBeenCalled();
-    expect(mocks.rpc).not.toHaveBeenCalled();
-    expect(mocks.redirect).not.toHaveBeenCalled();
-  });
-
-  it("does not advance or redirect when step persistence fails", async () => {
-    mocks.upsert.mockResolvedValue({ error: new Error("write failed") });
-
-    await expect(
-      saveOnboardingStepAction(
-        initialOnboardingActionState,
-        validCompanyForm(),
-      ),
-    ).resolves.toMatchObject({ status: "error" });
-    expect(mocks.rpc).not.toHaveBeenCalled();
-    expect(mocks.redirect).not.toHaveBeenCalled();
-  });
-
-  it("remains on the current step when durable progress cannot advance", async () => {
-    mocks.rpc.mockResolvedValue({
+  it("retains the step on persistence/progress failure and exposes no database detail", async () => {
+    m.rpc.mockResolvedValue({
       data: null,
-      error: new Error("progress write failed"),
+      error: { code: "UNKNOWN", message: "private table credentials" },
     });
-
-    await expect(
-      saveOnboardingStepAction(
-        initialOnboardingActionState,
-        validCompanyForm(),
-      ),
-    ).resolves.toMatchObject({ status: "error" });
-    expect(mocks.upsert).toHaveBeenCalledOnce();
-    expect(mocks.rpc).toHaveBeenCalledOnce();
-    expect(mocks.redirect).not.toHaveBeenCalled();
+    const result = await saveOnboardingStepAction(initial, form());
+    expect(result.status).toBe("error");
+    expect(result.message).not.toContain("credentials");
+    expect(m.redirect).not.toHaveBeenCalled();
   });
-
-  it("uses the same absolute completed step for duplicate requests", async () => {
-    for (let submission = 0; submission < 2; submission += 1) {
+  it("prevents stale drafts from continuing", async () => {
+    m.rpc.mockResolvedValue({ data: null, error: { code: "PT409" } });
+    expect(await saveOnboardingStepAction(initial, form())).toMatchObject({
+      message: expect.stringContaining("changed"),
+    });
+    expect(m.redirect).not.toHaveBeenCalled();
+  });
+  it("returns Review after explicit review editing", async () => {
+    const f = form();
+    f.set("returnTo", "review");
+    await expect(saveOnboardingStepAction(initial, f)).rejects.toThrow(
+      "redirect:/onboarding/review?edit=1",
+    );
+  });
+  it("retains Company Profile edit return behavior", async () => {
+    const f = form();
+    f.set("mode", "edit");
+    await expect(saveOnboardingStepAction(initial, f)).rejects.toThrow(
+      "redirect:/company/profile",
+    );
+  });
+  it("never starts an unknown step", async () => {
+    const f = form();
+    f.set("step", "future");
+    expect(await saveOnboardingStepAction(initial, f)).toMatchObject({
+      status: "error",
+    });
+    expect(m.context).not.toHaveBeenCalled();
+  });
+  it("does not let MEMBER or VIEWER modify Company context", async () => {
+    for (const role of ["MEMBER", "VIEWER"]) {
+      m.context.mockResolvedValue({
+        organization: { id: org },
+        membership: { role },
+      });
       await expect(
-        saveOnboardingStepAction(
-          initialOnboardingActionState,
-          validCompanyForm(),
-        ),
-      ).rejects.toThrow("redirect:/onboarding/problem");
+        saveOnboardingStepAction(initial, form()),
+      ).rejects.toBeInstanceOf(OnboardingMutationDeniedError);
     }
-
-    expect(mocks.rpc).toHaveBeenCalledTimes(2);
-    expect(
-      mocks.rpc.mock.calls.map((call) => call[1].p_completed_step),
-    ).toEqual([1, 1]);
+    expect(m.rpc).not.toHaveBeenCalled();
   });
-
-  it("rejects unknown steps without querying identity or data", async () => {
-    const formData = new FormData();
-    formData.set("step", "future-task");
-    await expect(
-      saveOnboardingStepAction(initialOnboardingActionState, formData),
-    ).resolves.toMatchObject({ status: "error" });
-    expect(mocks.getContext).not.toHaveBeenCalled();
-    expect(mocks.createClient).not.toHaveBeenCalled();
-  });
-
-  it("does not let a member perform an administrative update", async () => {
-    mocks.getContext.mockResolvedValueOnce({
-      membership: { role: "MEMBER" },
-      organization: { id: "10000000-0000-4000-8000-000000000001" },
-      user: { id: "00000000-0000-4000-8000-000000000001" },
+  it("denies a stale org/account form before any write", async () => {
+    const f = form();
+    f.set("organizationId", crypto.randomUUID());
+    await expect(saveOnboardingStepAction(initial, f)).rejects.toMatchObject({
+      code: "42501",
     });
-    const formData = new FormData();
-    formData.set("step", "company");
-
-    await expect(
-      saveOnboardingStepAction(initialOnboardingActionState, formData),
-    ).rejects.toBeInstanceOf(OnboardingMutationDeniedError);
-    expect(mocks.createClient).not.toHaveBeenCalled();
+    expect(m.rpc).not.toHaveBeenCalled();
+  });
+  it("finishes through the database validation contract and redirects only on success", async () => {
+    await expect(completeOnboardingAction(initial)).rejects.toThrow(
+      "redirect:/",
+    );
+    expect(m.rpc).toHaveBeenCalledWith("finish_company_onboarding", {
+      p_organization_id: org,
+    });
+    m.rpc.mockResolvedValue({ error: { code: "22023" } });
+    expect(await completeOnboardingAction(initial)).toMatchObject({
+      status: "error",
+      message: expect.stringContaining("drafts"),
+    });
+  });
+});
+describe("bounded manager-only draft actions", () => {
+  const request = {
+    organizationId: org,
+    step: "company",
+    fields: { companyName: ["N"] },
+    baseRevision: null,
+    revision: null,
+  };
+  it("saves incomplete input without canonical writes or progress advancement", async () => {
+    m.rpc.mockResolvedValue({ data: stamp, error: null });
+    expect(await saveOnboardingDraftAction(request)).toEqual({
+      status: "success",
+      revision: stamp,
+    });
+    expect(m.rpc).toHaveBeenCalledExactlyOnceWith(
+      "save_onboarding_draft",
+      expect.objectContaining({
+        p_fields: { companyName: ["N"] },
+        p_expected_updated_at: null,
+      }),
+    );
+  });
+  it("rejects oversized drafts and unknown authority before writing", async () => {
+    expect(
+      await saveOnboardingDraftAction({
+        ...request,
+        fields: { companyName: ["x".repeat(196609)] },
+      }),
+    ).toMatchObject({ status: "error" });
+    expect(
+      await saveOnboardingDraftAction({
+        ...request,
+        actorId: crypto.randomUUID(),
+      }),
+    ).toMatchObject({ status: "error" });
+    expect(m.rpc).not.toHaveBeenCalled();
+  });
+  it("resolves only the explicitly selected saved revision", async () => {
+    await resolveOnboardingDraftAction({
+      organizationId: org,
+      step: "company",
+      revision: stamp,
+      keep: false,
+    });
+    expect(m.rpc).toHaveBeenCalledExactlyOnceWith("resolve_onboarding_draft", {
+      p_organization_id: org,
+      p_step: "company",
+      p_expected_updated_at: stamp,
+      p_keep: false,
+    });
   });
 });

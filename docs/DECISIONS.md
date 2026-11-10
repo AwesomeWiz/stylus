@@ -1243,3 +1243,53 @@ Canonical creation/receipt and Board linking retain separate recovery steps.
 A public provenance host resolves the canonical target before requesting bounded
 trusted-plugin backlinks. Core has no private Marketing imports; generic Board
 mechanics remain frozen. See [Growth and learning](GROWTH_LEARNING.md).
+
+## ADR-052 - Core delivery relationships, working Notes and recoverable setup
+
+Date: 2026-11-10. Status: Accepted for REDESIGN-007 implementation.
+
+Task prerequisites are bounded tenant-constrained edges with serialized cycle
+checks and derived blocked state. A minimal optional Milestone captures delivery
+date/ownership and progress from existing Tasks. Goals are deferred: Company and
+Campaign objectives, Experiment criteria and Milestones cover the demonstrated
+need without another planning hierarchy.
+
+General working Notes are a separate Core entity because Company Profile, Memory,
+Marketing Research Notes/briefs and Board text have different lifecycles. Notes
+provide safe plain Markdown, bounded metadata search, explicit Core links and a
+live native provider. Durable Company Memory requires an edited confirmation,
+exact reviewed revision and organization-scoped create-once key. Note editing,
+Task completion and Milestones never promote Memory automatically.
+
+Home receives generic authorized attention from a trusted composition host;
+Marketing owns its projection and exact provenance. Core has no plugin-private
+schema dependency. Detail/prefetch behavior must preserve bounded list payloads.
+
+Manager-only raw setup drafts remain outside canonical Knowledge. Debounced
+saves do not advance progress. Continue atomically validates/commits profile rows,
+progress and draft removal. Revision checks plus explicit conflict resolution
+preserve shared editing intent. Input arriving during hydration is dirty until a
+server acknowledgement, never inferred to be persisted from current DOM values.
+Review return paths, invited-user bypass and existing management roles remain.
+Core execution does not change Board mechanics, AI workflows or notifications.
+The explicitly approved UI/input exception is recorded in ADR-053.
+See [Core execution](CORE_EXECUTION.md).
+
+## ADR-053 - Shared selects and bounded Board input/overlay corrections
+
+Date: 2026-11-10. Status: Accepted for the explicit REDESIGN-007 continuation.
+
+Extract the generic existing Board popup and stable event hook into public UI;
+retain Board panel/focus settings in a compatibility wrapper. Normal form selects
+use that layer with native payload/change-event preservation and unchanged option
+sets. Modal popups compensate translated host coordinates and handle Escape
+before their enclosing sheet. Core never imports a Board-private UI primitive.
+
+Context menus measure actual viewport bounds outside canvas transforms. Pointer
+opening has no synthetic active item; keyboard opening remains navigable. Adjacent
+hover/tap submenus retain transfer stability, independent flipping and Right/Left/
+Escape navigation. Focused-node Delete/Backspace delegates to existing atomic
+archive/history, with editing, lock, ownership and read-only guards. Native-card
+hierarchy changes presentation only. No new migration, generic editor redesign,
+entity contract, selection mechanic, voting, Presentation or model execution is
+authorized by these fixes. See [Core execution](CORE_EXECUTION.md).

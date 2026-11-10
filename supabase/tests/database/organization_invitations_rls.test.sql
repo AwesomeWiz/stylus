@@ -24,7 +24,7 @@ insert into public.memberships (organization_id,user_id,role) values
 ('10000000-0000-0000-0000-000000000072','00000000-0000-0000-0000-000000000077','OWNER');
 
 set local role anon;
-select is_empty($$ select id from public.organization_invitations $$, 'anonymous users cannot enumerate invitations');
+select throws_ok($$ select id from public.organization_invitations $$, '42501', null, 'anonymous users cannot enumerate invitations');
 
 set local role authenticated;
 select set_config('request.jwt.claim.role','authenticated',true);
@@ -60,7 +60,7 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000076'
 select throws_ok($$ select public.accept_organization_invitation('expired-token') $$,'22023','Invitation has expired','expired invitation is rejected');
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000071',true);
-select lives_ok($$ select public.revoke_organization_invitation('10000000-0000-0000-0000-000000000071',(select id from public.organization_invitations where email='new-viewer@example.test')) $$,'pending invitation can be cancelled');
+select lives_ok($$ select public.revoke_organization_invitation('10000000-0000-0000-0000-000000000071',(select id from public.list_organization_invitations('10000000-0000-0000-0000-000000000071') where email='new-viewer@example.test')) $$,'pending invitation can be cancelled');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000076',true);
 select throws_ok($$ select public.accept_organization_invitation('viewer-token') $$,'22023','Invitation is no longer active','revoked invitation is rejected');
 

@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import Link from "next/link";
 import type { Route } from "next";
@@ -442,7 +443,7 @@ function Control({
     );
   if (field.kind === "select")
     return (
-      <select
+      <Select
         className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
         defaultValue={value || field.options?.[0] || ""}
         name={name}
@@ -458,7 +459,7 @@ function Control({
             {option.name}
           </option>
         ))}
-      </select>
+      </Select>
     );
   return (
     <Input

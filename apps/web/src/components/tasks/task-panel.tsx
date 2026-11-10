@@ -17,6 +17,7 @@ import { loadTaskComments, loadTaskDetail } from "@/modules/tasks/read-actions";
 import { ReadOnlyTask, TaskDiscussion } from "./task-detail";
 import { EntityProvenanceLookup } from "@/components/entities/entity-provenance-lookup";
 import { TaskForm } from "./task-form";
+import { TaskRelatedWork } from "@/components/execution/task-related-work";
 
 const desktopQuery = "(min-width: 1200px)";
 const desktopSnapshot = () => window.matchMedia(desktopQuery).matches;
@@ -310,6 +311,7 @@ export function TaskPanel({
                     entityId={detail.task.id}
                   />
                 </div>
+                <TaskRelatedWork key={detail.task.updated_at} taskId={taskId} />
                 <Discussion
                   canMutate={detail.canMutate}
                   members={members}

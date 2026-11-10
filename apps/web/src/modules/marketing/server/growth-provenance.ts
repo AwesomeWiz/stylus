@@ -29,13 +29,15 @@ export async function marketingExecutionProvenance(
     .eq(column, entityId)
     .is("archived_at", null)
     .order("id")
-    .limit(20);
+    .limit(6);
   if (links.error) throw Error("Provenance could not load.");
   const ids = [...new Set((links.data ?? []).map((l) => l.experiment_id))];
   const experiments = ids.length
     ? await db
         .from("marketing_experiments")
-        .select("id,title,hypothesis_id,archived_at")
+        .select(
+          "id,title,hypothesis_id,status,evaluated_source_ids,archived_at",
+        )
         .eq("organization_id", org)
         .in("id", ids)
     : { data: [], error: null };
@@ -56,6 +58,7 @@ export async function marketingExecutionProvenance(
     : { data: [], error: null };
   if (hypotheses.error) throw Error("Hypotheses could not load.");
   const result: EntityProvenanceLink[] = [];
+  const seenHypotheses = new Set<string>();
   for (const experiment of experiments.data ?? []) {
     result.push({
       label: "Experiment",
@@ -65,12 +68,95 @@ export async function marketingExecutionProvenance(
     const hypothesis = hypotheses.data?.find(
       (h) => h.id === experiment.hypothesis_id,
     );
-    if (hypothesis)
+    if (hypothesis && !seenHypotheses.has(hypothesis.id)) {
+      seenHypotheses.add(hypothesis.id);
       result.push({
         label: "Based on Hypothesis",
         title: hypothesis.title + (hypothesis.archived_at ? " · Archived" : ""),
         href: `/apps/marketing/hypotheses?item=${hypothesis.id}`,
       });
+    }
+  }
+  // One batched explicit source read. Completed experiments retain their exact
+  // evaluation source IDs, even when today's Hypothesis has different sources.
+  if (hypothesisIds.length) {
+    const completedIds = [
+        ...new Set(
+          (experiments.data ?? []).flatMap((e) =>
+            e.status === "COMPLETE" ? (e.evaluated_source_ids ?? []) : [],
+          ),
+        ),
+      ],
+      liveHypotheses = [
+        ...new Set(
+          (experiments.data ?? []).flatMap((e) =>
+            e.status !== "COMPLETE" && e.hypothesis_id ? [e.hypothesis_id] : [],
+          ),
+        ),
+      ],
+      columns =
+        "id,hypothesis_id,evidence_id,evidence_run_id,evidence_key,archived_at";
+    const [frozen, current] = await Promise.all([
+      completedIds.length
+        ? db
+            .from("marketing_hypothesis_sources")
+            .select(columns)
+            .eq("organization_id", org)
+            .in("id", completedIds)
+            .order("id")
+            .limit(180)
+        : Promise.resolve({ data: [], error: null }),
+      liveHypotheses.length
+        ? db
+            .from("marketing_hypothesis_sources")
+            .select(columns)
+            .eq("organization_id", org)
+            .in("hypothesis_id", liveHypotheses)
+            .is("archived_at", null)
+            .order("id")
+            .limit(180)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (frozen.error || current.error)
+      throw Error("Evidence provenance could not load.");
+    const eligible = [
+      ...new Map(
+        [...(frozen.data ?? []), ...(current.data ?? [])].map((s) => [s.id, s]),
+      ).values(),
+    ]
+      .filter((s) => s.evidence_id)
+      .slice(0, 6);
+    if (eligible.length) {
+      const evidence = await db
+        .from("marketing_external_research_evidence")
+        .select("id,title,run_id,evidence_id")
+        .eq("organization_id", org)
+        .in(
+          "id",
+          eligible.flatMap((s) => (s.evidence_id ? [s.evidence_id] : [])),
+        );
+      if (evidence.error) throw Error("Evidence provenance could not load.");
+      const seen = new Set<string>();
+      for (const source of eligible) {
+        const row = evidence.data?.find(
+          (e) =>
+            e.id === source.evidence_id &&
+            e.run_id === source.evidence_run_id &&
+            e.evidence_id === source.evidence_key,
+        );
+        if (row && !seen.has(row.id)) {
+          seen.add(row.id);
+          result.push({
+            label: "Based on Evidence",
+            title:
+              (row.title ?? row.evidence_id).slice(0, 160) +
+              " · " +
+              row.evidence_id,
+            href: `/apps/marketing/research?section=evidence&run=${row.run_id}&evidence=${row.id}#${row.run_id}-${row.evidence_id}`,
+          });
+        }
+      }
+    }
   }
   if (entityType === "marketing.reel-idea") {
     const idea = await db

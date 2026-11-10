@@ -4,7 +4,82 @@ Last Updated: 2026-11-10
 
 ## Overall Status
 
-REDESIGN-006 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+REDESIGN-007 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-007 - Core execution and startup essentials
+
+Clean dedicated worktree/branch `codex/redesign-007-core-execution`, starting at
+`6afe70c7ffa07b61187ebc8eefd304318de02fba`. Original checkout and completed
+worktrees remain untouched. Main agent only, sequential runners; no merge/push.
+The inspected audit/decisions and implementation plan are in
+[Core execution](docs/CORE_EXECUTION.md). Dependencies, minimal Milestones and
+Core working Notes are justified by absent existing models. Goals are deferred.
+Onboarding keeps its eight-step canonical content and manager authorization;
+recoverable bounded drafts do not become Company Knowledge or AI context.
+No new AI execution. Generic Board changes are limited to the explicit
+continuation's menu/input/card fixes. The final fresh complete web suite must
+include all fixes and the retained route/navigation inventory assertions.
+
+Checkpoint: three reviewed forward migrations are applied to the authorized
+development backend; all 49 ledger versions, five RLS tables, 15 authenticated-only
+RPCs, private helper grants and retained Board columns/RPCs are verified. Applied
+hashes are unchanged. Thirteen related local PostgreSQL/pgTAP suites pass 455
+assertions (140 new). Existing anonymous-access fixtures now assert actual denied
+table grants; invitation revocation uses its public list RPC and onboarding test
+arguments use the real smallint signature. No security assertion was weakened.
+
+Actual production-built browser onboarding completed in a new isolated task
+organization: initial validation, incomplete-member waiting, partial resume,
+offline failure/retry, step jumps, zero competitors, Review Edit and Finish to
+Home. No automatic Memory. Real Task creation, dependency, Milestone association,
+filtered progress, working Note links and edited explicit Memory promotion have
+persisted. Browser QA identified an early-hydration draft baseline race and a
+Note locale hydration mismatch; both fixes have focused regression tests.
+
+Hosted Core checks pass 20 assertions, including concurrent cycle denial. Actual
+Growth creation/linking, exact Task/Experiment/Hypothesis/Evidence openers, Home
+evaluation/Learning attention, draft Keep/Discard conflicts, native Note insertion
+and invitation acceptance to Home pass. The initial responsive matrix passes 192
+cases; the changed shared controls receive additional current-build checks.
+
+The explicit continuation authorizes shared form selects, context-menu input/
+screen-space/collision fixes, Delete/Backspace safety and native card presentation.
+Generic Board changes are limited to those approved UI/input paths; persistence,
+entity contracts, selection semantics, voting and Presentation contracts remain.
+The shared popup is extracted into UI, retaining Board-specific configuration at
+its wrapper. Browser testing found and fixed nested-popup Escape and transformed
+modal positioning, with permanent focused coverage. Real selects and all seven
+Board zoom levels pass. Real Delete/Backspace/undo, locked/VIEWER/Presentation
+safety, boundary/modal cases and archived/unavailable card states also pass.
+
+The changed-control matrix passes another 96 cases. Practical production-built
+hosted samples cover 505 Tasks, 501 Notes, filtered/detail/Back and internal setup
+navigation. Full Task payload is about 1.57MB decoded and complete related work
+takes roughly 5.5s; these are profiling limits, not speedup/SLA claims. Manual NVDA,
+physical devices and other browser engines remain unperformed checks.
+
+Exact task fixtures are cleaned up: four Auth accounts (404), two organizations,
+two Boards/20 objects, 506 Tasks, 502 Notes, two Milestones, their dependent joins,
+synthetic Growth/Evidence/run/cancelled-job rows and one explicit Memory are absent.
+Both immutable history triggers remain enabled. Task Chrome/Next helpers are
+stopped and fixture credentials/storage cleared. No unrelated data was removed.
+
+Final complete web suite: **252 files / 1,409 tests PASS**, one worker thread,
+after all corrections. An initial incomplete attempt exposed native-select and
+Settings inventory assertions; a complete pre-correction run then found two
+remaining page fixtures (disabled policy and onboarding draft request context).
+All retain their payload/discoverability/edit/redirect checks. Focused reruns pass
+11 files / 69 tests and both page files / three tests. The final suite includes
+every correction, without skipped or weakened assertions. All 130 final
+source/test/SQL hashes remain frozen. Lint (zero warnings), worker/web typecheck
+and the final worker/web production build pass. Workers are otherwise unchanged;
+no worker test rerun is required. Scoped formatting, 56 local Markdown links,
+all 34 pages/three retained entrypoints, whitespace and credential/artifact checks
+pass across the 141-file delivery. Applied migration hashes remain unchanged.
+The task-local environment copy is removed after building; original environment
+files remain untouched. REDESIGN-007 is PASS and ready for user-managed review.
+No subagents, merge or push. REDESIGN-008 is ready for its own approved scope and
+has not started. Performance/manual-environment limits above remain explicit.
 
 ## REDESIGN-006 - Startup growth and learning workflow
 
