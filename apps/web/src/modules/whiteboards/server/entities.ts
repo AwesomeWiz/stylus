@@ -124,12 +124,60 @@ export async function readBoardEntities(input: unknown) {
       source.data?.length !== value.sourceIds.length ||
       source.data.some(
         (row) =>
-          !["TEXT", "STICKY", "SHAPE", "ARROW", "LINK"].includes(
+          !["TEXT", "STICKY", "SHAPE", "ARROW", "LINK", "ENTITY_CARD"].includes(
             row.element_type,
           ),
       )
     )
       throw { code: "42501" };
+    const native = source.data.some(
+      (row) => row.element_type === "ENTITY_CARD",
+    );
+    if (native) {
+      const provider = value.entityType
+        ? registry.available(context, value.entityType)
+        : undefined;
+      if (
+        !provider?.previewCreation ||
+        !provider.create ||
+        source.data.length !== 1 ||
+        !source.data.every((row) => row.element_type === "ENTITY_CARD")
+      )
+        throw { code: "42501" };
+      const reference = entityReferenceSchema.parse(
+        source.data[0]!.content.reference,
+      );
+      if (
+        !provider.metadata.sourceEntityTypes?.includes(reference.entityType) ||
+        (await registry.resolve(context, [reference]))[0]?.status !==
+          "available"
+      )
+        throw { code: "42501" };
+      const preview = z
+        .object({
+          title: z.string().max(160),
+          text: z.string().max(4800),
+          fields: z
+            .record(
+              z
+                .string()
+                .regex(/^[a-z][a-zA-Z0-9]*$/)
+                .max(40),
+              z.string().max(8000),
+            )
+            .refine((v) => Object.keys(v).length <= 20),
+        })
+        .strict()
+        .parse(await provider.previewCreation(context, source.data));
+      return {
+        ...base,
+        preview: {
+          ...preview,
+          truncated: false,
+          sourceIds: source.data.map((row) => row.id),
+        },
+      };
+    }
     return {
       ...base,
       preview: extractEntitySelection(source.data, scope.board.title),

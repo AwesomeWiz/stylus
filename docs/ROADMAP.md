@@ -2,7 +2,7 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-005 COMPLETE / VERIFIED
+Status: REDESIGN-006 COMPLETE / VERIFIED
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -19,7 +19,7 @@ Status: REDESIGN-005 COMPLETE / VERIFIED
 - [x] REDESIGN-004.3.2: Board UI/input polish and Group-child selection
 - [x] REDESIGN-004.3.3: visible voting, Section presentation and visual colors
 - [x] REDESIGN-005: native entities, canonical openers and recoverable conversions
-- [ ] REDESIGN-006: Marketing shell and Creative Studio
+- [x] REDESIGN-006: startup growth and learning workflow (approved revised scope)
 - [ ] REDESIGN-007: Research, Campaigns and secondary Marketing
 - [ ] REDESIGN-008: Settings and advanced surfaces
 - [ ] REDESIGN-009: profiling, responsive/NVDA/accessibility and final QA
@@ -28,7 +28,9 @@ Generic Board editor scope is frozen after 004.3.3. Pick from Board, full voting
 analytics and public slide/sharing features remain deferred. Native OS EyeDropper,
 manual NVDA and other browser/device engines remain explicitly recorded QA limits.
 005 native integration is verified; optional native voting/source replacement stay
-deferred. REDESIGN-006 awaits its separately approved scope and is not started.
+deferred. REDESIGN-006 delivers the approved growth/learning scope with exact
+provenance, explicit Memory and native integration. Verification/cleanup and
+remaining environment limits are recorded in PROJECT_STATE and Growth and learning.
 See [Boards](BOARDS.md) for final verification and performance observations.
 
 REDESIGN-001 is the completed specification milestone; REDESIGN-002 implements

@@ -4,6 +4,14 @@ REDESIGN-005, 2026-11-05. PASS; manual NVDA and other-engine checks remain expli
 
 ## Public Core contract and trusted registration
 
+REDESIGN-006 adds live Hypothesis, Experiment and Learning adapters and reviewed
+Evidence/text selection → Hypothesis and Hypothesis → Experiment creation through
+these same public contracts. A bounded provider preview may supply reviewed field
+context; fresh resolution checks allowed native source types before creation.
+Original plaintext target guards remain. Core's public provenance host can expose
+authorized canonical backlinks without importing private Marketing code. See
+[Growth and learning](GROWTH_LEARNING.md); generic editor mechanics stay frozen.
+
 `apps/web/src/core/entities/public.ts` owns strict reference, projection, metadata,
 provider and registry contracts. The trusted application composition host
 `plugins/board-entities.ts` registers Core Tasks and Marketing-owned adapters.

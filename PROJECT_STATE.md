@@ -1,10 +1,79 @@
 # Stylus — Project State
 
-Last Updated: 2026-11-05
+Last Updated: 2026-11-10
 
 ## Overall Status
 
-REDESIGN-005 PASS / VERIFIED / READY FOR USER-MANAGED REVIEW
+REDESIGN-006 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-006 - Startup growth and learning workflow
+
+Dedicated branch/worktree `codex/redesign-006-growth-learning` starts exactly at
+`82d854afca2f2a91162c70a5b6bf37694c0f857a`. Root and completed task worktrees,
+including the user's generated `next-env.d.ts` change in 005, remain preserved.
+Main agent only, sequential runners. No merge or push.
+
+The existing-domain audit is in [Growth and learning](docs/GROWTH_LEARNING.md).
+Content Opportunities remain immutable report candidates; deterministic
+Performance Learnings retain their metric-specific semantics. Focused new
+Marketing Hypothesis, Experiment and team Learning records are implemented.
+Evaluation stays on Experiment and freezes its result/source identities.
+Explicit Company Memory promotion delegates to the existing Core human mutation
+through an additive idempotent public SQL contract. No automatic promotion/AI.
+
+Four reviewed forward migrations are applied to the authorized development
+project. All 46 ledger versions match; schema/RLS/RPCs and unchanged hashes are
+verified. Thirteen related SQL suites pass 527 assertions in isolated PGlite,
+including 102 new growth assertions. Real authenticated and browser checks pass
+the workflow, native recovery, exact openers and role/tenant/revocation boundaries.
+Overview/Research/Experiments/Create/Campaigns/Learn navigation and bounded
+workspaces are implemented. Native providers and existing-receipt
+conversions extend only public integration contracts; generic Board mechanics,
+voting, presentation and existing AI workflow inputs/execution stay frozen.
+
+**Verification:** the full web suite ran once: 236 files / 1,330 tests; 1,328
+passed and two outdated route/navigation inventory expectations failed. Those
+expectations now explicitly cover all 30 retained routes plus three growth pages,
+six primary workflow entries and retained capabilities. The final focused rerun
+passes all nine tests across those two files and the dialog-focus regression.
+All observed failures are resolved; no duplicate full-suite run or skipped test.
+Web lint (zero warnings), worker/web typecheck and final production web build pass.
+Scoped formatting, local links, retained routes, diff and secret/artifact checks
+are recorded in ignored `.next/cache/redesign-006-qa` evidence.
+Default staged `diff --check` reports one extra EOF blank line in the already
+applied `20261109000110` migration. Its bytes/hash are deliberately preserved.
+All other files pass the default check; that file passes with only the
+`blank-at-eof` rule disabled. This formatting exception changes no SQL semantics.
+
+Production-built actual pages against the hosted development backend pass the
+explicit workflow, edited Memory confirmation, canonical backlinks, typed link
+pickers, exact immutable openers, native insertion/conversion/reload recovery,
+VIEWER/foreign/plugin-disabled/revoked-member checks. Responsive QA passes nine
+surfaces × eight widths × two themes (144 cases), plus 64 targeted repeats for
+the mobile search-row fix and modal bounds/labels/focus. Direct-create closing
+clears query state, restores a usable opener and permits native Enter reopening.
+
+Three samples per representative fixture cover Overview, 100 Hypotheses,
+110 Experiments, 100 Learnings, filtered search/detail and a 500-object mixed
+Board with 50 distinct native references. Lists stay at 25 records; metadata uses
+one 50-reference batch. Observed list readiness is 0.83–1.12s, Board readiness
+1.40–1.46s and full native metadata 4.76–4.90s. Board load has 3–4 Long Tasks per
+sample (maximum 161–207ms); no list Long Tasks were observed. These are unthrottled
+warm-server observations, not p95, an SLA or controlled before/after claims.
+
+**Cleanup verified:** four task accounts (Auth 404), two task organizations,
+three Boards/521 rows, 321 growth records plus joins/canonical/provenance fixtures,
+two explicitly promoted memories and four receipts are absent. Four immutable
+history triggers were restored in the same locked exact-ID cleanup transaction
+and verified enabled. No unrelated data or private assets were deleted. Both
+task-local Next/Chrome helpers are stopped; ignored test passwords are removed.
+
+**Limits/deferred:** manual Windows NVDA, physical touch devices and other browser
+engines remain target-environment checks. Native metadata still has measured
+type-grouped read latency; full cold/warm profiling belongs to 009. No new AI,
+generic Result/analytics platform, automatic Memory, anonymous voting, native
+source replacement or future business module is delivered. REDESIGN-007 is not
+started or authorized by this completion. No merge or push.
 
 ## REDESIGN-005 - Native Stylus entities in Boards
 

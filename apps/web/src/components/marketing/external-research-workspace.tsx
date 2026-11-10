@@ -630,6 +630,7 @@ function FashionReport({
               <article
                 className="space-y-2 py-3"
                 key={`${opportunity.title}-${index}`}
+                id={`opportunity-${runId}-${index}`}
               >
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <h5 className="text-sm font-semibold">{opportunity.title}</h5>

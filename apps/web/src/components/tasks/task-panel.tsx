@@ -15,6 +15,7 @@ import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
 import type { TaskMember } from "@/lib/supabase/database.types";
 import { loadTaskComments, loadTaskDetail } from "@/modules/tasks/read-actions";
 import { ReadOnlyTask, TaskDiscussion } from "./task-detail";
+import { EntityProvenanceLookup } from "@/components/entities/entity-provenance-lookup";
 import { TaskForm } from "./task-form";
 
 const desktopQuery = "(min-width: 1200px)";
@@ -303,6 +304,12 @@ export function TaskPanel({
                 ) : (
                   <ReadOnlyTask members={members} task={detail.task} />
                 )}
+                <div className="px-6">
+                  <EntityProvenanceLookup
+                    entityType="core.task"
+                    entityId={detail.task.id}
+                  />
+                </div>
                 <Discussion
                   canMutate={detail.canMutate}
                   members={members}

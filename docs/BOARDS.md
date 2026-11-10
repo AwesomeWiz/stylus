@@ -2,6 +2,12 @@
 
 ## Native Stylus entities (REDESIGN-005)
 
+REDESIGN-006 adds Hypothesis, Experiment and Learning cards and explicit growth
+conversions through the same public native contracts. Generic editor mechanics,
+visual design, voting and presentation remain frozen. See
+[Growth and learning](GROWTH_LEARNING.md) for exact source authorization and
+receipt recovery semantics.
+
 2026-11-05 Â· PASS. Six initial reference card types and
 reviewed Task/Idea/manual Research Note conversions use a public Core registry and
 trusted plugin host. Cards preserve canonical identity, exact Evidence provenance

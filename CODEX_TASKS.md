@@ -2,6 +2,22 @@
 
 # Current
 
+## REDESIGN-006 - Startup growth and learning workflow
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Approved exact baseline `82d854afca2f2a91162c70a5b6bf37694c0f857a`;
+branch `codex/redesign-006-growth-learning`. See PROJECT_STATE and
+docs/GROWTH_LEARNING.md for the domain mapping, delivered workflow and limits.
+Four reviewed development migrations are applied; all 46 ledger versions match.
+Hosted workflow/security/recovery and 144 responsive cases plus 64 targeted
+repeats pass. The single full web run covered 1,330 tests: 1,328 passed; two stale
+inventory expectations were corrected and the final focused nine tests pass.
+All failures are resolved. Thirteen SQL suites / 527 assertions, lint, worker/web
+typecheck and final production web build pass. Exact isolated data/accounts and
+helpers are cleaned up. No merge, push, new AI execution, automatic Memory or
+generic Board change. Main agent only, sequential runners; next phase not started.
+
 ## REDESIGN-005 - Native Stylus entities in Boards
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
@@ -17,7 +33,8 @@ Lint, worker/web typecheck, production web build and scoped delivery checks pass
 Exact isolated records/accounts and helpers are cleaned up. Performance probes
 show no repeatable native-resolution regression; small-sample/NVDA/other-engine
 limits are explicit in PROJECT_STATE. No AI, automatic Knowledge promotion,
-generic editor redesign, subagents, merge or push. REDESIGN-006 remains unstarted.
+generic editor redesign, subagents, merge or push. The current approved
+REDESIGN-006 scope is recorded above.
 
 ## REDESIGN-004.3.3 — Voting, Section presentation and visual color picker
 

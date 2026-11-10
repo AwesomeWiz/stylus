@@ -19,18 +19,24 @@ describe("example plugin", () => {
 });
 
 describe("Marketing plugin", () => {
-  it("is statically registered with the TASK-013 routes and bounded domains", () => {
+  it("registers the six growth destinations and retains bounded domains and execution capabilities", () => {
     const manifest = builtInPluginRegistry.get("marketing")?.manifest;
     expect(manifest?.memoryDomains).toEqual(["company", "marketing"]);
     expect(manifest?.navigation.map((item) => item.route)).toEqual([
       "/apps/marketing",
-      "/apps/marketing/competitors",
-      "/apps/marketing/reel-ideas",
-      "/apps/marketing/creative-studio",
-      "/apps/marketing/council",
-      "/apps/marketing/campaigns",
       "/apps/marketing/research",
-      "/apps/marketing/creative-briefs",
+      "/apps/marketing/experiments",
+      "/apps/marketing/creative-studio",
+      "/apps/marketing/campaigns",
+      "/apps/marketing/learn",
+    ]);
+    expect(manifest?.navigation.map((item) => item.label)).toEqual([
+      "Overview",
+      "Research",
+      "Experiments",
+      "Create",
+      "Campaigns",
+      "Learn",
     ]);
     expect(builtInPluginRegistry.getNavigation([])).not.toContainEqual(
       expect.objectContaining({ pluginId: "marketing" }),
@@ -39,7 +45,23 @@ describe("Marketing plugin", () => {
       builtInPluginRegistry
         .getNavigation(["marketing"])
         .filter((item) => item.pluginId === "marketing"),
-    ).toHaveLength(8);
+    ).toHaveLength(6);
+    expect(manifest?.capabilities).toEqual(
+      expect.arrayContaining([
+        "marketing.competitors.read",
+        "marketing.reels.read",
+        "marketing.briefs.read",
+        "marketing.research.read",
+        "marketing.campaigns.read",
+        "marketing.external-research.execute",
+        "marketing.hypotheses.read",
+        "marketing.hypotheses.write",
+        "marketing.experiments.read",
+        "marketing.experiments.write",
+        "marketing.learnings.read",
+        "marketing.learnings.write",
+      ]),
+    );
     expect(manifest?.capabilities).toContain(
       "marketing.creative-council.execute",
     );

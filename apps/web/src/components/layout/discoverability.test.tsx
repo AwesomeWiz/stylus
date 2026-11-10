@@ -31,7 +31,7 @@ describe("relocated route discoverability", () => {
       "/jobs",
     ]);
   });
-  it("keeps five Marketing sections plus four explicit secondary paths", () => {
+  it("exposes the six growth workflow sections and preserves Create destinations", () => {
     render(
       <MarketingPage
         activePath="/apps/marketing/council"
@@ -47,19 +47,70 @@ describe("relocated route discoverability", () => {
       within(nav)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Overview", "Ideas", "Studio", "Research", "Campaigns"]);
-    expect(within(nav).getByRole("link", { name: "Studio" })).toHaveAttribute(
+    ).toEqual([
+      "Overview",
+      "Research",
+      "Experiments",
+      "Create",
+      "Campaigns",
+      "Learn",
+    ]);
+    expect(within(nav).getByRole("link", { name: "Create" })).toHaveAttribute(
       "aria-current",
       "page",
     );
     const secondary = screen.getByRole("navigation", {
       name: "More Marketing destinations",
     });
-    expect(within(secondary).getAllByRole("link")).toHaveLength(4);
+    expect(
+      within(secondary)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href")),
+    ).toEqual([
+      "/apps/marketing/reel-ideas",
+      "/apps/marketing/creative-studio",
+      "/apps/marketing/council",
+      "/apps/marketing/creative-briefs",
+      "/apps/marketing/creative-studio#reasoning-history-heading",
+    ]);
     expect(
       within(secondary).getByRole("link", { name: "Ask Council" }),
     ).toHaveAttribute("aria-current", "page");
   });
+  it.each([
+    [
+      "/apps/marketing/research?section=evidence",
+      ["Reports", "Evidence", "Notes", "Opportunities", "Competitors"],
+    ],
+    ["/apps/marketing/hypotheses", ["Experiments", "Hypotheses"]],
+    [
+      "/apps/marketing/learn",
+      ["Learnings", "Experiment outcomes", "Performance"],
+    ],
+  ])(
+    "keeps contextual destinations discoverable in %s",
+    (activePath, labels) => {
+      render(
+        <MarketingPage
+          activePath={activePath as string}
+          context={{} as OrganizationContext}
+          description="Marketing"
+          title="Workflow"
+        >
+          <p>Existing records</p>
+        </MarketingPage>,
+      );
+      expect(
+        within(
+          screen.getByRole("navigation", {
+            name: "More Marketing destinations",
+          }),
+        )
+          .getAllByRole("link")
+          .map((link) => link.textContent),
+      ).toEqual(labels);
+    },
+  );
   it("keeps enabled development routes reachable through Apps for read-only members", () => {
     const manifest = builtInPluginRegistry.get("example")!.manifest;
     const view = render(

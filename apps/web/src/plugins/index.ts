@@ -22,6 +22,9 @@ export const builtInPluginRegistry = createPluginRegistry([
 ]);
 
 /** Server-only provider composition is loaded only at authorized data boundaries. */
+export async function getEntityProvenance(input: unknown) {
+  return (await import("./entity-provenance")).readEntityProvenance(input);
+}
 export async function getBoardEntityRegistry() {
   return (await import("./board-entities")).boardEntityRegistry;
 }

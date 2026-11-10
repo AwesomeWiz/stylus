@@ -804,6 +804,7 @@ export type AIRunRow = {
 };
 
 export type KnowledgeMemoryRow = {
+  creation_key?: string | null;
   archived_at: string | null;
   archived_by: string | null;
   content: string;
@@ -1104,9 +1105,97 @@ type MarketingUpdate<T extends MarketingAuditRow> = Partial<
   Omit<T, "created_at" | "created_by" | "id" | "organization_id">
 >;
 
+export type GrowthRow = {
+  id: string;
+  organization_id: string;
+  title: string;
+  owner_id?: string | null;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+  statement?: string;
+  status?: string;
+  confidence?: string | null;
+  hypothesis_id?: string;
+  test_plan?: string;
+  success_criteria?: string;
+  starts_on?: string | null;
+  ends_on?: string | null;
+  outcome?: string | null;
+  result_summary?: string | null;
+  evaluated_at?: string | null;
+  evaluated_by?: string | null;
+  evaluated_hypothesis_statement?: string | null;
+  evaluated_source_ids?: string[] | null;
+  experiment_id?: string;
+  conclusion?: string;
+  board_conversion_id?: string | null;
+};
+export type HypothesisSourceRow = {
+  id: string;
+  organization_id: string;
+  hypothesis_id: string;
+  evidence_id: string | null;
+  evidence_run_id: string | null;
+  evidence_key: string | null;
+  note_id: string | null;
+  opportunity_report_id: string | null;
+  opportunity_index: number | null;
+  created_by: string;
+  created_at: string;
+  archived_at: string | null;
+};
+export type ExperimentLinkRow = {
+  id: string;
+  organization_id: string;
+  experiment_id: string;
+  task_id: string | null;
+  campaign_id: string | null;
+  reel_idea_id: string | null;
+  creative_brief_id: string | null;
+  reel_brief_version_id: string | null;
+  performance_snapshot_id: string | null;
+  performance_learning_id: string | null;
+  created_by: string;
+  created_at: string;
+  archived_at: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
+      marketing_hypotheses: {
+        Row: GrowthRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_experiments: {
+        Row: GrowthRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_learnings: {
+        Row: GrowthRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_hypothesis_sources: {
+        Row: HypothesisSourceRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_experiment_links: {
+        Row: ExperimentLinkRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       activity_events: {
         Row: ActivityEventRow;
         Insert: never;
@@ -1599,6 +1688,102 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      marketing_growth_counts: {
+        Args: { p_organization_id: string; p_ids: string[] };
+        Returns: {
+          id: string;
+          source_count: number;
+          experiment_count: number;
+        }[];
+      };
+      create_company_memory_once: {
+        Args: {
+          p_organization_id: string;
+          p_creation_key: string;
+          p_kind: MemoryKind;
+          p_title: string;
+          p_content: string;
+          p_source_reference: string;
+        };
+        Returns: KnowledgeMemoryRow;
+      };
+      save_marketing_hypothesis: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_fields: Record<string, unknown>;
+          p_expected_updated_at?: string | null;
+          p_source?: Record<string, unknown> | null;
+        };
+        Returns: string;
+      };
+      save_marketing_experiment: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_fields: Record<string, unknown>;
+          p_expected_updated_at?: string | null;
+        };
+        Returns: string;
+      };
+      save_marketing_learning: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_experiment_id: string;
+          p_title: string;
+          p_conclusion: string;
+          p_confidence: string;
+          p_archived?: boolean;
+          p_expected_updated_at?: string | null;
+        };
+        Returns: string;
+      };
+      link_marketing_hypothesis_source: {
+        Args: {
+          p_organization_id: string;
+          p_hypothesis_id: string;
+          p_source: Record<string, unknown>;
+          p_archived?: boolean;
+        };
+        Returns: string;
+      };
+      link_marketing_experiment: {
+        Args: {
+          p_organization_id: string;
+          p_experiment_id: string;
+          p_kind: string;
+          p_target_id: string;
+          p_archived?: boolean;
+        };
+        Returns: string;
+      };
+      evaluate_marketing_experiment: {
+        Args: {
+          p_organization_id: string;
+          p_experiment_id: string;
+          p_outcome: string;
+          p_result_summary: string;
+          p_expected_updated_at: string;
+          p_learning?: Record<string, unknown> | null;
+          p_update_hypothesis?: boolean;
+        };
+        Returns: string;
+      };
+      promote_marketing_learning: {
+        Args: {
+          p_organization_id: string;
+          p_learning_id: string;
+          p_kind: MemoryKind;
+          p_title: string;
+          p_content: string;
+        };
+        Returns: string;
+      };
+      create_marketing_growth_from_board: {
+        Args: { p_conversion_id: string };
+        Returns: string;
+      };
       prepare_board_entity_conversion: {
         Args: {
           p_id: string;

@@ -1217,3 +1217,29 @@ Source objects remain by default; optional replacement and native vote eligibili
 are deferred. Generic editor mechanics/design, voting and presentation remain
 frozen. No AI execution or automatic memory promotion follows entity insertion,
 resolution, opening or conversion. See [Native entities](NATIVE_ENTITIES.md).
+
+## ADR-051 - Explicit startup experiments and reviewed learning
+
+Date: 2026-11-10. Status: Accepted for REDESIGN-006 implementation.
+
+Marketing owns Hypothesis, Experiment and human Learning records. Existing Content
+Opportunities remain immutable report candidates and deterministic Performance
+Learnings keep their metric-specific meaning. Typed tenant-constrained joins
+connect exact research provenance and canonical execution. A completed Experiment
+freezes evaluation, source identities and evaluated statement. Qualitative criteria
+and Inconclusive results are valid. Optional Learning and Hypothesis status changes
+are explicit parts of one atomic evaluation, never inferred.
+
+Permanent Company Memory stays a separate preview/edit/confirmation. Marketing
+validates its source and delegates to Core's public human company-memory contract.
+A tenant-scoped creation key makes retry duplicate-safe without overwriting
+content or recreating archived memory. Nothing broadens memory-domain access or
+adds model execution.
+
+Native providers/conversions extend the existing public registry and receipts.
+A reviewed provider preview maps a freshly authorized native source to bounded
+fields. Old plaintext target guards remain distinct from the new native guard.
+Canonical creation/receipt and Board linking retain separate recovery steps.
+A public provenance host resolves the canonical target before requesting bounded
+trusted-plugin backlinks. Core has no private Marketing imports; generic Board
+mechanics remain frozen. See [Growth and learning](GROWTH_LEARNING.md).

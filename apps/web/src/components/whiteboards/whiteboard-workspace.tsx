@@ -7,7 +7,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import type { EntityReference } from "@/core/entities/public";
-import { createBoardEntityStore } from "./board-entity-store";
+import { createBoardEntityStore, nativeReference } from "./board-entity-store";
 import { BoardNativeProviders } from "./board-native-providers";
 import { useBoardEntities } from "./use-board-entities";
 import { BoardEntityDialog, type NativeRequest } from "./board-entity-dialog";
@@ -898,14 +898,18 @@ export function WhiteboardWorkspace({
       const sources = selection.filter((row) =>
         ["TEXT", "STICKY", "SHAPE", "ARROW", "LINK"].includes(row.element_type),
       );
+      const sourceReference = one ? nativeReference(one) : null;
       if (
-        sources.length === selection.length &&
+        (sources.length === selection.length || !!sourceReference) &&
         sources.length <= 30 &&
-        sources.length > 0
+        selection.length > 0
       ) {
         const conversions = nativeItems.types.filter(
           (type) =>
             type.creatable &&
+            (sourceReference
+              ? type.sourceEntityTypes?.includes(sourceReference.entityType)
+              : type.creationSelection !== "single-reference") &&
             (type.creationSelection !== "single-sticky" ||
               one?.element_type === "STICKY"),
         );
@@ -918,7 +922,7 @@ export function WhiteboardWorkspace({
                 setNativeRequest({
                   mode: "convert",
                   entityType: type.id,
-                  sourceIds: sources.map((row) => row.id).sort(),
+                  sourceIds: selection.map((row) => row.id).sort(),
                 }),
             })),
           });

@@ -14,7 +14,7 @@ const source = (path: string) =>
   readFileSync(resolve(process.cwd(), "src", path), "utf8");
 
 describe("workspace routing and loading architecture", () => {
-  it("preserves all 30 unique public page paths across route groups", () => {
+  it("preserves all 30 legacy pages and the three growth workspaces across route groups", () => {
     const routes = files(root)
       .filter(
         (file) => file.endsWith("/page.tsx") || file.endsWith("\\page.tsx"),
@@ -28,19 +28,40 @@ describe("workspace routing and loading architecture", () => {
             .filter((part) => !part.startsWith("("))
             .join("/"),
       );
-    expect(routes).toHaveLength(30);
-    expect(new Set(routes).size).toBe(30);
+    expect(routes).toHaveLength(33);
+    expect(new Set(routes).size).toBe(33);
     expect(routes).toEqual(
       expect.arrayContaining([
         "/",
         "/tasks",
+        "/activity",
+        "/company/profile",
+        "/memory",
+        "/ai",
+        "/jobs",
+        "/workers",
+        "/apps",
+        "/team",
+        "/settings",
         "/whiteboards",
         "/whiteboards/[boardId]",
         "/login",
         "/signup",
+        "/organization/new",
         "/onboarding/[step]",
         "/invite/[token]",
         "/auth/error",
+        "/apps/marketing",
+        "/apps/marketing/reel-ideas",
+        "/apps/marketing/creative-studio",
+        "/apps/marketing/research",
+        "/apps/marketing/competitors",
+        "/apps/marketing/competitors/[competitorId]",
+        "/apps/marketing/campaigns",
+        "/apps/marketing/creative-briefs",
+        "/apps/marketing/hypotheses",
+        "/apps/marketing/experiments",
+        "/apps/marketing/learn",
         "/apps/marketing/council",
         "/apps/marketing/performance",
         "/apps/example",

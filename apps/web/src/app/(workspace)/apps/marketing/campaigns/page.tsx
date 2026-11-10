@@ -3,6 +3,7 @@ import { MarketingPage } from "@/components/marketing/marketing-page";
 import { MarketingWorkspace } from "@/components/marketing/marketing-workspace";
 import { listMarketingCampaigns } from "@/modules/marketing/server/data";
 import { requireEnabledPlugin } from "@/modules/plugins/server/guard";
+import { EntityProvenanceLookup } from "@/components/entities/entity-provenance-lookup";
 export default async function Page({
   searchParams,
 }: {
@@ -33,6 +34,12 @@ export default async function Page({
       description="Organize manual campaign objectives, dates, and lifecycle."
       title="Campaigns"
     >
+      {params.item && visibleRecords.some((r) => r.id === params.item) ? (
+        <EntityProvenanceLookup
+          entityType="marketing.campaign"
+          entityId={params.item}
+        />
+      ) : null}
       <MarketingWorkspace
         area="campaigns"
         archived={archived}

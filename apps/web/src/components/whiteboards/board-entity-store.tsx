@@ -22,6 +22,7 @@ export type EntityReadResult = {
   hasMore?: boolean;
   cursor?: string;
   preview?: {
+    fields?: Record<string, string>;
     title: string;
     text: string;
     truncated: boolean;

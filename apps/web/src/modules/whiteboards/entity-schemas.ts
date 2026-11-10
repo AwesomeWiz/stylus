@@ -24,7 +24,14 @@ export const entityReadSchema = z.discriminatedUnion("operation", [
       cursor: z.uuid().optional(),
     })
     .strict(),
-  z.object({ ...scope, operation: z.literal("preview"), sourceIds }).strict(),
+  z
+    .object({
+      ...scope,
+      operation: z.literal("preview"),
+      sourceIds,
+      entityType: z.string().max(80).optional(),
+    })
+    .strict(),
   z
     .object({ ...scope, operation: z.literal("recover"), attemptId: z.uuid() })
     .strict(),

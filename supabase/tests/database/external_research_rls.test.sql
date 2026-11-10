@@ -68,9 +68,12 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000173'
 select results_eq($$
   select count(*)::integer from public.marketing_competitor_social_profiles
 $$,array[1]::integer[],'VIEWER reads social profiles for the enabled organization');
-select throws_ok($$
-  update public.marketing_competitor_social_profiles set status='POLICY_DENIED'
-$$,'42501',null,'VIEWER cannot modify social profiles');
+do $$declare affected integer;begin
+  update public.marketing_competitor_social_profiles set status='POLICY_DENIED';
+  get diagnostics affected = row_count;
+  perform set_config('qa.research_viewer_updated',affected::text,true);
+end$$;
+select is(current_setting('qa.research_viewer_updated'),'0','VIEWER cannot modify any social profile through the update RLS policy');
 select throws_ok($$
   delete from public.marketing_competitor_social_profiles
 $$,'42501',null,'authenticated users receive no social-profile hard-delete grant');
@@ -80,14 +83,14 @@ select results_eq($$
 $$,array[0]::integer[],'cross-organization social profiles are isolated');
 reset role;
 
-select results_eq($$ select public.has_function_privilege('authenticated','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[false],'browser cannot invoke atomic research enqueue');
-select results_eq($$ select public.has_function_privilege('service_role','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[true],'service role may invoke atomic research enqueue');
-select results_eq($$ select public.has_function_privilege('authenticated','public.record_marketing_external_research_retrieval(uuid,uuid,jsonb,jsonb,boolean,text[],integer,integer,integer,integer)','execute') $$,array[false],'browser cannot persist enriched research evidence');
-select results_eq($$ select public.has_function_privilege('authenticated','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[false],'browser cannot target a SERVERLESS claim');
-select results_eq($$ select public.has_function_privilege('service_role','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[true],'service role may target a SERVERLESS claim');
-select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel in ('reddit','fashion-editorial') order by enumlabel $$,array['fashion-editorial','reddit'],'fashion source adapters extend the enum forward');
-select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='social' $$,array['social'],'social adapter extends the enum forward');
-select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='web-discovery' $$,array['web-discovery'],'web discovery adapter extends the enum forward');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[false],'browser cannot invoke atomic research enqueue');
+select results_eq($$ select pg_catalog.has_function_privilege('service_role','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[true],'service role may invoke atomic research enqueue');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.record_marketing_external_research_retrieval(uuid,uuid,jsonb,jsonb,boolean,text[],integer,integer,integer,integer)','execute') $$,array[false],'browser cannot persist enriched research evidence');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[false],'browser cannot target a SERVERLESS claim');
+select results_eq($$ select pg_catalog.has_function_privilege('service_role','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[true],'service role may target a SERVERLESS claim');
+select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel in ('reddit','fashion-editorial') order by enumlabel $$,array['fashion-editorial','reddit']::name[],'fashion source adapters extend the enum forward');
+select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='social' $$,array['social']::name[],'social adapter extends the enum forward');
+select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='web-discovery' $$,array['web-discovery']::name[],'web discovery adapter extends the enum forward');
 select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000171' $$,array[0]::integer[],'social-profile setup writes no durable memory');
 
 set local role service_role;
@@ -242,7 +245,7 @@ select throws_ok($$
   )
 $$,'42501',null,'removed MEMBER cannot execute external research');
 reset role;
-update public.organization_plugins set enabled=false
+update public.organization_plugins set enabled=false,disabled_at=now()
 where organization_id='10000000-0000-0000-0000-000000000172' and plugin_id='marketing';
 set local role service_role;
 select throws_ok($$
@@ -265,7 +268,7 @@ reset role;
 select throws_ok($$ update public.marketing_external_research_sources set title='changed' $$,'55000',null,'persisted sources are immutable');
 select throws_ok($$ update public.marketing_external_research_evidence set excerpt='changed' $$,'55000',null,'enriched evidence is immutable');
 select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000171' $$,array[0]::integer[],'external research writes no durable memory');
-select results_eq($$ select max_attempts from public.job_definitions where job_type='marketing.external-research.run' $$,array[1],'research job has no platform retry multiplication');
+select results_eq($$ select max_attempts::integer from public.job_definitions where job_type='marketing.external-research.run' $$,array[1],'research job has no platform retry multiplication');
 select results_eq($$ select timeout_seconds from public.job_definitions where job_type='marketing.external-research.run' $$,array[120],'research job has a 120-second workflow bound');
 
 select * from finish();

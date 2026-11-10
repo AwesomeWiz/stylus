@@ -47,8 +47,8 @@ insert into public.marketing_reel_brief_versions(
   'Try it','Caption','[]'::jsonb,'{}'::jsonb,'00000000-0000-0000-0000-000000000161'
 );
 
-select results_eq($$ select public.has_function_privilege('authenticated','public.start_marketing_strategic_review(uuid,uuid,uuid,uuid,jsonb)','execute') $$,array[false],'browser cannot invoke strategic-review start');
-select results_eq($$ select public.has_function_privilege('service_role','public.start_marketing_strategic_review(uuid,uuid,uuid,uuid,jsonb)','execute') $$,array[true],'service role may invoke strategic-review start');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.start_marketing_strategic_review(uuid,uuid,uuid,uuid,jsonb)','execute') $$,array[false],'browser cannot invoke strategic-review start');
+select results_eq($$ select pg_catalog.has_function_privilege('service_role','public.start_marketing_strategic_review(uuid,uuid,uuid,uuid,jsonb)','execute') $$,array[true],'service role may invoke strategic-review start');
 
 set local role service_role;
 select lives_ok($$

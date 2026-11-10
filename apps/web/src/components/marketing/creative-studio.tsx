@@ -25,6 +25,7 @@ import {
   SpecialistIdentity,
 } from "@/components/marketing/specialist-visuals";
 import { StrategicReviewPanel } from "@/components/marketing/strategic-review-panel";
+import { EntityProvenanceLookup } from "@/components/entities/entity-provenance-lookup";
 import type {
   MarketingCreativeCouncilEvidenceRow,
   MarketingCreativeCouncilRunRow,
@@ -154,6 +155,12 @@ export function CreativeStudio({
             </label>
 
             <ContextSummary companyContext={companyContext} idea={idea} />
+            {idea ? (
+              <EntityProvenanceLookup
+                entityType="marketing.reel-idea"
+                entityId={idea.id}
+              />
+            ) : null}
 
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium">

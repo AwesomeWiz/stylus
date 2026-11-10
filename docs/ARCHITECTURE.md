@@ -2,6 +2,14 @@
 
 ## Architectural Style
 
+REDESIGN-006 keeps Hypotheses, Experiments and reviewed team Learnings inside
+Marketing. Core owns Task and company-memory contracts, generic native references
+and the public provenance host. The trusted plugin composition supplies Marketing
+providers/backlinks without Core private imports. Evaluation and exact source
+relations stay domain-owned; explicit Memory promotion calls Core's idempotent
+human company mutation. No new AI workflow or background service is introduced.
+See [Growth and learning](GROWTH_LEARNING.md).
+
 Stylus begins as a modular monolith with external managed infrastructure.
 
 Avoid premature microservices.

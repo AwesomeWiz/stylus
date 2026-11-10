@@ -41,8 +41,8 @@ select ok(private.marketing_creative_council_executable('10000000-0000-0000-0000
 select ok(private.marketing_creative_council_executable('10000000-0000-0000-0000-000000000151','00000000-0000-0000-0000-000000000153'),'MEMBER may execute');
 select ok(not private.marketing_creative_council_executable('10000000-0000-0000-0000-000000000151','00000000-0000-0000-0000-000000000154'),'VIEWER may not execute');
 select ok(not private.marketing_creative_council_executable('10000000-0000-0000-0000-000000000151','00000000-0000-0000-0000-000000000155'),'cross-organization actor may not execute');
-select results_eq($$ select public.has_function_privilege('authenticated','public.start_marketing_creative_council_run(uuid,uuid,uuid,uuid,jsonb,jsonb)','execute') $$,array[false],'authenticated browser cannot invoke start transition');
-select results_eq($$ select public.has_function_privilege('service_role','public.start_marketing_creative_council_run(uuid,uuid,uuid,uuid,jsonb,jsonb)','execute') $$,array[true],'trusted hosted service may invoke start transition');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.start_marketing_creative_council_run(uuid,uuid,uuid,uuid,jsonb,jsonb)','execute') $$,array[false],'authenticated browser cannot invoke start transition');
+select results_eq($$ select pg_catalog.has_function_privilege('service_role','public.start_marketing_creative_council_run(uuid,uuid,uuid,uuid,jsonb,jsonb)','execute') $$,array[true],'trusted hosted service may invoke start transition');
 
 set local role service_role;
 select lives_ok($$

@@ -4,6 +4,15 @@ This document defines the initial conceptual data model.
 
 Exact schemas are introduced through migrations during implementation.
 
+REDESIGN-006 adds `marketing_hypotheses`, `marketing_hypothesis_sources`,
+`marketing_experiments`, `marketing_experiment_links` and `marketing_learnings`.
+Tenant-composite foreign keys preserve source/execution identity. RLS permits
+authorized reads; bounded editor RPCs own writes, revisions, criteria and atomic
+evaluation. Completed evaluations freeze statement/source identity and result.
+Company Memory gains a scoped optional creation key and public create-once wrapper
+around the existing human company mutation. Board integration extends existing
+receipts; old plaintext guards remain. See [Growth and learning](GROWTH_LEARNING.md).
+
 REDESIGN-005 adds `ENTITY_CARD`, `board_entity_conversions`, nullable scoped
 `board_conversion_id` links on Tasks/Marketing Ideas/manual Notes, strict native
 reference validation and four public preparation/domain-creation RPCs. Receipts

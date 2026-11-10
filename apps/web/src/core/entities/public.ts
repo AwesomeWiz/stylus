@@ -61,6 +61,12 @@ export const entityProjectionSchema = z
   })
   .strict();
 export type EntityProjection = z.infer<typeof entityProjectionSchema>;
+/** Bounded, freshly authorized backlinks through the trusted application host. */
+export type EntityProvenanceLink = {
+  title: string;
+  href: string;
+  label: string;
+};
 export type EntityResolution = { reference: EntityReference } & (
   | { status: "available"; projection: EntityProjection }
   | { status: "unavailable" | "error" }
@@ -78,14 +84,28 @@ export type EntityMetadata = {
   id: string;
   label: string;
   icon:
-    "task" | "evidence" | "idea" | "competitor" | "campaign" | "brief" | "note";
+    | "task"
+    | "evidence"
+    | "idea"
+    | "competitor"
+    | "campaign"
+    | "brief"
+    | "note"
+    | "hypothesis"
+    | "experiment"
+    | "learning";
   binding: "live" | "immutable";
   sourcePlugin?: string;
   readCapability?: string;
   routePrefix: string;
   fields?: readonly EntityField[];
   conversionOnly?: boolean;
-  creationSelection?: "single-sticky" | "text-selection";
+  creationSelection?:
+    | "single-sticky"
+    | "text-selection"
+    | "text-or-reference"
+    | "single-reference";
+  sourceEntityTypes?: readonly string[];
 };
 const entityMetadataSchema = z
   .object({
@@ -99,6 +119,9 @@ const entityMetadataSchema = z
       "campaign",
       "brief",
       "note",
+      "hypothesis",
+      "experiment",
+      "learning",
     ]),
     binding: z.enum(["live", "immutable"]),
     sourcePlugin: entityReferenceSchema.shape.sourcePlugin,
@@ -112,7 +135,19 @@ const entityMetadataSchema = z
       .max(200)
       .regex(/^\/(?!\/)[a-z0-9/-]*$/),
     conversionOnly: z.boolean().optional(),
-    creationSelection: z.enum(["single-sticky", "text-selection"]).optional(),
+    creationSelection: z
+      .enum([
+        "single-sticky",
+        "text-selection",
+        "text-or-reference",
+        "single-reference",
+      ])
+      .optional(),
+    sourceEntityTypes: z
+      .array(entityReferenceSchema.shape.entityType)
+      .min(1)
+      .max(10)
+      .optional(),
     fields: z
       .array(
         z
@@ -166,6 +201,16 @@ export type EntityCreationReceipt = {
   created_at: string;
 };
 export interface EntityProvider {
+  /** Optional domain projection of an explicitly selected native reference.
+   * Plain text keeps the existing Core mapping. Never executes creation/AI. */
+  previewCreation?(
+    context: EntityContext,
+    sources: readonly {
+      id: string;
+      element_type: string;
+      content: Record<string, unknown>;
+    }[],
+  ): Promise<{ title: string; text: string; fields: Record<string, string> }>;
   readonly metadata: Readonly<EntityMetadata>;
   resolve(
     context: EntityContext,

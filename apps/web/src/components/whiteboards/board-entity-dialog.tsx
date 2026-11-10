@@ -78,6 +78,7 @@ export function BoardEntityDialog({
         const result = await readBoardEntities(scope, {
           operation: "preview",
           sourceIds: request.sourceIds,
+          entityType: request.entityType,
         });
         if (!active) return;
         const provider = discovery.types.find(
@@ -92,13 +93,23 @@ export function BoardEntityDialog({
           ]),
         );
         next.title = result.preview.title;
-        for (const key of ["description", "concept", "content"])
+        for (const key of [
+          "description",
+          "concept",
+          "content",
+          "statement",
+          "testPlan",
+        ])
           if (provider.fields?.some((field) => field.key === key))
             next[key] = result.preview.text.slice(
               0,
               provider.fields.find((field) => field.key === key)?.maxLength ??
                 4800,
             );
+        Object.assign(
+          next,
+          "fields" in result.preview ? result.preview.fields : {},
+        );
         setFields(next);
         setData({ ...discovery, preview: result.preview });
       } else if (request.mode === "recover") {

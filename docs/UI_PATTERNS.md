@@ -10,6 +10,13 @@ feature specification.
 
 ## Persistent workspace and navigation
 
+REDESIGN-006 applies these contracts to growth lists with bounded title/status/
+archive search and URL-addressed detail independent of the list page. Evaluation
+and Memory promotion use separate labeled review dialogs with retained failure
+text, trapped focus, Escape and opener restoration. Native conversion previews
+may map an authorized exact source; they never execute work on selection alone.
+See [Growth and learning](GROWTH_LEARNING.md).
+
 Authenticated ordinary pages share AppShell in a persistent workspace layout.
 Public auth, organization setup and onboarding have their own focused shells.
 Board editing uses BoardShell outside ordinary workspace chrome. Share verified

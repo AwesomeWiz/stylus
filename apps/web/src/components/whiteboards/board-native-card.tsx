@@ -11,6 +11,9 @@ import {
   FileText,
   NotebookPen,
   ArrowUpRight,
+  CircleHelp,
+  FlaskConical,
+  BookOpenCheck,
 } from "lucide-react";
 import type {
   BoardElementRow,
@@ -30,6 +33,9 @@ const icons = {
   campaign: Flag,
   brief: FileText,
   note: NotebookPen,
+  hypothesis: CircleHelp,
+  experiment: FlaskConical,
+  learning: BookOpenCheck,
 };
 export function BoardNativeCard({
   row,

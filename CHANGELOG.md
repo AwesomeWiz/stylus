@@ -4,6 +4,13 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added a Marketing growth workflow: Evidence → Hypothesis → Experiment →
+  reviewed Learning, canonical Task/Campaign/creative/result links, exact research
+  provenance and separate explicit Company Memory confirmation. New native Board
+  cards and reviewed conversions reuse existing recovery identities. Marketing
+  navigation now follows Overview, Research, Experiments, Create, Campaigns and
+  Learn. Existing Reel workflows and generic Board mechanics are retained.
+
 - Added native Board reference cards for Tasks, exact Research Evidence, Reel
   Ideas, Competitors, Campaigns and human Creative Briefs. A scoped picker opens
   real canonical records; unavailable or disabled items reveal no cached titles.
