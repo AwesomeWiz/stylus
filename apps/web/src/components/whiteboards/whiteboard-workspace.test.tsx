@@ -672,6 +672,8 @@ describe("Boards V2 workspace", () => {
         files: [new File(["image"], "reference.png", { type: "image/png" })],
       },
     });
+    expect(mocks.upload).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Canvas pane" }));
     await waitFor(() =>
       expect(
         screen.getByText("Image upload failed. Retry."),

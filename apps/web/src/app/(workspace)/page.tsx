@@ -21,3 +21,5 @@ export default async function HomePage() {
     />
   );
 }
+
+export const metadata = { title: "Home" };

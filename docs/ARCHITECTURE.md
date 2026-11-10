@@ -2,6 +2,14 @@
 
 ## Architectural Style
 
+Post-REDESIGN-007 placement polish keeps preview/drawing state local to an
+ephemeral canvas input layer. Only release enters the existing authorized create/
+history path. Picked image files/thumbnail URLs are transient browser state until
+placement. No persistence, Realtime or object schema changes are introduced.
+Next metadata owns page titles; Board metadata and editor share a tenant/RLS-
+filtered board row through request-only React memoization, never a cross-request
+user cache. See [Boards](BOARDS.md) and ADR-054.
+
 REDESIGN-007 adds Core execution/working Notes in the existing monolith. Home
 consumes a generic attention contract through the trusted plugin host; Core does
 not understand Marketing persistence. Task relationships/progress are batched.

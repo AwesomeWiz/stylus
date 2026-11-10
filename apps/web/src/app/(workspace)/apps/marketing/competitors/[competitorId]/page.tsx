@@ -34,3 +34,5 @@ export default async function CompetitorDetailPage({
     </MarketingPage>
   );
 }
+
+export const metadata = { title: "Competitor" };

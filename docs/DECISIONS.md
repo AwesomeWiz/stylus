@@ -1293,3 +1293,22 @@ archive/history, with editing, lock, ownership and read-only guards. Native-card
 hierarchy changes presentation only. No new migration, generic editor redesign,
 entity contract, selection mechanic, voting, Presentation or model execution is
 authorized by these fixes. See [Core execution](CORE_EXECUTION.md).
+
+## ADR-054 - Ephemeral creation feedback and authorized page metadata
+
+Date: 2026-11-10. Status: Accepted for the small post-REDESIGN-007 polish.
+
+Creation feedback belongs in a local screen-space overlay; live drawn geometry
+uses the existing world conversion and guide engine. A six-pixel drag threshold
+keeps simple click insertion. Only pointer release delegates to existing atomic
+creation/history. Existing ellipse/rotation fields support Shape and Line/Arrow
+drawing without a migration. Section containment is unchanged. Image files and
+blob thumbnails remain local until explicit placement; drag-sized images and
+center-origin modifiers are deferred. Only new Shapes consume visible theme
+defaults; persisted authored colors are never migrated.
+
+Use Next metadata and a shared bounded plain-text helper for meaningful tab
+titles. A Board name is obtained only through current workspace authority and
+an active tenant/RLS-filtered record. React memoization shares that row within
+the render request; no global cache or additional entity payload is introduced.
+No transient save/count states or invented detail routes enter titles.

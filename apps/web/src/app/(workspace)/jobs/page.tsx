@@ -24,3 +24,5 @@ export default async function JobsPage() {
     />
   );
 }
+
+export const metadata = { title: "Jobs" };

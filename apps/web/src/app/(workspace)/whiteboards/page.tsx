@@ -25,3 +25,5 @@ export default async function WhiteboardsPage() {
     />
   );
 }
+
+export const metadata = { title: "Boards" };

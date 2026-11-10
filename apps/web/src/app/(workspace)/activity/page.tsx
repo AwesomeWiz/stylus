@@ -18,3 +18,5 @@ export default async function ActivityPage() {
     </>
   );
 }
+
+export const metadata = { title: "Activity" };

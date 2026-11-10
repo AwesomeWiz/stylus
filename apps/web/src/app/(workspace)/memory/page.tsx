@@ -97,3 +97,5 @@ export default async function MemoryPage({
     </>
   );
 }
+
+export const metadata = { title: "Knowledge / Memory" };

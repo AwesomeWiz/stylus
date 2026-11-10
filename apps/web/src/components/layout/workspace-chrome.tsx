@@ -11,7 +11,6 @@ import {
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { ShellIdentity, ShellOrganization } from "./app-shell";
 import type { NavigationGroup } from "./navigation";
-import { navigationContext } from "./navigation";
 import type { NotificationSummary } from "@/modules/notifications/server/data";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "./sidebar";
@@ -78,7 +77,6 @@ export function WorkspaceChrome({
   useEffect(() => {
     if (previousPath.current === pathname) return;
     previousPath.current = pathname;
-    document.title = `${navigationContext(pathname)} · Stylus`;
     const focusHeading = () => {
       const heading = main.current?.querySelector("h1");
       if (!heading) return false;

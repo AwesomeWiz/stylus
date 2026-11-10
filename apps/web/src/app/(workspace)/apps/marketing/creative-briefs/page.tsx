@@ -47,3 +47,5 @@ export default async function Page({
     </MarketingPage>
   );
 }
+
+export const metadata = { title: "Creative briefs" };

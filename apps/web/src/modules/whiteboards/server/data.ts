@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 import type {
   BoardCommentRow,
@@ -28,20 +29,29 @@ export async function getBoards(organizationId: string) {
   return data ?? [];
 }
 
+/** Request-scoped only: metadata and page share the same tenant/RLS-checked row. */
+export const getBoardRecord = cache(
+  async (organizationId: string, boardId: string) => {
+    const supabase = await createServerSupabaseClient();
+    const boardResult = await supabase
+      .from("boards")
+      .select("*")
+      .eq("id", boardId)
+      .eq("organization_id", organizationId)
+      .is("archived_at", null)
+      .maybeSingle();
+    if (boardResult.error) throw new Error("The board could not be loaded.");
+    return boardResult.data;
+  },
+);
+
 export async function getBoardEditorData(
   organizationId: string,
   boardId: string,
 ): Promise<BoardEditorData | null> {
+  const board = await getBoardRecord(organizationId, boardId);
+  if (!board) return null;
   const supabase = await createServerSupabaseClient();
-  const boardResult = await supabase
-    .from("boards")
-    .select("*")
-    .eq("id", boardId)
-    .eq("organization_id", organizationId)
-    .is("archived_at", null)
-    .maybeSingle();
-  if (boardResult.error) throw new Error("The board could not be loaded.");
-  if (!boardResult.data) return null;
   async function readElements() {
     const result: BoardElementRow[] = [];
     let afterId: string | null = null;
@@ -72,7 +82,7 @@ export async function getBoardEditorData(
   ]);
   if (members.error) throw new Error("Board members could not load.");
   return {
-    board: boardResult.data,
+    board,
     elements,
     members: members.data ?? [],
     comments: [],

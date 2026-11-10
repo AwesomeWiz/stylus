@@ -27,3 +27,5 @@ export default async function CompanyProfilePage() {
     </>
   );
 }
+
+export const metadata = { title: "Company profile" };

@@ -27,3 +27,5 @@ export default async function MarketingPerformancePage({
     </MarketingPage>
   );
 }
+
+export const metadata = { title: "Performance" };

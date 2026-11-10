@@ -68,7 +68,7 @@ export function defaultElementData(type: BoardElementType) {
     case "SHAPE":
       return {
         content: { shape: "rectangle" },
-        style: { fill: "#f4f4f5", stroke: "#71717a" },
+        style: { fill: "#d4d3ce", stroke: "#898780" },
       };
     case "ARROW":
       return {

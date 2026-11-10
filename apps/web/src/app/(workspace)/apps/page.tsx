@@ -29,3 +29,5 @@ export default async function AppsPage() {
     </>
   );
 }
+
+export const metadata = { title: "Apps" };

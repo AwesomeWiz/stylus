@@ -9,3 +9,5 @@ export default async function WorkersPage() {
   const workers = await getOrganizationWorkers(context.organization.id);
   return <WorkersWorkspace role={context.membership.role} workers={workers} />;
 }
+
+export const metadata = { title: "Workers" };

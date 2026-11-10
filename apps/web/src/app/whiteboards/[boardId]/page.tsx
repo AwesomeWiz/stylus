@@ -4,7 +4,23 @@ import { logoutAction } from "@/modules/auth/actions";
 import { getWorkspaceContext } from "@/modules/onboarding/server/workspace";
 import { canMutateWhiteboards } from "@/modules/whiteboards/authorization";
 import { boardIdSchema } from "@/modules/whiteboards/schemas";
-import { getBoardEditorData } from "@/modules/whiteboards/server/data";
+import {
+  getBoardEditorData,
+  getBoardRecord,
+} from "@/modules/whiteboards/server/data";
+import { conciseTitle } from "@/lib/page-title";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ boardId: string }>;
+}) {
+  const context = await getWorkspaceContext();
+  const parsed = boardIdSchema.safeParse((await params).boardId);
+  if (!parsed.success) return { title: "Board" };
+  const board = await getBoardRecord(context.organization.id, parsed.data);
+  return { title: conciseTitle(board?.title) };
+}
 
 export default async function WhiteboardEditorPage({
   params,

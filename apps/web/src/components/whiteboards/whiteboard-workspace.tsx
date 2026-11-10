@@ -90,6 +90,10 @@ import { BoardHelp, BoardLinkDialog, BoardMenu } from "./board-controls";
 import type { WhiteboardTool } from "./whiteboard-toolbar";
 import { BoardCanvas, type BoardCanvasHandle } from "./board-canvas";
 import { useBoardEvent } from "./use-board-event";
+import type { CreationGeometry } from "@/modules/whiteboards/creation-geometry";
+import { boardPaint } from "@/modules/whiteboards/elements";
+import { boardImageFileSchema } from "@/modules/whiteboards/schemas";
+import { pageTitle } from "@/lib/page-title";
 import { createBoardVotingStore } from "@/modules/whiteboards/voting-store";
 import { BoardVotingContext } from "./board-voting-context";
 import { BoardVoting, type BoardVotingHandle } from "./board-voting";
@@ -139,7 +143,7 @@ export function WhiteboardWorkspace({
   const desktop = useBoardDesktop();
   const panels = useBoardPanels(currentUser.id);
   useEffect(() => {
-    document.title = `${board.title} · Stylus`;
+    document.title = pageTitle(board.title);
   }, [board.title]);
   const {
     history,
@@ -199,6 +203,20 @@ export function WhiteboardWorkspace({
   } = useBoardImages(board, rows, imageUrls, visibleIds);
   const [tool, setTool] = useState<WhiteboardTool>("SELECT"),
     [shape, setShape] = useState("rectangle");
+  const [placementImages, setPlacementImages] = useState<{
+    files: File[];
+    url?: string;
+  } | null>(null);
+  useEffect(
+    () => () => {
+      if (placementImages?.url) URL.revokeObjectURL(placementImages.url);
+    },
+    [placementImages],
+  );
+  const changeTool = useCallback((next: WhiteboardTool) => {
+    setPlacementImages(null);
+    setTool(next);
+  }, []);
   const [title, setTitle] = useState(board.title),
     [renaming, setRenaming] = useState(false),
     [titlePending, setTitlePending] = useState(false);
@@ -241,6 +259,7 @@ export function WhiteboardWorkspace({
       adopt(row, created);
       acceptImage(row, url);
       setSelected([row.id]);
+      setPlacementImages(null);
       setTool("SELECT");
     },
     [adopt, acceptImage],
@@ -636,14 +655,16 @@ export function WhiteboardWorkspace({
         : [id],
     );
   }, []);
-  function imageRequest(id?: string) {
+  function imageRequest(id?: string, position?: Point) {
     if (!editable) return;
     replacement.current = id;
-    imagePosition.current = canvasApi.current?.center() ?? { x: 0, y: 0 };
+    imagePosition.current = position ??
+      canvasApi.current?.center() ?? { x: 0, y: 0 };
+    changeTool(id ? "SELECT" : "IMAGE");
     if (picker.current) picker.current.multiple = !id;
     picker.current?.click();
   }
-  function insert(at: Point) {
+  function insert(at: Point, geometry?: CreationGeometry) {
     if (!editable || tool === "SELECT" || tool === "PAN") return;
     if (tool === "LINK") {
       setLinkAt(at);
@@ -651,7 +672,10 @@ export function WhiteboardWorkspace({
       return;
     }
     if (tool === "IMAGE") {
-      imageRequest();
+      if (placementImages) {
+        uploads.add(placementImages.files, at);
+        changeTool("SELECT");
+      } else imageRequest(undefined, at);
       return;
     }
     const row = createLocalObject(
@@ -661,14 +685,42 @@ export function WhiteboardWorkspace({
       currentUser.id,
       getRows(),
       at,
+      geometry,
     );
     if (tool === "SHAPE") {
       row.content = { shape };
-      if (shape === "circle") row.height = row.width;
+      if (shape === "circle") {
+        if (!geometry) row.height = row.width;
+        else if (row.width !== row.height) row.content.shape = "ellipse";
+      }
+      const tokens = getComputedStyle(document.documentElement);
+      row.style = {
+        ...row.style,
+        fill: boardPaint(
+          tokens.getPropertyValue("--board-shape-fill").trim(),
+          String(row.style.fill),
+        ),
+        stroke: boardPaint(
+          tokens.getPropertyValue("--board-shape-stroke").trim(),
+          String(row.style.stroke),
+        ),
+      };
     }
     if (tool === "ARROW") row.content = { line: shape === "line" };
     void commit([...getRows(), row]).then((saved) => {
-      if (saved) setSelected([row.id]);
+      if (saved) {
+        setSelected([row.id]);
+        if (row.element_type === "TEXT")
+          requestAnimationFrame(() => {
+            const text = document.querySelector<HTMLElement>(
+              `.react-flow__node[data-id="${row.id}"] [aria-label^="Text:"]`,
+            );
+            text?.focus({ preventScroll: true });
+            text?.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+            );
+          });
+      }
     });
     setTool("SELECT");
   }
@@ -1475,7 +1527,8 @@ export function WhiteboardWorkspace({
               select={select}
               onSelection={setSelected}
               tool={tool}
-              setTool={setTool}
+              setTool={changeTool}
+              placementImage={placementImages?.url}
               shape={shape}
               setShape={setShape}
               editable={editable}
@@ -1491,10 +1544,7 @@ export function WhiteboardWorkspace({
               }
               onInsert={insert}
               onImageRequest={(position) => {
-                imagePosition.current = position;
-                replacement.current = undefined;
-                if (picker.current) picker.current.multiple = true;
-                picker.current?.click();
+                imageRequest(undefined, position);
               }}
               onFiles={uploads.add}
               onPanel={openPanel}
@@ -1506,21 +1556,6 @@ export function WhiteboardWorkspace({
               onContext={handleCanvasContext}
               onClipboard={clipboardAction}
               hasClipboard={clipboard.length > 0}
-              onSectionDraw={(bounds) => {
-                const row = createLocalObject(
-                  "SECTION",
-                  board.id,
-                  board.organization_id,
-                  currentUser.id,
-                  getRows(),
-                  bounds,
-                  bounds,
-                );
-                void commit([...getRows(), row]).then((ok) => {
-                  if (ok) setSelected([row.id]);
-                });
-                setTool("SELECT");
-              }}
               commentCounts={commentCounts}
               imageUrl={imageUrl}
               retryImage={retryImage}
@@ -1654,11 +1689,34 @@ export function WhiteboardWorkspace({
             className="sr-only"
             onChange={(event) => {
               const files = Array.from(event.currentTarget.files ?? []);
-              uploads.add(
-                replacement.current ? files.slice(0, 1) : files,
-                imagePosition.current,
-                replacement.current,
-              );
+              if (replacement.current)
+                uploads.add(
+                  files.slice(0, 1),
+                  imagePosition.current,
+                  replacement.current,
+                );
+              else if (files.length) {
+                const invalid = files
+                  .map((file) => boardImageFileSchema.safeParse(file))
+                  .find((result) => !result.success);
+                if (files.length > 10 || invalid)
+                  setError(
+                    invalid && !invalid.success
+                      ? invalid.error.issues[0]!.message
+                      : "Choose up to 10 images per batch.",
+                  );
+                else {
+                  let url: string | undefined;
+                  try {
+                    url = URL.createObjectURL(files[0]!);
+                  } catch {
+                    /* A placeholder remains available. */
+                  }
+                  setPlacementImages({ files, url });
+                  setTool("IMAGE");
+                  requestAnimationFrame(focusBoardCanvas);
+                }
+              }
               event.currentTarget.value = "";
               replacement.current = undefined;
             }}

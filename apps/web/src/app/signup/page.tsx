@@ -19,3 +19,5 @@ export default async function SignupPage({
     </AuthShell>
   );
 }
+
+export const metadata = { title: "Create account" };

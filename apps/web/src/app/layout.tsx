@@ -9,7 +9,7 @@ import "@xyflow/react/dist/style.css";
 void serverEnv;
 
 export const metadata: Metadata = {
-  title: "Stylus",
+  title: { default: "Stylus", template: "%s — Stylus" },
   description: "The collaborative operating system for startup teams.",
   icons: {
     icon: [

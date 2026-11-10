@@ -150,3 +150,5 @@ export default async function MarketingOverviewPage() {
     </MarketingPage>
   );
 }
+
+export const metadata = { title: "Marketing" };

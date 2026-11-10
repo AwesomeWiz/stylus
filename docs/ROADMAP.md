@@ -26,6 +26,8 @@ Status: REDESIGN-007 VERIFIED / REDESIGN-008 NOT STARTED
 
 Generic Board editor scope is frozen after 004.3.3 except for the explicitly
 approved REDESIGN-007 select/menu/Delete/native-card presentation corrections.
+The small authorized post-007 placement/default-paint/title polish is an additional
+bounded follow-up, not a new phase or permission to redesign other Board systems.
 Persistence, entity contracts, selection mechanics, voting and Presentation stay
 unchanged. Pick from Board, full voting
 analytics and public slide/sharing features remain deferred. Native OS EyeDropper,

@@ -21,3 +21,5 @@ export default async function ExamplePluginPage() {
     </>
   );
 }
+
+export const metadata = { title: "Example integration" };

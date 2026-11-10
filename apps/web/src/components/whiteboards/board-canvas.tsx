@@ -45,6 +45,8 @@ import {
   type SmartGuide,
 } from "@/modules/whiteboards/guides";
 import { BoardGuides } from "./board-guides";
+import { BoardPlacement } from "./board-placement";
+import type { CreationGeometry } from "@/modules/whiteboards/creation-geometry";
 import { BoardQuickActions } from "./board-quick-actions";
 import { WhiteboardNode, type WhiteboardFlowNode } from "./whiteboard-node";
 import { stabilizeFlowNodes, previewFlowNodes } from "./flow-nodes";
@@ -130,15 +132,10 @@ type Props = DocumentHandlers & {
     id: string | null,
     point: Point,
   ) => void;
-  onSectionDraw: (bounds: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  }) => void;
   action: (action: SelectionAction) => void;
   onMove: (dx: number, dy: number) => void;
-  onInsert: (point: Point) => void;
+  onInsert: (point: Point, geometry?: CreationGeometry) => void;
+  placementImage?: string;
   onImageRequest: (point: Point) => void;
   onFiles: (files: File[], point: Point) => void;
   onPanel: (panel: "INSPECTOR" | "OUTLINE" | "COMMENTS" | null) => void;
@@ -193,10 +190,10 @@ export function BoardCanvas({
   hasClipboard,
   onClipboard,
   onContext,
-  onSectionDraw,
   action,
   onMove,
   onInsert,
+  placementImage,
   onImageRequest,
   onFiles,
   onPanel,
@@ -248,15 +245,7 @@ export function BoardCanvas({
       delta: { dx: number; dy: number };
     } | null>(null);
   const marquee = useRef<{ additive: boolean; base: string[] } | null>(null);
-  const sectionDraw = useRef<{ x: number; y: number } | null>(null),
-    suppressPane = useRef(false);
-  const [region, setRegion] = useState<{
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    } | null>(null),
-    [dropSection, setDropSection] = useState<string | null>(null);
+  const [dropSection, setDropSection] = useState<string | null>(null);
   const viewportKey = `stylus-board-viewport:${userId}:${board.organization_id}:${board.id}`;
   const presentationRestore = useRef<{
     viewport: Viewport;
@@ -966,51 +955,6 @@ export function BoardCanvas({
       onPointerDownCapture={(event) => {
         if (presentationSectionId) return;
         handlePendingPointer(event);
-        if (event.defaultPrevented) return;
-        if (
-          tool === "SECTION" &&
-          editable &&
-          (event.target as Element).closest(".react-flow__pane") &&
-          event.button === 0
-        ) {
-          sectionDraw.current = { x: event.clientX, y: event.clientY };
-        }
-      }}
-      onPointerMoveCapture={(event) => {
-        const start = sectionDraw.current,
-          box = canvas.current?.getBoundingClientRect();
-        if (start && box)
-          setRegion({
-            x: Math.min(start.x, event.clientX) - box.left,
-            y: Math.min(start.y, event.clientY) - box.top,
-            width: Math.abs(start.x - event.clientX),
-            height: Math.abs(start.y - event.clientY),
-          });
-      }}
-      onPointerUpCapture={(event) => {
-        const start = sectionDraw.current;
-        sectionDraw.current = null;
-        setRegion(null);
-        if (
-          start &&
-          Math.hypot(start.x - event.clientX, start.y - event.clientY) > 12
-        ) {
-          const a = flow.current!.screenToFlowPosition(start),
-            b = flow.current!.screenToFlowPosition({
-              x: event.clientX,
-              y: event.clientY,
-            });
-          suppressPane.current = true;
-          setTimeout(() => {
-            suppressPane.current = false;
-          }, 0);
-          onSectionDraw({
-            x: Math.min(a.x, b.x),
-            y: Math.min(a.y, b.y),
-            width: Math.max(24, Math.abs(a.x - b.x)),
-            height: Math.max(24, Math.abs(a.y - b.y)),
-          });
-        }
       }}
       onKeyDown={keys}
       onKeyUp={(event) => {
@@ -1139,10 +1083,6 @@ export function BoardCanvas({
         onNodeContextMenu={handleNodeContextMenu}
         onPaneClick={(event) => {
           if (presentationSectionId) return;
-          if (suppressPane.current) {
-            suppressPane.current = false;
-            return;
-          }
           focusBoardCanvas();
           if (tool === "SELECT") onSelection([]);
           else
@@ -1204,6 +1144,37 @@ export function BoardCanvas({
           />
         ) : null}
       </ReactFlow>
+      {editable &&
+      !presentationSectionId &&
+      tool !== "SELECT" &&
+      tool !== "PAN" &&
+      tool !== "ENTITY_CARD" ? (
+        <BoardPlacement
+          key={`${tool}:${shape}`}
+          tool={tool}
+          shape={shape}
+          image={placementImage}
+          viewport={viewport}
+          toWorld={(point) =>
+            flow.current?.screenToFlowPosition(point) ?? point
+          }
+          getRows={getRows}
+          snap={snapObjects}
+          grid={snapGrid}
+          onPlace={(point, geometry) => onInsert(point, geometry)}
+          onCancel={() => setTool("SELECT")}
+          onContext={(event) =>
+            onContext(
+              event,
+              null,
+              flow.current?.screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+              }) ?? center(),
+            )
+          }
+        />
+      ) : null}
       <div
         hidden={!!presentationSectionId}
         className="contents [&[hidden]]:hidden"
@@ -1248,18 +1219,6 @@ export function BoardCanvas({
                 selected[0] ?? null,
                 center(),
               );
-            }}
-          />
-        ) : null}
-        {region ? (
-          <div
-            aria-hidden
-            className="border-primary bg-primary/5 pointer-events-none absolute z-10 border-2"
-            style={{
-              left: region.x,
-              top: region.y,
-              width: region.width,
-              height: region.height,
             }}
           />
         ) : null}

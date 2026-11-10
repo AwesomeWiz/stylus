@@ -32,6 +32,12 @@ license; no runtime font CDN or new component library.
 
 ## Color and theme
 
+New Board Shapes use centrally defined `--board-shape-fill` and
+`--board-shape-stroke` theme pairs. Creation resolves them to validated authored
+paint; existing persisted/custom colors are never remapped. Light uses
+`#d4d3ce` / `#898780`; dark uses `#484a52` / `#a0a2ab`. The default boundary meets
+3:1 against its canvas in both themes. See [Boards](BOARDS.md).
+
 Directional normal-application balance: about 90% neutral surfaces, 7% primary
 accent, 3% semantic/status. These are qualitative review proportions; user images,
 intentional board objects and collaborator identity are not chrome color quotas.

@@ -35,3 +35,5 @@ export default async function CreativeStudioPage({
     </MarketingPage>
   );
 }
+
+export const metadata = { title: "Create" };

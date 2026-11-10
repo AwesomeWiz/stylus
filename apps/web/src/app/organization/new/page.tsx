@@ -32,3 +32,5 @@ export default async function OrganizationSetupPage() {
     </AuthShell>
   );
 }
+
+export const metadata = { title: "Organization setup" };

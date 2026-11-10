@@ -89,3 +89,5 @@ export default async function TasksPage({
     />
   );
 }
+
+export const metadata = { title: "Tasks" };

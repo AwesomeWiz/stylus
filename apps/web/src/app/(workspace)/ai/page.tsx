@@ -29,3 +29,5 @@ export default async function AIPage() {
     </>
   );
 }
+
+export const metadata = { title: "AI" };

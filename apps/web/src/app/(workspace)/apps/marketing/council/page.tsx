@@ -33,3 +33,5 @@ export default async function AskCouncilPage({
     </MarketingPage>
   );
 }
+
+export const metadata = { title: "Ask Council" };

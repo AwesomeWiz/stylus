@@ -4,6 +4,11 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added small placement cues, precise drawing cursors, drag-sized Shapes/Sections/
+  Lines/Arrows, local image-thumbnail placement and visible neutral defaults for
+  new Shapes. Browser titles now identify the route or authorized Board name.
+  Existing Board colors, persistence and collaboration contracts are retained.
+
 - Added action-led Home attention, Task prerequisites and minimal Milestones,
   bounded Core working Notes with explicit reviewed Memory promotion, and
   recoverable eight-step onboarding drafts. Exact execution provenance and a

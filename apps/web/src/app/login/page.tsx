@@ -19,3 +19,5 @@ export default async function LoginPage({
     </AuthShell>
   );
 }
+
+export const metadata = { title: "Sign in" };

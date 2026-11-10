@@ -2,6 +2,21 @@
 
 # Current
 
+## Final interaction and metadata polish (post-REDESIGN-007)
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Same dedicated branch from `f1d83a044de4871e1e1da46ca2efcce5688fba58`.
+Only placement cues/cursors, bounded drag creation, image thumbnail staging,
+new Shape defaults and meaningful page titles. No schema changes or new phase.
+See PROJECT_STATE and docs/BOARDS.md. Main agent only; no merge/push.
+Affected coverage is 396 tests, with the corrected upload-flow file included in
+a passing 35-test final rerun. Eleven component-browser flow groups, twelve zoom/
+theme samples, responsive/touch-style checks and five production Next title
+checks pass. Lint, worker/web typecheck, production build and scoped delivery
+checks pass. No database/dependency changes or hosted writes. Image drag sizing,
+other entity names and manual target-environment checks remain explicit limits.
+
 ## REDESIGN-007 - Core execution and startup essentials
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

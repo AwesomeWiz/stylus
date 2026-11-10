@@ -4,7 +4,57 @@ Last Updated: 2026-11-10
 
 ## Overall Status
 
-REDESIGN-007 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+POST-REDESIGN-007 INTERACTION / METADATA POLISH COMPLETE / VERIFIED
+
+## Final interaction and metadata polish (post-REDESIGN-007)
+
+Small authorized follow-up on the same branch/worktree, starting at
+`f1d83a044de4871e1e1da46ca2efcce5688fba58`. The completed 007 systems and original
+checkout remain preserved. Main agent only, sequential runners; no merge/push.
+Plan: isolate ephemeral placement feedback, reuse existing creation/coordinates/
+guides, add bounded drag geometry and local picked-image staging, improve only
+new Shape defaults, and use Next metadata with a tenant-authorized Board title.
+No schema, persisted existing-object or workflow redesign is authorized.
+
+Delivered: local constant-size cursor cues, precise tool cursors, six-pixel click/
+drag distinction, world-space Shape/Line/Arrow/Section drawing, existing snapping,
+Shift constraints and one-shot create/history. Text enters the existing editor.
+Picked image files remain local until placement, with actual blob thumbnails,
+safe fallback and URL cleanup. Only new Shapes receive visible theme defaults.
+Next metadata covers all 34 existing pages (33 static, one authorized named Board),
+with bounded plain-text titles and a stable Board fallback. No database changes.
+
+Affected regression coverage spans 68 files / 396 tests: 395 passed initially;
+one legacy upload test expected immediate upload on file selection. It now also
+asserts zero uploads before placement. The corrected Workspace/placement/title
+rerun passes all 35 tests across three files; no failure remains. Eleven new
+tests cover geometry, release-only creation, cues/fallback and title authority.
+The complete web suite is not repeated for this bounded patch; the unchanged
+baseline's full 252-file / 1,409-test result remains recorded below. Relevant
+Board/layout/metadata coverage, lint (zero warnings), worker/web typecheck and
+the final production build pass. Worker and database code remain unchanged.
+
+Actual production-bundled component browser QA passes 11 flow groups, six zooms
+in both themes (10/25/50/100/200/400%), responsive 390/768/1440px checks, touch-style
+placement, cancellation/undo/read-only safety, real local image previews and
+selected/unselected Shape paint with grid on/off. Boundary contrast exceeds 3:1
+in both themes; prior Shape colors remain unchanged. These checks use explicit
+synthetic actions/reads/Realtime, not hosted writes. Five additional checks against
+the actual production Next server verify public titles, client navigation and
+safe unauthenticated Board entry. Tenant/RLS/fallback metadata tests pass.
+Helpers and isolated browser storage are cleaned up. No backend fixtures created.
+
+Scoped formatting, all 34 route/title declarations, 57 local Markdown links,
+whitespace and secret/artifact review pass across 57 changed/new files (48
+source/test/style files). CSS formatting only normalizes line endings beyond the
+four new token declarations. No schema/dependency/provider/worker changes, subagents,
+merge or push. This is a small completed follow-up, not REDESIGN-008.
+
+Limits: image drag sizing and center-origin modifiers are deferred. Named entity
+metadata is Board-only; Competitor keeps a safe generic title rather than adding
+plugin data reads. Manual NVDA, physical devices, other browser engines and fresh
+authenticated hosted metadata/persistence smoke tests were not performed here.
+The existing hosted persistence baseline is preserved, not claimed as a new run.
 
 ## REDESIGN-007 - Core execution and startup essentials
 

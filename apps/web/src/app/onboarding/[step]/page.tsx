@@ -113,3 +113,5 @@ export default async function OnboardingStepPage({
     </OnboardingShell>
   );
 }
+
+export const metadata = { title: "Company setup" };

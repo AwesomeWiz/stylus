@@ -9,6 +9,8 @@
 }
 
 :root {
+  --board-shape-fill: #d4d3ce;
+  --board-shape-stroke: #898780;
   color-scheme: light;
   --brand: #4f5bd5;
   --background: #f7f6f2;
@@ -157,6 +159,8 @@
 }
 
 .dark {
+  --board-shape-fill: #484a52;
+  --board-shape-stroke: #a0a2ab;
   color-scheme: dark;
   --background: #111216;
   --foreground: #f4f3ef;

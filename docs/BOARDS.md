@@ -1,5 +1,59 @@
 # Boards V2 interaction and creative usability
 
+## Placement and metadata polish (post-REDESIGN-007)
+
+An ephemeral placement layer owns the primary canvas gesture while a creation
+tool is active. It leaves toolbar/panels outside that layer. Cursor cues use
+crosshair for Shapes/Sections/Line/Arrow/Sticky, text for Text and copy for images/
+links. A 48x40px maximum ghost at 50% opacity stays in screen space; it cannot
+receive input, enter Layers/search/history or broadcast/persist. Movement updates
+only this local component, not the document or full canvas tree.
+
+A six-screen-pixel threshold retains click insertion with existing defaults.
+Shapes, Sections and Line/Arrow support drag creation. The actual live preview
+uses world coordinates through React Flow's existing conversion and viewport.
+Guide/grid snapping reuses the existing bounded guide index and engine. Shift
+constrains equal Shape dimensions or 45-degree Line/Arrow angles. Unconstrained
+Circle drawing uses the already supported ellipse shape. Existing 24–10,000-unit
+dimension limits apply visibly to preview and committed geometry. Lines/arrows
+use existing rotation and renderer geometry, with exact drawn start/end points.
+There is one existing authorized create/history intent on release and none on
+movement. Section ownership/containment remains unchanged. Escape, pointer cancel,
+tool switching and right-click cancel without creating an object; right-click
+then opens the ordinary menu. Successful insertion returns to Select. Text hands
+focus to its existing editor after the create succeeds.
+
+Picked PNG/JPEG/WebP files stay local until placement; no upload or object is
+created by choosing them. A bounded aspect-preserving blob thumbnail follows the
+cursor, with an icon fallback on unavailable/failed decoding. Blob URLs are
+revoked on completion, replacement, cancellation or unmount. Placement reuses
+the existing bounded batch upload/retry path and dimensions. File drop/paste and
+replacement retain their existing behavior. Drag-sized image insertion and
+Alt/center-origin drawing are deliberately deferred.
+
+Only new Shapes receive current-theme `--board-shape-fill` and
+`--board-shape-stroke` defaults. Paint is validated and persisted as authored HEX;
+old objects and custom color/None/alpha controls remain unchanged. The light pair
+is `#d4d3ce` / `#898780`, the dark pair `#484a52` / `#a0a2ab`.
+
+Next metadata owns static route titles through `%s — Stylus`. Board metadata
+resolves the active row using current workspace authority, organization filtering
+and RLS; metadata/page share only a React request-scoped row lookup. Parent title
+is Board while unresolved. Authorized live renames reuse the same plain, bounded
+80-character title helper. No query-selected Task/Note title or internal ID is
+inserted into metadata. Generic titles remain for other detail surfaces.
+
+Focused regression covers 68 files / 396 tests; the sole initial failure was an
+old immediate-upload expectation. The corrected Workspace/placement/title rerun
+passes 35 tests. Lint/typecheck/production build pass. Eleven browser flow groups
+include six zooms in both themes, touch-style input, cancellation/history and
+responsive placement. Default stroke contrast exceeds 3:1 in both themes, with
+grid on/off and unselected objects. Public title/client-navigation/recovery checks
+also pass on the actual production Next server. Final delivery is recorded in
+PROJECT_STATE. Component browser evidence replaces only transport with explicit
+synthetic actions/reads/Realtime; it is not a new hosted persistence benchmark or
+manual NVDA/device certification. No hosted records were created or modified.
+
 ## Approved interaction polish (REDESIGN-007 continuation)
 
 Context menus portal outside the transformed canvas, into an enclosing modal

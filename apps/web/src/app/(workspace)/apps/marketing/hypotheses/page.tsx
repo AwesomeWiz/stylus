@@ -6,3 +6,5 @@ export default async function Page({
 }) {
   return <GrowthPage kind="hypothesis" searchParams={searchParams} />;
 }
+
+export const metadata = { title: "Hypotheses" };
