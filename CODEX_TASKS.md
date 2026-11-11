@@ -2,6 +2,16 @@
 
 # Current
 
+Placement cursor stability follow-up: COMPLETE / VERIFIED. Fixed dual-tone,
+screen-space app cursor replaces native placement cursors; Image Escape/chooser
+cancellation restores Select. Focused tests: 32 pass. Prolonged light/dark Chrome
+hover, zoom/drag/theme/reset checks, lint, web typecheck and build pass. No database
+changes, subagents, merge or push; prior Tasks styling work remains preserved.
+
+Tasks navigation styling follow-up: COMPLETE / VERIFIED. Milestones shares the
+Tasks view-link renderer, without text underline; only the active view has the
+Stylus indicator. Existing Tasks tests (19), lint, web typecheck and build pass.
+
 ## Final interaction and metadata polish (post-REDESIGN-007)
 
 Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW

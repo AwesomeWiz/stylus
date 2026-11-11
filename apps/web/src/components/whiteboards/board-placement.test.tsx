@@ -60,6 +60,9 @@ describe("ephemeral Board placement", () => {
     (zoom) => {
       const { surface, place, container } = setup("SHAPE", zoom);
       fireEvent.pointerMove(surface, point(100, 100));
+      const cursor = container.querySelector("[data-placement-cursor]")!;
+      expect(cursor.getAttribute("width")).toBe("20");
+      expect(surface).toHaveStyle({ cursor: "none" });
       expect(container.querySelector("[data-placement-ghost]")).not.toBeNull();
       fireEvent.pointerDown(surface, point(100, 100));
       for (let i = 1; i <= 10; i++)
@@ -69,6 +72,12 @@ describe("ephemeral Board placement", () => {
         container.querySelector("[data-placement-drawing]"),
       ).not.toBeNull();
       expect(container.querySelector("[data-placement-ghost]")).toBeNull();
+      expect(container.querySelector("[data-placement-cursor]")).toBe(cursor);
+      expect(
+        [...cursor.querySelectorAll("path")].map((path) =>
+          path.getAttribute("stroke"),
+        ),
+      ).toEqual(["#ffffff", "#191a1d"]);
       fireEvent.pointerUp(surface, point(200, 150));
       expect(place).toHaveBeenCalledExactlyOnceWith(
         { x: 50 / zoom, y: 80 / zoom },
@@ -131,7 +140,8 @@ describe("ephemeral Board placement", () => {
     expect(place).not.toHaveBeenCalled();
     rerender(<BoardPlacement key="text" {...props} tool="TEXT" />);
     expect(container.querySelector("[data-placement-ghost]")).toBeNull();
-    expect(container.firstElementChild).toHaveStyle({ cursor: "text" });
+    expect(container.querySelector("[data-placement-cursor]")).toBeNull();
+    expect(container.firstElementChild).toHaveStyle({ cursor: "none" });
   });
   it("shares grid snapping and constrains arrow angles", () => {
     const { props, rerender, surface, place } = setup();

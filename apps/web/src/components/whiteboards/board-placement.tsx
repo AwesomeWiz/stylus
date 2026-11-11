@@ -54,12 +54,6 @@ export function BoardPlacement({
       guides: SmartGuide[];
     } | null>(null);
   const draw = tool === "SHAPE" || tool === "SECTION" || tool === "ARROW";
-  const cursor =
-    tool === "IMAGE" || tool === "LINK"
-      ? "copy"
-      : tool === "TEXT"
-        ? "text"
-        : "crosshair";
   function update(event: React.PointerEvent) {
     const box = root.current!.getBoundingClientRect();
     setPointer({ x: event.clientX - box.left, y: event.clientY - box.top });
@@ -98,11 +92,13 @@ export function BoardPlacement({
       ref={root}
       data-board-placement={tool}
       className="absolute inset-0 z-[5] touch-none"
-      style={{ cursor }}
+      style={{ cursor: "none" }}
+      onPointerEnter={update}
       onPointerDown={(event) => {
         if (event.button !== 0 || start.current) return;
         event.preventDefault();
         event.stopPropagation();
+        update(event);
         const point = toWorld({ x: event.clientX, y: event.clientY });
         const index = buildGuideIndex(getRows(), new Set(), {
           ...point,
@@ -208,6 +204,23 @@ export function BoardPlacement({
           viewport={viewport}
           spacing={null}
         />
+      ) : null}
+      {pointer ? (
+        <svg
+          aria-hidden
+          data-placement-cursor
+          className="pointer-events-none absolute z-20"
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          style={{ left: pointer.x - 10, top: pointer.y - 10 }}
+          fill="none"
+          strokeLinecap="round"
+        >
+          {/* Fixed dual-tone paint stays readable over either theme and user images. */}
+          <path d="M10 3V17M3 10H17" stroke="#ffffff" strokeWidth="4" />
+          <path d="M10 3V17M3 10H17" stroke="#191a1d" strokeWidth="2" />
+        </svg>
       ) : null}
     </div>
   );

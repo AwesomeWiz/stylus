@@ -1312,3 +1312,10 @@ titles. A Board name is obtained only through current workspace authority and
 an active tenant/RLS-filtered record. React memoization shares that row within
 the render request; no global cache or additional entity payload is introduced.
 No transient save/count states or invented detail routes enter titles.
+
+Placement cursor stability follow-up: use fixed dual-tone SVG paint in the
+screen-space placement layer instead of native crosshair/text/copy cursors, which
+can vary with browser/OS settings. A 20px indicator has a dark centre and white
+halo in both themes, independent of content and delayed theme resolution. Native
+cursors are hidden only within placement; ordinary UI/dialog cursors remain.
+Unmounting the layer resets the cursor without global document cursor overrides.

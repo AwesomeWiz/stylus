@@ -309,6 +309,7 @@ export function BoardCanvas({
   }
   function imageRequest() {
     onImageRequest(center());
+    requestAnimationFrame(focusBoardCanvas);
   }
   const chosen = useMemo(() => expandedIds(rows, selected), [rows, selected]);
   const structure = useMemo(
@@ -767,12 +768,17 @@ export function BoardCanvas({
   function keys(event: KeyboardEvent<HTMLDivElement>) {
     if (presentationSectionId) return;
     if (!event.currentTarget.contains(event.target as Node)) return;
-    if (
-      (event.target as HTMLElement).closest(
-        "input,textarea,select,button,a,summary,[contenteditable]:not([contenteditable=false]),[role=textbox],[role=combobox],[role=dialog]",
-      )
-    )
-      return;
+    const control = (event.target as HTMLElement).closest(
+      "input,textarea,select,button,a,summary,[contenteditable]:not([contenteditable=false]),[role=textbox],[role=combobox],[role=dialog]",
+    );
+    const cancelPlacement =
+      event.key === "Escape" &&
+      tool !== "SELECT" &&
+      tool !== "PAN" &&
+      tool !== "ENTITY_CARD" &&
+      control?.matches("button,a,summary") &&
+      !control.closest("[role=dialog],[data-board-popup]");
+    if (control && !cancelPlacement) return;
     const command = event.ctrlKey || event.metaKey,
       key = event.key.toLowerCase();
     if (

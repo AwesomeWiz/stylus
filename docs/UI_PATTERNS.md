@@ -38,8 +38,8 @@ feature specification.
 
 ## Persistent workspace and navigation
 
-Post-REDESIGN-007 placement uses a small screen-space cue plus a tool-specific
-cursor. Drawing previews are local world geometry; only release creates work.
+Post-REDESIGN-007 placement uses a small screen-space object cue plus a stable
+outlined app cursor. Drawing previews are local world geometry; only release creates work.
 Escape/tool changes cancel. Next metadata identifies routes and authorized Board
 names with `— Stylus`; focus navigation never overwrites those titles. See
 [Boards](BOARDS.md) for the bounded creation and image-preview contracts.

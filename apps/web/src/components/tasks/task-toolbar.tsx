@@ -79,15 +79,24 @@ export function TaskToolbar({
     router.push(taskHref(query, patch), { scroll: false });
     setOpen(false);
   }
-  function viewLink(label: string, view: TaskView) {
+  const milestonesActive = new URLSearchParams(query).get("milestones") === "1";
+  function viewLink(label: string, view: TaskView | "milestones") {
+    const active =
+      view === "milestones"
+        ? milestonesActive
+        : !milestonesActive && filters.view === view;
     return (
       <Link
-        aria-current={filters.view === view ? "page" : undefined}
+        aria-current={active ? "page" : undefined}
         className={cn(
-          "text-muted-foreground hover:text-foreground inline-flex min-h-10 shrink-0 items-center border-b-2 border-transparent px-2 text-sm font-medium",
-          filters.view === view && "border-primary text-foreground",
+          "text-muted-foreground hover:text-foreground inline-flex min-h-10 shrink-0 items-center border-b-2 border-transparent px-2 text-sm font-medium no-underline",
+          active && "border-primary text-foreground",
         )}
-        href={taskHref(query, { view }) as Route}
+        href={
+          view === "milestones"
+            ? "/tasks?milestones=1"
+            : (taskHref(query, { view }) as Route)
+        }
         key={view}
       >
         {label}
@@ -123,12 +132,7 @@ export function TaskToolbar({
         className="mt-5 flex flex-wrap items-center gap-x-1 border-b"
       >
         {primary.map(([label, view]) => viewLink(label, view))}
-        <Link
-          href="/tasks?milestones=1"
-          className="text-muted-foreground inline-flex min-h-11 items-center px-2 text-sm underline"
-        >
-          Milestones
-        </Link>
+        {viewLink("Milestones", "milestones")}
         <details className="relative ml-1">
           <summary className="text-muted-foreground hover:text-foreground flex min-h-10 cursor-pointer items-center px-2 text-sm">
             {secondary.find(([, view]) => view === filters.view)?.[0] ??

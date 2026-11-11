@@ -6,6 +6,25 @@ Last Updated: 2026-11-10
 
 POST-REDESIGN-007 INTERACTION / METADATA POLISH COMPLETE / VERIFIED
 
+Tasks navigation follow-up: Milestones now uses the same view-link renderer and
+explicit no-underline styling as other Tasks views. Only the selected view receives
+the primary border indicator and `aria-current`. The 19 existing Tasks tests,
+lint, web typecheck and production web build pass. No data or permission changes.
+
+Placement cursor stability follow-up: FIXED. Creation uses a 20px screen-space
+SVG crosshair with fixed dark centre/white halo; native cursors are hidden only
+inside placement. Its paint persists through drawing and viewport/theme changes,
+and unmounts on finish/cancel/tool switch. Image requests restore canvas focus;
+native file-chooser cancellation also clears placement with a cleaned-up listener.
+Escape from canvas navigation buttons also cancels placement; editing fields and
+dialog/popup keyboard handling remain guarded.
+All 32 focused placement/workspace tests pass. Automated Chrome records 266
+unchanged hover samples over 31 seconds per theme, plus drag, content hover,
+10/100/400% zoom, same-session theme/zoom/fit changes and all reset paths.
+Lint, web typecheck, production build and scoped formatting/diff checks pass.
+QA uses actual components with synthetic transport; no hosted records change.
+Temporary browser/server helpers are stopped. The earlier Tasks tab fix is preserved.
+
 ## Final interaction and metadata polish (post-REDESIGN-007)
 
 Small authorized follow-up on the same branch/worktree, starting at

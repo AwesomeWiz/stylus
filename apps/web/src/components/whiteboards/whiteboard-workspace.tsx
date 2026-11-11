@@ -249,6 +249,16 @@ export function WhiteboardWorkspace({
     picker = useRef<HTMLInputElement>(null);
   const imagePosition = useRef<Point>({ x: 0, y: 0 }),
     replacement = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const input = picker.current;
+    const cancel = () => {
+      replacement.current = undefined;
+      changeTool("SELECT");
+      focusBoardCanvas();
+    };
+    input?.addEventListener("cancel", cancel);
+    return () => input?.removeEventListener("cancel", cancel);
+  }, [changeTool]);
   const selectedRows = useMemo(
     () => selectionRoots(rows, selected),
     [rows, selected],

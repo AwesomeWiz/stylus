@@ -627,7 +627,7 @@ describe("Boards V2 workspace", () => {
     await waitFor(() => expect(mocks.operation).toHaveBeenCalledTimes(3));
     expect(mocks.operation.mock.calls[2]![0].upserts[0].id).toBe(id);
   });
-  it("opens the native image picker synchronously before upload", () => {
+  it("opens the native image picker synchronously and restores placement cancellation focus", async () => {
     mount([]);
     const click = vi.spyOn(
       screen.getByLabelText("Upload board images"),
@@ -635,6 +635,22 @@ describe("Boards V2 workspace", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Image" }));
     expect(click).toHaveBeenCalledOnce();
+    expect(mocks.upload).not.toHaveBeenCalled();
+    const canvas = screen.getByRole("region", { name: "Board canvas" });
+    await waitFor(() => expect(canvas).toHaveFocus());
+    fireEvent.keyDown(canvas, { key: "Escape" });
+    expect(document.querySelector("[data-board-placement]")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Image" }));
+    fireEvent.keyDown(screen.getByRole("button", { name: "Zoom in" }), {
+      key: "Escape",
+    });
+    expect(document.querySelector("[data-board-placement]")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Image" }));
+    fireEvent(
+      screen.getByLabelText("Upload board images"),
+      new Event("cancel", { bubbles: true }),
+    );
+    expect(document.querySelector("[data-board-placement]")).toBeNull();
     expect(mocks.upload).not.toHaveBeenCalled();
   });
   it("blocks duplicate creation during a pending request", async () => {

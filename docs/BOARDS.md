@@ -3,9 +3,18 @@
 ## Placement and metadata polish (post-REDESIGN-007)
 
 An ephemeral placement layer owns the primary canvas gesture while a creation
-tool is active. It leaves toolbar/panels outside that layer. Cursor cues use
-crosshair for Shapes/Sections/Line/Arrow/Sticky, text for Text and copy for images/
-links. A 48x40px maximum ghost at 50% opacity stays in screen space; it cannot
+tool is active. It leaves toolbar/panels outside that layer. Native placement
+cursors are hidden: every creation tool uses a 20px app-rendered crosshair with
+a fixed dark centre (`#191a1d`, 2px) and thin white halo (`#ffffff`, 4px total
+stroke). Neither paint inherits theme or object colours. It remains above drawing
+previews/guides but below menus/dialogs, with pointer events disabled and no canvas
+zoom transform. The cursor remains during dragging; the separate object ghost
+identifies the tool. Entering/down updates its position immediately; leaving
+placement unmounts it and restores the normal native Select/edit cursor. Image
+picker requests retain canvas cancellation focus, and native chooser cancellation
+clears placement. Escape also cancels when canvas navigation buttons retain focus,
+while editing fields and dialog/popups keep their keyboard handling.
+A 48x40px maximum ghost at 50% opacity stays in screen space; it cannot
 receive input, enter Layers/search/history or broadcast/persist. Movement updates
 only this local component, not the document or full canvas tree.
 
@@ -53,6 +62,13 @@ also pass on the actual production Next server. Final delivery is recorded in
 PROJECT_STATE. Component browser evidence replaces only transport with explicit
 synthetic actions/reads/Realtime; it is not a new hosted persistence benchmark or
 manual NVDA/device certification. No hosted records were created or modified.
+
+Cursor stability follow-up: focused placement/workspace tests pass 32 cases.
+Automated Chrome samples cover 31 seconds per theme over canvas, dark/light
+Shapes, images, Stickies and Sections (266 samples with identical paint), drag,
+10/100/400% zoom, same-session theme changes, zoom/fit translation, repeated tool
+changes, successful creation and Escape/right-click/file-chooser cancellation.
+The native picker remains synchronous; its cancel listener is removed on unmount.
 
 ## Approved interaction polish (REDESIGN-007 continuation)
 
