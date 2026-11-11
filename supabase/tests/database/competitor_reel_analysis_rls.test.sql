@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(23);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000141','00000000-0000-0000-0000-000000000000','authenticated','authenticated','reel-owner@example.test','',now(),'{}','{}',now(),now()),
@@ -18,6 +18,10 @@ insert into public.memberships(organization_id,user_id,role) values
 
 set local role authenticated;
 select set_config('request.jwt.claim.role','authenticated',true);
+-- Both tenants must have Marketing enabled so the foreign-key assertion below
+-- reaches tenant relation validation rather than failing the plugin gate first.
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000144',true);
+select public.set_organization_plugin_enabled('10000000-0000-0000-0000-000000000142','marketing',true);
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000141',true);
 select public.set_organization_plugin_enabled('10000000-0000-0000-0000-000000000141','marketing',true);
 select lives_ok($$ insert into public.marketing_competitors(id,organization_id,name,created_by,updated_by) values('20000000-0000-4000-8000-000000000141','10000000-0000-0000-0000-000000000141','Observed Co','00000000-0000-0000-0000-000000000141','00000000-0000-0000-0000-000000000141') $$,'owner creates parent competitor');
@@ -40,11 +44,16 @@ select lives_ok($$ select public.enqueue_competitor_reel_analysis('10000000-0000
 select results_eq($$ select count(*)::integer from public.jobs where job_type='marketing.competitor-reel.extract' $$,array[1]::integer[],'one external job created');
 select results_eq($$ select count(*)::integer from public.marketing_competitor_reel_analyses where analysis_version=1 and job_id is not null $$,array[1]::integer[],'version one links its job');
 select throws_ok($$ select public.enqueue_competitor_reel_analysis('10000000-0000-0000-0000-000000000141','30000000-0000-4000-8000-000000000141') $$,'22023',null,'duplicate active analysis rejected');
+select throws_ok($$ select * from public.job_definitions $$,'42501',null,'browser cannot read the private job registry');
+-- Inspect deployment configuration as the test owner; browser access to the
+-- private job registry remains revoked. Restore the actor before mutations.
+reset role;
 select results_eq($$ select execution_class::text from public.job_definitions where job_type='marketing.competitor-reel.extract' $$,array['EXTERNAL_WORKER'::text],'job is external worker only');
-select results_eq($$ select public.has_function_privilege('authenticated','public.worker_authorize_reel_media(text,uuid)','execute') $$,array[false],'browser cannot authorize worker media');
-select results_eq($$ select public.has_function_privilege('service_role','public.worker_authorize_reel_media(text,uuid)','execute') $$,array[true],'service broker may authorize worker media');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.worker_authorize_reel_media(text,uuid)','execute') $$,array[false],'browser cannot authorize worker media');
+select results_eq($$ select pg_catalog.has_function_privilege('service_role','public.worker_authorize_reel_media(text,uuid)','execute') $$,array[true],'service broker may authorize worker media');
 select results_eq($$ select public from storage.buckets where id='marketing-reel-media' $$,array[false],'media bucket is private');
 select results_eq($$ select file_size_limit::bigint from storage.buckets where id='marketing-reel-media' $$,array[104857600::bigint],'bucket enforces 100 MiB');
+set local role authenticated;
 select lives_ok($$ update public.marketing_competitor_reels set archived_at=now() where id='30000000-0000-4000-8000-000000000141' $$,'Reel soft archives');
 select lives_ok($$ update public.marketing_competitor_reels set archived_at=null where id='30000000-0000-4000-8000-000000000141' $$,'Reel restores');
 select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000141' $$,array[0]::integer[],'analysis enqueue creates no memory');

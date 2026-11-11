@@ -41,13 +41,13 @@ insert into public.marketing_performance_learnings(
 ('15000000-0000-4000-8000-000000000202','10000000-0000-0000-0000-000000000202','INSTAGRAM','REEL','SEVEN_DAY','SAVE_RATE_BY_REACH','CONTENT_OPPORTUNITY_TYPE','MYTH_BUSTING',3,6,0.07,0.05,0.02,'WEAK','Foreign learning',array['Association is not causation.'],'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2','00000000-0000-0000-0000-000000000204');
 
 select ok(
-  not public.has_table_privilege(
+  not pg_catalog.has_table_privilege(
     'authenticated','public.marketing_ask_council_messages','insert'
   ),
   'browser cannot forge Ask Council messages'
 );
 select ok(
-  not public.has_function_privilege(
+  not pg_catalog.has_function_privilege(
     'authenticated',
     'public.start_marketing_ask_council_turn(uuid,uuid,uuid,uuid,text,text,text[],jsonb,jsonb)',
     'execute'
@@ -55,7 +55,7 @@ select ok(
   'browser cannot start a trusted Ask Council turn directly'
 );
 select ok(
-  public.has_function_privilege(
+  pg_catalog.has_function_privilege(
     'service_role',
     'public.start_marketing_ask_council_turn(uuid,uuid,uuid,uuid,text,text,text[],jsonb,jsonb)',
     'execute'
@@ -63,7 +63,7 @@ select ok(
   'trusted service can start a guarded Ask Council turn'
 );
 select ok(
-  public.has_function_privilege(
+  pg_catalog.has_function_privilege(
     'service_role',
     'public.record_marketing_ask_council_specialist(uuid,uuid,uuid,smallint,text,uuid,jsonb)',
     'execute'
@@ -71,7 +71,7 @@ select ok(
   'trusted service can record a guarded specialist result'
 );
 select ok(
-  public.has_function_privilege(
+  pg_catalog.has_function_privilege(
     'service_role',
     'public.complete_marketing_ask_council_turn(uuid,uuid,uuid,uuid,jsonb)',
     'execute'
@@ -79,7 +79,7 @@ select ok(
   'trusted service can complete a guarded Ask Council turn'
 );
 select ok(
-  public.has_function_privilege(
+  pg_catalog.has_function_privilege(
     'authenticated',
     'public.set_marketing_ask_council_conversation_archived(uuid,uuid,boolean)',
     'execute'
@@ -158,7 +158,7 @@ select lives_ok($$
     '00000000-0000-0000-0000-000000000202',
     (select id from public.marketing_ask_council_turns
       where idempotency_key='20000000-0000-4000-8000-000000000201'),
-    1,'marketing.content-strategist',
+    1::smallint,'marketing.content-strategist',
     '30000000-0000-4000-8000-000000000201',
     '{"recommendation":"Run one controlled test."}'::jsonb
   )
@@ -166,6 +166,7 @@ $$,'service records the exact selected specialist with valid AI provenance');
 reset role;
 select results_eq($$
   select count(*)::integer from public.marketing_ask_council_specialist_results
+  where organization_id='10000000-0000-0000-0000-000000000201'
 $$,array[1]::integer[],'one specialist result is persisted');
 
 set local role service_role;
@@ -182,11 +183,11 @@ $$,'service creates an assistant answer only after all specialists succeed');
 reset role;
 select results_eq($$
   select count(*)::integer from public.marketing_ask_council_messages
-  where role='ASSISTANT'
+  where organization_id='10000000-0000-0000-0000-000000000201' and role='ASSISTANT'
 $$,array[1]::integer[],'successful completion creates one assistant message');
 select results_eq($$
   select count(*)::integer from public.marketing_ask_council_turns
-  where status='SUCCEEDED'
+  where organization_id='10000000-0000-0000-0000-000000000201' and status='SUCCEEDED'
 $$,array[1]::integer[],'completed turn has a terminal success state');
 select results_eq($$
   select count(*)::integer from public.activity_events
@@ -200,7 +201,8 @@ select lives_ok($$
   select public.start_marketing_ask_council_turn(
     '10000000-0000-0000-0000-000000000201',
     '00000000-0000-0000-0000-000000000202',
-    (select id from public.marketing_ask_council_conversations limit 1),
+    (select id from public.marketing_ask_council_conversations
+      where organization_id='10000000-0000-0000-0000-000000000201'),
     '20000000-0000-4000-8000-000000000203','Will failure create an answer?','GENERAL_MARKETING',
     array['marketing.content-strategist']::text[],'{}'::jsonb,'[]'::jsonb
   )
@@ -211,7 +213,7 @@ select lives_ok($$
     '00000000-0000-0000-0000-000000000202',
     (select id from public.marketing_ask_council_turns
       where idempotency_key='20000000-0000-4000-8000-000000000203'),
-    'UNKNOWN',null,null
+    'unknown',null,null
   )
 $$,'service records a safe failed follow-up without an assistant answer');
 reset role;
@@ -225,7 +227,7 @@ $$,array[1]::integer[],'failed follow-up adds no successful assistant message');
 select results_eq($$
   select count(*)::integer from public.marketing_ask_council_turns
   where idempotency_key='20000000-0000-4000-8000-000000000203'
-    and status='FAILED' and failure_category='UNKNOWN'
+    and status='FAILED' and failure_category='unknown'
 $$,array[1]::integer[],'failed follow-up retains only normalized failure state');
 
 set local role authenticated;
@@ -236,19 +238,23 @@ select throws_ok($$
     organization_id,conversation_id,role,content,ai_run_id,structured_output
   ) values (
     '10000000-0000-0000-0000-000000000201',
-    (select id from public.marketing_ask_council_conversations limit 1),
+    (select id from public.marketing_ask_council_conversations
+      where organization_id='10000000-0000-0000-0000-000000000201'),
     'ASSISTANT','Forged answer','30000000-0000-4000-8000-000000000202','{}'
   )
 $$,'42501',null,'authenticated MEMBER cannot forge an assistant message');
 reset role;
 select throws_ok($$
   update public.marketing_ask_council_messages set content='Rewritten history'
+  where organization_id='10000000-0000-0000-0000-000000000201'
 $$,'42501',null,'message update is blocked by immutable trigger');
 select throws_ok($$
   delete from public.marketing_ask_council_messages
+  where organization_id='10000000-0000-0000-0000-000000000201'
 $$,'42501',null,'message deletion is blocked by immutable trigger');
 select throws_ok($$
   update public.marketing_ask_council_turns set intent='BRAND'
+  where organization_id='10000000-0000-0000-0000-000000000201'
 $$,'42501',null,'turn routing provenance is immutable');
 
 set local role authenticated;
@@ -264,20 +270,22 @@ $$,array[3]::integer[],'VIEWER reads same-organization Ask Council history');
 select throws_ok($$
   select public.set_marketing_ask_council_conversation_archived(
     '10000000-0000-0000-0000-000000000201',
-    (select id from public.marketing_ask_council_conversations limit 1),true
+    (select id from public.marketing_ask_council_conversations
+      where organization_id='10000000-0000-0000-0000-000000000201'),true
   )
 $$,'42501',null,'VIEWER cannot archive a conversation');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000202',true);
 select lives_ok($$
   select public.set_marketing_ask_council_conversation_archived(
     '10000000-0000-0000-0000-000000000201',
-    (select id from public.marketing_ask_council_conversations limit 1),true
+    (select id from public.marketing_ask_council_conversations
+      where organization_id='10000000-0000-0000-0000-000000000201'),true
   )
 $$,'MEMBER may archive completed conversation history');
 reset role;
 select results_eq($$
   select count(*)::integer from public.marketing_ask_council_conversations
-  where archived_at is not null
+  where organization_id='10000000-0000-0000-0000-000000000201' and archived_at is not null
 $$,array[1]::integer[],'conversation archival preserves its history');
 
 set local role authenticated;

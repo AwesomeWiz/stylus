@@ -1,7 +1,8 @@
 # Integrations and external context
 
-REDESIGN-008 · implementation present; validation finished with open acceptance gates. Live-provider QA is pending isolated
-test app configuration. No personal provider accounts or credentials are used.
+REDESIGN-008 · accepted through REDESIGN-008.1. The owner's closure brief records
+successful live GitHub, Google Drive and Google Calendar QA. No credentials or
+real external resource names are included in this document.
 
 Settings → Integrations manages GitHub, Google Drive and Google Calendar. Existing
 trusted business plugins remain managed through Apps. Integrations are optional:
@@ -192,11 +193,23 @@ Local provider/security and component tests, real Supabase JWT isolation smoke,
 authenticated optional-configuration browser checks and hosted schema/RLS checks
 are recorded in PROJECT_STATE. Full web (264 files / 1,512 tests), worker tests,
 lint, both typechecks and the production build pass. The new 54-assertion RLS suite
-passes locally and hosted; all 51 migration versions match. The expanded local SQL
-audit reproduces three unchanged legacy fixture/bootstrap failures, documented in
-PROJECT_STATE, so the overall SQL gate is not green. Isolated fixtures and helpers
-are cleaned. No final REDESIGN-008 PASS or REDESIGN-009 readiness is claimed. Live OAuth,
-installation permissions and real provider CRUD recovery remain **unverified**
-until isolated apps are configured. No production success claim follows from
-mocked provider results. The task must record local SQL/RLS and hosted ledger
-verification separately before a final PASS.
+passes locally and hosted; all 51 migration versions match. REDESIGN-008.1 repairs
+legacy SQL setup and fixture-scopes service-side cache counts without changing
+application code, provider adapters, OAuth, RLS or migrations. All 29 suites pass
+1,018 assertions in isolated PostgreSQL with real pgcrypto and no privilege aliases.
+Native hosted rollback-only checks pass Ask Council 35, Competitor 23, Workers 23
+and integration isolation 54. Focused integration web tests pass 92; final lint,
+web/worker typechecks and production build pass. Full web/worker runtime suites
+are not repeated for fixture-only changes.
+
+The owner reports live GitHub installation/OAuth/discovery, repository selection,
+repository/Issue/PR/Commit links, external opening, unlink/relink and connection
+persistence as passed. Drive consent, private metadata search, linking, external
+opening and unlink passed. Calendar consent, private event search/linking, explicit
+real event creation and no automatic sync passed. **LIVE PROVIDER QA: PREVIOUS PASS
+REMAINS VALID**; provider retesting was not required by these SQL-only repairs.
+This records the supplied live acceptance, separately from automated mock results.
+REDESIGN-008 is PASS and ready for review; REDESIGN-009 is not started. Manual NVDA,
+physical device/other-engine QA and optional deferred features remain outside this
+closure. Detailed baseline causality, fixture fixes and verification are in
+PROJECT_STATE. Hosted tests roll back; no task credentials or QA artifacts ship.

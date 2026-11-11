@@ -14,7 +14,7 @@ with bounded batches, short scoped cache and client expiry, without polling.
 Explicit Calendar writes use account-bound durable intent receipts and exact
 event IDs for recovery. There are no generic Board changes, webhooks, new AI,
 automatic Calendar sync or Memory ingestion. See [Integrations](INTEGRATIONS.md)
-and ADR-055 for scope, setup and pending live-provider verification.
+and ADR-055 for scope, setup and completed acceptance verification.
 
 Post-REDESIGN-007 placement polish keeps preview/drawing state local to an
 ephemeral canvas input layer. Only release enters the existing authorized create/

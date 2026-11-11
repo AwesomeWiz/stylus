@@ -7,8 +7,13 @@ All notable user-facing changes to Stylus will be documented here.
 - Added Settings → Integrations for organization GitHub and private Google Drive/
   Calendar, reusable connected-resource references on execution work, secure
   server-side OAuth credentials and explicit recoverable Calendar event creation.
-  Integrations remain optional. Live isolated provider verification is pending;
+  Integrations remain optional. Live GitHub, Drive and Calendar QA passed;
   no new AI, Memory ingestion, provider-wide sync or Board editor changes.
+
+- Closed REDESIGN-008 acceptance with repaired SQL fixtures for Ask Council,
+  competitor analysis and Windows Workers. All 29 SQL/RLS suites pass 1,018
+  assertions. Fixture-scoped integration cache checks work on a nonempty backend;
+  application behavior, RLS and applied migrations are unchanged.
 
 - Added small placement cues, precise drawing cursors, drag-sized Shapes/Sections/
   Lines/Arrows, local image-thumbnail placement and visible neutral defaults for

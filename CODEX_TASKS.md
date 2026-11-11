@@ -4,24 +4,33 @@
 
 ## REDESIGN-008 — Integrations & Context Bridge
 
-IMPLEMENTED / VALIDATION FINISHED / ACCEPTANCE PENDING on `codex/redesign-008-integrations`,
-clean base `6ce67b9`; live isolated provider QA remains pending by user decision.
+PASS / ACCEPTANCE CLOSED by REDESIGN-008.1 on `codex/redesign-008-integrations`,
+implementation `2bb3bed`, clean feature base `6ce67b9`. The owner's closure brief
+records live GitHub, Drive and Calendar QA as passed; provider QA is not repeated
+for SQL fixture/documentation changes.
 GitHub organization installation/repository selection; private Google Drive and
 Calendar; shared bounded external references; explicit recoverable Calendar
 creation only. Reuse canonical entity authority and trusted plugin host, keep
 Core/tenant/user boundaries, optional self-host setup and zero new AI/Boards work.
 See docs/INTEGRATIONS.md and PROJECT_STATE.md for plan and verification limits.
-Main agent only, no merge/push. Mocked provider QA authorized; live isolated apps
-will be configured by the user after setup docs. Both additive migrations are
-applied and all 51 ledger versions match. New SQL/RLS: 54 local/hosted assertions
-pass; relevant SQL: 246 pass; real Supabase JWT smoke: 13 pass. Browser component
-matrix and authenticated optional-configuration checks pass. Expanded legacy SQL
-has three baseline-reproduced fixture/bootstrap failures (see PROJECT_STATE).
+Main agent only, no merge/push. Both additive migrations remain unchanged and all
+51 ledger versions match; no new migration. All 29 SQL/RLS suites pass 1,018
+assertions in isolated PostgreSQL with real pgcrypto and no privilege aliases.
+Ask Council catalog/type/enum and tenant-scoping fixtures, competitor plugin/
+catalog inspection setup and worker temporary-ID access are repaired, preserving
+all original assertions and adding two denial checks. Baseline reproduces the
+original defects. Hosted focused suites pass 35/23/23 and integration 54, with
+rollback; integration cache counts now scope their own fixture connection.
+Real Supabase JWT smoke (13), browser component matrix and authenticated optional-
+configuration checks from implementation remain valid.
 The corrected full web run passes 264 files / 1,512 tests; worker tests pass 32.
 Lint, both typechecks and final worker/web production build pass. Final browser
 checks pass; isolated accounts/organizations/credentials and helpers are cleaned.
 Formatting, links, secret/artifact scans and diff review pass (56 scoped files).
-No final PASS or REDESIGN-009 readiness claim until remaining gates are resolved.
+Closure re-runs 92 focused integration web tests, lint, both typechecks and the
+worker/web production build. Full web/worker runtime suites are not repeated for
+SQL-only repairs. No provider/application/RLS changes, credentials or QA artifacts
+are committed. REDESIGN-009 is ready to plan but has not started.
 
 Placement cursor stability follow-up: COMPLETE / VERIFIED. Fixed dual-tone,
 screen-space app cursor replaces native placement cursors; Image Escape/chooser

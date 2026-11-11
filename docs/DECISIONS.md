@@ -1322,7 +1322,7 @@ Unmounting the layer resets the cursor without global document cursor overrides.
 
 ## ADR-055 - Optional integrations as explicit execution context
 
-2026-11-11 · REDESIGN-008 implementation direction; live provider QA pending.
+2026-11-11 · REDESIGN-008 direction; acceptance closed in REDESIGN-008.1.
 
 GitHub, Drive and Calendar remain external systems. Core stores bounded references
 on canonical work rather than copying files, code, calendars or business records.

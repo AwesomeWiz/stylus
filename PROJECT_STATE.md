@@ -4,7 +4,7 @@ Last Updated: 2026-11-11
 
 ## Overall Status
 
-REDESIGN-008 IMPLEMENTED / VALIDATION FINISHED / ACCEPTANCE GATES STILL OPEN
+REDESIGN-008 PASS / ACCEPTANCE CLOSED BY REDESIGN-008.1
 
 Dedicated `codex/redesign-008-integrations` worktree, exact clean 007 base
 `6ce67b97ef098c709b8bce02aded0835f1469cc6`. The verified predecessor follow-ups
@@ -20,10 +20,92 @@ one-time browser/user/org-bound PKCE, additive RLS migrations, bounded adapters,
 Settings management and lazy connected-resource UI, focused security/provider
 tests, then final regression/build and authorized hosted migration verification.
 
-User approved mocked provider QA while isolated GitHub/Google apps are prepared;
-no personal accounts or credentials. Exact variables/permissions/scopes/callbacks
-are documented in docs/INTEGRATIONS.md. Live-provider QA remains pending and must
-not be represented as passed. No 008 PASS or REDESIGN-009 readiness is claimed.
+The owner's REDESIGN-008.1 brief records successful live GitHub, Drive and Calendar
+QA, including real Calendar event creation. Those results remain valid: this
+follow-up changes SQL fixtures/documentation only, with no provider, OAuth,
+application, RLS or migration change. Live provider QA is not repeated. Exact
+configuration remains in docs/INTEGRATIONS.md; no credentials or real resource
+names are recorded here. REDESIGN-009 is not started.
+
+## REDESIGN-008.1 acceptance closure
+
+Started at `2bb3bed1f54a88e0805d148e23abe2334763eab0` on the existing branch.
+The pre-existing generated `apps/web/next-env.d.ts` development-path change is
+preserved and excluded from the follow-up commit. Main agent only; sequential
+runners, no merge/push. No new hosted migration or retained test record.
+
+Each legacy suite was run individually before repair. Original sources and all
+49 migrations were also loaded directly from baseline
+`6ce67b97ef098c709b8bce02aded0835f1469cc6`, without resetting the checkout.
+
+| Suite | Original current tree | Baseline | Same root cause |
+| --- | --- | --- | --- |
+| Ask Council | FAIL | FAIL | YES |
+| Competitor analysis | FAIL | FAIL | YES |
+| Windows Workers | FAIL | FAIL | YES |
+
+These are invalid original fixture assumptions, not integration regressions or
+legitimate product semantics superseded since the tests were written:
+
+- Ask Council first stops before assertion 1: `public.has_*_privilege` does not
+  exist (`42883`). Catalog functions belong to `pg_catalog`. Diagnostic aliases
+  exposed assertion 14's integer argument to the existing `smallint` specialist
+  RPC (`42883`) and the later invalid uppercase `UNKNOWN` enum (`22P02`), which
+  also aborts assertion 23's query. AI migration `20260825000900` has always used
+  lowercase `unknown`; Ask Council migration `20260825002000` already declared
+  the smallint parameter. Repairs use the actual namespace/type/enum. Counts,
+  mutation probes and conversation lookups now target the fixture organization,
+  retaining every role, immutability and tenant-denial assertion. This also fixes
+  seven hosted failures caused by unrelated pre-existing conversations.
+- Competitor assertion 10 expected composite-FK rejection `23503`, but received
+  plugin-denial `42501`: Org B's Marketing plugin was never enabled. Its own OWNER
+  now enables it, so the original cross-tenant FK assertion reaches its intended
+  constraint. Assertion 15 then stopped on the private job registry: migration
+  `20260825001100` already revoked browser access before the competitor suite was
+  introduced with `20260825001400`. Only read-only deployment/bucket inspection
+  uses the test owner; authenticated role is restored for archive/restore. Catalog
+  privilege calls use `pg_catalog`. An added assertion proves browser registry
+  reads remain denied; no browser mutation is moved to service-role access.
+- Windows Workers originally appeared to stop on missing `paired` (`42P01`).
+  The prior local bootstrap stripped pgcrypto and supplied only digest, so valid
+  pairing assertion 8 failed first on missing `gen_random_bytes` (`42883`). The
+  installed PGlite package's real pgcrypto extension is now loaded for local QA,
+  without stubs or privilege aliases. Native hosted PostgreSQL and the baseline
+  with real pgcrypto reveal the actual fixture defect: assertion 21 cannot read
+  the service-owned temporary credential table as authenticated (`42501`), so
+  revocation never occurs and assertion 22 sees no exception. A separate temporary
+  table exposes only the worker ID to the authenticated OWNER. The original real
+  revoke and revoked-credential checks pass; an added check denies credential-table
+  reads to that OWNER. Worker runtime and permissions remain unchanged.
+
+Hosted integration regression additionally exposed three global cache counts
+that assumed an empty backend. Those lifecycle assertions now count only their
+fixture connection. Unscoped authenticated visibility checks remain unchanged,
+preserving their ability to detect foreign/private rows. All 54 assertions pass
+locally and hosted, including GitHub tenant isolation, private Google connections,
+VIEWER writes, target authorization, revoked membership and cross-tenant denial.
+
+Final SQL gate: **29/29 suites, 1,018 assertions, no skips/expected failures** in
+isolated PGlite PostgreSQL with pgTAP, real pgcrypto and all 51 repository migrations.
+No public privilege aliases or crypto substitutes are used. Focused legacy totals
+are 35/23/23; related AI/creative/jobs/plugin coverage also passes. Hosted native
+rollback-only checks pass Ask Council 35, Competitor 23, Workers 23 and integration
+54. The hosted full-gate attempt was stopped when nonempty-database assumptions
+surfaced; the complete gate is the isolated run, not a claim of 29 hosted passes.
+All hosted suites roll back; no external provider calls are made by these tests.
+Focused integration web coverage passes 10 files / 92 tests. Full web and worker
+runtime suites are not repeated for SQL-only repairs; their implementation-commit
+results below remain valid. Final lint, web/worker typechecks and the worker/web
+production build pass. Scoped formatting, diff, secret/artifact and migration
+hash/51-version ledger checks are recorded with the final follow-up review.
+Final review covers 11 scoped files, 37 local documentation links and 59 production
+client chunks; formatting, whitespace, secret and artifact checks pass. All 51
+migrations remain unchanged and match the hosted ledger. A read-only hosted probe
+confirms zero retained organizations at the eight exact closure-fixture IDs.
+No security assertion is weakened, policy broadened or VIEWER write enabled.
+REDESIGN-008 is ready for review; REDESIGN-009 may be planned but is not started.
+
+## REDESIGN-008 implementation verification
 
 Delivered: restrained Settings → Integrations; organization GitHub App/user
 intersection and explicit repository selection; separate private Drive/Calendar
@@ -71,16 +153,8 @@ browser profiles, screenshots, generated bundles or QA harnesses are included.
 Generic Board/worker/dependency files remain unchanged. All 51 migration versions
 still match after cleanup; applied migration hashes are unchanged. No merge/push.
 
-Expanded SQL audit: 26/29 local suites complete, with 937 passing assertions.
-Three unchanged legacy suites stop on fixture/bootstrap errors: Ask Council uses
-an invalid uppercase `UNKNOWN` AI error enum; Competitor analysis writes the
-restricted `job_definitions` table as authenticated; Windows Workers references
-the unavailable `paired` relation. The original 49-migration baseline reproduces
-the exact same three errors (25/28 suites). Some legacy tests also qualify catalog
-privilege inspection through `public`; local compatibility aliases delegate to
-the real `pg_catalog` functions without changing assertions. No legacy tests or
-application permissions were weakened. The expanded SQL run is not green; these
-pre-existing issues remain outside 008 and must be resolved before release QA.
+The initial expanded SQL audit stopped in three suites and used local catalog
+aliases. Its 26/29 result is superseded by the complete alias-free 008.1 gate above.
 
 POST-REDESIGN-007 INTERACTION / METADATA POLISH COMPLETE / VERIFIED
 

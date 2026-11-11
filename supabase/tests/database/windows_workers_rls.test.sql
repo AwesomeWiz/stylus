@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(23);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000211','00000000-0000-0000-0000-000000000000','authenticated','authenticated','owner-worker@example.test','',now(),'{}','{}',now(),now()),
@@ -38,6 +38,10 @@ reset role; update public.worker_pairing_requests set created_at=now()-interval 
 set local role service_role;
 select throws_ok($$select public.pair_windows_worker('admin-token','windows','0.1.0',array['core.worker.echo'])$$,'42501','Worker pairing failed','expired pairing fails');
 select lives_ok($$create temporary table paired as select public.pair_windows_worker('owner-token-2','windows','0.1.0',array['core.worker.echo']) value$$,'valid pairing succeeds');
+-- The authenticated OWNER needs the fixture's public worker ID to revoke it,
+-- not access to the service-role fixture containing its raw credential.
+create temporary table paired_worker as select (value->>'workerId')::uuid id from paired;
+grant select on paired_worker to authenticated;
 select isnt((select value->>'credential' from paired),null,'durable credential returned once');
 select ok(not exists(select 1 from public.worker_registrations where encode(credential_hash,'hex')=(select value->>'credential' from paired)),'raw credential is not persisted');
 select throws_ok($$select public.pair_windows_worker('owner-token-2','windows','0.1.0',array['core.worker.echo'])$$,'42501','Worker pairing failed','consumed pairing cannot replay');
@@ -56,7 +60,8 @@ select ok((select status='SUCCEEDED' and progress=100 and result_metadata='{"ack
 set local role authenticated; select set_config('request.jwt.claim.role','authenticated',true); select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000215',true);
 select throws_ok($$select public.list_organization_workers('10000000-0000-0000-0000-000000000211')$$,'42501','Organization worker read permission required','cross-organization worker reads denied');
 set local role authenticated; select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000211',true);
-select lives_ok($$select public.revoke_worker('10000000-0000-0000-0000-000000000211',(select (value->>'workerId')::uuid from paired))$$,'OWNER revokes worker');
+select throws_ok($$select value from paired$$,'42501',null,'authenticated OWNER cannot read the service credential fixture');
+select lives_ok($$select public.revoke_worker('10000000-0000-0000-0000-000000000211',(select id from paired_worker))$$,'OWNER revokes worker');
 set local role service_role;
 select throws_ok($$select public.worker_heartbeat((select value->>'credential' from paired),'0.1.0',array['core.worker.echo'])$$,'42501','Worker authentication failed','revoked credential fails immediately');
 

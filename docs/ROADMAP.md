@@ -2,13 +2,14 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-007 VERIFIED / REDESIGN-008 IMPLEMENTED, ACCEPTANCE PENDING
+Status: REDESIGN-008 VERIFIED / REDESIGN-008.1 ACCEPTANCE CLOSED
 
-008 implementation, full web/worker suites, lint/typecheck/build and mocked/browser/
-hosted-isolation checks are complete. Isolated live GitHub/Google apps are not yet
-configured. Final 008 acceptance remains pending;
-the expanded SQL audit also reproduces three unchanged baseline fixture/bootstrap
-failures documented in PROJECT_STATE. Do not start 009 or claim release readiness.
+The owner's closure brief records live GitHub, Drive and Calendar QA as passed.
+SQL fixture repairs close the remaining gate: all 29 suites / 1,018 assertions
+pass, with unchanged authorization and migrations. Focused hosted isolation,
+integration web tests, lint/typecheck and the production build pass. Prior full
+web/worker results remain valid for this SQL-only follow-up. REDESIGN-009 is ready
+to plan, not started; its profiling/manual NVDA/device acceptance remains future work.
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -27,7 +28,7 @@ failures documented in PROJECT_STATE. Do not start 009 or claim release readines
 - [x] REDESIGN-005: native entities, canonical openers and recoverable conversions
 - [x] REDESIGN-006: startup growth and learning workflow (approved revised scope)
 - [x] REDESIGN-007: Core execution and startup essentials (approved revised scope)
-- [ ] REDESIGN-008: Integrations & Context Bridge (approved revised scope)
+- [x] REDESIGN-008: Integrations & Context Bridge (approved revised scope)
 - [ ] REDESIGN-009: profiling, responsive/NVDA/accessibility and final QA
 
 Generic Board editor scope is frozen after 004.3.3 except for the explicitly

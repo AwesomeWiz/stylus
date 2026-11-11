@@ -62,17 +62,19 @@ set local role authenticated;
 select throws_ok($$select public.set_external_resource_link(pg_temp.k(10),'core.note',pg_temp.k(40),pg_temp.k(30),pg_temp.loc(),false)$$,'42501',null,'archived target cannot acquire new links');
 reset role;
 select public.store_integration_cache(pg_temp.k(30),1,'[{"key":"fixture","projection":{"title":"Fictional metadata"}}]');
-select is((select count(*)::int from public.integration_resource_cache),1,'server cache persists bounded metadata');
+-- Service-side lifecycle checks concern this fixture connection. Other tenants'
+-- cached metadata must neither affect the count nor be removed by disconnect.
+select is((select count(*)::int from public.integration_resource_cache where connection_id=pg_temp.k(30)),1,'server cache persists bounded metadata');
 set local role authenticated;
 select lives_ok($$select public.disconnect_integration(pg_temp.k(10),pg_temp.k(30))$$,'manager disconnect succeeds');
 select is((select count(*)::int from public.external_resource_links),3,'disconnect retains all Stylus references');
 select throws_ok($$select public.set_external_resource_link(pg_temp.k(10),'core.task',pg_temp.k(20),pg_temp.k(30),pg_temp.loc(),false)$$,'42501',null,'disconnected connection cannot attach');
 reset role;
-select is((select count(*)::int from public.integration_resource_cache),0,'disconnect clears metadata cache');
+select is((select count(*)::int from public.integration_resource_cache where connection_id=pg_temp.k(30)),0,'disconnect clears metadata cache');
 select is((select count(*)::int from public.integration_secrets where connection_id=pg_temp.k(30)),0,'disconnect clears credentials');
 select is(public.store_integration_secret(pg_temp.k(30),1,'stale-secret'),false,'late refresh cannot resurrect disconnected credentials');
 select public.store_integration_cache(pg_temp.k(30),1,'[{"key":"late","projection":{"title":"Must not return"}}]');
-select is((select count(*)::int from public.integration_resource_cache),0,'late provider response cannot resurrect cache');
+select is((select count(*)::int from public.integration_resource_cache where connection_id=pg_temp.k(30)),0,'late provider response cannot resurrect cache');
 select throws_ok($$select public.activate_integration(pg_temp.k(1),pg_temp.k(10),pg_temp.k(30),'github','1','X','{}','sealed',1)$$,'PT409',null,'late OAuth callback cannot override disconnect generation');
 update public.memberships set removed_at=clock_timestamp() where user_id=pg_temp.k(2) and organization_id=pg_temp.k(10);
 select is(public.store_integration_secret(pg_temp.k(31),1,'late-secret'),false,'removed user credential refresh denied');
