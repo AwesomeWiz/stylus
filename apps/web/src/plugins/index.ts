@@ -36,6 +36,11 @@ export async function getBoardEntityRegistry() {
   return (await import("./board-entities")).boardEntityRegistry;
 }
 
+/** Shared canonical authority for external references, without Board execution. */
+export async function getIntegrationEntityRegistry() {
+  return (await import("./board-entities")).boardEntityRegistry;
+}
+
 export function getApplicationNavigation(
   enabledPluginIds: Iterable<string>,
 ): NavigationGroup[] {

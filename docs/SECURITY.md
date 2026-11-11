@@ -1,5 +1,25 @@
 # Stylus — Security Requirements
 
+## External integrations
+
+Optional provider credentials and temporary OAuth grants are server-only AES-GCM
+envelopes, authenticated to organization/record/provider and versioned by key ID.
+Database clients cannot read credential, state, cache or Calendar receipt tables.
+Secrets never enter action results, browser props, logs or localStorage. OAuth
+requires a current authenticated user/membership, ten-minute one-time state,
+browser cookie binding, exact callback and S256 PKCE; callback destinations are
+fixed. GitHub App selection verifies App identity and the user's repository access,
+then derives read-only installation tokens limited to selected repositories.
+Google search/calendar listing is owner-private; shared metadata is released only
+through an explicitly linked, freshly authorized entity. Disconnect clears local
+secrets/cache atomically; generation checks reject late refresh/reconnect results.
+Metadata has a maximum 60-second server and client lifetime, with focus expiry,
+and failed refreshes suppress old titles. Provider requests use fixed HTTPS hosts,
+no redirects, eight-second timeouts and 512 KB response limits. Calendar creation
+requires a dated editable target, owned calendar and explicit submission, with
+account-bound recovery; unlink never deletes external data. See
+[Integrations](INTEGRATIONS.md) for exact scopes, key rotation and QA limitations.
+
 ## Organization Isolation
 
 Users must only access organizations they belong to.

@@ -18,6 +18,7 @@ import { ReadOnlyTask, TaskDiscussion } from "./task-detail";
 import { EntityProvenanceLookup } from "@/components/entities/entity-provenance-lookup";
 import { TaskForm } from "./task-form";
 import { TaskRelatedWork } from "@/components/execution/task-related-work";
+import { ConnectedResources } from "@/components/integrations/connected-resources";
 
 const desktopQuery = "(min-width: 1200px)";
 const desktopSnapshot = () => window.matchMedia(desktopQuery).matches;
@@ -312,6 +313,12 @@ export function TaskPanel({
                   />
                 </div>
                 <TaskRelatedWork key={detail.task.updated_at} taskId={taskId} />
+                <div className="px-6">
+                  <ConnectedResources
+                    target={{ entityType: "core.task", entityId: taskId }}
+                    editable={detail.canMutate}
+                  />
+                </div>
                 <Discussion
                   canMutate={detail.canMutate}
                   members={members}

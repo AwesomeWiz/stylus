@@ -1,3 +1,36 @@
+import type {
+  ConnectionRow,
+  LinkRow,
+  ResourceProjection,
+} from "@/core/integrations/public";
+type IntegrationTable<T> = {
+  Row: T;
+  Insert: T;
+  Update: Partial<T>;
+  Relationships: [];
+};
+type IntegrationState = {
+  id: string;
+  organization_id: string;
+  actor_id: string;
+  provider: ConnectionRow["provider"];
+  purpose: "oauth" | "github-selection";
+  sealed: string;
+  expires_at: string;
+  created_at: string;
+};
+type CalendarIntent = {
+  account_id: string;
+  id: string;
+  organization_id: string;
+  actor_id: string;
+  connection_id: string;
+  entity_type: LinkRow["entity_type"];
+  entity_id: string;
+  input: Record<string, string>;
+  state: "pending" | "linked";
+  created_at: string;
+};
 export type OrganizationRole = "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
 export type OrganizationInvitationStatus = "PENDING" | "ACCEPTED" | "REVOKED";
 export type OrganizationPluginRow = {
@@ -1216,6 +1249,22 @@ export type OnboardingDraftRow = {
 export type Database = {
   public: {
     Tables: {
+      integration_connections: IntegrationTable<ConnectionRow>;
+      integration_secrets: IntegrationTable<{
+        connection_id: string;
+        sealed: string;
+        updated_at: string;
+      }>;
+      integration_oauth_states: IntegrationTable<IntegrationState>;
+      external_resource_links: IntegrationTable<LinkRow>;
+      integration_resource_cache: IntegrationTable<{
+        connection_id: string;
+        resource_key: string;
+        generation: number;
+        projection: ResourceProjection;
+        checked_at: string;
+      }>;
+      integration_calendar_intents: IntegrationTable<CalendarIntent>;
       milestones: {
         Row: MilestoneRow;
         Insert: never;
@@ -1771,6 +1820,47 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      set_external_resource_link: {
+        Args: {
+          p_organization_id: string;
+          p_type: string;
+          p_entity: string;
+          p_connection: string;
+          p_locator: LinkRow["locator"];
+          p_remove: boolean;
+        };
+        Returns: string;
+      };
+      disconnect_integration: {
+        Args: { p_organization_id: string; p_id: string };
+        Returns: undefined;
+      };
+      store_integration_secret: {
+        Args: { p_id: string; p_generation: number; p_sealed: string };
+        Returns: boolean;
+      };
+      store_integration_cache: {
+        Args: {
+          p_id: string;
+          p_generation: number;
+          p_rows: { key: string; projection: ResourceProjection }[];
+        };
+        Returns: undefined;
+      };
+      activate_integration: {
+        Args: {
+          p_actor: string;
+          p_org: string;
+          p_id: string;
+          p_provider: string;
+          p_account: string;
+          p_name: string;
+          p_config: ConnectionRow["config"];
+          p_sealed: string;
+          p_expected: number;
+        };
+        Returns: string;
+      };
       daily_core_attention: {
         Args: { p_organization_id: string; p_now: string };
         Returns: unknown;

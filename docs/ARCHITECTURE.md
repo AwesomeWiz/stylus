@@ -2,6 +2,20 @@
 
 ## Architectural Style
 
+REDESIGN-008 adds optional Core integrations through static, server-only provider
+adapters and the existing canonical entity registry/trusted host. GitHub is an
+organization App connection; Google Drive/Calendar are private to user and current
+organization. A single external-reference table attaches bounded identities to
+Task, Milestone, Note, Hypothesis or Experiment. The trusted migration host registers
+target relations; Core imports no Marketing-private persistence. Credentials use
+versioned AES-GCM envelopes in a service-only RLS table. OAuth state is browser/user/
+organization-bound and consumed once. Provider metadata loads after Core content,
+with bounded batches, short scoped cache and client expiry, without polling.
+Explicit Calendar writes use account-bound durable intent receipts and exact
+event IDs for recovery. There are no generic Board changes, webhooks, new AI,
+automatic Calendar sync or Memory ingestion. See [Integrations](INTEGRATIONS.md)
+and ADR-055 for scope, setup and pending live-provider verification.
+
 Post-REDESIGN-007 placement polish keeps preview/drawing state local to an
 ephemeral canvas input layer. Only release enters the existing authorized create/
 history path. Picked image files/thumbnail URLs are transient browser state until

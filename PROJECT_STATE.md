@@ -1,8 +1,86 @@
 # Stylus — Project State
 
-Last Updated: 2026-11-10
+Last Updated: 2026-11-11
 
 ## Overall Status
+
+REDESIGN-008 IMPLEMENTED / VALIDATION FINISHED / ACCEPTANCE GATES STILL OPEN
+
+Dedicated `codex/redesign-008-integrations` worktree, exact clean 007 base
+`6ce67b97ef098c709b8bce02aded0835f1469cc6`. The verified predecessor follow-ups
+were committed before branching; root/user changes are preserved. Main agent
+only, sequential work, no merge/push. Approved scope is GitHub organization App
+access, user-private Drive/Calendar and explicit references on five existing
+entity types, with one confirmed Calendar event write. Boards/AI remain frozen.
+
+Audit: existing organization context/RLS, service-role client, public canonical
+entity registry/provenance, trusted plugin host and shared UI are reused. No
+existing OAuth/encryption helper was found. Plan: server-only AES-GCM credentials,
+one-time browser/user/org-bound PKCE, additive RLS migrations, bounded adapters,
+Settings management and lazy connected-resource UI, focused security/provider
+tests, then final regression/build and authorized hosted migration verification.
+
+User approved mocked provider QA while isolated GitHub/Google apps are prepared;
+no personal accounts or credentials. Exact variables/permissions/scopes/callbacks
+are documented in docs/INTEGRATIONS.md. Live-provider QA remains pending and must
+not be represented as passed. No 008 PASS or REDESIGN-009 readiness is claimed.
+
+Delivered: restrained Settings → Integrations; organization GitHub App/user
+intersection and explicit repository selection; separate private Drive/Calendar
+grants; shared references on Task/Milestone/Note/Hypothesis/Experiment; debounced,
+paginated metadata pickers and batched lazy resolution. Versioned AES-GCM secrets,
+browser/user/org-bound one-time PKCE and fixed callbacks protect authorization.
+Generation checks protect disconnect; 60-second server/client metadata expiry and
+local failure states prevent indefinite stale titles. Confirmed Calendar creation
+uses account-bound durable receipts and deterministic event IDs, including recovery
+after reopening. No automatic synchronization, ingestion, new AI or Board changes.
+Home's optional upcoming widget is deferred to preserve its attention hierarchy.
+
+Database: exactly two reviewed additive `202611110001*` migrations applied through
+the supported CLI. All 51 hosted/local versions match and reviewed hashes remain
+unchanged. Hosted catalogs confirm six RLS tables, five target types, two member
+RPCs and three service-only RPCs. No reset/DROP/TRUNCATE or existing-record rewrite.
+The new 54-assertion suite passes locally and hosted with transaction rollback;
+five relevant SQL suites pass 246 assertions. Real Supabase Auth JWT smoke passes
+13 persistence/isolation/role assertions using fictional task-only fixtures.
+
+Focused validation passed 200 tests across 33 files, followed by 15 passing UI
+tests after hook cleanup and 13 passing navigation/discoverability tests. The
+complete corrected web run passes 264 files / 1,512 tests with one worker. An
+initial candidate run exposed lost direct trusted-App discoverability; the
+existing Apps link was restored alongside Integrations and the strict inventory
+extended. No test was weakened. Worker tests pass 5 files / 32 tests. Final lint
+and both typechecks pass; the final worker/web production build passes.
+Production-bundled actual-component browser QA uses synthetic provider/Next
+transport: 14 width/theme combinations (320/390/430/768/1024/1440/1920), seven
+interaction/permission/failure flows, no overflow/console errors, keyboard popup/
+modal/focus checks and 15 small fixture-only performance samples. Actual production
+Next/Supabase browser checks pass for OWNER and VIEWER with optional providers
+unconfigured, zero provider requests and usable Task details. This does not prove
+live OAuth consent, real external permissions, provider latency or manual NVDA.
+Final production-build browser checks pass for both roles. All four isolated test
+accounts and both organizations are deleted through exact scoped ownership checks;
+13 follow-up checks confirm no task rows, credentials or cached metadata remain.
+Task-only Next/Vite servers and Chrome are stopped; the verified task Chrome
+profile is removed. No real provider records or personal accounts were used.
+
+Final file review: 56 scoped files (36 new), 45 local Markdown links validated,
+59 production client chunks checked for actual server secrets, scoped formatting
+and `git diff --check` pass. No environment files, private credentials, logs,
+browser profiles, screenshots, generated bundles or QA harnesses are included.
+Generic Board/worker/dependency files remain unchanged. All 51 migration versions
+still match after cleanup; applied migration hashes are unchanged. No merge/push.
+
+Expanded SQL audit: 26/29 local suites complete, with 937 passing assertions.
+Three unchanged legacy suites stop on fixture/bootstrap errors: Ask Council uses
+an invalid uppercase `UNKNOWN` AI error enum; Competitor analysis writes the
+restricted `job_definitions` table as authenticated; Windows Workers references
+the unavailable `paired` relation. The original 49-migration baseline reproduces
+the exact same three errors (25/28 suites). Some legacy tests also qualify catalog
+privilege inspection through `public`; local compatibility aliases delegate to
+the real `pg_catalog` functions without changing assertions. No legacy tests or
+application permissions were weakened. The expanded SQL run is not green; these
+pre-existing issues remain outside 008 and must be resolved before release QA.
 
 POST-REDESIGN-007 INTERACTION / METADATA POLISH COMPLETE / VERIFIED
 

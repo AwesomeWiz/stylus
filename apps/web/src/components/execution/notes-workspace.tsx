@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
 import { EntityProvenance } from "@/components/entities/entity-provenance";
+import { ConnectedResources } from "@/components/integrations/connected-resources";
 import type { getNotes, getNote } from "@/modules/execution/server/data";
 import { NoteMarkdown } from "./note-markdown";
 import { NoteForm } from "./note-form";
@@ -214,6 +215,13 @@ export function NotesWorkspace({
                 ) : null}
                 <NoteMarkdown content={selected.note.content} />
                 <EntityProvenance links={links} title="Related work" />
+                <ConnectedResources
+                  target={{
+                    entityType: "core.note",
+                    entityId: selected.note.id,
+                  }}
+                  editable={canEdit && !selected.note.archived_at}
+                />
                 {error ? (
                   <p role="alert" className="text-sm">
                     {error}

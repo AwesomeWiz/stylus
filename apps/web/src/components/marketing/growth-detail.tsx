@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
+import { ConnectedResources } from "@/components/integrations/connected-resources";
 import {
   growthLabel,
   growthLinkColumn,
@@ -77,6 +78,18 @@ export function GrowthDetailContent({
           </Button>
         ) : null}
       </div>
+      {kind !== "learning" ? (
+        <ConnectedResources
+          target={{
+            entityType:
+              kind === "hypothesis"
+                ? "marketing.hypothesis"
+                : "marketing.experiment",
+            entityId: record.id,
+          }}
+          editable={canEdit && !record.archived_at}
+        />
+      ) : null}
       {kind === "hypothesis" ? (
         <p className="max-w-[72ch] text-sm leading-7 break-words whitespace-pre-wrap">
           {record.statement}

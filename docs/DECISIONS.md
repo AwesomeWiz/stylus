@@ -1319,3 +1319,43 @@ can vary with browser/OS settings. A 20px indicator has a dark centre and white
 halo in both themes, independent of content and delayed theme resolution. Native
 cursors are hidden only within placement; ordinary UI/dialog cursors remain.
 Unmounting the layer resets the cursor without global document cursor overrides.
+
+## ADR-055 - Optional integrations as explicit execution context
+
+2026-11-11 · REDESIGN-008 implementation direction; live provider QA pending.
+
+GitHub, Drive and Calendar remain external systems. Core stores bounded references
+on canonical work rather than copying files, code, calendars or business records.
+Reuse existing entity authority through the trusted plugin host; a migration-only
+target registry repeats tenant/plugin/read/edit boundaries in SQL. Marketing
+registers targets without a Core-private import. Generic Boards remain unchanged.
+
+GitHub is organization-scoped, manager-configured App access with explicit
+repository selection. Temporary user OAuth proves the App/user intersection before
+restricted installation tokens are issued. Drive and Calendar are separate private,
+organization-bound user connections sharing Google client setup, with independent
+grants/health. Explicit metadata links never change provider permissions or allow
+browsing another user's Google account. Disconnect reliably clears local secrets;
+remote App-grant revocation remains available at the provider.
+
+No encryption/OAuth helper existed. Use Node AES-256-GCM, per-record authenticated
+identity, fresh nonce, version/key ID and server keyring separate from persistence.
+One-time ten-minute OAuth state binds browser, actor and current organization,
+with S256 PKCE and fixed callbacks. Credential/state/cache/receipt tables remain
+service-only. Connection generations reject late refresh/callback/cache writes.
+
+Metadata loads after Core content in bounded batches/pages. Pickers debounce and
+paginate fixed metadata fields; GitHub GraphQL avoids source/patches and full issue
+bodies. Server/client freshness is at most 60 seconds, with focus expiry and
+explicit refresh. Failure suppresses old titles. No polling, webhooks, sync
+platform, provider analytics, content ingestion, new AI or Memory writes.
+
+Only confirmed Calendar event creation is a provider business write. It requires
+a dated editable Task/Milestone/Experiment and owned calendar. Account-bound input
+receipts, one pending intent per scope and exact event IDs recover lost responses
+and link failures, including after reopening. A definitive invalid request may be
+corrected; an unknown outcome retains its identity. Date changes and unlink never
+synchronize or delete provider events. Home's existing attention hierarchy stays
+focused; the optional upcoming Home widget is deferred. The Calendar picker shows
+a bounded upcoming window instead. External Board cards and all other providers,
+automatic ingestion and integration-powered AI remain deferred.

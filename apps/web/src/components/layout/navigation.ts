@@ -70,7 +70,8 @@ export const settingsNavigation: NavigationItem[] = [
   { label: "Knowledge / Memory", href: "/memory", icon: "knowledge" },
   { label: "Knowledge / Working Notes", href: "/notes", icon: "knowledge" },
   { label: "AI", href: "/ai", icon: "ai" },
-  { label: "Integrations / Apps", href: "/apps", icon: "blocks" },
+  { label: "Integrations", href: "/settings/integrations", icon: "blocks" },
+  { label: "Trusted Apps", href: "/apps", icon: "blocks" },
   { label: "Workers", href: "/workers", icon: "workers" },
   { label: "Advanced / Jobs", href: "/jobs", icon: "jobs" },
 ];
@@ -84,6 +85,9 @@ export function globalNavigationPath(path: string) {
     return "/whiteboards";
   if (
     path === "/settings" ||
+    path.startsWith("/settings/") ||
+    path === "/apps" ||
+    path.startsWith("/apps/") ||
     settingsNavigation.some(
       ({ href }) => path === href || path.startsWith(href + "/"),
     )

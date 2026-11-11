@@ -4,6 +4,21 @@ This document defines the initial conceptual data model.
 
 Exact schemas are introduced through migrations during implementation.
 
+REDESIGN-008 adds six RLS tables: `integration_connections`, service-only encrypted
+`integration_secrets`, service-only `integration_oauth_states`, generic
+`external_resource_links`, service-only `integration_resource_cache`, and private
+`integration_calendar_intents`. Authenticated clients can read organization GitHub
+or their own Google connection, and references through authorized canonical targets.
+They cannot write tables directly or read secrets/cache/receipts. Two actor-derived
+RPCs attach/unlink and disconnect; three service-only RPCs atomically activate a
+connection and store generation-checked refresh credentials/cache. A private,
+migration-only target registry supplies trusted relation/tenant/plugin/archival
+checks. Provider identities never become copied content or Knowledge. Calendar
+receipts retain exact actor, organization, Google account, target and submitted
+input, with one pending intent per scope. Existing rows/migrations are preserved.
+Both `202611110001*` forward migrations are applied to the authorized development
+project; all 51 local/hosted ledger versions match. See [Integrations](INTEGRATIONS.md).
+
 REDESIGN-007 adds Core `milestones`, `task_dependencies`, `notes`, `note_links`,
 nullable tenant-constrained `tasks.milestone_id`, and manager-only
 `onboarding_drafts`. Working tables allow authenticated RLS reads and no direct

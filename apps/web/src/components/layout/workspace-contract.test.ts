@@ -14,7 +14,7 @@ const source = (path: string) =>
   readFileSync(resolve(process.cwd(), "src", path), "utf8");
 
 describe("workspace routing and loading architecture", () => {
-  it("preserves all 30 legacy pages, three growth workspaces and Core Notes across route groups", () => {
+  it("preserves legacy pages and adds a Settings integration destination across route groups", () => {
     const routes = files(root)
       .filter(
         (file) => file.endsWith("/page.tsx") || file.endsWith("\\page.tsx"),
@@ -28,8 +28,8 @@ describe("workspace routing and loading architecture", () => {
             .filter((part) => !part.startsWith("("))
             .join("/"),
       );
-    expect(routes).toHaveLength(34);
-    expect(new Set(routes).size).toBe(34);
+    expect(routes).toHaveLength(35);
+    expect(new Set(routes).size).toBe(35);
     expect(routes).toEqual(
       expect.arrayContaining([
         "/",
@@ -44,6 +44,7 @@ describe("workspace routing and loading architecture", () => {
         "/apps",
         "/team",
         "/settings",
+        "/settings/integrations",
         "/whiteboards",
         "/whiteboards/[boardId]",
         "/login",

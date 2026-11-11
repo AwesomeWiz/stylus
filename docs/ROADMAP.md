@@ -2,7 +2,13 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-007 VERIFIED / REDESIGN-008 NOT STARTED
+Status: REDESIGN-007 VERIFIED / REDESIGN-008 IMPLEMENTED, ACCEPTANCE PENDING
+
+008 implementation, full web/worker suites, lint/typecheck/build and mocked/browser/
+hosted-isolation checks are complete. Isolated live GitHub/Google apps are not yet
+configured. Final 008 acceptance remains pending;
+the expanded SQL audit also reproduces three unchanged baseline fixture/bootstrap
+failures documented in PROJECT_STATE. Do not start 009 or claim release readiness.
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -21,7 +27,7 @@ Status: REDESIGN-007 VERIFIED / REDESIGN-008 NOT STARTED
 - [x] REDESIGN-005: native entities, canonical openers and recoverable conversions
 - [x] REDESIGN-006: startup growth and learning workflow (approved revised scope)
 - [x] REDESIGN-007: Core execution and startup essentials (approved revised scope)
-- [ ] REDESIGN-008: Settings and advanced surfaces
+- [ ] REDESIGN-008: Integrations & Context Bridge (approved revised scope)
 - [ ] REDESIGN-009: profiling, responsive/NVDA/accessibility and final QA
 
 Generic Board editor scope is frozen after 004.3.3 except for the explicitly

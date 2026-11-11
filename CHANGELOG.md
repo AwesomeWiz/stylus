@@ -4,6 +4,12 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Added Settings → Integrations for organization GitHub and private Google Drive/
+  Calendar, reusable connected-resource references on execution work, secure
+  server-side OAuth credentials and explicit recoverable Calendar event creation.
+  Integrations remain optional. Live isolated provider verification is pending;
+  no new AI, Memory ingestion, provider-wide sync or Board editor changes.
+
 - Added small placement cues, precise drawing cursors, drag-sized Shapes/Sections/
   Lines/Arrows, local image-thumbnail placement and visible neutral defaults for
   new Shapes. Browser titles now identify the route or authorized Board name.

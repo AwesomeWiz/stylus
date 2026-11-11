@@ -27,6 +27,7 @@ describe("relocated route discoverability", () => {
       "/memory",
       "/notes",
       "/ai",
+      "/settings/integrations",
       "/apps",
       "/workers",
       "/jobs",

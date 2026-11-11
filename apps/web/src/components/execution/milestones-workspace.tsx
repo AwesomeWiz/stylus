@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { MilestoneForm } from "./milestone-form";
+import { ConnectedResources } from "@/components/integrations/connected-resources";
 import type { MilestoneRow, TaskMember } from "@/lib/supabase/database.types";
 import type { getMilestones } from "@/modules/execution/server/data";
 export function MilestonesWorkspace({
@@ -186,6 +187,13 @@ export function MilestonesWorkspace({
                 >
                   Open linked Tasks
                 </Link>
+                <ConnectedResources
+                  target={{
+                    entityType: "core.milestone",
+                    entityId: selected.id,
+                  }}
+                  editable={canEdit && !selected.archived_at}
+                />
                 {canEdit ? (
                   <div>
                     <Button variant="secondary" onClick={() => open("edit")}>

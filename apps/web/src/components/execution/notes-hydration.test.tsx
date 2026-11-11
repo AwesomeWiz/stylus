@@ -9,6 +9,9 @@ vi.mock("next/navigation", () => ({
 vi.mock("next/form", () => ({
   default: (props: FormHTMLAttributes<HTMLFormElement>) => <form {...props} />,
 }));
+vi.mock("@/components/integrations/connected-resources", () => ({
+  ConnectedResources: () => null,
+}));
 import { NotesWorkspace } from "./notes-workspace";
 const stamp = "2026-11-10T23:45:00Z",
   note = {
