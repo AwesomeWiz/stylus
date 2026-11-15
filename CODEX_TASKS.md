@@ -29,8 +29,11 @@ credentials are removed and placeholder configuration restored.
 Final runtime passes 267 web files / 1,531 tests and 32 worker tests; lint,
 typechecks, production builds, SQL/upgrade, license inventory, formatting, links
 and redacted tree/history scans pass. Seven documented moderate dev-only audit
-findings remain, with zero high/critical findings. Exact candidate/clean-clone
-closure is in progress; no public-release gate is waived.
+findings remain, with zero high/critical findings. Fresh-clone install, example
+configuration without optional services, typechecks/builds and eight four-engine
+public checks pass without inherited modules/env/build output. The final handoff
+records the exact candidate SHA. Native authenticated setup and remote CI remain
+open; no public-release gate is waived.
 
 Owner instruction on 2026-11-15: do not require local Docker/Supabase or enable
 WSL/Virtual Machine Platform after a boot failure. Full local authenticated

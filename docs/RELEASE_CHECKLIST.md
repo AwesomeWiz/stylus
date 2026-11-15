@@ -43,17 +43,18 @@ passing gate. Final evidence must identify an exact release-candidate commit.
 
 ## Reproducibility and CI
 
-- [ ] Deterministic clean install and all required web/worker quality gates.
+- [x] Deterministic clean install and all required web/worker quality gates.
 - [x] Isolated database runner: 53 migrations from zero, real pgcrypto, 30 suites /
       1,115 assertions. Native CI execution remains separate.
 - [x] Pre-integration upgrade preserves organization/Task/Board/object data and
       authorized writes; no existing database is reset.
-- [ ] Public self-host/optional-service/environment instructions tested.
+- [x] Fresh-clone install/example configuration/build/public-browser instructions
+      pass without optional services. Native authenticated setup remains below.
 - [ ] Docker-dependent full local clean-clone signup, organization, onboarding and
       Core smoke: pending by owner instruction, not passed or waived.
 - [x] Hosted ledger/ACL read-only inspection and supported dry run identify exactly
       one required forward Board grant correction. Owner-authorized application is
-      complete; all 52 hosted versions and explicit column/RPC checks match.
+      complete; the final ledger has 53 versions and column/RPC checks pass.
 - [ ] Remote GitHub Actions run on the exact candidate. Pending unless a push is
       separately authorized; workflow inspection alone is not remote execution proof.
 - [x] Additional populated-tenant deletion migration: full isolated gate passes,
@@ -78,8 +79,9 @@ passing gate. Final evidence must identify an exact release-candidate commit.
 
 - [x] Final full web and worker suites; complete SQL/RLS gate.
 - [x] Fresh and upgrade migration paths, lint, both typechecks and production builds.
-- [ ] Formatting, links, whitespace, secrets/history, vulnerabilities/licenses,
+- [x] Formatting, links, whitespace, secrets/history, vulnerabilities/licenses,
       fonts/assets and private-data/artifact scans on the candidate tree.
-- [ ] Exact candidate SHA, known limitations and remaining manual actions recorded.
+- [x] Exact candidate identified by `git rev-parse HEAD` and final handoff; known
+      limitations and remaining manual actions recorded in the audit.
 - [x] No failing or unexecuted required gate reported as PASS.
 - [x] No merge, push, release tag or repository visibility change performed.

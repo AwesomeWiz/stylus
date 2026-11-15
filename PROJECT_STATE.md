@@ -4,7 +4,7 @@ Last Updated: 2026-11-15
 
 ## Overall Status
 
-REDESIGN-009 IN PROGRESS / PUBLIC RELEASE NOT YET APPROVED
+REDESIGN-009 LOCAL VALIDATION VERIFIED / PUBLIC RELEASE GATES OPEN
 
 Dedicated `codex/redesign-009-release-hardening` worktree from exact
 `72b990e221a2c353697f8edb5f64466d115feb6c`; the dirty root and 008's generated
@@ -89,8 +89,14 @@ are removed; the application uses restored placeholder configuration.
 Final lint, both typechecks, worker/web production builds, SQL/upgrade, license
 inventory, formatting, links and redacted current/history secret scans pass.
 The registry audit passes its high-severity gate with seven documented moderate
-development-only findings and zero high/critical findings. Candidate commit and
-exact clean-clone verification remain in progress.
+development-only findings and zero high/critical findings. A fresh temporary clone
+with no inherited modules/environment/build output passes `npm ci`, placeholder
+example configuration, formatting, links, license inventory, both typechecks,
+worker/web builds and eight public checks across all four engines. Its tracked
+tree stays clean. Full native authenticated setup remains pending as stated below.
+Runtime/test/schema/package inputs are frozen; final documentation records these
+results. The final handoff and ignored verification manifest identify the exact
+release-candidate SHA. No major new feature or external provider execution was added.
 
 Automatic review rejected a broad existing-data fingerprint query; it was removed
 before execution. The permitted alternative records only aggregate account/org/

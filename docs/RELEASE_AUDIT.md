@@ -30,12 +30,15 @@ Original code now uses AGPL-3.0-only; separate font/dependency licenses remain.
 [Third-party review](THIRD_PARTY.md) records conditions and the lockfile inventory.
 
 Gitleaks 8.30.1 initially scanned all reachable history with zero findings.
-This is not a private-information audit or a final-candidate certificate. Initial
+This is not by itself a private-information audit or a final-candidate certificate. Initial
 review found a private-business domain used as a Board input placeholder/test
 example; it is replaced with the reserved example.com domain. Internal development
 project identifiers are removed from current documentation. Historical author
 metadata includes a personal email address; the maintainer must decide whether to
-retain that metadata. No history rewrite or automatic author-email change is made.
+retain that metadata. Historical commits also retain the earlier sample-domain/
+business-name references in a placeholder, tests and an engineering note; those
+are flagged for maintainer review, without treating them as customer records.
+No history rewrite or automatic author-email change is made.
 
 The baseline npm audit reported 17 findings, including critical/high Next.js,
 image-library and validation issues. Reviewed compatible updates include Next.js
@@ -219,8 +222,19 @@ suites / 1,115 assertions, the pre-008 upgrade, dependency/font inventory, forma
 relative links and redacted tree/history secret scans pass. npm audit reports
 seven documented moderate development-only findings and zero high/critical
 findings. An initial sandbox registry connection failure returned no audit result;
-the rerun with registry access passed the high-severity gate. Exact candidate and
-clean-clone verification are the remaining local closure work.
+the rerun with registry access passed the high-severity gate.
+
+A new temporary clone, outside the existing checkout's ancestor dependency paths,
+starts with no inherited modules, environment file or build output. `npm ci`,
+copying the committed `.env.example` placeholders, format/docs/license checks,
+both typechecks and worker/web production builds pass. Eight public browser checks
+pass across Chromium, Edge, Firefox and WebKit using that production server, with
+no database, hosted credential, provider or demo. Its tracked tree remains clean.
+This proves the independent install/configuration/build/public-entrypoint path;
+it does not claim the pending native authenticated signup/organization/onboarding
+path ran. The final handoff records one exact candidate SHA; task-local evidence
+is stamped with it. Runtime/test/schema/package inputs remain unchanged after
+the full regression run; final documentation records that evidence.
 
 - Review the exact candidate, complete missing required runtime/remote CI gates
   and all final scans; no failing gate is waived by this checklist.
