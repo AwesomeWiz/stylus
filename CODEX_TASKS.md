@@ -2,6 +2,42 @@
 
 # Current
 
+## REDESIGN-009 — Open-source and public release hardening
+
+LOCAL VALIDATION VERIFIED / RELEASE GATES OPEN on
+`codex/redesign-009-release-hardening` from exact `72b990e`.
+Main agent only, sequential runners, feature freeze. AGPL-3.0-only, fresh security/
+RLS/dependency/provenance review, reproducible CI/self-hosting, fictional demo/media,
+public docs, accessible error pages and bounded measured performance fixes.
+Initial checklist: docs/RELEASE_CHECKLIST.md. No merge/push/tag/publication.
+
+Isolated SQL passes 30 suites / 1,115 assertions over 53 migrations; pre-008 upgrade
+preserves work and authorized edits. A real broad-Board-grant defect was confirmed
+read-only on the hosted backend. Forward correction `20261115000100` is applied
+with owner authorization. The additional populated-tenant deletion repair
+`20261115000200` is separately approved and applied. All 53 hosted versions and
+Board column/RPC checks match. No previously applied migration was rewritten.
+
+Final four-engine smoke (12), authenticated responsive (64) and detailed Board
+interaction/upload/persistence checks pass. Actual Task comparison and large
+Board samples, media provenance and manual QA limits are in RELEASE_AUDIT/MEDIA.
+The original populated-tenant cleanup failure is repaired. Guarded exact-ID cleanup
+verifies all 1,096 demo rows, one organization, three accounts and four private
+image assets absent. Approved non-demo aggregate counts match before/after; no
+existing-content fingerprint is claimed. No AI/provider was invoked. Task-only
+credentials are removed and placeholder configuration restored.
+Final runtime passes 267 web files / 1,531 tests and 32 worker tests; lint,
+typechecks, production builds, SQL/upgrade, license inventory, formatting, links
+and redacted tree/history scans pass. Seven documented moderate dev-only audit
+findings remain, with zero high/critical findings. Exact candidate/clean-clone
+closure is in progress; no public-release gate is waived.
+
+Owner instruction on 2026-11-15: do not require local Docker/Supabase or enable
+WSL/Virtual Machine Platform after a boot failure. Full local authenticated
+Supabase clean-install checks remain pending; independent isolated SQL/CI and all
+other work continue without weakening the release gates. Remote CI cannot be
+claimed verified without an authorized push and an actual run.
+
 ## REDESIGN-008 — Integrations & Context Bridge
 
 PASS / ACCEPTANCE CLOSED by REDESIGN-008.1 on `codex/redesign-008-integrations`,

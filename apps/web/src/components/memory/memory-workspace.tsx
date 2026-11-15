@@ -211,6 +211,7 @@ export function MemoryWorkspace({
           placeholder="Search company memory"
         />
         <Select
+          aria-label="Memory type"
           className="bg-background h-9 rounded-md border px-3 text-sm"
           defaultValue={filters.kind ?? ""}
           name="kind"
@@ -223,6 +224,7 @@ export function MemoryWorkspace({
           ))}
         </Select>
         <Select
+          aria-label="Memory source"
           className="bg-background h-9 rounded-md border px-3 text-sm"
           defaultValue={filters.provenance ?? ""}
           name="provenance"

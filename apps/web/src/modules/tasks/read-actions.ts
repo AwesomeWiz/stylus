@@ -12,7 +12,9 @@ const selectionSchema = z.object({
   taskId: z.uuid(),
 });
 const commentSchema = selectionSchema.extend({
-  before: z.object({ createdAt: z.iso.datetime(), id: z.uuid() }).optional(),
+  before: z
+    .object({ createdAt: z.iso.datetime({ offset: true }), id: z.uuid() })
+    .optional(),
 });
 
 export async function loadTaskDetail(input: unknown) {

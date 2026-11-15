@@ -1,0 +1,20 @@
+name: Bug report
+description: Report a reproducible defect using fictional data.
+body:
+  - type: markdown
+    attributes:
+      value: "Do not post security vulnerabilities or private data here. See SECURITY.md."
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction and expected behavior
+      description: Include minimal steps and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Stylus version/commit, OS, browser, Node and deployment type. No environment values.
+    validations:
+      required: true

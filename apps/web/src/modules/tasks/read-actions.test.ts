@@ -90,7 +90,7 @@ describe("authorized lazy Task reads", () => {
   it("bounds comments to 50, ordered by timestamp and ID with a stable earlier cursor", async () => {
     const rows = Array.from({ length: 51 }, (_, index) => ({
       id: `${50 - index}`.padStart(8, "0") + "-0000-4000-8000-000000000001",
-      created_at: "2026-11-01T12:00:00.000Z",
+      created_at: "2026-11-01T12:00:00.123456+00:00",
       body: `Comment ${50 - index}`,
     }));
     const taskQuery = query({ id: taskId });

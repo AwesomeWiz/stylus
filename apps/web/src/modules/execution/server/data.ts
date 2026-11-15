@@ -111,7 +111,7 @@ export async function getTaskExecution(input: unknown) {
     task.milestone_id
       ? db
           .from("milestones")
-          .select("*")
+          .select("id,title,archived_at")
           .eq("organization_id", org)
           .eq("id", task.milestone_id)
           .maybeSingle()

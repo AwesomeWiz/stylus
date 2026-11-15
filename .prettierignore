@@ -1,5 +1,8 @@
 .next
 coverage
 node_modules
+.release-qa
+.worktrees
+dist
 package-lock.json
 *.md

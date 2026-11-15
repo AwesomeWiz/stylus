@@ -3,7 +3,7 @@
 ## REDESIGN-004.3.3 development verification
 
 The expressly authorized Stylus development backend remains
-`otdofpjgccvnkcvkcjxx`. Its initial 37-version ledger matched the repository.
+the maintainer's development project. Its initial 37-version ledger matched the repository.
 Reviewed dry runs identified only `20261104000100_board_voting.sql`, then the
 necessary forward correction `20261104000110_board_voting_conflict_response.sql`.
 Both were applied with the supported CLI. Final inspection matches all 39 local/
@@ -92,7 +92,7 @@ stopped and generated files restored.
 
 The sections below retain the earlier 004.2 migration/verification history.
 
-The owner explicitly authorized project **Stylus**, `otdofpjgccvnkcvkcjxx`, as
+The owner explicitly authorized project **Stylus**, the maintainer?s development project, as
 the active development backend for this task, superseding the earlier production
 restriction. Isolated test accounts/organizations/boards and reviewed pending
 forward migrations are authorized. No reset, DROP, TRUNCATE, database recreation

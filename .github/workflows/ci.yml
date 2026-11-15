@@ -1,0 +1,58 @@
+name: Release verification
+
+on:
+  pull_request:
+  push:
+    branches: [main, "codex/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.release-qa/browsers
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.22.1
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run docs:check
+      - run: npm run audit:licenses:check
+      - run: npm audit --audit-level=high
+      - run: npm run audit:secrets
+      - run: npm run audit:secrets:tree
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:db:isolated
+      - run: npm run test:db:upgrade
+      # GitHub-hosted Linux provides an isolated Docker engine. No linked
+      # project, account token or repository secret is required by this job.
+      - name: Initialize fresh native Supabase stack and migrations
+        run: |
+          mkdir -p .release-qa
+          npx --no-install supabase start -x studio,logflare,vector,edge-runtime,imgproxy,supavisor > .release-qa/supabase-start.log 2>&1
+      - run: npm run test:db
+      - run: node scripts/setup-local-env.mjs
+      - run: npm run demo:seed -- --confirm-demo-memory
+      - run: npm run build
+      - run: npx --no-install playwright install --with-deps chromium firefox webkit
+      - run: npm run test:e2e
+      - run: git diff --check
+      - name: Stop only this job's local stack
+        if: always()
+        run: npx --no-install supabase stop --no-backup

@@ -1,8 +1,111 @@
 # Stylus — Project State
 
-Last Updated: 2026-11-11
+Last Updated: 2026-11-15
 
 ## Overall Status
+
+REDESIGN-009 IN PROGRESS / PUBLIC RELEASE NOT YET APPROVED
+
+Dedicated `codex/redesign-009-release-hardening` worktree from exact
+`72b990e221a2c353697f8edb5f64466d115feb6c`; the dirty root and 008's generated
+Next.js development-type change remain untouched. Main agent only, sequential
+runners. No push, merge, tag or visibility change is authorized. Scope is release
+hardening, documentation, legal/provenance, reproducibility, CI, fictional demo
+media, accessibility/browser/security and measured performance fixes; feature freeze.
+
+The maintainer confirmed public redistribution of the project-created Stylus logo
+and source raster, with no extra attribution. Baseline has no project LICENSE,
+despite the brief's Apache assumption. Reviewed dependency license expressions
+and existing OFL font provenance before adding canonical AGPL-3.0-only text and
+package metadata. Initial version recommendation is `0.1.0-beta.1`: all packages
+were 0.1.0 and no tags exist. Source-only third-party obligations are being recorded.
+
+Gitleaks 8.30.1 all-reachable-history and Git-visible candidate-tree scans have
+zero findings. Current text/path review finds no known private business/project
+reference, tracked environment or QA artifact; one personal Git author mailbox is
+flagged for maintainer review without rewriting history. Final-candidate scans
+remain required. Compatible dependency updates address reported critical/high
+runtime issues; seven moderate lint-tooling findings have a documented controlled
+development-only reachability assessment. The final sequential runtime run passes
+267 web files / 1,531 tests and 32 worker tests. Lint, both typechecks and full
+formatting pass. LF checkout rules fix Windows autocrlf-only formatter failures
+without changing canonical Git source or binary assets.
+
+The isolated SQL runner uses real pgcrypto, no privilege aliases, no environment
+or hosted connection. It passes all 30 suites / 1,115 assertions over 53 migrations.
+The pre-008 upgrade preserves organization/Task/Board/object data and permitted
+authenticated edits. All 71 organization-keyed tables have RLS; all 149 application
+security-definer functions pin empty search paths. See docs/RLS_REVIEW.md.
+
+Mirroring Supabase default grants exposed the original Boards migration's missing
+table-level revocation. Its identity-update denial assertion failed. A read-only
+hosted query confirms broad anon/authenticated grants there. New forward-only
+`20261115000100_board_explicit_browser_grants.sql` removes those grants and
+restores existing permitted columns, including stable upload IDs. No data, RLS,
+RPC or applied migration changes. Six new ACL checks pass; two anonymous-read
+assertions require the stronger 42501 outcome. The supported linked dry run lists
+only this correction. The owner authorized application and the exact fictional
+demo; the correction is now applied. All 52 hosted versions match; explicit
+column/RPC checks pass. No applied migration was rewritten.
+
+The production worker/web build passes with optional AI/providers absent.
+Chromium, Edge, Firefox and WebKit pass eight public production-browser checks:
+semantic/axe checks, Skip/Enter focus, responsive widths, themes and reduced motion.
+Native Windows WebKit requires explicit zero tabindex for skip-link Tab access;
+the main target is focusable. A sandboxed Firefox crash was rerun successfully
+with normal process permissions. Authenticated demo/media and actual Task/Board
+transport measurements now pass: all 12 final four-engine smoke checks, 64
+authenticated responsive combinations, Task failure/retry and real 50+5 comment
+pagination. Three-sample same-fixture comparisons reduce decoded Task documents
+from 656,412 to 275,882 bytes and median related/discussion readiness from 8,818
+to 3,320ms. Actual 200/300/500-object Board checks and detailed creation/group/
+menu/upload/persistence flows in Chromium, Edge, Firefox and WebKit pass. Two
+fictional users converge through private Realtime; VIEWER remains read-only.
+Memory filter labels, real PostgreSQL cursor offsets and unnecessary Board
+subscription restarts are corrected. Board cursor decoration is hidden from the
+accessibility tree; low-zoom inline edit targets have individually measured
+same-page equivalent controls. See RELEASE_AUDIT for raw-finding interpretation.
+Eight screenshots, two GIFs and two decoded/seeked masters show actual fictional UI.
+
+Exactly three users and one organization were used. The final exact-ID inventory
+contains 1,096 rows across 33 demo tables; every created object/image ID is recorded.
+All four exact private image assets were removed and verified absent. The existing
+organization-deletion RPC then failed with a membership/Board FK ordering error;
+that transaction rolled back and no accounts were deleted in that attempt.
+Guarded cleanup initially stopped for separately requested approval of the forward
+`20261115000200_atomic_organization_deletion.sql` repair. Its 16 root tenant
+cascade links and 133 deferrable reference changes preserve existing keys, initial
+modes and records on deployment. History remains immutable while its organization
+exists; owner/name checks and RLS remain. Populated Core/Research/Performance/
+Council deletion and all permanent isolation/immutability tests pass locally.
+The owner separately approved it; the supported dry run listed only this repair,
+and deployment is complete. All 53 hosted versions and Board column/RPC checks
+match. Guarded cleanup then succeeded: all 1,096 inventoried rows, the exact demo
+organization and all three Auth accounts are verified absent. The four exact
+Storage assets are absent. Non-demo aggregate account/org/provider counts match
+before and after; no full existing-content fingerprint is claimed. No AI or
+provider was invoked. The password and task-only hosted/browser credential copies
+are removed; the application uses restored placeholder configuration.
+Final lint, both typechecks, worker/web production builds, SQL/upgrade, license
+inventory, formatting, links and redacted current/history secret scans pass.
+The registry audit passes its high-severity gate with seven documented moderate
+development-only findings and zero high/critical findings. Candidate commit and
+exact clean-clone verification remain in progress.
+
+Automatic review rejected a broad existing-data fingerprint query; it was removed
+before execution. The permitted alternative records only aggregate account/org/
+provider-connection counts. Non-demo counts match; no full content comparison is
+claimed. Do not retry the rejected broad query or inventory existing tenants.
+
+The owner reports WSL/Virtual Machine Platform caused a Windows boot failure and
+were disabled. Do not enable them, require Docker or repeat requests to install
+local Supabase. Only Docker-dependent full local Supabase authenticated clean-
+install checks are pending for that reason; isolated SQL, database CI, public
+clean-clone documentation and all independent work continue. These pending checks
+must not be reported passed. Remote CI also requires a later separately authorized
+push. See docs/RELEASE_CHECKLIST.md for the initial checklist and open gates.
+
+## Prior accepted phase
 
 REDESIGN-008 PASS / ACCEPTANCE CLOSED BY REDESIGN-008.1
 
@@ -694,7 +797,7 @@ is independent from the 200-object feedback limit, preventing preview starvation
 on large text-heavy Boards; signing stays bounded to 25 per request.
 
 Section 39 of the 004.3 brief expressly authorizes the configured development
-project `otdofpjgccvnkcvkcjxx`. Reviewed forward migrations
+project the maintainer?s development project. Reviewed forward migrations
 `20261103000100_board_reactions.sql` and
 `20261103000110_board_comment_resolution.sql` were applied unchanged through the
 supported linked CLI workflow. They preserve existing rows and enforce fresh
@@ -767,7 +870,7 @@ previous uncommitted P0 patch was retained. Main agent only; original
 checkout/other worktrees preserved; no merge/push or REDESIGN-005.
 
 The owner explicitly superseded the earlier production restriction and
-authorized `otdofpjgccvnkcvkcjxx` as this task's active development backend.
+authorized the maintainer?s development project as this task's active development backend.
 Supported CLI ledger inspection confirmed history through `20260825002020` and
 exactly two missing migrations. The reviewed dry run listed only
 `20261102000100_board_v2_element_types.sql` and

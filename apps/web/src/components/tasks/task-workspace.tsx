@@ -2,7 +2,7 @@
 
 import { CalendarDays, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import type { TaskMember } from "@/lib/supabase/database.types";
@@ -49,6 +49,7 @@ export function TaskWorkspace({
   tasks,
 }: TaskWorkspaceProps) {
   const router = useRouter();
+  const [visibleCount, setVisibleCount] = useState(50);
   const query = useTaskQuery(initialQuery);
   const params = new URLSearchParams(query);
   const selectedTaskId = params.get("task");
@@ -114,7 +115,7 @@ export function TaskWorkspace({
       <div className="border-y">
         {tasks.length ? (
           <ul aria-label="Tasks">
-            {tasks.map((task) => (
+            {tasks.slice(0, visibleCount).map((task) => (
               <TaskRowItem
                 canMutate={canMutate}
                 key={task.id}
@@ -171,6 +172,22 @@ export function TaskWorkspace({
           </div>
         )}
       </div>
+      {tasks.length > 50 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+          <p className="text-muted-foreground text-sm" role="status">
+            Showing {Math.min(visibleCount, tasks.length)} of {tasks.length}{" "}
+            matching tasks
+          </p>
+          {visibleCount < tasks.length ? (
+            <Button
+              variant="secondary"
+              onClick={() => setVisibleCount((count) => count + 50)}
+            >
+              Show 50 more tasks
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       <p className="text-muted-foreground mt-3 flex items-start gap-1.5 text-xs">
         <CalendarDays aria-hidden="true" className="size-3.5 shrink-0" />
         Dates use your local time. Completed work stays in Completed for 14

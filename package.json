@@ -1,13 +1,13 @@
 {
   "name": "stylus",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "private": true,
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "dev": "npm run dev --workspace @stylus/web",
@@ -18,7 +18,7 @@
     "db:stop": "supabase stop",
     "lint": "npm run lint --workspace @stylus/web",
     "typecheck": "npm run typecheck --workspace @stylus/worker && npm run typecheck --workspace @stylus/web",
-    "test": "npm run test --workspace @stylus/worker && npm run test --workspace @stylus/web",
+    "test": "npm run test --workspace @stylus/worker -- --maxWorkers=1 && npm run test --workspace @stylus/web -- --maxWorkers=1",
     "test:db": "supabase test db",
     "test:watch": "npm run test:watch --workspace @stylus/web",
     "worker:pair": "npm run build --workspace @stylus/worker && node apps/worker/dist/cli.js pair",
@@ -27,11 +27,26 @@
     "worker:status": "npm run build --workspace @stylus/worker && node apps/worker/dist/cli.js status",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "test:db:isolated": "node scripts/database/test-isolated.mjs",
+    "test:db:upgrade": "node scripts/database/test-isolated.mjs --upgrade",
+    "audit:licenses": "node scripts/release/license-audit.mjs",
+    "audit:licenses:check": "node scripts/release/license-audit.mjs --check",
+    "test:e2e": "playwright test",
+    "demo:seed": "node scripts/demo/seed.mjs",
+    "audit:secrets": "node scripts/release/gitleaks.mjs",
+    "audit:secrets:tree": "node scripts/release/gitleaks.mjs --tree",
+    "docs:check": "node scripts/release/check-docs.mjs",
+    "demo:cleanup": "node scripts/demo/seed.mjs --cleanup"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@electric-sql/pglite-pgtap": "0.0.9",
+    "@playwright/test": "1.65.0",
+    "gifenc": "1.0.3",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "supabase": "^2.115.0"
-  }
+  },
+  "license": "AGPL-3.0-only"
 }

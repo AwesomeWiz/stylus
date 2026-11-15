@@ -1,0 +1,11 @@
+Stylus
+Copyright 2026 Stylus contributors
+
+Original Stylus code and project-created assets are licensed under AGPL-3.0-only.
+Third-party components retain their own copyright and license terms. See
+docs/THIRD_PARTY.md, docs/licenses/dependencies.json and the bundled font notices.
+This notice does not replace those licenses or grant trademark rights.
+
+Stylus was built with extensive use of Codex as an implementation agent.
+Product direction, architecture, review, testing, maintenance and release
+responsibility remain human-directed.

@@ -858,3 +858,41 @@ replacement of `set_board_vote` that changes stale-version SQLSTATE `40001` to
 `PT409` (HTTP409). This avoids the observed hosted PostgREST serialization-retry
 timeout. Authorization, locking, data and grants are unchanged. Neither migration
 resets or drops existing schema/data. No color/presentation migration is needed.
+
+## Public beta database verification (REDESIGN-009)
+
+This phase adds no persistence model. The 51 applied canonical migrations remain
+unchanged. New forward migration `20261115000100_board_explicit_browser_grants.sql`
+corrects inherited platform-wide Board grants, restoring supported column writes
+without changing records, RLS or RPCs. The supported hosted dry run lists exactly
+this correction. The owner authorized deployment; all 52 hosted versions now
+match, and column/RPC checks pass. No records or applied SQL were changed.
+`scripts/database/test-isolated.mjs` creates an
+in-memory PostgreSQL database with real pgcrypto/pgTAP and minimal Supabase platform
+fixtures, then applies actual SQL and permanent tests. Default grants mirror the
+platform so explicit revocations remain testable. A separate pre-integration
+upgrade fixture checks retained organization/Task data and authorized reads.
+
+All 30 suites pass 1,115 assertions over the 53-migration fresh path. The release
+catalog regression discovers organization-keyed tables dynamically,
+requires RLS, checks security-definer search paths and credential/state ACLs.
+The reviewed inventory contains 75 public tables, 71 keyed by organization.
+`job_definitions` is a service-only code registry rather than tenant data;
+integration secrets/cache inherit identity through their connection and remain
+service-only. See [RLS review](RLS_REVIEW.md). Isolated fixtures do not certify
+native Auth, Storage, Realtime or PostgREST transport. The full Docker-dependent
+local authenticated clean-install gate remains pending by owner instruction.
+
+The additional `20261115000200_atomic_organization_deletion.sql` correction is
+locally verified, separately owner-approved and deployed. A real populated-demo
+deletion exposed immediate membership references and missing organization
+lifecycle links on immutable child tables. Sixteen validated direct root FKs
+complete tenant ownership; 133 existing references become deferrable without
+changing their keys or initial modes. Owner-confirmed deletion defers the full
+cascade, then validates before return. Research/Performance/Council history may
+delete only after its actual organization is absent. No trigger or constraint is
+disabled, no existing row changes at deployment, and all prior immutability/RLS
+denials remain tested. Existing migrations remain untouched. See ADR-057 and the
+release audit for the initial failed cleanup and successful exact-ID retry.
+The final hosted ledger matches all 53 versions; only the recorded demo was
+deleted after deployment, with its rows/accounts/assets verified absent.

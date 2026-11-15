@@ -10,3 +10,5 @@ dist/
 .DS_Store
 Thumbs.db
 supabase/.temp/
+.worktrees/
+.release-qa/

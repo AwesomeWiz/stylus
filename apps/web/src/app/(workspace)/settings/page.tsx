@@ -5,6 +5,7 @@ import { ThemeSelector } from "@/components/appearance/theme-selector";
 import { DeleteOrganizationPanel } from "@/components/organizations/delete-organization-panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { SettingsNavigation } from "@/components/layout/settings-navigation";
+import { serverEnv } from "@/lib/env/server";
 
 export default async function SettingsPage() {
   const context = await getWorkspaceContext();
@@ -80,6 +81,26 @@ export default async function SettingsPage() {
           >
             Manage team <ArrowRight aria-hidden="true" className="size-4" />
           </Link>
+        </section>
+        <section aria-labelledby="source-heading" className="border-b pb-8">
+          <h2 className="font-semibold" id="source-heading">
+            Open source
+          </h2>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Stylus is licensed under AGPL-3.0-only.
+          </p>
+          <a
+            className="text-primary mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-medium underline"
+            href={
+              serverEnv.STYLUS_SOURCE_URL ??
+              "https://github.com/AwesomeWiz/stylus"
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View source code{" "}
+            <ArrowRight aria-hidden="true" className="size-4" />
+          </a>
         </section>
         {context.membership.role === "OWNER" ? (
           <DeleteOrganizationPanel

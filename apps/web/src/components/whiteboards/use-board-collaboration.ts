@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   BoardCommentRow,
   BoardElementRow,
@@ -28,6 +28,19 @@ export function useBoardCollaboration(
   onReaction?: (row: BoardReactionRow) => void,
   onVoting?: (row: BoardVotingSessionRow) => void,
 ) {
+  // RSC refreshes allocate new objects even when authorized directory content is
+  // identical. Replacing the channel on every save creates visible disconnects.
+  // Memoize only this component's complete directory projection; actual content,
+  // account, board or organization changes still replace/unsubscribe the channel.
+  const directoryJson = useMemo(() => JSON.stringify(members), [members]);
+  const directory = useMemo(
+    () => JSON.parse(directoryJson) as TaskMember[],
+    [directoryJson],
+  );
+  const identity = useMemo(
+    () => ({ id: currentUser.id, displayName: currentUser.displayName }),
+    [currentUser.id, currentUser.displayName],
+  );
   const [presence, setPresence] = useState(() =>
     includeLocalBoardPresence([], currentUser, members),
   );
@@ -41,12 +54,12 @@ export function useBoardCollaboration(
     typeof subscribeToBoardCollaboration
   > | null>(null);
   useEffect(() => {
-    if (!currentUser.id) return;
+    if (!identity.id) return;
     const channel = subscribeToBoardCollaboration({
       boardId: board.id,
       organizationId: board.organization_id,
-      currentUser,
-      members,
+      currentUser: identity,
+      members: directory,
       onElement,
       onComment,
       onReaction,
@@ -75,8 +88,8 @@ export function useBoardCollaboration(
   }, [
     board.id,
     board.organization_id,
-    currentUser,
-    members,
+    identity,
+    directory,
     onComment,
     onElement,
     onReaction,

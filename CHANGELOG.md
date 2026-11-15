@@ -4,6 +4,24 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Prepared the first AGPL-3.0-only public beta candidate with source-offer settings,
+  dependency/font/asset provenance, self-host/community documentation and sequential
+  release CI. Publication is not yet approved; required unexecuted gates remain open.
+- Added accessible themed public 404 and unexpected/global recovery, explicit
+  skip-link focus, and independent authorized Task detail reads with progressive
+  list rendering. Optional providers remain outside Core reads.
+- Added a forward-only correction to inherited Board table grants, preserving
+  existing records and permitted column edits. Fresh isolated SQL passes 1,115
+  assertions; owner-authorized hosted deployment is verified. Existing migrations
+  are unchanged.
+- Stabilized Board collaboration across saves, corrected decorative cursor
+  semantics and Memory filter labels, and preserved PostgreSQL comment cursor
+  precision. Actual fictional media and measured Task transport comparisons are
+  included in the release audit.
+- Prepared a separate forward repair for populated organization deletion, after
+  the exact demo cleanup failed and rolled back. All 1,115 isolated SQL assertions
+  pass; separate hosted approval, deployment and exact fixture cleanup are complete.
+
 - Added Settings → Integrations for organization GitHub and private Google Drive/
   Calendar, reusable connected-resource references on execution work, secure
   server-side OAuth credentials and explicit recoverable Calendar event creation.

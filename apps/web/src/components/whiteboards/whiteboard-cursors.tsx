@@ -24,7 +24,7 @@ export function WhiteboardCursors({
   const people = new Map(presence.map((person) => [person.userId, person]));
   return (
     <div
-      aria-label="Collaborator cursors"
+      aria-hidden="true"
       className="pointer-events-none absolute inset-0 z-30 overflow-hidden"
     >
       {cursors

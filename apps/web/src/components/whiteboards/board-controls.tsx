@@ -371,7 +371,7 @@ export function BoardLinkDialog({
             required
             type="text"
             inputMode="url"
-            placeholder="stybay.com"
+            placeholder="example.com"
           />
         </label>
         <label className="block text-sm">

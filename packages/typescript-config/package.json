@@ -1,8 +1,9 @@
 {
   "name": "@stylus/typescript-config",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "private": true,
   "files": [
     "base.json"
-  ]
+  ],
+  "license": "AGPL-3.0-only"
 }

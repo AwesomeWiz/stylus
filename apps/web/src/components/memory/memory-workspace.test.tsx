@@ -64,6 +64,12 @@ describe("Company Memory workspace", () => {
       screen.getByRole("heading", { name: "Company memory" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Planning preference")).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Memory type" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Memory source" }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Insight · Company · Human/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Archive" })).toBeInTheDocument();

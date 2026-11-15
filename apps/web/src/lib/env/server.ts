@@ -18,6 +18,22 @@ const optionalNonnegativeNumber = z.preprocess(
 );
 
 const serverEnvironmentSchema = z.object({
+  STYLUS_SOURCE_URL: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z
+      .url()
+      .refine((value) => {
+        const url = new URL(value);
+        return (
+          url.protocol === "https:" &&
+          !url.username &&
+          !url.password &&
+          !url.search &&
+          !url.hash
+        );
+      }, "Use a public HTTPS corresponding-source URL without credentials or query parameters.")
+      .optional(),
+  ),
   CRON_SECRET: optionalString,
   NODE_ENV: z.enum(["development", "test", "production"]),
   STYLUS_AI_OLLAMA_BASE_URL: optionalUrl,
@@ -38,6 +54,7 @@ export function parseServerEnvironment(input: unknown) {
 export const serverEnv = {
   ...publicEnv,
   ...parseServerEnvironment({
+    STYLUS_SOURCE_URL: process.env.STYLUS_SOURCE_URL,
     CRON_SECRET: process.env.CRON_SECRET,
     NODE_ENV: process.env.NODE_ENV,
     STYLUS_AI_OLLAMA_BASE_URL: process.env.STYLUS_AI_OLLAMA_BASE_URL,

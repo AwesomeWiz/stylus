@@ -1287,6 +1287,7 @@ export function WhiteboardWorkspace({
           <a
             className="bg-background focus:ring-ring sr-only fixed top-2 left-2 z-[60] rounded border px-4 py-2 focus:not-sr-only focus:ring-2"
             href="#board-canvas"
+            tabIndex={0}
             onClick={(event) => {
               event.preventDefault();
               focusBoardCanvas();

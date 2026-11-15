@@ -26,8 +26,10 @@ values
   ('10000000-0000-4000-8000-000000000062', '00000000-0000-4000-8000-000000000064', 'OWNER');
 
 set local role anon;
-select is_empty($$ select id from public.boards $$, 'anonymous users cannot read boards');
-select is_empty($$ select id from public.board_elements $$, 'anonymous users cannot read board elements');
+-- The release grant correction denies anonymous table access before RLS runs.
+-- Preserve both denial assertions with the stronger explicit ACL outcome.
+select throws_ok($$ select id from public.boards $$, '42501', 'permission denied for table boards', 'anonymous users cannot read boards');
+select throws_ok($$ select id from public.board_elements $$, '42501', 'permission denied for table board_elements', 'anonymous users cannot read board elements');
 select is_empty($$ select name from storage.objects where bucket_id = 'board-images' $$, 'anonymous users cannot read board images');
 
 set local role authenticated;

@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ViewerLocalDateTime } from "@/components/ui/viewer-local-date-time";
 import type { TaskMember } from "@/lib/supabase/database.types";
-import { loadTaskComments, loadTaskDetail } from "@/modules/tasks/read-actions";
+import { loadTaskComments, loadTaskDetail } from "@/modules/tasks/client-reads";
 import { ReadOnlyTask, TaskDiscussion } from "./task-detail";
 import { EntityProvenanceLookup } from "@/components/entities/entity-provenance-lookup";
 import { TaskForm } from "./task-form";
@@ -93,7 +93,7 @@ function Discussion({
       const page = await loadTaskComments({
         organizationId,
         taskId,
-        before: current.before,
+        before: current.before ?? undefined,
       });
       if (!request.active) return;
       if (page.status === "success")
@@ -310,9 +310,14 @@ export function TaskPanel({
                   <EntityProvenanceLookup
                     entityType="core.task"
                     entityId={detail.task.id}
+                    organizationId={organizationId}
                   />
                 </div>
-                <TaskRelatedWork key={detail.task.updated_at} taskId={taskId} />
+                <TaskRelatedWork
+                  key={detail.task.updated_at}
+                  taskId={taskId}
+                  organizationId={organizationId}
+                />
                 <div className="px-6">
                   <ConnectedResources
                     target={{ entityType: "core.task", entityId: taskId }}

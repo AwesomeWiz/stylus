@@ -10,6 +10,35 @@ const publicPaths = new Set([
   ...authEntryPaths,
 ]);
 
+// Unmatched top-level addresses reach the public Next.js 404 without a backend
+// round trip. Every real page/handler root is covered by the inventory test.
+const applicationRoots = new Set([
+  "activity",
+  "ai",
+  "api",
+  "apps",
+  "auth",
+  "company",
+  "integrations",
+  "invite",
+  "jobs",
+  "login",
+  "memory",
+  "notes",
+  "onboarding",
+  "organization",
+  "signup",
+  "settings",
+  "tasks",
+  "team",
+  "whiteboards",
+  "workers",
+]);
+
+export function isSessionApplicationPath(pathname: string) {
+  return pathname === "/" || applicationRoots.has(pathname.split("/")[1] ?? "");
+}
+
 function isPublicPath(pathname: string) {
   return publicPaths.has(pathname) || pathname.startsWith("/invite/");
 }
@@ -26,7 +55,11 @@ export function getSessionRouteDecision(
   pathname: string,
   isAuthenticated: boolean,
 ): "/" | "/login" | null {
-  if (!isAuthenticated && !isPublicPath(pathname)) {
+  if (
+    !isAuthenticated &&
+    isSessionApplicationPath(pathname) &&
+    !isPublicPath(pathname)
+  ) {
     return "/login";
   }
 
@@ -39,6 +72,7 @@ export function getSessionRouteDecision(
 
 export async function updateSession(request: NextRequest) {
   if (
+    !isSessionApplicationPath(request.nextUrl.pathname) ||
     isWorkerBrokerPath(request.nextUrl.pathname) ||
     isServerlessJobCronPath(request.nextUrl.pathname)
   ) {

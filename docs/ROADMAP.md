@@ -2,14 +2,21 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-008 VERIFIED / REDESIGN-008.1 ACCEPTANCE CLOSED
+Status: REDESIGN-008 VERIFIED / REDESIGN-009 LOCAL VALIDATION VERIFIED, RELEASE GATES OPEN
 
 The owner's closure brief records live GitHub, Drive and Calendar QA as passed.
 SQL fixture repairs close the remaining gate: all 29 suites / 1,018 assertions
 pass, with unchanged authorization and migrations. Focused hosted isolation,
 integration web tests, lint/typecheck and the production build pass. Prior full
-web/worker results remain valid for this SQL-only follow-up. REDESIGN-009 is ready
-to plan, not started; its profiling/manual NVDA/device acceptance remains future work.
+web/worker results remain valid for that SQL-only follow-up. REDESIGN-009 now
+continues release hardening: isolated SQL/upgrade and public browser checks pass;
+the reviewed Board grant correction and remaining release gates are tracked in
+[the audit](RELEASE_AUDIT.md). Full local authenticated Supabase checks remain
+pending after the owner's Windows virtualization failure, without a waiver.
+Final local web/worker and SQL/upgrade gates pass; separately approved Board grants
+and populated-tenant deletion repairs are deployed. Exact demo rows/accounts/assets
+are verified absent. Remote CI and the native authenticated clean-install gate
+remain required before this release milestone can be marked complete.
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -29,7 +36,8 @@ to plan, not started; its profiling/manual NVDA/device acceptance remains future
 - [x] REDESIGN-006: startup growth and learning workflow (approved revised scope)
 - [x] REDESIGN-007: Core execution and startup essentials (approved revised scope)
 - [x] REDESIGN-008: Integrations & Context Bridge (approved revised scope)
-- [ ] REDESIGN-009: profiling, responsive/NVDA/accessibility and final QA
+- [ ] REDESIGN-009: open-source/public release hardening, reproducibility, security,
+  documentation/media, profiling, responsive/accessibility and final QA (approved revised scope)
 
 Generic Board editor scope is frozen after 004.3.3 except for the explicitly
 approved REDESIGN-007 select/menu/Delete/native-card presentation corrections.

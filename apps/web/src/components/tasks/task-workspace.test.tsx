@@ -25,9 +25,15 @@ const mocks = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh, push: mocks.push }),
 }));
-vi.mock("@/modules/tasks/read-actions", () => ({
+vi.mock("@/modules/tasks/client-reads", () => ({
   loadTaskDetail: mocks.detail,
   loadTaskComments: mocks.comments,
+  loadTaskExecution: vi.fn(async () => ({
+    status: "error",
+    code: "TRANSPORT",
+    message: "Related work unavailable",
+  })),
+  loadTaskProvenance: vi.fn(async () => ({ status: "success", links: [] })),
 }));
 import { TaskWorkspace } from "./task-workspace";
 import { selectTaskQuery } from "./task-selection";
@@ -395,4 +401,29 @@ describe("task workspace", () => {
       scroll: false,
     });
   });
+});
+
+describe("large task lists", () => {
+  it("renders fifty initial rows while retaining all matches for explicit progressive display", () => {
+    const rows = Array.from({ length: 200 }, (_, index) => ({
+      ...task,
+      id: `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+      title: `Fictional task ${index + 1}`,
+    }));
+    renderWorkspace(false, rows);
+    const list = screen.getByRole("list", { name: "Tasks" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(50);
+    expect(
+      screen.getByText("Showing 50 of 200 matching tasks"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Fictional task 200")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show 50 more tasks" }));
+    expect(within(list).getAllByRole("listitem")).toHaveLength(100);
+    fireEvent.click(screen.getByRole("button", { name: "Show 50 more tasks" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show 50 more tasks" }));
+    expect(screen.getByText("Fictional task 200")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Show 50 more tasks" }),
+    ).not.toBeInTheDocument();
+  }, 20000);
 });

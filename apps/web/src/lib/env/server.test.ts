@@ -3,6 +3,22 @@ import { describe, expect, it } from "vitest";
 import { parseServerEnvironment } from "./server";
 
 describe("server environment validation", () => {
+  it("accepts an optional public source offer and rejects unsafe or credential-bearing links", () => {
+    expect(
+      parseServerEnvironment({
+        NODE_ENV: "test",
+        STYLUS_SOURCE_URL: "https://example.test/source/commit",
+      }).STYLUS_SOURCE_URL,
+    ).toBe("https://example.test/source/commit");
+    for (const value of [
+      "javascript:alert(1)",
+      "https://user:secret@example.test/source",
+      "https://example.test/source?token=secret",
+    ])
+      expect(() =>
+        parseServerEnvironment({ NODE_ENV: "test", STYLUS_SOURCE_URL: value }),
+      ).toThrow();
+  });
   it("keeps AI providers optional for zero-cost and offline operation", () => {
     expect(parseServerEnvironment({ NODE_ENV: "test" })).toMatchObject({
       NODE_ENV: "test",

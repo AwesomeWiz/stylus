@@ -11,6 +11,13 @@ configuration. There is no new global navigation destination.
 
 ## Server configuration
 
+For normal users of a configured deployment, open Settings → Integrations,
+choose Connect, authorize the deployment's App and (for GitHub) select permitted
+repositories. Normal users do not create OAuth apps or supply deployment keys.
+The server setup below is performed once by the self-hosting operator. Test-app
+guidance concerns QA; public deployments need their own provider approvals,
+privacy notice and applicable Google restricted-scope verification.
+
 Keep values in the hosting secret store or ignored `apps/web/.env.local`. Never
 paste credentials into chat, commit them or prefix secret names with `NEXT_PUBLIC`.
 Use the existing `NEXT_PUBLIC_SITE_URL` as the canonical application origin; there

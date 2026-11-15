@@ -9,8 +9,25 @@ import "@xyflow/react/dist/style.css";
 void serverEnv;
 
 export const metadata: Metadata = {
+  metadataBase: new URL(serverEnv.NEXT_PUBLIC_SITE_URL),
   title: { default: "Stylus", template: "%s — Stylus" },
-  description: "The collaborative operating system for startup teams.",
+  description:
+    "From evidence to execution. A shared operating system for early-stage teams.",
+  robots: { index: false, follow: false },
+  openGraph: {
+    title: "Stylus",
+    description: "From evidence to execution.",
+    siteName: "Stylus",
+    type: "website",
+    images: [
+      {
+        url: "/brand/stylus-icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Stylus",
+      },
+    ],
+  },
   icons: {
     icon: [
       { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },

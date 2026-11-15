@@ -84,7 +84,7 @@ Task detail, a selected Studio Idea and Campaign detail show authorized
 "Why are we doing this?" backlinks from actual Experiment links. Studio remains
 the creation surface. Existing Create/Strategic Review/Council inputs, versions
 and bounded model execution are unchanged. No Experiment context silently enters
-a model request. No StyBay-specific assumptions were found in changed UI copy.
+a model request. No private-company-specific assumptions were found in changed UI copy.
 
 ## Persistence, loading and native integration
 

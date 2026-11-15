@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(35);
+select plan(37);
 
 insert into auth.users(
   id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,
@@ -323,6 +323,14 @@ select throws_ok($$
     array['marketing.content-strategist']::text[],'{}'::jsonb,'[]'::jsonb
   )
 $$,'42501',null,'disabled Marketing plugin blocks trusted execution');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.role','authenticated',true);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000201',true);
+select lives_ok($$ select public.delete_owned_organization('10000000-0000-0000-0000-000000000201','Council Org A') $$,'confirmed OWNER deletes populated tenant including immutable history');
+reset role;
+select is((select count(*)::integer from public.organizations where id='10000000-0000-0000-0000-000000000202'),1,'tenant deletion preserves the unrelated organization');
 
 select * from finish();
 rollback;

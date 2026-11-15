@@ -644,3 +644,22 @@ collection.
 - Theme preference is non-sensitive local UI state. No service-role secret is
   imported by a client component, and Marketing/Council authorization and AI
   execution boundaries are unchanged.
+
+## REDESIGN-009 release review
+
+The public Task read endpoint validates bounded strict query state, current
+identity/organization and existing entity authorization on every request. It
+returns private/no-store JSON with Cookie variance, never raw database/provider
+errors. It does not mutate state or expand VIEWER rights. Credentials in browser
+configuration are rejected unless classified as publishable/legacy anon; this
+guard prevents accidental configuration leaks and does not replace Supabase
+credential verification. The optional source-offer URL rejects credentials and
+query parameters before rendering an external link.
+
+[RLS review](RLS_REVIEW.md) records the complete public-table inventory and
+permanent SQL coverage. Existing tenant, plugin, memory, worker and OAuth tests
+remain enabled. Integration credential envelopes, browser/user/org-bound PKCE,
+fixed provider hosts, bounded bodies/timeouts and private cache generations are
+preserved. Public errors serialize no exception details. See
+[release audit](RELEASE_AUDIT.md) for executed checks and explicit pending gates;
+neither this document nor isolated tests claim platform or WCAG certification.

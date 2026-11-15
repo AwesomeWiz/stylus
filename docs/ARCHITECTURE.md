@@ -949,3 +949,37 @@ The fetch client validates snapshots, times out after 20 seconds and uses existi
 generation/revision reconciliation. No persistent cache or authorization shortcut
 is introduced. Empty-session discovery still responds to channel/focus events;
 panning alone does not refetch a known absent session.
+
+### Public beta hardening (REDESIGN-009)
+
+Task detail/comments/execution/provenance reads use
+`GET /api/tasks/[taskId]/read` independently of the mutation Server Action queue.
+The strict bounded query identifies a read kind and expected organization; the
+server freshly validates identity/current membership and reuses entity-authorized
+helpers. Responses are private/no-store and vary by Cookie. No user data enters a
+shared cache. Task lists initially render 50 matching summaries with explicit
+progressive display; all matching data and direct-detail authorization remain.
+
+Public not-found/unexpected/global fallbacks share a small original error surface
+without session reads, raw exception text or provider requests. The root fallback
+has its own document/CSS boundary. An implementation-derived proxy test inventories
+all real route roots so the public 404 does not bypass known application entrypoints.
+
+The release workflow runs one sequential job with fresh dependency installation,
+web/worker checks, isolated SQL, upgrade preservation and native Supabase/browser
+gates. Native execution and remote CI are separately recorded; see
+[release verification](RELEASE_AUDIT.md) and [ADR-056](DECISIONS.md).
+
+Board collaboration subscriptions retain stable identity across equivalent RSC
+refresh objects. A component-local canonical directory and primitive account
+identity prevent each successful save from tearing down the private channel.
+Actual role/directory/account/organization/board changes still replace it; no
+shared user cache or authority change is introduced. PostgreSQL comment cursors
+retain their timezone offset and microsecond precision during bounded pagination.
+
+Tenant deletion uses the same existing owner/name-confirmed public RPC. Validated
+root lifecycle references cover plugin child records; composite references defer
+only through its complete cascade and validate before return. Immutable history
+permits that cascade only when the actual parent organization is absent. No
+application plugin-private import or arbitrary deletion API is added. See ADR-057
+for the separately approved hosted repair and its regression evidence.

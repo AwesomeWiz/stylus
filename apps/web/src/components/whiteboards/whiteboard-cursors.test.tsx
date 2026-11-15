@@ -39,6 +39,9 @@ describe("WhiteboardCursors", () => {
       />,
     );
     const cursor = screen.getByTestId("collaborator-cursor-remote");
+    // The header exposes the collaborator directory. Moving visual cursors must
+    // not duplicate identities or generate accessibility-tree churn.
+    expect(cursor.parentElement).toHaveAttribute("aria-hidden", "true");
     expect(cursor).toHaveStyle({ transform: "translate(45px, 68px)" });
     expect(cursor.querySelector("svg")).toHaveStyle({
       color: boardCollaboratorColor("remote", colorAssignments).cursor,

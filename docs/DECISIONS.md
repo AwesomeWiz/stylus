@@ -1359,3 +1359,76 @@ synchronize or delete provider events. Home's existing attention hierarchy stays
 focused; the optional upcoming Home widget is deferred. The Calendar picker shows
 a bounded upcoming window instead. External Board cards and all other providers,
 automatic ingestion and integration-powered AI remain deferred.
+
+## ADR-056 - Public beta verification and independent Task reads
+
+2026-11-15 · REDESIGN-009, release gates remain open.
+
+Original repository code uses AGPL-3.0-only. Retain canonical license text and
+third-party/font notices; contributors retain copyright with inbound licensing
+equal to outbound licensing. Modified network deployments must offer their exact
+corresponding source. The optional server-only `STYLUS_SOURCE_URL` supplies the
+member-visible source link; it accepts credential-free public HTTPS links only.
+
+Release verification has distinct layers: isolated PostgreSQL with real pgcrypto
+and pgTAP; native Supabase/Auth/Storage/Realtime tests; and authenticated browser
+checks. A passing isolated layer never certifies the others. WSL/virtualization
+must not be enabled on the current Windows host after its boot failure. The
+Docker-dependent full local authenticated clean-install gate remains pending.
+GitHub CI prepares a fresh isolated native stack, without a hosted project or
+repository credentials; remote execution remains a separate required gate.
+
+Task lists retain all matching summaries but render an initial 50 rows and an
+explicit progressive-display action. Read-only detail, discussion, execution and
+provenance use independently authorized private/no-store GET requests, following
+the existing Board voting read separation. Mutations remain Server Actions. Each
+read verifies current identity and organization, then retains existing entity
+authorization; layout state and a client organization ID confer no authority.
+No cross-request user cache, persistence model, provider call or new business feature is
+introduced. Actual before/after transport measurements remain required.
+
+Platform default grants are part of the isolated security fixture. This exposed
+overbroad original Board table grants; a new forward migration removes them and
+restores explicit column grants. Preserve the applied SQL, legitimate upload IDs,
+RLS and atomic RPCs. Anonymous table reads now fail before RLS with 42501; existing
+denial tests require this stronger outcome. Full SQL/upgrade tests pass; hosted
+deployment remains separately recorded, never inferred from isolated success.
+
+Public error recovery uses shared, original, static artwork and safe messages.
+Unexpected errors expose a real reset action without serializing exceptions.
+Unknown top-level routes can reach the public 404; every implemented application
+route root remains covered by the session proxy inventory regression test.
+
+Board collaboration subscriptions retain stable identity across equivalent RSC
+refresh objects. A component-local canonical directory and primitive account
+identity prevent each successful save from tearing down the private channel.
+Actual role/directory/account/organization/board changes still replace it; no
+shared user cache or authority change is introduced. PostgreSQL comment cursors
+retain their timezone offset and microsecond precision during bounded pagination.
+
+## ADR-057 - Atomic owner-confirmed tenant deletion
+
+2026-11-15 · REDESIGN-009; hosted application separately approved and verified.
+
+The original owner/name-confirmed organization RPC succeeds only for empty
+tenants. The actual fictional demo reproduces membership FK ordering failure;
+immutable child tables also lack a root organization cascade. A populated
+permanent regression fails before the repair. Forward migration `20261115000200`
+adds the missing validated root lifecycle edges and makes existing tenant
+references deferrable, retaining composite columns, referenced keys, update
+actions and initial checking modes. RESTRICT becomes NO ACTION with the same
+commit-time invariant. No existing records change on deployment.
+
+The existing RPC retains authentication, row locking, active OWNER authority and
+exact-name confirmation. It defers references during its single bounded cascade
+and validates them before return. Immutable Research, Performance and Council
+triggers permit DELETE only after the actual parent organization is absent;
+normal updates/deletes remain rejected. No client flag, trigger disabling,
+provider call, generic arbitrary-table action or weaker RLS is introduced.
+Organization lifecycle ownership is a database contract shared with plugins;
+Core application code imports no Marketing persistence. Deployment must fail on
+unexpected existing orphans instead of silently repairing or deleting them.
+
+Permanent SQL coverage now deletes populated Core and immutable-domain fixtures,
+preserves unrelated organizations/accounts, and checks validated lifecycle/FK
+invariants. All original role, tenant and immutability denials remain enabled.

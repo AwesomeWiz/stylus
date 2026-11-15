@@ -3,13 +3,19 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { readTaskExecutionAction } from "@/modules/execution/actions";
+import { loadTaskExecution } from "@/modules/tasks/client-reads";
 import { selectTaskQuery } from "@/components/tasks/task-selection";
 import { EntityProvenance } from "@/components/entities/entity-provenance";
 import { ExecutionChoicePicker } from "./choice-picker";
 import { saveExecution } from "./requests";
-type Result = Awaited<ReturnType<typeof readTaskExecutionAction>>;
-export function TaskRelatedWork({ taskId }: { taskId: string }) {
+type Result = Awaited<ReturnType<typeof loadTaskExecution>>;
+export function TaskRelatedWork({
+  taskId,
+  organizationId,
+}: {
+  taskId: string;
+  organizationId: string;
+}) {
   const router = useRouter(),
     [result, setResult] = useState<Result>(),
     [turn, setTurn] = useState(0),
@@ -22,7 +28,7 @@ export function TaskRelatedWork({ taskId }: { taskId: string }) {
   }, []);
   useEffect(() => {
     let active = true;
-    void readTaskExecutionAction({ taskId }).then(
+    void loadTaskExecution({ taskId, organizationId }).then(
       (r) => {
         if (active) setResult(r);
       },
@@ -40,7 +46,7 @@ export function TaskRelatedWork({ taskId }: { taskId: string }) {
       active = false;
       window.removeEventListener("focus", refresh);
     };
-  }, [taskId, turn, refresh]);
+  }, [taskId, organizationId, turn, refresh]);
   async function mutate(input: unknown) {
     if (busy) return;
     setBusy(true);

@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(52);
+select plan(54);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000000','authenticated','authenticated','research-owner@example.test','',now(),'{}','{}',now(),now()),
@@ -270,6 +270,14 @@ select throws_ok($$ update public.marketing_external_research_evidence set excer
 select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000171' $$,array[0]::integer[],'external research writes no durable memory');
 select results_eq($$ select max_attempts::integer from public.job_definitions where job_type='marketing.external-research.run' $$,array[1],'research job has no platform retry multiplication');
 select results_eq($$ select timeout_seconds from public.job_definitions where job_type='marketing.external-research.run' $$,array[120],'research job has a 120-second workflow bound');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.role','authenticated',true);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000171',true);
+select lives_ok($$ select public.delete_owned_organization('10000000-0000-0000-0000-000000000171','Research Org A') $$,'confirmed OWNER deletes populated tenant including immutable history');
+reset role;
+select is((select count(*)::integer from public.organizations where id='10000000-0000-0000-0000-000000000172'),1,'tenant deletion preserves the unrelated organization');
 
 select * from finish();
 rollback;

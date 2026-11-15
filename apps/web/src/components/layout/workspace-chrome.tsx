@@ -113,6 +113,7 @@ export function WorkspaceChrome({
     >
       <a
         href="#main-content"
+        tabIndex={0}
         className="bg-background focus:ring-ring sr-only z-50 rounded-md border p-3 focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:ring-2"
       >
         Skip to content

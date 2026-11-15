@@ -2,13 +2,16 @@
 import { useEffect, useState } from "react";
 import type { EntityProvenanceLink } from "@/core/entities/public";
 import { loadEntityProvenance } from "@/core/entities/actions";
+import { loadTaskProvenance } from "@/modules/tasks/client-reads";
 import { EntityProvenance } from "./entity-provenance";
 export function EntityProvenanceLookup({
   entityType,
   entityId,
+  organizationId,
 }: {
   entityType: string;
   entityId: string;
+  organizationId?: string;
 }) {
   const [state, setState] = useState<{
       key: string;
@@ -24,7 +27,10 @@ export function EntityProvenanceLookup({
       const turn = ++generation;
       setState(undefined);
       try {
-        const result = await loadEntityProvenance({ entityType, entityId });
+        const result =
+          entityType === "core.task" && organizationId
+            ? await loadTaskProvenance({ taskId: entityId, organizationId })
+            : await loadEntityProvenance({ entityType, entityId });
         if (active && turn === generation)
           setState({
             key,
@@ -44,7 +50,7 @@ export function EntityProvenanceLookup({
       window.removeEventListener("focus", refresh);
       clearInterval(timer);
     };
-  }, [key, entityType, entityId]);
+  }, [key, entityType, entityId, organizationId]);
   if (state?.key !== key) return null;
   return state.error ? (
     <p role="status" className="text-muted-foreground text-sm">
