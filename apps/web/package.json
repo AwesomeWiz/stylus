@@ -41,7 +41,7 @@
     "eslint-config-next": "16.4.6",
     "jsdom": "^27.0.0",
     "tailwindcss": "^4.1.13",
-    "typescript": "^5.9.2",
+    "typescript": "^7.0.2",
     "vitest": "4.1.12"
   },
   "license": "AGPL-3.0-only"
