@@ -16,9 +16,15 @@ READY TO MAKE PUBLIC: NO. Maintainer checks remain for supported-host signup/
 organization/onboarding, physical NVDA, live GitHub security/branch/reviewer
 settings, historical author/privacy review, distribution/service legal duties
 and applicable public Google OAuth verification. Publication is not authorized.
-No future feature work starts. Closure updates Markdown only; a following local
-documentation commit does not replace the tested runtime SHA or require another
-expensive suite. No hosted access, agents, merge, tag or visibility change.
+No future feature work starts. The documentation-only acceptance commit `cdd2238`
+and final documentation reconciliation follow the tested runtime SHA. Prepare a
+draft release PR into main, preserving all original-checkout changes. Main is an
+ancestor, the merge preview is conflict-free, and no release execution inputs
+change. Audit all remote refs/history: repository visibility is already public;
+historical privacy and the old independent open-source licensing branch remain
+explicit review items, not silently deleted. Require a full native run at the
+actual main merge SHA after any separately authorized merge. No hosted access,
+agents, automatic merge, tag or visibility change.
 
 # Earlier verification records
 

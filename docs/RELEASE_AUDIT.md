@@ -76,6 +76,68 @@ verification appropriate to that new candidate.
 Engineering/release-pipeline acceptance is **PASS**. Public-release readiness
 remains **NO** until the applicable manual checks and authorization are recorded.
 
+## Final branch and public-history reconciliation — 2026-11-16
+
+Native #21 is independently reverified successful at the exact tested SHA above.
+After a fresh fetch, `origin/codex/redesign-009-release-hardening` still points
+there. Local acceptance commit `cdd223862801b3689da5fbf15112dc81bb5b00c5` is its
+only later release commit and changes exactly seven Markdown files. This final
+reconciliation commit adds only documentation on top; its exact head is reported
+in the PR/handoff. No other branch commits are silently cherry-picked or merged.
+
+Local main and origin/main both remain at
+`5b7e76a0fe6a4e80f17e14c04b119a84b43668a9`. It is the release branch's merge base
+and ancestor, with zero main-only commits. Before reconciliation there are 30
+release-only commits and 664 changed files relative to main; this is the entire
+accumulated V2 release, not merely the last CI repair. Main's original checkout
+has 58 tracked changes and 25 untracked files outside `.worktrees`. Their status,
+tracked/index diffs and untracked content hashes are captured privately and
+compared without resetting, cleaning, stashing or overwriting them.
+
+`git merge-tree --write-tree origin/main HEAD` finds no conflicts and returns
+the release tree. Recommend a normal reviewed **merge commit**, preserving the
+tested candidate and subsequent documentation commits in ancestry. Do not mix
+the original main checkout's local edits into this PR. The exact source head is
+not the future GitHub merge SHA: after an authorized merge, read the PR's actual
+`merge_commit_sha`, confirm it equals origin/main and run the complete native
+release pipeline with both branches set to main at that exact SHA. A temporary
+PR test-merge SHA is provisional; do not claim it or the source SHA as a validated
+post-merge result. No merge has been performed by this task.
+
+GitHub's API reports that the repository is **already public** at inspection;
+visibility is unchanged. Review covers all **31 advertised remote branch heads,
+zero remote tags and 121 commits reachable from those heads**. Local-only refs
+and stashes are kept separate from the advertised public scope. The full local
+reachable-history Gitleaks scan also passes. The current candidate review finds
+zero secrets, committed environment/private QA files, known private references
+or raster metadata findings; remote history has no environment/QA artifact paths.
+These scans are not a guarantee that every historical string is intended public.
+
+Residual remote-history findings, deliberately not republished as raw values:
+
+- One personal author/committer mailbox needs approval; GitHub's standard service
+  committer identity is not classified as a personal address.
+- Earlier brand/domain examples occur in Board controls/link tests, Growth and
+  learning docs and `docs/OPEN_SOURCE_RELEASE.md`; hosted-project references occur
+  historically in PROJECT_STATE and `docs/BOARDS_ENVIRONMENT.md`. They are privacy/
+  metadata review items, not a finding of credentials or tenant records. Current
+  release-tree cleanup does not remove old Git objects.
+- Only two advertised heads contain commits outside the release ancestry:
+  `cci/preflight/demo-seed-20261116-a` (three diagnostic commits) and
+  `codex/open-source-readiness` (one older independent preparation commit at
+  `7783b5df1d1f2042628c7bd3bb65d4c3f4f6387a`). The latter ships an Apache-2.0
+  LICENSE, distinct from this AGPL-3.0-only release, and needs explicit historical
+  licensing/distribution review. Neither branch is merged, deleted or rewritten.
+- Merging this PR would not remove old refs or their privacy/licensing contents
+  from the already-public repository. Any later history/ref cleanup needs its
+  own explicit plan and authorization; no force push or blanket ref push is used.
+
+Prepare the release PR as a draft while the manual gates above remain open.
+Its source tree changes only in documentation after #21, so validate prose,
+links, diff, public-artifact checks and exact non-Markdown tree identity locally;
+do not repeat expensive runtime suites merely to record the evidence. Mandatory
+post-merge validation applies to the actual new main SHA before release.
+
 ## Earlier verification records
 
 The following entries describe earlier candidates and environment limits; their

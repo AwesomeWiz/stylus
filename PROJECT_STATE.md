@@ -22,11 +22,27 @@ obligations and applicable public Google OAuth verification still need maintaine
 confirmation. No failing or unexecuted manual check is relabeled as passed.
 See [release audit](docs/RELEASE_AUDIT.md) and [checklist](docs/RELEASE_CHECKLIST.md).
 
-Acceptance closure changes documentation only. Its following local documentation
-commit is distinct from the exact CI-tested SHA above; non-documentation inputs
-must match that candidate. Only Markdown/link/diff checks are repeated for this
-record; no expensive suites or new CI run are required for prose alone. No hosted
-database access, agents, merge, tag, publication or visibility change occurs.
+Acceptance closure `cdd223862801b3689da5fbf15112dc81bb5b00c5` changes exactly seven
+Markdown files after the tested SHA. No later release commits are found on a fresh
+remote fetch. This final reconciliation adds documentation only and is intended
+for the release PR; executable inputs remain identical to the tested candidate.
+Only Markdown/link/diff and requested branch/history checks are repeated.
+
+Both local and remote main remain at `5b7e76a0fe6a4e80f17e14c04b119a84b43668a9`,
+an ancestor of the release head, with no main-only commits. The original main
+checkout's 58 tracked modifications and 25 untracked files outside `.worktrees`
+are preserved by content/status comparison. Merge preview has no conflicts and
+matches the release tree. Recommend a reviewed merge commit preserving ancestry;
+validate the eventual actual main merge SHA, which does not exist before merge.
+
+GitHub already reports PUBLIC visibility; this task does not change it. All 31
+advertised branches and zero tags are reviewed. Reachable-history secrets scan
+passes; no committed environment/QA artifacts are found in those remote refs.
+Historical personal author metadata, example-brand/domain and hosted-project
+references still need review, and the separate old open-source branch has Apache
+licensing rather than this candidate's AGPL license. No refs/history are deleted
+or rewritten. See the release audit for scope and exact reconciliation evidence.
+No hosted database access, agents, automatic merge, tag or visibility change.
 
 ## Earlier verification records
 
