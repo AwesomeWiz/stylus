@@ -11,6 +11,43 @@ The candidate must be evaluated at its exact SHA.
 
 ## Environment limits
 
+### Complete demo privilege audit and round trip — 2026-11-16
+
+Native job `3e01d041-5273-47dd-a911-fd4525d9927c` at `e5fe80e` confirms the next
+42501 is the service client's membership insert. The [complete audit](DEMO.md#identity-and-permission-audit)
+now covers every operation, role, permission path, exact-ID inventory and cleanup.
+Team creation follows OWNER invitation and each user's acceptance. Research
+fixtures use existing bounded service RPCs, followed by explicit cancellation
+before synthesis; administrative SQL writes are removed. Operational writes stay
+under OWNER. One authored private image exercises real Storage cleanup. No
+application grants, RLS, migration, dependency or lockfile changes are made.
+
+Nineteen demo tests pass, including two complete seed/cleanup executions using
+actual migrations/grants/RLS with synthetic Auth/Storage transport. All 30 isolated
+SQL suites pass 1,138 assertions across 53 migrations. These results are not real
+Supabase/Auth evidence. Full local web/worker suites, lint/typechecks, production
+builds, upgrade, formatting/links and license checks pass. The native round-trip
+gate adds complete seed/verification/
+cleanup/reseed, exact Auth/tenant/Storage absence and unchanged control content.
+Real Auth/JWT/role and browser checks still run against the second fixture before
+final guarded cleanup. All prior full release gates remain mandatory.
+
+Authenticated CircleCI reads now work. The CLI's explicit native trigger returns
+404, and cancellation returns 403. Diagnostic snapshot `8a182d9` is retained on
+`cci/preflight/demo-seed-20261116-a`; its automatic run chose the older compatibility
+workflow. The owner has been asked to start the native `release-machine-ci`
+definition explicitly. Real complete seed, cleanup and final native acceptance
+remain pending; hosted data and local Windows virtualization are untouched.
+
+The initial preflight snapshot predates the final inventory-key normalization,
+Storage identity denial checks and shared verification SQL regression. Validate
+the final 009 candidate, not that snapshot. Official CircleCI configuration,
+Bash/owned-cleanup checks and candidate-tree secret scanning pass. The existing
+`npm audit --audit-level=high` gate passes; seven moderate findings remain in the
+unchanged lint-tool dependency chain via minimatch
+([GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249)). No dependency
+or security threshold is changed for this repair.
+
 ### Demo exact-organization verification — 2026-11-16
 
 The remote branch and CircleCI release failure match `227c7cf`; the owner reports

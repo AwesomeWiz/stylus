@@ -1449,6 +1449,11 @@ platform prerequisites and an explicit local postgres connection. Inspect worker
 table grants and fixture privileges instead of modifying RLS for an unclassified
 compatibility-run denial. Add real password-grant Auth JWT checks for the existing
 fictional OWNER/MEMBER/VIEWER accounts; public-key user sessions enforce role
-assertions, while fixture creation retains the seeder's separate administrative
-path. An always-run final step stops only the job-owned local stack. Official
+assertions. Auth account administration remains separate; team setup uses owner
+invitations and each user's acceptance, operational fixtures use owner APIs, and
+synthetic evidence uses only existing bounded service RPCs cancelled before
+synthesis. Read-only administrative inventory never becomes a fixture-write
+bypass. Real seed/cleanup round trips verify exact absence and unchanged control
+content before release acceptance. An always-run final step stops only the
+job-owned local stack. Official
 configuration validation is not proof of a successful remote release run.

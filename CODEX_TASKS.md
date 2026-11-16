@@ -2,6 +2,24 @@
 
 # Current
 
+## REDESIGN-009 — Complete demo-seed privilege and round-trip repair
+
+Continue from `e5fe80e`; audit every seed/cleanup operation. Use OWNER invitation
+and teammate acceptance, existing guarded research service RPCs instead of
+administrative SQL writes, and exact private-image identity/hash cleanup. Keep
+all production grants/RLS/migrations unchanged. Full actual-source seed/cleanup
+contract coverage passes twice under all 53 migrations with synthetic transport;
+19 demo tests and 30 SQL suites / 1,138 assertions pass. Full web/worker tests,
+lint/typechecks/builds, upgrade, formatting/links and license checks pass. Real fresh Supabase
+round-trip, Auth/JWT/browser and the complete exact native release run remain
+required. The new CI round-trip checks repeatability, exact absence and an
+unchanged pre-existing control, and adds no relaxed release gate.
+
+CircleCI log reads work, but explicit native trigger returns 404 and cancellation
+403. The initial diagnostic predates final local hardening; the final 009 candidate
+must run `release-machine-ci`. Compatibility workflow results do not close this task. No hosted writes,
+local Docker/virtualization, agents, merge/tag/publication or release PASS.
+
 ## REDESIGN-009 — Demo exact-organization verification
 
 Fix only the seed's 42501 verification boundary from `227c7cf`: use the signed-in

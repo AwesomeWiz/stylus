@@ -82,7 +82,7 @@ export function guardFreshCheckout() {
   }
 }
 
-export function verifyDatabase() {
+export function verifyDatabase(runSuites = true) {
   assert.equal(process.env.SUPABASE_EXPERIMENTAL_STACK, "0");
   // Real CLI status is captured in memory; API/service keys are never printed.
   const status = parseLocalStatus(cli(["status", "--output", "env"]));
@@ -154,6 +154,12 @@ export function verifyDatabase() {
     migrations,
     "Fresh local migration ledger differs from repository",
   );
+  if (!runSuites) {
+    console.log(
+      `Verified all ${migrations.length} migrations and real local prerequisites; focused seed diagnostic only.`,
+    );
+    return;
+  }
   console.log(
     `Verified all ${migrations.length} migrations; running all ${suites.length} SQL/RLS suites using the same local postgres connection.`,
   );
@@ -170,5 +176,6 @@ if (
 ) {
   if (process.argv[2] === "guard") guardFreshCheckout();
   else if (process.argv[2] === "test") verifyDatabase();
+  else if (process.argv[2] === "verify") verifyDatabase(false);
   else throw Error("Expected guard or test");
 }
