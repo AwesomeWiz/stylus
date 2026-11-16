@@ -4,6 +4,36 @@ Last Updated: 2026-11-16
 
 ## Overall Status
 
+REDESIGN-009 SQL role-boundary repair: the owner reports Docker-backed Supabase,
+local postgres fixture setup, Auth/Storage/pgcrypto and all 53 migrations passing
+on CircleCI candidate `06ecb41`. The following SQL errors reproduce locally when
+the isolated bootstrap's accidental blanket public-table grant to service_role
+is removed. Both harness variants have postgres session/current identity; the
+grant masks intra-suite service-role fixture reads, not a connection, ordering
+or transaction-reset defect. Ask Council fails before its RPC during argument-ID
+lookup; six other suites inspect protected state without restoring postgres.
+
+The seven suites now capture fixture UUIDs under postgres in transaction-local
+test settings, keep all original RPC operations under their intended roles, and
+reset for protected result inspection. The isolated bootstrap no longer grants
+every public table to service_role. Production grants, RLS, functions, migrations,
+application code, dependencies and both CI configurations remain unchanged.
+All 255 original focused assertions retain labels/order, and 171 public function
+references retain their original roles. A new administrator-restoration assertion
+and 18 release-security assertions enforce eight direct-read denials plus explicit
+integration access. The new denial guards reject the old bootstrap with 16
+expected failures, proving sensitivity to the original masking defect.
+
+Focused suites pass individually in the requested order: Ask Council 38, Creative
+Council 21, External Research 54, Heavy Jobs 59, Reminders 32, Strategic Review 29,
+Windows Workers 23; release-security passes 104. Full isolated SQL passes 30/30
+suites / 1,134 assertions / 53 migrations, and the pre-integration upgrade passes.
+Lint, both typechecks, repository formatting, 188 relative links, candidate-tree
+secret scanning and diff checks pass; production build inputs are unchanged.
+Native SQL rerun, remaining real Auth/JWT/Core/browser/build gates and complete
+CircleCI acceptance remain pending at the new exact candidate. No hosted backend
+or local Docker/virtualization was used for this repair.
+
 REDESIGN-009 direct CircleCI machine pipeline: `.circleci/config.yml` adds one
 sequential Ubuntu 24.04 VM job with direct local Docker, exact `CIRCLE_SHA1`
 verification, Node 24.22.1, a fresh npm cache and deterministic `npm ci`. The

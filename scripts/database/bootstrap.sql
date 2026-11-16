@@ -3,7 +3,8 @@
 create role anon;create role authenticated;create role service_role bypassrls;
 create schema auth;create schema storage;create schema realtime;create schema extensions;
 alter default privileges in schema public grant all on tables to anon,authenticated;
-alter default privileges in schema public grant all on tables to service_role;
+-- service_role bypasses RLS but does not implicitly receive table privileges.
+-- Keep internal tables RPC-only; migrations grant direct integration access explicitly.
 alter default privileges in schema public grant all on sequences to service_role;
 alter default privileges in schema public grant execute on functions to service_role;
 create table auth.users(id uuid primary key,instance_id uuid,aud text,role text,email text,encrypted_password text,email_confirmed_at timestamptz,raw_app_meta_data jsonb,raw_user_meta_data jsonb,created_at timestamptz,updated_at timestamptz,last_sign_in_at timestamptz);

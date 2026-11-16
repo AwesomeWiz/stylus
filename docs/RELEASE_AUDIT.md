@@ -11,6 +11,41 @@ The candidate must be evaluated at its exact SHA.
 
 ## Environment limits
 
+### Fresh Supabase SQL fixture roles — 2026-11-16
+
+The owner reports the direct CircleCI machine run at `06ecb41` successfully
+starting real Docker Supabase, verifying local postgres administrative setup,
+Auth/Storage/pgcrypto and all 53 migrations. Its SQL gate exposes a test-role
+defect, not evidence of broken domain RPCs. Removing only the isolated bootstrap's
+blanket `service_role` public-table grant reproduces all seven reported suites.
+Ask Council's original 37 assertions pass with that grant; without it, argument
+subqueries fail with 42501 before specialist/completion/follow-up functions run,
+and downstream history assertions cascade. The other six suites fail on protected
+table inspection. Both variants identify session/current user as postgres before
+the suites. Their explicit BEGIN/SET LOCAL ROLE/RESET/ROLLBACK behavior is the same;
+the isolated runner's extra between-suite reset cannot repair an in-suite read.
+Neither test ordering, psql nor the native `supabase test db` command is the cause.
+
+Capture fixture UUIDs under postgres with transaction-local `qa.*` settings and
+pass those IDs into the original role-scoped calls. Reset to postgres for private
+state inspection, restoring service_role before its next application operation.
+Worker credentials remain in their existing service-owned temporary fixture;
+authenticated users still cannot read that fixture. No function, RLS policy,
+production grant, migration, connection strategy or CI executor/runtime changes.
+The isolated bootstrap now omits its unsupported blanket table grant; explicit
+production integration adapter grants remain effective.
+
+All 255 original focused assertion labels/order and 171 public-function role
+references are retained. Seven focused runs pass in order: 38/21/54/59/32/29/23
+assertions. Release-security passes 104, including eight catalog privilege checks,
+eight actual 42501 service-role reads, administrator restoration and preservation
+of all six explicit integration-table SELECT grants. Those new denial checks
+reject the original permissive bootstrap with 16 expected failures. Full isolated
+SQL passes **30 suites / 1,134 assertions / 53 migrations**; upgrade also passes.
+The new candidate still requires the native SQL rerun and remaining actual
+Auth/JWT/Core, web/worker, build and browser release gates. Nothing is inferred
+passed from the isolated result. Hosted backends and Windows Docker are untouched.
+
 ### Direct CircleCI machine release gate — 2026-11-16
 
 The owner selected a direct CircleCI pipeline after the GitHub Actions

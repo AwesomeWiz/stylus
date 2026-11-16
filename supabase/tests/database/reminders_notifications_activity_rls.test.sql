@@ -44,6 +44,9 @@ select lives_ok(
   'the reminder processor executes its eligible insert path without ambiguous identifiers'
 );
 select is(public.process_task_reminders('2026-08-25 12:00:00+00'), 0, 'duplicate processor execution is idempotent');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select is((select count(*)::integer from public.task_reminder_deliveries), 1, 'only an eligible task records delivery');
 select is((select count(*)::integer from public.notifications), 1, 'completed, cancelled and unassigned tasks do not notify');
 
@@ -59,6 +62,9 @@ where id = '20000000-0000-0000-0000-000000000055';
 
 set local role service_role;
 select is(public.process_task_reminders('2026-08-25 12:00:00+00'), 1, 'a changed deadline creates only its currently eligible version');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select is_empty(
   $$ select id from public.task_reminder_deliveries where task_id = '20000000-0000-0000-0000-000000000055' and deadline_at = '2026-08-27 12:00:00+00' $$,
   'the old deadline version is never delivered'
@@ -80,6 +86,9 @@ values
 
 set local role service_role;
 select is(public.process_task_reminders('2026-08-25 12:00:00+00'), 3, 'exact deadline boundaries are deterministic');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq(
   $$ select reminder_kind::text from public.task_reminder_deliveries where task_id in ('20000000-0000-0000-0000-000000000056', '20000000-0000-0000-0000-000000000057', '20000000-0000-0000-0000-000000000058') order by reminder_kind::text $$,
   array['DEADLINE', 'DUE_1H', 'DUE_24H']::text[],

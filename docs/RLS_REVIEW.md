@@ -1,10 +1,31 @@
 # Public beta RLS review
 
-REDESIGN-009 - 2026-11-15 - Fresh isolated catalog; native transport remains a separate gate.
+REDESIGN-009 - updated 2026-11-16 - Fresh isolated catalog; native transport remains a separate gate.
 
-This inventory is derived from 53 migrations, with the 51 applied files unchanged in a fresh PostgreSQL instance.
-The runner uses real pgcrypto/pgTAP and platform default grants; it does not supply permissive policies.
+This inventory is derived from 53 migrations in fresh isolated PostgreSQL; all
+53 production migration files remain unchanged by this test-role repair.
+The runner uses real pgcrypto/pgTAP and no permissive policies. Its former blanket
+public-table grant to service_role masked test-side privileged inspection. That
+test-only grant is removed; production migrations and grants are unchanged.
 Tenant roles and denial behavior are exercised by the permanent domain suites, not inferred solely from RLS flags.
+
+The corrected isolated result is **30 suites / 1,134 assertions**. The owner reports
+fresh Docker Supabase and all 53 migrations passing on CircleCI at `06ecb41`;
+native SQL rerun and remaining authenticated release checks are still pending.
+
+| Direct service_role SELECT contract                                                                      | Expected access                  | Verification                                |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------- |
+| `worker_registrations`, `jobs`, `task_reminder_deliveries`                                               | Denied; use guarded service RPCs | Catalog privileges plus actual 42501 reads  |
+| `marketing_ask_council_turns`, `marketing_ask_council_conversations`                                     | Denied; use guarded service RPCs | Catalog privileges plus actual 42501 reads  |
+| `marketing_creative_council_runs`, `marketing_external_research_runs`, `marketing_strategic_review_runs` | Denied; use guarded service RPCs | Catalog privileges plus actual 42501 reads  |
+| Six integration adapter tables granted explicitly by `20261111000100`                                    | Allowed for service persistence  | Explicit SELECT grants retained and checked |
+
+Fixture ID lookups and post-operation inspection use the postgres test connection.
+Domain RPCs keep their original service/authenticated/anonymous roles; test-local
+UUID settings confer no application authority. Ask Council verifies the reset
+after a real role-scoped operation. The regression suite fails with the original
+permissive bootstrap, so accidental broad service table grants cannot hide this
+class of fixture failure again. Application behavior, RLS and migrations do not change.
 
 All 71 organization-keyed tables and `organizations` have RLS enabled.
 The two connection-keyed integration secret/cache tables have RLS and no browser CRUD.

@@ -136,13 +136,19 @@ select throws_ok(
   '42501','Organization job cancellation permission required','19 MEMBER cannot cancel another actor job'
 );
 
+reset role;
+-- Lookup the fixture ID as postgres before the service operation.
+select set_config('qa.job_first_id',(select id from public.jobs where idempotency_key='first-key')::text,true);
 set local role service_role;
 select set_config('request.jwt.claim.role','service_role',true);
 select results_eq(
   $$ select id from public.claim_next_job('worker/one','DATABASE',60) $$,
-  $$ select id from public.jobs where idempotency_key='first-key' $$,
+  $$ select current_setting('qa.job_first_id')::uuid $$,
   '20 a queued eligible job is claimed atomically'
 );
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq(
   $$ select claimant_id from public.jobs where idempotency_key='first-key' $$,
   array['worker/one'::text],
@@ -153,31 +159,46 @@ select results_eq(
   array[1::smallint],
   '22 first claim advances exactly one attempt'
 );
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select is(
   (select (public.claim_next_job('worker/two','DATABASE',60)).id),
   null::uuid,
   '23 another worker cannot claim the running or future job'
 );
 select lives_ok(
-  $$ select public.report_job_progress((select id from public.jobs where idempotency_key='first-key'),'worker/one',50::smallint,'Halfway') $$,
+  $$ select public.report_job_progress((select current_setting('qa.job_first_id')::uuid),'worker/one',50::smallint,'Halfway') $$,
   '24 the active claimant can report bounded progress'
 );
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq(
   $$ select progress from public.jobs where idempotency_key='first-key' $$,
   array[50::smallint],
   '25 progress persists'
 );
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select lives_ok(
-  $$ select public.complete_job((select id from public.jobs where idempotency_key='first-key'),'worker/one','{"acknowledged":true}') $$,
+  $$ select public.complete_job((select current_setting('qa.job_first_id')::uuid),'worker/one','{"acknowledged":true}') $$,
   '26 the active claimant can complete the job'
 );
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq(
   $$ select status from public.jobs where idempotency_key='first-key' $$,
   array['SUCCEEDED'::public.job_status],
   '27 completion is terminal and stores success'
 );
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select throws_ok(
-  $$ select public.complete_job((select id from public.jobs where idempotency_key='first-key'),'worker/one','{}') $$,
+  $$ select public.complete_job((select current_setting('qa.job_first_id')::uuid),'worker/one','{}') $$,
   '42501','Active job completion rejected','28 a terminal job cannot complete twice'
 );
 select is(
@@ -193,16 +214,22 @@ select lives_ok(
   $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"retry"}','retry-key','core.test.echo') $$,
   '30 retry test job enqueues'
 );
+reset role;
+-- Lookup the fixture ID as postgres before the service operation.
+select set_config('qa.job_retry_id',(select id from public.jobs where idempotency_key='retry-key')::text,true);
 set local role service_role;
 select results_eq(
   $$ select id from public.claim_next_job('worker/retry','DATABASE',60) $$,
-  $$ select id from public.jobs where idempotency_key='retry-key' $$,
+  $$ select current_setting('qa.job_retry_id')::uuid $$,
   '31 retry test job is claimed'
 );
 select lives_ok(
-  $$ select public.report_job_failure((select id from public.jobs where idempotency_key='retry-key'),'worker/retry','transient_failure',true) $$,
+  $$ select public.report_job_failure((select current_setting('qa.job_retry_id')::uuid),'worker/retry','transient_failure',true) $$,
   '32 transient failure is reported'
 );
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq(
   $$ select status from public.jobs where idempotency_key='retry-key' $$,
   array['SCHEDULED'::public.job_status],
@@ -219,16 +246,22 @@ select lives_ok(
   $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"permanent"}','permanent-key','core.test.echo') $$,
   '35 permanent failure test job enqueues'
 );
+reset role;
+-- Lookup the fixture ID as postgres before the service operation.
+select set_config('qa.job_permanent_id',(select id from public.jobs where idempotency_key='permanent-key')::text,true);
 set local role service_role;
 select results_eq(
   $$ select id from public.claim_next_job('worker/permanent','DATABASE',60) $$,
-  $$ select id from public.jobs where idempotency_key='permanent-key' $$,
+  $$ select current_setting('qa.job_permanent_id')::uuid $$,
   '36 next eligible job is claimed'
 );
 select lives_ok(
-  $$ select public.report_job_failure((select id from public.jobs where idempotency_key='permanent-key'),'worker/permanent','permanent_failure',false) $$,
+  $$ select public.report_job_failure((select current_setting('qa.job_permanent_id')::uuid),'worker/permanent','permanent_failure',false) $$,
   '37 permanent failure is recorded without retry'
 );
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq(
   $$ select status from public.jobs where idempotency_key='permanent-key' $$,
   array['FAILED'::public.job_status],
@@ -264,19 +297,25 @@ select lives_ok(
   $$ select public.enqueue_job('10000000-0000-0000-0000-000000000111',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"exhaust"}','exhaust-key','core.test.echo') $$,
   '42 exhausted retry test job enqueues'
 );
+reset role;
+-- Lookup the fixture ID as postgres before the service operation.
+select set_config('qa.job_exhaust_id',(select id from public.jobs where idempotency_key='exhaust-key')::text,true);
 set local role service_role;
 select results_eq(
   $$ select id from public.claim_next_job('worker/exhaust','DATABASE',60) $$,
-  $$ select id from public.jobs where idempotency_key='exhaust-key' $$,
+  $$ select current_setting('qa.job_exhaust_id')::uuid $$,
   '43 exhausted retry test job is claimed'
 );
 reset role;
 update public.jobs set attempt_count=max_attempts where idempotency_key='exhaust-key';
 set local role service_role;
 select lives_ok(
-  $$ select public.report_job_failure((select id from public.jobs where idempotency_key='exhaust-key'),'worker/exhaust','transient_failure',true) $$,
+  $$ select public.report_job_failure((select current_setting('qa.job_exhaust_id')::uuid),'worker/exhaust','transient_failure',true) $$,
   '44 retryable failure is accepted at the final attempt'
 );
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq(
   $$ select status from public.jobs where idempotency_key='exhaust-key' $$,
   array['DEAD_LETTER'::public.job_status],
@@ -288,7 +327,7 @@ where parent_job_id=(select id from public.jobs where idempotency_key='permanent
 set local role service_role;
 select results_eq(
   $$ select parent_job_id from public.claim_next_job('worker/stale','DATABASE',60) $$,
-  $$ select id from public.jobs where idempotency_key='permanent-key' $$,
+  $$ select current_setting('qa.job_permanent_id')::uuid $$,
   '46 the explicit retry clone can be claimed'
 );
 reset role;
@@ -301,8 +340,11 @@ select lives_ok(
   $$ select public.recover_stale_jobs(now()) $$,
   '48 stale lease reconciliation executes'
 );
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq(
-  $$ select status from public.jobs where parent_job_id=(select id from public.jobs where idempotency_key='permanent-key') $$,
+  $$ select status from public.jobs where parent_job_id=(select current_setting('qa.job_permanent_id')::uuid) $$,
   array['TIMED_OUT'::public.job_status],
   '49 a stale final attempt becomes terminal instead of remaining RUNNING'
 );
@@ -319,6 +361,9 @@ select lives_ok(
   $$ select public.process_database_jobs(10) $$,
   '51 database-native processor executes without a browser worker'
 );
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select ok(
   (select status='SUCCEEDED' and result_metadata='{"acknowledged":true}'::jsonb from public.jobs where idempotency_key='cron-key'),
   '52 actual database handler produces bounded validated result metadata'

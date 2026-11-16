@@ -101,10 +101,18 @@ select lives_ok($$
     '20000000-0000-4000-8000-000000000171'
   )
 $$,'MEMBER atomically enqueues bounded external research');
+reset role;
+-- Administrative fixture identity lookup, not a service-role table read.
+select set_config('qa.research_job_id',(select job_id from public.marketing_external_research_runs limit 1)::text,true);
+select set_config('qa.research_run_id',(select id from public.marketing_external_research_runs limit 1)::text,true);
+
 select results_eq($$ select count(*)::integer from public.marketing_external_research_runs $$,array[1]::integer[],'one research run persists');
 select results_eq($$ select requested_source_count from public.marketing_external_research_runs limit 1 $$,array[2::smallint],'persisted deterministic plan records two selected source families');
 select results_eq($$ select count(*)::integer from public.jobs where job_type='marketing.external-research.run' and capability='marketing.external-research.execute' and execution_class='SERVERLESS' $$,array[1]::integer[],'one exact SERVERLESS job persists');
 select results_eq($$ select count(*)::integer from public.marketing_external_research_runs as run join public.jobs as job on job.id=run.job_id where job.input_metadata->>'runId'=run.id::text $$,array[1]::integer[],'run and job are linked atomically');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select results_eq($$
   select (public.enqueue_marketing_external_research(
     '10000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000172',
@@ -143,69 +151,81 @@ $$,'22023',null,'invalid feed request is rejected');
 
 select lives_ok($$
   select public.claim_serverless_job(
-    (select job_id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
     'task-017-lifecycle',120
   )
 $$,'immediate hosted executor atomically claims the exact research job');
 select results_eq($$
   select (public.claim_serverless_job(
-    (select job_id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
     'task-017-concurrent',120
   )).id is null
 $$,array[true],'concurrent immediate or Cron execution cannot claim the running job twice');
 select lives_ok($$
   select public.begin_marketing_external_research(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    (select id from public.marketing_external_research_runs limit 1)
+    (current_setting('qa.research_job_id')::uuid),
+    (current_setting('qa.research_run_id')::uuid)
   )
 $$,'claimed research run begins');
 select lives_ok($$
   select public.record_marketing_external_research_retrieval(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    (select id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
+    (current_setting('qa.research_run_id')::uuid),
     '[{"sourceKey":"SRC-1","adapter":"reddit","status":"SUCCEEDED","nativeId":"post-1","canonicalUrl":"https://www.reddit.com/r/fashion/comments/post-1/","title":"Sizing","author":"shopper","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","failureCategory":null,"safeMetadata":{"sourceRequest":"reddit:fashion","community":"fashion"}}]'::jsonb,
     '[{"evidenceId":"EVID-1","evidenceType":"REDDIT_POST","excerpt":"Sizing labels vary between brands.","sourceKey":"SRC-1","nativeId":"post-1","parentNativeId":null,"canonicalUrl":"https://www.reddit.com/r/fashion/comments/post-1/","title":"Sizing","author":"shopper","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","safeMetadata":{"score":10,"community":"fashion"}}]'::jsonb,
     false,'{}',1,0,100,24
   )
 $$,'retrieval persists source and evidence provenance');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select evidence_type || ':' || native_id || ':' || (safe_metadata->>'score') from public.marketing_external_research_evidence limit 1 $$,array['REDDIT_POST:post-1:10'],'Reddit evidence keeps its exact type and native provenance');
 select results_eq($$ select status::text from public.marketing_external_research_runs limit 1 $$,array['SYNTHESIZING'],'evidence advances the run to synthesis');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select lives_ok($$
   select public.start_marketing_external_research_ai_run(
-    (select job_id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
     '30000000-0000-4000-8000-000000000171','generate_structured',
     'marketing.external-research.execute','BALANCED','{}'
   )
 $$,'one trusted balanced synthesis trace starts');
 select lives_ok($$
   select public.complete_marketing_external_research_ai_run(
-    (select job_id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
     '30000000-0000-4000-8000-000000000171','SUCCEEDED','test-model','test-provider',false,
     10,10,10,20,0,null,'{}'
   )
 $$,'trusted synthesis trace completes');
 select throws_ok($$
   select public.complete_marketing_external_research(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    (select id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
+    (current_setting('qa.research_run_id')::uuid),
     '30000000-0000-4000-8000-000000000171',
     '{"schemaVersion":"marketing-fashion-research-report-v1","audienceSignals":[{"evidenceRefs":["EVID-2"]}],"languageSignals":[],"trendSignals":[],"objections":[],"debates":[],"contentOpportunities":[]}'::jsonb
   )
 $$,'22023',null,'invented evidence reference cannot create a report');
 select lives_ok($$
   select public.complete_marketing_external_research(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    (select id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
+    (current_setting('qa.research_run_id')::uuid),
     '30000000-0000-4000-8000-000000000171',
     '{"schemaVersion":"marketing-fashion-research-report-v1","summary":"Summary","audienceSignals":[{"evidenceRefs":["EVID-1"]}],"languageSignals":[],"trendSignals":[],"objections":[],"debates":[],"contentOpportunities":[]}'::jsonb
   )
 $$,'valid evidence references create an immutable report');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select count(*)::integer from public.marketing_external_research_reports $$,array[1]::integer[],'one immutable report persists');
 select results_eq($$ select schema_version from public.marketing_external_research_reports $$,array['marketing-fashion-research-report-v1'],'fashion report schema version persists immutably');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select lives_ok($$
   select public.complete_job(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    'task-017-lifecycle',jsonb_build_object('runId',(select id from public.marketing_external_research_runs limit 1))
+    (current_setting('qa.research_job_id')::uuid),
+    'task-017-lifecycle',jsonb_build_object('runId',(current_setting('qa.research_run_id')::uuid))
   )
 $$,'job completes after the domain report');
 
@@ -223,7 +243,13 @@ begin
   end loop;
 end;
 $$;
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select count(*)::integer from public.marketing_external_research_runs $$,array[5]::integer[],'five submissions in one hour are retained');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select throws_ok($$
   select public.enqueue_marketing_external_research(
     '10000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000172',

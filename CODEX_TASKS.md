@@ -2,6 +2,21 @@
 
 # Current
 
+## REDESIGN-009 — Fresh Supabase SQL test role leakage
+
+Repair test/harness boundaries only. The old isolated bootstrap's blanket table
+grant to service_role masked direct fixture lookups and inspection under that
+role in seven suites. Without it, all reported native failures reproduce under
+the same postgres connection and transaction semantics. Preserve original RPC
+roles, all existing assertions, explicit integration grants and production RLS.
+Seven focused suites and the complete stricter SQL gate pass: 30 suites / 1,134
+assertions / 53 migrations; upgrade passes. Actual direct-read denials for eight
+internal tables, administrator restoration and explicit integration access have
+permanent regressions. No production/application/migration or CI runtime change.
+The owner reports the native Docker setup and migration gate already passed at
+`06ecb41`; the new candidate must complete native SQL and all remaining release
+gates on CircleCI. No hosted database or Windows virtualization changes.
+
 ## REDESIGN-009 — Direct CircleCI machine release pipeline
 
 Add `.circleci/config.yml` as an alternate CI path: one Ubuntu 24.04 machine job,

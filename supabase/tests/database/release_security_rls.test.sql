@@ -2,6 +2,32 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select no_plan();
 
+-- Trusted transitions use guarded RPCs; BYPASSRLS is not a direct table grant.
+-- Fixture inspection must not depend on a permissive service-role bootstrap.
+select ok(not pg_catalog.has_table_privilege('service_role','public.'||name,'SELECT'),
+  name || ': service_role has no direct SELECT grant')
+from unnest(array[
+  'marketing_ask_council_turns','marketing_ask_council_conversations',
+  'marketing_creative_council_runs','marketing_external_research_runs',
+  'marketing_strategic_review_runs','jobs','task_reminder_deliveries','worker_registrations'
+]) t(name);
+set local role service_role;
+select throws_ok(format('select * from public.%I limit 0',name),'42501',null,
+  name || ': direct service-role inspection is denied')
+from unnest(array[
+  'marketing_ask_council_turns','marketing_ask_council_conversations',
+  'marketing_creative_council_runs','marketing_external_research_runs',
+  'marketing_strategic_review_runs','jobs','task_reminder_deliveries','worker_registrations'
+]) t(name);
+reset role;
+select is(current_user::text,'postgres','role-scoped denial checks restore administrative fixture inspection');
+-- Integrations deliberately grant their service persistence adapter direct access.
+select is((select count(*)::integer from unnest(array[
+  'integration_connections','integration_secrets','integration_oauth_states',
+  'external_resource_links','integration_resource_cache','integration_calendar_intents'
+]) t(name) where pg_catalog.has_table_privilege('service_role','public.'||name,'SELECT')),6,
+  'explicit integration service SELECT grants remain available');
+
 -- Discover tenant tables from the real catalog so newly added domains cannot
 -- escape the release gate simply by being absent from a hand-maintained list.
 select ok(c.relrowsecurity, c.relname || ': tenant table has RLS enabled')

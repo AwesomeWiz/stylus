@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(37);
+select plan(38);
 
 insert into auth.users(
   id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,
@@ -100,6 +100,10 @@ select lives_ok($$
   )
 $$,'service starts one organization-scoped turn for an active MEMBER');
 reset role;
+-- Capture fixture identities as postgres; role-scoped RPCs receive only UUIDs.
+select is(current_user::text,'postgres','fixture inspection returns to the administrative postgres role');
+select set_config('qa.ask_first_turn_id',(select id from public.marketing_ask_council_turns where idempotency_key='20000000-0000-4000-8000-000000000201')::text,true);
+select set_config('qa.ask_conversation_id',(select id from public.marketing_ask_council_conversations where organization_id='10000000-0000-0000-0000-000000000201')::text,true);
 select results_eq($$
   select count(*)::integer from public.marketing_ask_council_conversations
   where organization_id='10000000-0000-0000-0000-000000000201'
@@ -156,8 +160,7 @@ select lives_ok($$
   select public.record_marketing_ask_council_specialist(
     '10000000-0000-0000-0000-000000000201',
     '00000000-0000-0000-0000-000000000202',
-    (select id from public.marketing_ask_council_turns
-      where idempotency_key='20000000-0000-4000-8000-000000000201'),
+    (current_setting('qa.ask_first_turn_id')::uuid),
     1::smallint,'marketing.content-strategist',
     '30000000-0000-4000-8000-000000000201',
     '{"recommendation":"Run one controlled test."}'::jsonb
@@ -174,8 +177,7 @@ select lives_ok($$
   select public.complete_marketing_ask_council_turn(
     '10000000-0000-0000-0000-000000000201',
     '00000000-0000-0000-0000-000000000202',
-    (select id from public.marketing_ask_council_turns
-      where idempotency_key='20000000-0000-4000-8000-000000000201'),
+    (current_setting('qa.ask_first_turn_id')::uuid),
     '30000000-0000-4000-8000-000000000202',
     '{"answer":"Test one evidence-bounded direction."}'::jsonb
   )
@@ -201,18 +203,19 @@ select lives_ok($$
   select public.start_marketing_ask_council_turn(
     '10000000-0000-0000-0000-000000000201',
     '00000000-0000-0000-0000-000000000202',
-    (select id from public.marketing_ask_council_conversations
-      where organization_id='10000000-0000-0000-0000-000000000201'),
+    (current_setting('qa.ask_conversation_id')::uuid),
     '20000000-0000-4000-8000-000000000203','Will failure create an answer?','GENERAL_MARKETING',
     array['marketing.content-strategist']::text[],'{}'::jsonb,'[]'::jsonb
   )
 $$,'service appends a follow-up turn to the existing conversation');
+reset role;
+select set_config('qa.ask_followup_turn_id',(select id from public.marketing_ask_council_turns where idempotency_key='20000000-0000-4000-8000-000000000203')::text,true);
+set local role service_role;
 select lives_ok($$
   select public.fail_marketing_ask_council_turn(
     '10000000-0000-0000-0000-000000000201',
     '00000000-0000-0000-0000-000000000202',
-    (select id from public.marketing_ask_council_turns
-      where idempotency_key='20000000-0000-4000-8000-000000000203'),
+    (current_setting('qa.ask_followup_turn_id')::uuid),
     'unknown',null,null
   )
 $$,'service records a safe failed follow-up without an assistant answer');

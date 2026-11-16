@@ -18,6 +18,12 @@ and populated-tenant deletion repairs are deployed. Exact demo rows/accounts/ass
 are verified absent. Remote CI and the native authenticated clean-install gate
 remain required before this release milestone can be marked complete.
 
+CircleCI's direct machine job now has owner-reported Docker/local postgres and
+53-migration setup evidence at `06ecb41`. The SQL fixture-role defect is repaired
+without production grant changes: the stricter isolated gate passes 30 suites /
+1,134 assertions. Native SQL rerun and the remaining authenticated/full-workflow
+acceptance are still required; this milestone remains open.
+
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
 - [x] Boards V2 and immersive BoardShell specified with P0/P1/P2 priorities
