@@ -4,6 +4,20 @@ Last Updated: 2026-11-16
 
 ## Overall Status
 
+REDESIGN-009.1 startup diagnosis: CircleCI passed npm installation and the worker
+path fix at `7aa7924`, then failed Supabase startup with both output streams hidden
+in a file. CI now reports safe platform/tool/environment-presence diagnostics,
+bounded artifact-host reachability probes and sanitized failure output while
+preserving the startup exit status. This is a diagnostic candidate, not native
+acceptance. Locked CLI 2.115.0 top-level start/help uses legacy Docker; the repo
+does not select the current documented experimental native runtime. Actual
+CircleCI UID/architecture/glibc, startup error, downloads, Postgres, Auth and all
+53 migrations still need remote evidence. No runtime switch, dependency change,
+root workaround, health bypass or hosted database operation is included.
+Local verification passes two log-redaction tests, parsed workflow comparison
+(all other gates unchanged), Bash syntax and simulated success/failure exit
+paths, lint and both typechecks. Application build inputs remain unchanged.
+
 REDESIGN-009.1 follow-up: CircleCI confirmed the npm-cache fix at `ca86b31`,
 then exposed host-dependent Windows model-path basename handling on Linux.
 Transcript model metadata remains filename-only; execution retains the full
@@ -16,7 +30,8 @@ REDESIGN-009 LOCAL VALIDATION VERIFIED / PUBLIC RELEASE GATES OPEN
 Dedicated `codex/redesign-009-release-hardening` worktree from exact
 `72b990e221a2c353697f8edb5f64466d115feb6c`; the dirty root and 008's generated
 Next.js development-type change remain untouched. Main agent only, sequential
-runners. No push, merge, tag or visibility change is authorized. Scope is release
+runners. REDESIGN-009.1 authorizes normal task-branch pushes for remote CI;
+no merge, tag or visibility change is authorized. Scope is release
 hardening, documentation, legal/provenance, reproducibility, CI, fictional demo
 media, accessibility/browser/security and measured performance fixes; feature freeze.
 

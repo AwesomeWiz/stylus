@@ -5,10 +5,40 @@ Status: **in progress; not approved for publication**. Starting commit:
 validation evidence will be recorded after the release tree is stable.
 
 The [checklist](RELEASE_CHECKLIST.md) distinguishes completed work and open gates.
-No push, merge, tag or visibility change is authorized. A workflow file is not
-remote CI evidence. The candidate must be evaluated at its exact SHA.
+REDESIGN-009.1 authorizes normal task-branch pushes for remote CI; no merge, tag
+or visibility change is authorized. A workflow file is not remote CI evidence.
+The candidate must be evaluated at its exact SHA.
 
 ## Environment limits
+
+### REDESIGN-009.1 remote startup diagnosis — 2026-11-16
+
+CircleCI passed installation and worker tests at `7aa7924`, then reported only
+exit 1 for Supabase start. Both streams were redirected without a failure-log
+handler. The follow-up prints sanitized failure output and preserves its exit
+status. Runner identity, Linux/architecture/glibc, tool versions, native-variable
+presence and bounded artifact-host reachability are now diagnostic outputs.
+Reachability responses do not prove archive downloads or checksum verification.
+Raw startup logs stay ignored/private; debug credential dumps are not enabled.
+
+The locked CLI is 2.115.0. Actual installed help identifies top-level `start` as
+container startup, even with `SUPABASE_EXPERIMENTAL_STACK=1`; the tagged
+[experimental start source](https://github.com/supabase/cli/blob/v2.115.0/apps/cli/src/next/commands/start/start.command.ts)
+uses a different `--mode` contract. The current documented
+[native runtime](https://supabase.com/docs/guides/local-development/docker-and-native-runtimes)
+requires experimental-stack selection and explicit `--runtime native` to prevent
+fallback. That is absent from this repository's command/config. The existing
+step title therefore does not establish native execution. No CLI upgrade or
+runtime substitution is made before observing the actual remote error.
+
+The documented native requirements are Linux amd64/arm64 with glibc >=2.35 and
+system tar, verified service archives from GitHub/release-assets or Supabase's
+S3 fallback, and a non-root Postgres account. A root workaround is conditional
+on the actual runner UID, which is not yet known. CircleCI's actual platform,
+artifact results, Postgres/Auth startup and all 53 migrations remain unverified;
+none is inferred from local isolated SQL results. All downstream database,
+fictional bootstrap and authenticated browser gates remain required. The next
+candidate needs a complete CircleCI run and evidence-based failure classification.
 
 The owner disabled WSL/Virtual Machine Platform after a Windows boot failure.
 They must not be enabled for this task. Docker-dependent full local Supabase

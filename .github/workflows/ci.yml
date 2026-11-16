@@ -42,12 +42,46 @@ jobs:
       - run: npm test
       - run: npm run test:db:isolated
       - run: npm run test:db:upgrade
-      # GitHub-hosted Linux provides an isolated Docker engine. No linked
-      # project, account token or repository secret is required by this job.
+      # Diagnose the pinned CLI before changing runtimes. Its top-level start
+      # currently uses legacy Docker, not the experimental native stack.
+      # No linked project, account token or repository secret is required.
       - name: Initialize fresh native Supabase stack and migrations
         run: |
+          diagnose() {
+            printf '\nDiagnostic: %s\n' "$*"
+            if "$@"; then :; else printf 'Diagnostic unavailable (exit %s)\n' "$?"; fi
+          }
+          diagnose id
+          diagnose uname -srm
+          diagnose getconf GNU_LIBC_VERSION
+          diagnose node --version
+          diagnose npm --version
+          diagnose npx --no-install supabase --version
+          diagnose command -v tar
+          diagnose tar --version
+          for setting in SUPABASE_EXPERIMENTAL_STACK SUPABASE_NATIVE_POSTGRES_USER; do
+            if [[ -v "$setting" ]]; then
+              printf '%s: present (value withheld)\n' "$setting"
+            else
+              printf '%s: unset\n' "$setting"
+            fi
+          done
+          printf 'Runtime contract: pinned CLI top-level start uses legacy Docker; native acceptance remains unverified.\n'
+          # Reachability only: these responses do not prove archive download or checksum success.
+          for host in github.com release-assets.githubusercontent.com supabase-cli-artifacts.s3.us-east-1.amazonaws.com; do
+            diagnose curl --disable --head --silent --show-error --max-time 10 --output /dev/null --write-out "Artifact host $host: HTTP %{http_code}\n" "https://$host/"
+          done
+          node --test scripts/release/supabase-start-log.test.mjs
           mkdir -p .release-qa
-          npx --no-install supabase start -x studio,logflare,vector,edge-runtime,imgproxy,supavisor > .release-qa/supabase-start.log 2>&1
+          umask 077
+          if npx --no-install supabase start -x studio,logflare,vector,edge-runtime,imgproxy,supavisor > .release-qa/supabase-start.log 2>&1; then
+            printf 'Supabase start completed; database and authenticated gates must still pass.\n'
+          else
+            startup_status=$?
+            printf 'Supabase start failed (exit %s); sanitized stdout/stderr follows.\n' "$startup_status"
+            node scripts/release/supabase-start-log.mjs .release-qa/supabase-start.log
+            exit "$startup_status"
+          fi
       - run: npm run test:db
       - run: node scripts/setup-local-env.mjs
       - run: npm run demo:seed -- --confirm-demo-memory

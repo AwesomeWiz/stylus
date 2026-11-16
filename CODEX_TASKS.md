@@ -2,6 +2,18 @@
 
 # Current
 
+## REDESIGN-009.1 — Supabase startup diagnostics follow-up
+
+Remote failure diagnosis remains open. Preserve startup stdout/stderr in an
+ignored private file and print sanitized output on failure with the original
+nonzero exit status. Report runner identity/platform/tool versions, only the
+presence of native settings, and bounded artifact-host reachability. The pinned
+2.115.0 top-level command is legacy Docker despite the step name; no native PASS
+is claimed. The next exact candidate must run the full CircleCI workflow to
+establish the actual failure before any runtime/version/root workaround.
+Local log-redaction, workflow/Bash/exit-status checks, lint and typechecks pass;
+dependencies, lockfile and application build inputs remain unchanged.
+
 ## REDESIGN-009.1 — Worker model metadata portability follow-up
 
 Local verification passes: 22 media tests, 36 full worker tests, worker typecheck
