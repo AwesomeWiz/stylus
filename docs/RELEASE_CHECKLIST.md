@@ -45,18 +45,23 @@ passing gate. Final evidence must identify an exact release-candidate commit.
 
 - [x] Deterministic clean install and all required web/worker quality gates.
 - [x] Isolated database runner: 53 migrations from zero, real pgcrypto, 30 suites /
-      1,115 assertions. Native CI execution remains separate.
+      1,138 assertions. Native CI execution remains separate.
 - [x] Pre-integration upgrade preserves organization/Task/Board/object data and
       authorized writes; no existing database is reset.
 - [x] Fresh-clone install/example configuration/build/public-browser instructions
       pass without optional services. Native authenticated setup remains below.
 - [ ] Docker-dependent full local clean-clone signup, organization, onboarding and
       Core smoke: pending by owner instruction, not passed or waived.
+- [x] Native CircleCI diagnostic #17 at `6ac08ac`: fresh Supabase, both complete
+      demo seed/verification/exact-cleanup rounds, real Auth/JWT role checks,
+      unchanged baseline and final control/asset/account absence. This does not
+      replace the full signup/onboarding/browser acceptance above.
 - [x] Hosted ledger/ACL read-only inspection and supported dry run identify exactly
       one required forward Board grant correction. Owner-authorized application is
       complete; the final ledger has 53 versions and column/RPC checks pass.
-- [ ] Remote GitHub Actions run on the exact candidate. Pending unless a push is
-      separately authorized; workflow inspection alone is not remote execution proof.
+- [ ] Approved native CircleCI `release-machine-ci` (or the supported GitHub
+      Actions equivalent) completes every release gate on the exact candidate.
+      The focused seed diagnostic does not close this gate.
 - [x] Additional populated-tenant deletion migration: full isolated gate passes,
       supported dry run lists only `20261115000200`; separate hosted approval and
       exact demo cleanup are complete. Initial failed cleanup rolled back.

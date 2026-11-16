@@ -5,6 +5,7 @@ import vm from "node:vm";
 import { randomBytes, randomUUID } from "node:crypto";
 import { canonicalInventory } from "./inventory.mjs";
 import { verifyDemoOrganization } from "./organization-identity.mjs";
+import * as responses from "./responses.mjs";
 
 const url = "http://127.0.0.1:54321";
 const fixture = () => ({
@@ -259,6 +260,7 @@ async function cleanupScenario(options = {}) {
     },
   });
   const dependencies = {
+    "./responses.mjs": responses,
     "node:fs": {
       default: {
         existsSync() {

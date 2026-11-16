@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { requireObject, requireUuid } from "./responses.mjs";
 
 // Store explicitly labelled synthetic evidence through the existing bounded
 // service RPCs. No SQL writes, adapter fetch, AI run or successful report exists.
@@ -15,25 +16,28 @@ export async function createResearchFixture({
   const fixture = manifest.researchFixture;
   const executor = `demo-seed/${manifest.token}`;
   if (!fixture.runId) {
-    const result = check(
-      await service.rpc("enqueue_marketing_external_research", {
-        p_organization_id: org,
-        p_actor_id: manifest.users[0].id,
-        p_invocation_key: invocation,
-        p_request_snapshot: {
-          question:
-            "Fictional demo observation; no external retrieval or AI execution.",
-          objective: "CONTENT_OBSERVATIONS",
-          queryTerms: ["fictional demo"],
-          hackerNewsStream: null,
-          rssFeedUrls: ["https://example.test/fictional-feed"],
-          fictionalDemo: true,
-        },
-      }),
-      "create bounded fictional evidence run",
+    const result = requireObject(
+      check(
+        await service.rpc("enqueue_marketing_external_research", {
+          p_organization_id: org,
+          p_actor_id: manifest.users[0].id,
+          p_invocation_key: invocation,
+          p_request_snapshot: {
+            question:
+              "Fictional demo observation; no external retrieval or AI execution.",
+            objective: "CONTENT_OBSERVATIONS",
+            queryTerms: ["fictional demo"],
+            hackerNewsStream: null,
+            rssFeedUrls: ["https://example.test/fictional-feed"],
+            fictionalDemo: true,
+          },
+        }),
+        "create bounded fictional evidence run",
+      ),
+      "research enqueue response",
     );
-    fixture.runId = result.runId;
-    fixture.jobId = result.jobId;
+    fixture.runId = requireUuid(result.runId, "research run ID");
+    fixture.jobId = requireUuid(result.jobId, "research job ID");
     save();
   }
   const runQuery = () =>
@@ -43,7 +47,9 @@ export async function createResearchFixture({
       .eq("organization_id", org)
       .eq("id", fixture.runId)
       .single();
-  let run = check(await runQuery(), "verify exact fictional research run");
+  const readRun = async (label) =>
+    requireObject(check(await runQuery(), label), label);
+  let run = await readRun("verify exact fictional research run");
   if (run.job_id !== fixture.jobId)
     throw Error("STOP: fictional research job identity mismatch");
   if (run.status === "QUEUED") {
@@ -64,7 +70,7 @@ export async function createResearchFixture({
       }),
       "begin fictional evidence fixture",
     );
-    run = check(await runQuery(), "verify begun fictional research run");
+    run = await readRun("verify begun fictional research run");
   }
   if (run.status === "RUNNING") {
     const excerpt =
@@ -111,7 +117,7 @@ export async function createResearchFixture({
       }),
       "persist labelled fictional evidence through guarded RPC",
     );
-    run = check(await runQuery(), "verify fictional evidence state");
+    run = await readRun("verify fictional evidence state");
   }
   if (run.status === "SYNTHESIZING") {
     check(
@@ -128,29 +134,35 @@ export async function createResearchFixture({
       }),
       "acknowledge fictional job cancellation",
     );
-    run = check(await runQuery(), "verify cancelled fictional research run");
+    run = await readRun("verify cancelled fictional research run");
   }
   if (run.status !== "CANCELLED")
     throw Error("STOP: fictional research fixture must remain cancelled");
-  const source = check(
-    await owner
-      .from("marketing_external_research_sources")
-      .select("id,run_id,safe_metadata")
-      .eq("organization_id", org)
-      .eq("run_id", fixture.runId)
-      .eq("source_key", "SRC-1")
-      .single(),
-    "verify exact fictional source",
+  const source = requireObject(
+    check(
+      await owner
+        .from("marketing_external_research_sources")
+        .select("id,run_id,safe_metadata")
+        .eq("organization_id", org)
+        .eq("run_id", fixture.runId)
+        .eq("source_key", "SRC-1")
+        .single(),
+      "verify exact fictional source",
+    ),
+    "research source response",
   );
-  const evidence = check(
-    await owner
-      .from("marketing_external_research_evidence")
-      .select("id,run_id,source_id,evidence_id")
-      .eq("organization_id", org)
-      .eq("run_id", fixture.runId)
-      .eq("evidence_id", "EVID-1")
-      .single(),
-    "verify exact fictional evidence",
+  const evidence = requireObject(
+    check(
+      await owner
+        .from("marketing_external_research_evidence")
+        .select("id,run_id,source_id,evidence_id")
+        .eq("organization_id", org)
+        .eq("run_id", fixture.runId)
+        .eq("evidence_id", "EVID-1")
+        .single(),
+      "verify exact fictional evidence",
+    ),
+    "research evidence response",
   );
   if (
     source.safe_metadata?.fictionalDemo !== true ||

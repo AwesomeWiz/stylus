@@ -4,6 +4,10 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Fixed demo inventory decoding across CLI output modes and validated complete
+  baselines before cleanup. Native Supabase verification now passes both seed/
+  cleanup rounds and real Auth role checks; full release acceptance remains gated.
+
 - Repaired fictional demo setup to use real team invitations/acceptance and
   existing bounded research APIs. Added private-image identity/hash cleanup and
   a repeatable isolated CI seed/cleanup gate that preserves a control workspace.

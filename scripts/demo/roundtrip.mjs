@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
 import {
   assertLoopback,
@@ -18,7 +18,15 @@ import {
   seedVerificationSql,
   assertSeedCounts,
   assertFixtureInventory,
+  assertControlBaseline,
 } from "./verification.mjs";
+import {
+  requireData,
+  requireObject,
+  requireRows,
+  requireSingleRow,
+  requireUuid,
+} from "./responses.mjs";
 
 assert.equal(
   process.env.CIRCLECI,
@@ -39,11 +47,9 @@ const owner = createClient(
 );
 const file = ".release-qa/demo-roundtrip.json";
 const demoFile = ".release-qa/demo.json";
-const read = (name) => JSON.parse(fs.readFileSync(name, "utf8"));
-const check = (result, label) => {
-  if (result.error) throw Error(`${label} (${result.error.code ?? "request"})`);
-  return result.data;
-};
+const read = (name) =>
+  requireObject(JSON.parse(fs.readFileSync(name, "utf8")), `recorded ${name}`);
+const check = requireData;
 const save = () =>
   fs.writeFileSync(file, JSON.stringify(report, null, 2), { mode: 0o600 });
 const pass = (label) => {
@@ -51,13 +57,20 @@ const pass = (label) => {
   save();
   console.log(`PASS ${label}`);
 };
-function seed(args = []) {
-  const result = spawnSync(
-    process.execPath,
-    ["scripts/demo/seed.mjs", ...args],
-    { env: childEnv, stdio: "inherit", windowsHide: true },
-  );
-  assert.equal(result.status, 0, "Complete seed/cleanup command must succeed");
+async function seed(args = []) {
+  await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ["scripts/demo/seed.mjs", ...args], {
+      env: childEnv,
+      stdio: "inherit",
+      windowsHide: true,
+    });
+    child.once("error", reject);
+    child.once("close", (code, signal) => {
+      if (code !== 0 || signal)
+        reject(Error("Complete seed/cleanup command must succeed"));
+      else resolve();
+    });
+  });
 }
 async function login(user, password) {
   check(
@@ -65,59 +78,160 @@ async function login(user, password) {
     "round-trip owner login",
   );
 }
+function readyDemo() {
+  const manifest = read(demoFile);
+  assert.equal(manifest.state, "ready");
+  assert.equal(manifest.url, url);
+  requireUuid(manifest.organizationId, "demo organization ID");
+  const users = requireRows(manifest.users, "demo accounts");
+  assert.equal(users.length, 3);
+  for (const user of users) {
+    requireUuid(user.id, "demo account ID");
+    assert.equal(typeof user.email, "string");
+  }
+  assert.equal(new Set(users.map((u) => u.id)).size, 3);
+  requireObject(manifest.ids, "demo entity IDs");
+  requireObject(manifest.teamInvitations, "demo invitations");
+  assert.equal(requireRows(manifest.assets, "demo asset inventory").length, 1);
+  assert.ok(requireRows(manifest.recordInventory, "demo row inventory").length);
+  return manifest;
+}
 async function controlSnapshot() {
   const c = report.control;
-  const identity = check(
-    await admin.auth.admin.getUserById(c.user.id),
-    "control exact Auth read",
-  ).user;
+  const identity = requireObject(
+    requireObject(
+      check(
+        await admin.auth.admin.getUserById(c.user.id),
+        "control exact Auth read",
+      ),
+      "control Auth response",
+    ).user,
+    "control Auth user",
+  );
   assert.equal(identity.id, c.user.id);
   assert.equal(identity.email, c.user.email);
   const inventory = await readDemoInventory({
     organizationId: c.organizationId,
     users: [c.user],
   });
-  const data = readLocalDemoRows(
-    controlSnapshotSql(c),
-    "demo-control-snapshot",
+  const data = requireSingleRow(
+    await readLocalDemoRows(controlSnapshotSql(c), "demo-control-snapshot"),
+    "control content snapshot",
   );
-  return {
-    inventory,
-    data,
-    identity: {
-      id: identity.id,
-      email: identity.email,
-      user_metadata: identity.user_metadata,
+  for (const field of ["organization", "note", "membership"])
+    requireObject(data[field], `control ${field}`);
+  assert.equal(data.organization.id, c.organizationId);
+  assert.equal(data.organization.created_by, c.user.id);
+  assert.equal(data.note.id, c.noteId);
+  assert.equal(data.note.organization_id, c.organizationId);
+  assert.equal(data.membership.organization_id, c.organizationId);
+  assert.equal(data.membership.user_id, c.user.id);
+  assert.equal(data.membership.role, "OWNER");
+  assert.equal(data.membership.removed_at, null);
+  for (const [table, key, id] of [
+    ["organizations", "id", c.organizationId],
+    ["notes", "id", c.noteId],
+    ["memberships", "user_id", c.user.id],
+  ]) {
+    const item = requireObject(
+      inventory.find((t) => t.table_name === table),
+      `control ${table} inventory`,
+    );
+    assert.equal(
+      requireSingleRow(item.records, `control ${table} records`).keys[key],
+      id,
+    );
+  }
+  const authUsers = requireRows(
+    await readLocalDemoRows(
+      "select id from auth.users order by id;",
+      "demo-auth-baseline",
+    ),
+    "Auth baseline",
+  );
+  for (const row of authUsers) requireUuid(row.id, "Auth baseline ID");
+  assert.equal(authUsers.filter((row) => row.id === c.user.id).length, 1);
+  const assets = requireRows(
+    await readLocalDemoRows(
+      "select id,bucket_id,name,owner_id from storage.objects order by id;",
+      "demo-storage-baseline",
+    ),
+    "Storage baseline",
+  );
+  for (const row of assets) {
+    requireUuid(row.id, "Storage baseline ID");
+    assert.equal(typeof row.name, "string");
+    assert.equal(typeof row.bucket_id, "string");
+  }
+  return assertControlBaseline(
+    {
+      inventory,
+      data,
+      authUsers,
+      assets,
+      identity: {
+        id: identity.id,
+        email: identity.email,
+        user_metadata: identity.user_metadata,
+      },
     },
-  };
+    c,
+  );
 }
 async function verifySeed() {
-  const manifest = read(demoFile);
+  const manifest = readyDemo();
   assert.equal(manifest.state, "ready");
   assert.equal(manifest.users.length, 3);
   await login(manifest.users[0], manifest.password);
+  const team = requireRows(
+    check(
+      await owner.rpc("list_organization_team", {
+        p_organization_id: manifest.organizationId,
+      }),
+      "authorized team directory",
+    ),
+    "team directory rows",
+  );
+  assert.equal(team.length, 3);
   for (const [i, user] of manifest.users.entries()) {
-    const membership = check(
-      await owner
-        .from("memberships")
-        .select("role,user_id")
-        .eq("organization_id", manifest.organizationId)
-        .eq("user_id", user.id)
-        .single(),
-      "exact team membership",
+    const membership = requireObject(
+      team.find((member) => member.member_user_id === user.id),
+      "verified membership",
     );
+    assert.equal(membership.email, user.email);
     assert.equal(membership.role, ["OWNER", "MEMBER", "VIEWER"][i]);
+  }
+  const invitations = requireRows(
+    check(
+      await owner.rpc("list_organization_invitations", {
+        p_organization_id: manifest.organizationId,
+      }),
+      "authorized invitation directory",
+    ),
+    "invitation rows",
+  );
+  assert.equal(invitations.length, 2);
+  for (const invitation of invitations) {
+    assert.equal(invitation.status, "ACCEPTED");
+    assert.ok(
+      Object.values(manifest.teamInvitations).some(
+        (record) => record.id === invitation.id && record.accepted,
+      ),
+    );
   }
   assert.equal(
     Object.values(manifest.teamInvitations).filter((i) => i.accepted).length,
     2,
   );
   const org = manifest.organizationId;
-  const rows = readLocalDemoRows(
-    seedVerificationSql(manifest),
-    "demo-roundtrip-verification",
+  const row = requireSingleRow(
+    await readLocalDemoRows(
+      seedVerificationSql(manifest),
+      "demo-roundtrip-verification",
+    ),
+    "seed count verification",
   );
-  assertSeedCounts(rows[0]);
+  assertSeedCounts(row);
   assertFixtureInventory(manifest, await readDemoInventory(manifest));
   await verifyDemoAssets({ owner, manifest, check });
   assert.deepEqual(
@@ -136,8 +250,9 @@ async function verifySeed() {
   );
 }
 async function cleanupSeed() {
-  const manifest = read(demoFile);
-  seed(["--cleanup"]);
+  const manifest = readyDemo();
+  await assertControlUnchanged();
+  await seed(["--cleanup"]);
   assert.equal(read(demoFile).state, "cleaned");
   assert.ok(
     (await readDemoInventory(manifest)).every((t) => t.records.length === 0),
@@ -153,7 +268,7 @@ async function cleanupSeed() {
   for (const asset of manifest.assets) {
     assert.match(asset.storageId, /^[0-9a-f-]{36}$/i);
     assert.deepEqual(
-      readLocalDemoRows(
+      await readLocalDemoRows(
         `select id from storage.objects where id='${asset.storageId}';`,
         "demo-asset-absence",
       ),
@@ -169,35 +284,66 @@ async function cleanupSeed() {
     "Guarded cleanup: exact tenant rows, Auth accounts and private assets absent; pre-existing control unchanged",
   );
 }
-// Accept only the two preallocated Auth-smoke tasks and their four exact trigger
+async function assertControlUnchanged() {
+  assertControlBaseline(report.controlSnapshot, report.control);
+  const before = await controlSnapshot();
+  for (const field of ["inventory", "data", "identity"])
+    assert.deepEqual(
+      before[field],
+      report.controlSnapshot[field],
+      `Pre-existing control ${field} changed before cleanup`,
+    );
+}
+// Accept only the two Auth-smoke tasks recorded on creation and their four exact trigger
 // events. Any other inventory change aborts cleanup; never refresh it blindly.
 async function approveSmokeWrites() {
   if (!fs.existsSync(".release-qa/auth-smoke.json")) return;
-  const manifest = read(demoFile),
+  const manifest = readyDemo(),
     smoke = read(".release-qa/auth-smoke.json");
   assert.equal(smoke.organizationId, manifest.organizationId);
+  if (!Array.isArray(smoke.taskIds))
+    throw Error("STOP: missing recorded smoke task IDs");
   assert.equal(smoke.taskIds.length, 2);
   assert.equal(new Set(smoke.taskIds).size, 2);
   await login(manifest.users[0], manifest.password);
   const expected = structuredClone(manifest.recordInventory);
+  const addExact = (table, record) => {
+    const entries = requireRows(
+      requireObject(
+        expected.find((t) => t.table_name === table),
+        `smoke ${table} inventory`,
+      ).records,
+      `smoke ${table} records`,
+    );
+    const matches = entries.filter((entry) => entry.keys.id === record.keys.id);
+    assert.ok(matches.length <= 1, "Duplicate recorded smoke identity");
+    if (matches.length)
+      assert.deepEqual(matches[0], record, "Recorded smoke provenance changed");
+    else entries.push(record);
+  };
   for (const [index, id] of smoke.taskIds.entries()) {
     assert.match(id, /^[0-9a-f-]{36}$/i);
     const actor = manifest.users[index].id;
-    const row = check(
-      await owner
-        .from("tasks")
-        .select("id,title,created_by,updated_by")
-        .eq("organization_id", manifest.organizationId)
-        .eq("id", id)
-        .single(),
-      "exact smoke task",
+    const row = requireObject(
+      check(
+        await owner
+          .from("tasks")
+          .select("id,title,created_by,updated_by")
+          .eq("organization_id", manifest.organizationId)
+          .eq("id", id)
+          .single(),
+        "exact smoke task",
+      ),
+      "verified smoke task",
     );
     assert.equal(row.created_by, actor);
     assert.equal(row.updated_by, actor);
     assert.equal(row.title, `CI ${["OWNER", "MEMBER"][index]} persisted`);
-    expected
-      .find((t) => t.table_name === "tasks")
-      .records.push({ keys: { id }, creator: actor, actor: null });
+    addExact("tasks", {
+      keys: { id },
+      creator: actor,
+      actor: null,
+    });
     const events = check(
       await owner
         .from("activity_events")
@@ -206,6 +352,7 @@ async function approveSmokeWrites() {
         .eq("entity_id", id),
       "exact smoke activity",
     );
+    requireRows(events, "smoke trigger events");
     assert.equal(events.length, 2);
     assert.deepEqual(events.map((e) => e.event_type).sort(), [
       "TASK_CREATED",
@@ -214,9 +361,11 @@ async function approveSmokeWrites() {
     for (const event of events) {
       assert.equal(event.actor_id, actor);
       assert.equal(event.entity_type, "TASK");
-      expected
-        .find((t) => t.table_name === "activity_events")
-        .records.push({ keys: { id: event.id }, creator: null, actor });
+      addExact("activity_events", {
+        keys: { id: requireUuid(event.id, "smoke event ID") },
+        creator: null,
+        actor,
+      });
     }
   }
   assert.deepEqual(
@@ -239,6 +388,7 @@ if (process.argv[2] === "prepare") {
     "Round trip requires a fresh recorded scope",
   );
   report = {
+    state: "preparing",
     checks: [],
     rounds: [],
     control: {
@@ -248,24 +398,37 @@ if (process.argv[2] === "prepare") {
   };
   save();
   const c = report.control;
-  c.user = check(
-    await admin.auth.admin.createUser({
-      email: `stylus-control-${randomBytes(6).toString("hex")}@example.test`,
-      password: c.password,
-      email_confirm: true,
-      user_metadata: { full_name: "Isolated preservation control" },
-    }),
-    "create isolated control Auth account",
-  ).user;
+  c.user = requireObject(
+    requireObject(
+      check(
+        await admin.auth.admin.createUser({
+          email: `stylus-control-${randomBytes(6).toString("hex")}@example.test`,
+          password: c.password,
+          email_confirm: true,
+          user_metadata: { full_name: "Isolated preservation control" },
+        }),
+        "create isolated control Auth account",
+      ),
+      "control account response",
+    ).user,
+    "created control account",
+  );
+  requireUuid(c.user.id, "created control account ID");
   c.user = { id: c.user.id, email: c.user.email };
   save();
   await login(c.user, c.password);
-  c.organizationId = check(
-    await owner.rpc("create_organization", {
-      p_name: "Isolated release preservation control",
-    }),
-    "create isolated control organization",
-  ).id;
+  c.organizationId = requireUuid(
+    requireObject(
+      check(
+        await owner.rpc("create_organization", {
+          p_name: "Isolated release preservation control",
+        }),
+        "create isolated control organization",
+      ),
+      "control organization response",
+    ).id,
+    "created control organization ID",
+  );
   save();
   check(
     await owner.rpc("save_core_note", {
@@ -281,26 +444,45 @@ if (process.argv[2] === "prepare") {
   );
   report.controlSnapshot = await controlSnapshot();
   save();
-  seed(["--confirm-demo-memory"]);
+  await seed(["--confirm-demo-memory"]);
   await verifySeed();
   await cleanupSeed();
   fs.renameSync(demoFile, ".release-qa/demo-round-one-cleaned.json");
-  seed(["--confirm-demo-memory"]);
+  await seed(["--confirm-demo-memory"]);
   await verifySeed();
+  report.state = "prepared";
   pass("Second complete real seed ready for Auth/JWT/browser release checks");
 } else if (process.argv[2] === "cleanup") {
   report = read(file);
+  assert.equal(
+    report.state,
+    "prepared",
+    "Only a fully prepared round trip may clean up",
+  );
+  assertControlBaseline(report.controlSnapshot, report.control);
+  requireRows(report.rounds, "recorded round trips");
+  assert.equal(report.rounds.length, 2);
+  const latest = readyDemo();
+  assert.equal(latest.organizationId, report.rounds[1].organizationId);
+  assert.deepEqual(
+    latest.users.map((u) => u.id),
+    report.rounds[1].userIds,
+  );
+  await assertControlUnchanged();
   await approveSmokeWrites();
   await cleanupSeed();
   const c = report.control;
   await login(c.user, c.password);
-  const organization = check(
-    await owner
-      .from("organizations")
-      .select("id,name,created_by")
-      .eq("id", c.organizationId)
-      .single(),
-    "exact control cleanup identity",
+  const organization = requireObject(
+    check(
+      await owner
+        .from("organizations")
+        .select("id,name,created_by")
+        .eq("id", c.organizationId)
+        .single(),
+      "exact control cleanup identity",
+    ),
+    "control cleanup organization",
   );
   assert.equal(organization.created_by, c.user.id);
   assert.equal(organization.name, "Isolated release preservation control");
@@ -327,6 +509,20 @@ if (process.argv[2] === "prepare") {
   assert.ok(
     !gone.data?.user &&
       (gone.error?.status === 404 || gone.error?.code === "user_not_found"),
+  );
+  assert.deepEqual(
+    await readLocalDemoRows(
+      "select id from auth.users order by id;",
+      "demo-final-auth-absence",
+    ),
+    report.controlSnapshot.authUsers.filter((u) => u.id !== c.user.id),
+  );
+  assert.deepEqual(
+    await readLocalDemoRows(
+      "select id,bucket_id,name,owner_id from storage.objects order by id;",
+      "demo-final-storage-absence",
+    ),
+    report.controlSnapshot.assets,
   );
   delete c.password;
   report.state = "cleaned";

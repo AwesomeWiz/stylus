@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import test from "node:test";
 import vm from "node:vm";
+import { EventEmitter } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
+import { createClient as createSdkClient } from "@supabase/supabase-js";
 import { PGlite } from "@electric-sql/pglite";
 import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { pgtap } from "@electric-sql/pglite-pgtap";
@@ -10,13 +14,24 @@ import { ensureDemoTeam } from "./team.mjs";
 import { createResearchFixture } from "./research-fixture.mjs";
 import { ensureDemoAsset, cleanupDemoAssets } from "./assets.mjs";
 import { verifyDemoOrganization } from "./organization-identity.mjs";
-import { canonicalInventory, readDemoInventory } from "./inventory.mjs";
+import {
+  canonicalInventory,
+  readDemoInventory,
+  decodeLocalQueryResult,
+} from "./inventory.mjs";
+import * as responses from "./responses.mjs";
+import * as verification from "./verification.mjs";
+import {
+  assertLoopback,
+  assertNoProviders,
+} from "../release/ci-local-database.mjs";
 import {
   controlSnapshotSql,
   seedVerificationSql,
   assertSeedCounts,
   assertFixtureInventory,
 } from "./verification.mjs";
+import { sanitizeStartupLog } from "../release/supabase-start-log.mjs";
 
 // Real migrations/grants/RLS/functions, with synthetic Auth/Storage transport.
 // This is a complete SQL contract regression, not a real Supabase/Auth claim.
@@ -60,37 +75,65 @@ test(
           };
         }
       };
-      const client = {
+      // Exercise installed Auth/Storage SDK transformations, rather than
+      // fabricating SDK result objects. HTTP is wholly synthetic and fenced.
+      const json = (value, status = 200) =>
+        new Response(JSON.stringify(value), {
+          status,
+          headers: {
+            "content-type": "application/json",
+            "x-supabase-api-version": "2024-01-01",
+          },
+        });
+      const publicUser = (record) => ({
+        id: record.id,
+        aud: "authenticated",
+        role: "authenticated",
+        email: record.email,
+        user_metadata: record.user_metadata ?? {},
+        app_metadata: { provider: "email", providers: ["email"] },
+        created_at: "2026-01-01T00:00:00Z",
+      });
+      const sdk = createSdkClient(url, key, {
         auth: {
-          admin: {
-            createUser: (input) =>
-              result(async () => {
-                assert.equal(role, "service_role");
-                const record = { id: randomUUID(), ...input };
-                await sql(
-                  "postgres",
-                  null,
-                  "insert into auth.users(id,email,raw_user_meta_data) values($1,$2,$3)",
-                  [
-                    record.id,
-                    record.email,
-                    JSON.stringify(input.user_metadata),
-                  ],
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+        global: {
+          fetch: async (input, init) => {
+            const request = new Request(input, init),
+              target = new URL(request.url);
+            assert.equal(
+              target.origin,
+              url,
+              "No network request may escape the synthetic transport",
+            );
+            const route = decodeURIComponent(target.pathname),
+              method = request.method;
+            if (route === "/auth/v1/admin/users" && method === "POST") {
+              assert.equal(role, "service_role");
+              const input = await request.json(),
+                record = { id: randomUUID(), ...input };
+              await sql(
+                "postgres",
+                null,
+                "insert into auth.users(id,email,raw_user_meta_data) values($1,$2,$3)",
+                [record.id, record.email, JSON.stringify(record.user_metadata)],
+              );
+              accounts.set(record.id, record);
+              return json(publicUser(record));
+            }
+            if (route.startsWith("/auth/v1/admin/users/")) {
+              assert.equal(role, "service_role");
+              const id = route.split("/").at(-1),
+                record = accounts.get(id);
+              if (!record)
+                return json(
+                  { code: "user_not_found", msg: "User not found" },
+                  404,
                 );
-                accounts.set(record.id, record);
-                return { user: record };
-              }),
-            async getUserById(id) {
-              return accounts.has(id)
-                ? { data: { user: accounts.get(id) } }
-                : {
-                    data: { user: null },
-                    error: { status: 404, code: "user_not_found" },
-                  };
-            },
-            deleteUser: (id) =>
-              result(async () => {
-                assert.ok(accounts.has(id));
+              if (method === "DELETE") {
                 await sql(
                   "postgres",
                   null,
@@ -98,28 +141,114 @@ test(
                   [id],
                 );
                 accounts.delete(id);
-                return {};
-              }),
-          },
-          signInWithPassword: (input) =>
-            result(async () => {
+              } else assert.equal(method, "GET");
+              return json(publicUser(record));
+            }
+            if (route === "/auth/v1/token") {
+              const credentials = await request.json();
               user = [...accounts.values()].find(
-                (a) => a.email === input.email && a.password === input.password,
+                (u) =>
+                  u.email === credentials.email &&
+                  u.password === credentials.password,
               );
               assert.ok(user);
-              return { user };
-            }),
-          getUser: () =>
-            result(async () => {
+              const token = [
+                Buffer.from(
+                  JSON.stringify({ alg: "HS256", typ: "JWT" }),
+                ).toString("base64url"),
+                Buffer.from(
+                  JSON.stringify({
+                    sub: user.id,
+                    role: "authenticated",
+                    exp: Math.floor(Date.now() / 1000) + 3600,
+                  }),
+                ).toString("base64url"),
+                "synthetic-signature",
+              ].join(".");
+              return json({
+                access_token: token,
+                token_type: "bearer",
+                expires_in: 3600,
+                refresh_token: randomUUID(),
+                user: publicUser(user),
+              });
+            }
+            if (route === "/auth/v1/user") {
               assert.ok(user);
-              return { user };
-            }),
-          signOut: () =>
-            result(async () => {
+              return json(publicUser(user));
+            }
+            if (route === "/auth/v1/logout") {
+              assert.equal(method, "POST");
               user = null;
-              return {};
-            }),
+              return new Response(null, { status: 204 });
+            }
+            if (route.startsWith("/storage/v1/object/")) {
+              assert.ok(user);
+              assert.equal(role, "authenticated");
+              const rest = route.slice("/storage/v1/object/".length);
+              const prefix = rest.startsWith("info/")
+                ? "info/"
+                : rest.startsWith("authenticated/")
+                  ? "authenticated/"
+                  : "";
+              const resource = rest.slice(prefix.length),
+                bucket = resource.split("/")[0],
+                name = resource.slice(bucket.length + 1);
+              assert.equal(bucket, "board-images");
+              if (method === "DELETE") {
+                const body = await request.json();
+                assert.equal(body.prefixes.length, 1);
+                const rows = await sql(
+                  role,
+                  user.id,
+                  "delete from storage.objects where bucket_id=$1 and name=$2 returning id,name",
+                  [bucket, body.prefixes[0]],
+                );
+                bytes.delete(body.prefixes[0]);
+                return json(rows);
+              }
+              if (method === "POST") {
+                const id = randomUUID();
+                await sql(
+                  role,
+                  user.id,
+                  "insert into storage.objects(id,bucket_id,name,owner_id) values($1,$2,$3,$4)",
+                  [id, bucket, name, user.id],
+                );
+                bytes.set(name, Buffer.from(await request.arrayBuffer()));
+                return json({ Id: id, Key: bucket + "/" + name });
+              }
+              assert.equal(method, "GET");
+              const row = (
+                await sql(
+                  role,
+                  user.id,
+                  "select id,name,bucket_id,owner_id from storage.objects where bucket_id=$1 and name=$2",
+                  [bucket, name],
+                )
+              )[0];
+              if (!row)
+                return json(
+                  {
+                    statusCode: "404",
+                    error: "not_found",
+                    message: "Object not found",
+                  },
+                  404,
+                );
+              return prefix === "info/"
+                ? json(row)
+                : new Response(bytes.get(name), {
+                    headers: { "content-type": "image/png" },
+                  });
+            }
+            throw Error(`Unexpected synthetic SDK endpoint ${method} ${route}`);
+          },
         },
+      });
+      const client = {
+        auth: sdk.auth,
+        storage: sdk.storage,
         rpc: (name, args) =>
           result(async () => {
             calls.push([role, name]);
@@ -161,6 +290,7 @@ test(
         from(table) {
           let fields = "*",
             insertion,
+            updating,
             filters = [],
             single = false,
             optional = false;
@@ -169,12 +299,20 @@ test(
               insertion = value;
               return builder;
             },
+            update(value) {
+              updating = value;
+              return builder;
+            },
             select(value = "*") {
               fields = value;
               return builder;
             },
             eq(key, value) {
               filters.push([key, value]);
+              return builder;
+            },
+            in(key, value) {
+              filters.push([key, value, "in"]);
               return builder;
             },
             single() {
@@ -194,10 +332,12 @@ test(
                 ]);
                 const projection =
                   fields === "*" ? "*" : fields.split(",").map(quote).join(",");
-                const params = [],
-                  clauses = filters.map(([k, v]) => {
+                const params = updating ? Object.values(updating) : [],
+                  clauses = filters.map(([k, v, kind]) => {
                     params.push(v);
-                    return `${quote(k)}=$${params.length}`;
+                    return kind === "in"
+                      ? `${quote(k)}=any($${params.length}::uuid[])`
+                      : `${quote(k)}=$${params.length}`;
                   });
                 let query = `select ${projection} from public.${quote(table)}${clauses.length ? " where " + clauses.join(" and ") : ""}`;
                 if (insertion) {
@@ -211,6 +351,14 @@ test(
                   );
                   query = `insert into public.${quote(table)}(${Object.keys(insertion).map(quote).join(",")}) values(${params.map((_, i) => "$" + (i + 1)).join(",")}) returning ${projection}`;
                 }
+                if (updating)
+                  query = `update public.${quote(table)} set ${Object.keys(
+                    updating,
+                  )
+                    .map((key, i) => `${quote(key)}=$${i + 1}`)
+                    .join(
+                      ",",
+                    )} where ${clauses.join(" and ")} returning ${projection}`;
                 const rows = await sql(role, user?.id, query, params);
                 if (single) {
                   assert.ok(
@@ -225,70 +373,29 @@ test(
           };
           return builder;
         },
-        storage: {
-          from(bucket) {
-            assert.equal(bucket, "board-images");
-            return {
-              info: (name) =>
-                result(async () => {
-                  const rows = await sql(
-                    role,
-                    user?.id,
-                    "select id,name,bucket_id from storage.objects where bucket_id=$1 and name=$2",
-                    [bucket, name],
-                  );
-                  assert.equal(rows.length, 1);
-                  return {
-                    id: rows[0].id,
-                    name: rows[0].name,
-                    bucketId: rows[0].bucket_id,
-                  };
-                }),
-              upload: (name, data) =>
-                result(async () => {
-                  const id = randomUUID();
-                  await sql(
-                    role,
-                    user?.id,
-                    "insert into storage.objects(id,bucket_id,name,owner_id) values($1,$2,$3,$4)",
-                    [id, bucket, name, user.id],
-                  );
-                  bytes.set(name, data);
-                  return { id, path: name };
-                }),
-              async download(name) {
-                const rows = await sql(
-                  role,
-                  user?.id,
-                  "select id from storage.objects where bucket_id=$1 and name=$2",
-                  [bucket, name],
-                );
-                return rows.length
-                  ? { data: new Blob([bytes.get(name)]) }
-                  : { error: { statusCode: "404" } };
-              },
-              remove: (names) =>
-                result(async () => {
-                  assert.equal(names.length, 1);
-                  const rows = await sql(
-                    role,
-                    user?.id,
-                    "delete from storage.objects where bucket_id=$1 and name=$2 returning id,name",
-                    [bucket, names[0]],
-                  );
-                  bytes.delete(names[0]);
-                  return rows;
-                }),
-            };
-          },
-        },
       };
       return client;
     }
-    const inventory = (manifest) =>
-      readDemoInventory(manifest, async (query) =>
-        sql("postgres", null, query),
+    let agentEnvelope = false;
+    const localRead = async (query) => {
+      const rows = await sql("postgres", null, query);
+      return decodeLocalQueryResult(
+        {
+          status: 0,
+          stdout: JSON.stringify(
+            agentEnvelope
+              ? {
+                  rows,
+                  boundary: "fixture",
+                  warning: "Untrusted database data",
+                }
+              : rows,
+          ),
+        },
+        "contract query",
       );
+    };
+    const inventory = (manifest) => readDemoInventory(manifest, localRead);
     async function execute(args) {
       const context = vm.createContext({
         URL,
@@ -307,6 +414,7 @@ test(
         },
       });
       const deps = {
+        "./responses.mjs": responses,
         "node:fs": {
           default: {
             existsSync: (file) => files.has(file),
@@ -350,6 +458,115 @@ test(
           { cause: error },
         );
       }
+    }
+    async function executeRoundtrip(phase, authSmoke = false) {
+      const context = vm.createContext({
+        URL,
+        Buffer,
+        structuredClone,
+        console: { log() {} },
+        process: {
+          env: { CIRCLECI: "true" },
+          execPath: process.execPath,
+          argv: ["node", "roundtrip.mjs", phase],
+          loadEnvFile() {
+            Object.assign(this.env, {
+              NEXT_PUBLIC_SUPABASE_URL: url,
+              NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+                "sb_publishable_test_contract",
+              SUPABASE_SERVICE_ROLE_KEY: "test-service",
+            });
+          },
+        },
+      });
+      const deps = {
+        "node:fs": {
+          default: {
+            existsSync: (file) => files.has(file),
+            readFileSync: (file) => {
+              assert.ok(files.has(file), file);
+              return files.get(file);
+            },
+            writeFileSync: (file, text) => files.set(file, text),
+            renameSync: (from, to) => {
+              assert.ok(files.has(from));
+              assert.ok(!files.has(to));
+              files.set(to, files.get(from));
+              files.delete(from);
+            },
+          },
+        },
+        // Normalize only VM-realm prototypes; the full values/keys still compare.
+        "node:assert/strict": {
+          default: {
+            ...assert,
+            deepEqual: (a, b, message) =>
+              assert.deepEqual(
+                JSON.parse(JSON.stringify(a)),
+                JSON.parse(JSON.stringify(b)),
+                message,
+              ),
+          },
+        },
+        "node:crypto": { randomBytes, randomUUID },
+        "node:path": { default: path },
+        "node:url": { pathToFileURL },
+        "node:child_process": {
+          spawn(_exe, args, options) {
+            assert.equal(args[0], "scripts/demo/seed.mjs");
+            assert.equal(options.env.NEXT_PUBLIC_SUPABASE_URL, undefined);
+            const child = new EventEmitter();
+            Promise.resolve()
+              .then(() => execute(args.slice(1)))
+              .then(
+                () => child.emit("close", 0, null),
+                (error) => child.emit("error", error),
+              );
+            return child;
+          },
+        },
+        "@supabase/supabase-js": { createClient },
+        "../release/ci-local-database.mjs": {
+          assertLoopback,
+          assertNoProviders,
+        },
+        "./ci-local-database.mjs": { assertLoopback, assertNoProviders },
+        "./supabase-start-log.mjs": { sanitizeStartupLog },
+        "./inventory.mjs": {
+          canonicalInventory,
+          readDemoInventory: inventory,
+          readLocalDemoRows: localRead,
+        },
+        "./assets.mjs": {
+          verifyDemoAssets: (await import("./assets.mjs")).verifyDemoAssets,
+        },
+        "./verification.mjs": verification,
+        "./responses.mjs": responses,
+        "../demo/responses.mjs": responses,
+      };
+      const source = new vm.SourceTextModule(
+        fs.readFileSync(
+          new URL(
+            authSmoke ? "../release/ci-auth-smoke.mjs" : "./roundtrip.mjs",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+        { context },
+      );
+      await source.link((name) => {
+        assert.ok(deps[name], name);
+        return new vm.SyntheticModule(
+          Object.keys(deps[name]),
+          function () {
+            for (const [key, value] of Object.entries(deps[name]))
+              this.setExport(key, value);
+          },
+          { context },
+        );
+      });
+      await source.evaluate();
+      if (authSmoke) await source.namespace.runAuthSmoke();
     }
     try {
       await db.exec(fs.readFileSync("scripts/database/bootstrap.sql", "utf8"));
@@ -455,6 +672,45 @@ test(
           .length,
         4,
       );
+      // Exercise the actual controller, CLI response decoder, both complete seed
+      // rounds, its smoke-inventory extension and final control/global absence.
+      agentEnvelope = true;
+      await executeRoundtrip("prepare");
+      const prepared = JSON.parse(files.get(".release-qa/demo-roundtrip.json"));
+      assert.equal(prepared.state, "prepared");
+      assert.equal(prepared.rounds.length, 2);
+      const demo = JSON.parse(files.get(".release-qa/demo.json"));
+      await executeRoundtrip("auth", true);
+      assert.equal(
+        JSON.parse(files.get(".release-qa/auth-smoke.json")).taskIds.length,
+        2,
+      );
+      const malformed = structuredClone(prepared);
+      delete malformed.controlSnapshot.assets;
+      files.set(".release-qa/demo-roundtrip.json", JSON.stringify(malformed));
+      const identitiesBefore = [...accounts.keys()];
+      await assert.rejects(executeRoundtrip("cleanup"), /asset inventory/);
+      assert.deepEqual([...accounts.keys()], identitiesBefore);
+      assert.equal(bytes.size, 1);
+      files.set(".release-qa/demo-roundtrip.json", JSON.stringify(prepared));
+      const changed = structuredClone(prepared);
+      changed.controlSnapshot.data.note.content = "Unexpected baseline content";
+      files.set(".release-qa/demo-roundtrip.json", JSON.stringify(changed));
+      await assert.rejects(
+        executeRoundtrip("cleanup"),
+        /changed before cleanup/,
+      );
+      assert.deepEqual([...accounts.keys()], identitiesBefore);
+      assert.equal(bytes.size, 1);
+      files.set(".release-qa/demo-roundtrip.json", JSON.stringify(prepared));
+      await executeRoundtrip("cleanup");
+      assert.equal(
+        JSON.parse(files.get(".release-qa/demo-roundtrip.json")).state,
+        "cleaned",
+      );
+      assert.equal(accounts.size, 1);
+      assert.equal(bytes.size, 0);
+      assert.deepEqual(await inventory(controlManifest), controlInventory);
     } finally {
       await db.close();
     }
