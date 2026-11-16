@@ -2,24 +2,23 @@
 
 # Current
 
-## REDESIGN-009 — Full native release acceptance
+## REDESIGN-009 — Engineering acceptance PASS; manual publication gates open
 
-The inventory/round-trip repair is verified by native CircleCI #17 at
-`6ac08ac7501bc70a82c90ba6663b4ac6b25cb34c`: complete seed/verify/cleanup/baseline
-sequence succeeds twice against fresh Supabase, including actual Auth/JWT role
-checks, explicit Memory, private assets, exact absence and final control cleanup.
-The repair is on the 009 branch at `ea521df`. Full native #19 passes backend,
-SQL/security/test/build gates and eight browser cases, then fails authenticated
-WebKit on document-replacement prefetch diagnostics; final cleanup is not run.
-Keep direct-entry checks in fresh authenticated tabs and exercise real application
-navigation with unchanged document identity. The diagnostic is reproduced in an
-owned loopback probe; no page errors are filtered. Validate the resulting exact
-candidate with every mandatory native release gate. Preserve other
-open checklist items; no merge, tag, publication, hosted access or agents.
+Native `release-machine-ci` #21 succeeds at exact CI-tested release candidate
+`5c99aaea122338556d96703f0b32e90b6de4ed83`. All required pipeline steps pass:
+fresh install/53 migrations, 30 SQL/RLS suites / 1,138 assertions, upgrade, actual
+Auth/JWT role checks, worker/web/demo tests, security/static checks, builds, all
+nine Chromium/Firefox/WebKit browser cases and complete guarded demo cleanup with
+unchanged baselines and no seeded tenant/Auth/Storage orphans. Exact run and gate
+evidence are recorded in docs/RELEASE_AUDIT.md. No completed phase is reopened.
 
-64 demo regressions, seven helper tests, 30 SQL suites / 1,138 assertions,
-lint/typechecks/builds, formatting/links, secrets and workflow checks pass. No
-application, production grant/RLS/migration, dependency or lockfile changes.
+READY TO MAKE PUBLIC: NO. Maintainer checks remain for supported-host signup/
+organization/onboarding, physical NVDA, live GitHub security/branch/reviewer
+settings, historical author/privacy review, distribution/service legal duties
+and applicable public Google OAuth verification. Publication is not authorized.
+No future feature work starts. Closure updates Markdown only; a following local
+documentation commit does not replace the tested runtime SHA or require another
+expensive suite. No hosted access, agents, merge, tag or visibility change.
 
 # Earlier verification records
 

@@ -27,9 +27,13 @@ Core panel reads no longer wait in a provider's Server Action queue.
 ## Beta limits
 
 Read [the audit](RELEASE_AUDIT.md) for measured performance and exact verification.
-Remote CI and the complete Docker-dependent local authenticated clean-install
-gate must not be treated as passed before execution. Physical-device/engine and
-screen-reader coverage are recorded separately, not called WCAG certification.
+Native CircleCI #21 passes every pipeline gate at exact release candidate
+`5c99aaea122338556d96703f0b32e90b6de4ed83`, including real Supabase, Auth/JWT,
+three-engine browser checks and guarded demo cleanup. The separate supported-host
+signup/organization/onboarding walkthrough remains unexecuted; seeded workflows
+do not establish that result. Manual publication checks remain open.
+Physical-device/engine and screen-reader coverage are recorded separately, not
+called WCAG certification. No public release is authorized by CI success alone.
 
 Integrations, AI and worker capabilities are optional. Drive's restricted scope
 may require Google's public-deployment verification. No automatic Calendar sync,

@@ -3,10 +3,17 @@
 Release work starts at `72b990e221a2c353697f8edb5f64466d115feb6c` on
 `codex/redesign-009-release-hardening`. The dedicated worktree started clean.
 The root checkout and the previous worktree's generated Next.js type-path change
-remain untouched. No push, merge, tag or publication is authorized.
+remain untouched. Later 009.1 instructions authorized normal task-branch pushes;
+no merge, tag, publication or visibility change is authorized.
 
 This checklist was created before implementation. An unchecked item is not a
 passing gate. Final evidence must identify an exact release-candidate commit.
+
+Engineering/native CI acceptance is **PASS** at exact tested candidate
+`5c99aaea122338556d96703f0b32e90b6de4ed83`, native CircleCI #21. Final logs and
+the distinction from its following documentation-only record are in
+[the audit](RELEASE_AUDIT.md#final-native-acceptance--2026-11-16).
+READY TO MAKE PUBLIC remains **NO** while manual checks below remain open.
 
 ## Initial inspection
 
@@ -59,9 +66,11 @@ passing gate. Final evidence must identify an exact release-candidate commit.
 - [x] Hosted ledger/ACL read-only inspection and supported dry run identify exactly
       one required forward Board grant correction. Owner-authorized application is
       complete; the final ledger has 53 versions and column/RPC checks pass.
-- [ ] Approved native CircleCI `release-machine-ci` (or the supported GitHub
-      Actions equivalent) completes every release gate on the exact candidate.
-      The focused seed diagnostic does not close this gate.
+- [x] Native CircleCI `release-machine-ci` #21 completes every pipeline gate at
+      exact candidate `5c99aaea122338556d96703f0b32e90b6de4ed83`, including all
+      30 native SQL/RLS suites / 1,138 assertions, actual Auth/JWT, nine browser
+      cases and final guarded cleanup. The full signup/onboarding walkthrough
+      remains separate and unexecuted above.
 - [x] Additional populated-tenant deletion migration: full isolated gate passes,
       supported dry run lists only `20261115000200`; separate hosted approval and
       exact demo cleanup are complete. Initial failed cleanup rolled back.
@@ -89,4 +98,19 @@ passing gate. Final evidence must identify an exact release-candidate commit.
 - [x] Exact candidate identified by `git rev-parse HEAD` and final handoff; known
       limitations and remaining manual actions recorded in the audit.
 - [x] No failing or unexecuted required gate reported as PASS.
-- [x] No merge, push, release tag or repository visibility change performed.
+- [x] No merge, release tag, publication or repository visibility change performed;
+      only expressly authorized normal task-branch pushes were used for CI.
+
+## Manual publication gates — still open
+
+- [ ] Complete supported-host clean-clone signup/organization/onboarding/Core
+      walkthrough without enabling the owner's disabled virtualization.
+- [ ] Record physical Windows NVDA and any required physical-device acceptance.
+- [ ] Verify live GitHub vulnerability reporting, dependency alerts, available
+      secret/push protection, branch rules, required native check and review rules.
+- [ ] Approve historical author email and sample business/domain metadata privacy.
+- [ ] Confirm artifact notices/source obligations and operator-specific public
+      service legal/privacy requirements; no compliance approval is inferred.
+- [ ] For a public Google-enabled service, confirm applicable OAuth verification,
+      including restricted Drive scope requirements; earlier test QA is separate.
+- [ ] Obtain explicit authorization for any merge/publication/tag/visibility action.

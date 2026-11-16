@@ -1,15 +1,86 @@
 # Public beta release audit
 
-Status: **in progress; not approved for publication**. Starting commit:
-`72b990e221a2c353697f8edb5f64466d115feb6c`. Exact release-candidate commit and final
-validation evidence will be recorded after the release tree is stable.
+Status: **REDESIGN-009 engineering acceptance PASS; READY TO MAKE PUBLIC: NO**.
+Exact CI-tested release candidate: `5c99aaea122338556d96703f0b32e90b6de4ed83`.
+Starting commit: `72b990e221a2c353697f8edb5f64466d115feb6c`.
 
 The [checklist](RELEASE_CHECKLIST.md) distinguishes completed work and open gates.
 REDESIGN-009.1 authorizes normal task-branch pushes for remote CI; no merge, tag
 or visibility change is authorized. A workflow file is not remote CI evidence.
 The candidate must be evaluated at its exact SHA.
 
-## Environment limits
+## Final native acceptance — 2026-11-16
+
+[Native CircleCI release-machine-ci #21](https://app.circleci.com/workflow/fb7f1bdd-b38e-4f34-947e-7a0d318273cb/job/a344e292-252d-438f-9258-14679aca6c3d)
+is **SUCCESS**. The API identifies pipeline `45fa3c09-3f38-421a-8101-2d7e9ecb46ca`,
+workflow `fb7f1bdd-b38e-4f34-947e-7a0d318273cb`, job
+`a344e292-252d-438f-9258-14679aca6c3d`, checkout branch
+`codex/redesign-009-release-hardening` and full SHA above. The checkout log
+independently confirms that exact SHA and a clean tree. Every job step succeeds.
+
+| Required gate          | Verified result from #21 logs                                                                                                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Fresh install/platform | `npm ci`; Node 24.22.1; direct Docker on fresh Ubuntu 24.04; local-only configuration/helper checks                                                                                                                |
+| Migration from zero    | Fresh Docker Supabase; all 53 repository versions verified, with real Auth, Storage and pgcrypto prerequisites                                                                                                     |
+| SQL/RLS                | All 30 suites / 1,138 assertions pass against real local Supabase; the isolated run separately passes the same count                                                                                               |
+| Upgrade                | Pre-integration upgrade preserves organization, Task and Board/object content and authorized writes; identity updates remain denied                                                                                |
+| Worker/web/demo tests  | Worker: 5 files / 36 tests; web: 267 files / 1,531 tests; demo: 64 tests, zero failures                                                                                                                            |
+| Real Auth/JWT          | OWNER/MEMBER/VIEWER password login, Auth-verified identity/membership/Core reads; OWNER/MEMBER persisted task writes; VIEWER writes and MEMBER/VIEWER management denied; sessions signed out                       |
+| Static/security        | Lint, both typechecks, formatting/docs, 675 dependency license entries / 23 fonts, tree/history secret scans and high-severity dependency audit pass                                                               |
+| Production builds      | Worker TypeScript build and Next.js production build pass                                                                                                                                                          |
+| Browser E2E            | 9/9 pass, one worker, zero retries: public, authenticated workflow and responsive/reduced-motion checks in Chromium, Firefox and WebKit; every page error remains fatal                                            |
+| Seed/cleanup/baseline  | Both complete real seeds verify all fixtures, explicit Memory and private image. Both exact-ID tenant/Auth/Storage cleanups and unchanged control baselines pass; final control cleanup confirms no seeded orphans |
+| Final hygiene          | `git diff --check` and always-run stop of only the VM-owned stack pass                                                                                                                                             |
+
+The seven previously documented moderate development-only dependency findings
+remain; the passing high-severity audit is not a zero-vulnerability claim. No AI,
+external provider or hosted database is used by this run. No gate is skipped or
+waived. #21 supersedes #19's failed browser result and closes the complete native
+CI gate; #17 remains earlier focused round-trip evidence.
+
+This acceptance update changes Markdown documentation only. The tested SHA stays
+the release candidate; any following documentation-only commit is an evidence
+record, not a newly CI-tested runtime candidate. Validate its Markdown, links,
+diff and unchanged non-documentation tree locally. No expensive suite or new
+remote run is required solely for those prose changes. A later application,
+test, schema, workflow, dependency or other executable change requires fresh
+verification appropriate to that new candidate.
+
+## Remaining manual publication checks
+
+- The full clean-clone **signup → organization → onboarding → Core** walkthrough
+  is still pending on a suitable supported host. #21 proves seeded organization
+  bootstrap, real login/JWT/Core and browser workflows, not browser signup or
+  onboarding completion. Windows Docker/WSL remains disabled by owner instruction;
+  this outstanding check is neither passed nor waived.
+- Physical Windows NVDA and any required physical-device coverage remain
+  unperformed; automated axe/keyboard/browser checks are not that evidence.
+- The maintainer must verify GitHub Private Vulnerability Reporting and its
+  SECURITY.md link, dependency graph/Dependabot, available secret scanning/push
+  protection, branch protections, required **native release** check and reviewer/
+  CODEOWNERS enforcement. Committed configuration does not establish live settings.
+- Review historical author email and earlier sample business/domain references
+  intentionally before exposing Git history. Secret scans passed; no history
+  rewrite or metadata/privacy approval is inferred from that result.
+- Confirm distribution/source-offer and third-party notice obligations for the
+  actual release artifact. Public service operators separately need appropriate
+  terms/privacy, retention/operator information and provider approvals. Logo
+  redistribution is already authorized; these are not a new logo-permission gate.
+- For a public Google-enabled deployment, confirm the applicable OAuth consent/
+  verification requirements, including Drive's restricted metadata scope. Prior
+  isolated live provider QA is not public Google verification. These deployment
+  requirements do not mean credentials are required to use Core/source installs.
+- Obtain explicit publication/merge/tag/visibility authorization after the open
+  checks. None of those actions is performed by acceptance closure.
+
+Engineering/release-pipeline acceptance is **PASS**. Public-release readiness
+remains **NO** until the applicable manual checks and authorization are recorded.
+
+## Earlier verification records
+
+The following entries describe earlier candidates and environment limits; their
+pending native-CI statements are superseded by #21 above, not retroactive PASSes.
+The separately identified signup/onboarding and physical-accessibility gaps remain.
 
 ### Full native #19 and browser navigation isolation — 2026-11-16
 
@@ -455,7 +526,7 @@ dimensions were 24px or greater (the Content editors were 295×80px). This uses 
 not a claim that tiny canvas text becomes a large pointer target. Raw findings
 are retained; any other violation fails the check. Physical NVDA remains untested.
 
-## Maintainer actions before publication
+## Earlier local and hosted verification
 
 The final demo cleanup uncovered an additional release defect. The existing
 organization-deletion RPC failed with a creator-membership FK error; that
@@ -500,14 +571,7 @@ path ran. The final handoff records one exact candidate SHA; task-local evidence
 is stamped with it. Runtime/test/schema/package inputs remain unchanged after
 the full regression run; final documentation records that evidence.
 
-- Review the exact candidate, complete missing required runtime/remote CI gates
-  and all final scans; no failing gate is waived by this checklist.
-- Enable and verify Private Vulnerability Reporting and its SECURITY.md link.
-- Enable dependency graph/Dependabot and available secret scanning/push protection.
-- Configure branch rules and required release-verification check; require review
-  and CODEOWNERS review where appropriate. A CODEOWNERS file alone enforces nothing.
-- Review Git author email metadata intentionally before publication.
-- Review operator-specific legal/privacy text, Google verification and source-offer
-  responsibilities for the actual public service. No general compliance guarantee.
-- Only after authorization: push for remote CI, review the run, merge and publish
-  the candidate, then create an explicitly approved beta tag/release.
+The current outstanding maintainer actions are listed under
+[remaining manual publication checks](#remaining-manual-publication-checks).
+Native #21 closes the remote pipeline gap in these earlier records; it does not
+close the separately unexecuted signup/onboarding or manual publication checks.

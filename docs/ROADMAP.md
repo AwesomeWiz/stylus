@@ -2,27 +2,22 @@
 
 ## Stylus V2 experience — redesign track
 
-Status: REDESIGN-008 VERIFIED / REDESIGN-009 LOCAL VALIDATION VERIFIED, RELEASE GATES OPEN
+Status: REDESIGN-008 VERIFIED / REDESIGN-009 ENGINEERING ACCEPTANCE PASS; MANUAL PUBLICATION GATES OPEN
 
-The owner's closure brief records live GitHub, Drive and Calendar QA as passed.
-SQL fixture repairs close the remaining gate: all 29 suites / 1,018 assertions
-pass, with unchanged authorization and migrations. Focused hosted isolation,
-integration web tests, lint/typecheck and the production build pass. Prior full
-web/worker results remain valid for that SQL-only follow-up. REDESIGN-009 now
-continues release hardening: isolated SQL/upgrade and public browser checks pass;
-the reviewed Board grant correction and remaining release gates are tracked in
-[the audit](RELEASE_AUDIT.md). Full local authenticated Supabase checks remain
-pending after the owner's Windows virtualization failure, without a waiver.
-Final local web/worker and SQL/upgrade gates pass; separately approved Board grants
-and populated-tenant deletion repairs are deployed. Exact demo rows/accounts/assets
-are verified absent. Remote CI and the native authenticated clean-install gate
-remain required before this release milestone can be marked complete.
+The owner's 008 closure records live GitHub, Drive and Calendar QA as passed.
+REDESIGN-009's complete native CircleCI #21 is verified successful at exact
+release candidate `5c99aaea122338556d96703f0b32e90b6de4ed83`: fresh install and
+53 migrations, 30 SQL/RLS suites / 1,138 assertions, upgrade, real Auth/JWT roles,
+web/worker/demo tests, security/static checks, production builds, nine browser
+cases and both exact seed/cleanup/baseline rounds pass. See
+[the release audit](RELEASE_AUDIT.md) for exact evidence and limits.
 
-CircleCI's direct machine job now has owner-reported Docker/local postgres and
-53-migration setup evidence at `06ecb41`. The SQL fixture-role defect is repaired
-without production grant changes: the stricter isolated gate passes 30 suites /
-1,134 assertions. Native SQL rerun and the remaining authenticated/full-workflow
-acceptance are still required; this milestone remains open.
+Engineering hardening is complete; public release remains blocked on the listed
+manual checks and explicit authorization. Supported-host signup/organization/
+onboarding and physical NVDA coverage are not inferred from seeded CI workflows.
+The owner-disabled Windows virtualization remains disabled. Live GitHub settings,
+history/privacy and applicable distribution/legal/Google verification checks are
+still open. No feature scope is expanded and no publication action is performed.
 
 - [x] Canonical product, visual and navigation direction specified
 - [x] All 30 current page routes and retained entrypoints mapped
@@ -42,8 +37,9 @@ acceptance are still required; this milestone remains open.
 - [x] REDESIGN-006: startup growth and learning workflow (approved revised scope)
 - [x] REDESIGN-007: Core execution and startup essentials (approved revised scope)
 - [x] REDESIGN-008: Integrations & Context Bridge (approved revised scope)
-- [ ] REDESIGN-009: open-source/public release hardening, reproducibility, security,
-  documentation/media, profiling, responsive/accessibility and final QA (approved revised scope)
+- [x] REDESIGN-009 engineering hardening and complete native release pipeline
+- [ ] Manual public-release acceptance and explicit publication authorization;
+  retain the unexecuted checks in the release audit/checklist
 
 Generic Board editor scope is frozen after 004.3.3 except for the explicitly
 approved REDESIGN-007 select/menu/Delete/native-card presentation corrections.

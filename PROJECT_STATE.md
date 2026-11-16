@@ -4,43 +4,29 @@ Last Updated: 2026-11-16
 
 ## Overall Status
 
-REDESIGN-009 demo inventory/round-trip repair: **real Supabase diagnostic PASS**.
-Owner-started native CircleCI #17, `seed-preflight` / `seed-diagnostic`, succeeds
-at `6ac08ac7501bc70a82c90ba6663b4ac6b25cb34c` (workflow
-`9ce63cc6-05b4-4ddc-bedc-5c7c2e429f0c`, job
-`cb038336-61d6-4d9c-a918-9e2123aa397c`). Fresh Docker and all 53 migrations are
-verified. Both full seeds, all fixtures, explicit company Memory, private PNG,
-two exact tenant/Auth/Storage cleanups, unchanged baseline comparisons and final
-control cleanup pass. Real OWNER/MEMBER/VIEWER password login, Auth-verified JWTs,
-Core persistence and management/write denials pass. Zero AI/external providers;
-no seeded tenant, account or Storage orphans remain. The VM-owned stack stops.
+REDESIGN-009 engineering and native release-pipeline acceptance: **PASS**.
+Exact CI-tested release SHA: `5c99aaea122338556d96703f0b32e90b6de4ed83`.
+[Native CircleCI #21](https://app.circleci.com/workflow/fb7f1bdd-b38e-4f34-947e-7a0d318273cb/job/a344e292-252d-438f-9258-14679aca6c3d)
+and its complete logs are verified successful. Fresh install, all 53 migrations
+from zero, isolated/native SQL (30 suites / 1,138 assertions), upgrade, real
+OWNER/MEMBER/VIEWER Auth/JWT/role checks, 36 worker tests, 1,531 web tests, 64 demo
+tests, lint/typechecks/security and both production builds pass. All nine browser
+cases pass in Chromium/Firefox/WebKit with one worker and zero retries. Both full
+seed/verification/exact-cleanup rounds, unchanged control baseline, final control
+cleanup and no tenant/Auth/Storage orphans are verified. The owned stack stops.
 
-The root cause was reading `.rows` from the CLI's successful plain-array output.
-Transport/catalog/row/baseline contracts now reject missing data explicitly.
-Whole-controller testing also corrected directory reads, protected task-ID
-allocation and error-only Auth logout. Installed Auth/Storage SDKs run over fenced
-synthetic HTTP in the SQL regression; 64 demo tests and seven helper tests pass.
-All 30 local SQL suites / 1,138 assertions, lint/typechecks, production builds,
-formatting/links, secret and workflow/Bash checks pass. Application code,
-production grants/RLS/migrations, dependencies and lockfile are unchanged.
+**READY TO MAKE PUBLIC: NO.** The supported-host clean-clone signup/organization/
+onboarding walkthrough and physical NVDA checks remain unperformed. GitHub live
+security/branch/reviewer settings, author/history privacy, artifact legal/source
+obligations and applicable public Google OAuth verification still need maintainer
+confirmation. No failing or unexecuted manual check is relabeled as passed.
+See [release audit](docs/RELEASE_AUDIT.md) and [checklist](docs/RELEASE_CHECKLIST.md).
 
-The complete native release #19 at `ea521df3d16c38ef506829c0f3201e07014a5f29`
-passes install, security/static gates, all tests, native SQL (30 suites / 1,138
-assertions), both seeds, real Auth/JWT role checks and production builds. Browser
-QA passes eight of nine cases; authenticated WebKit reports Home prefetches
-started during document replacement as access-control page errors. Final guarded
-cleanup is not reached in #19; its owned stack stop succeeds. This is a failed
-full workflow, separate from #17's successful complete cleanup proof.
-
-A loopback-only three-engine probe reproduces that WebKit diagnostic without
-Auth, CORS restrictions or Supabase; Chromium/Firefox do not emit it. Fresh-tab
-controls pass in all three engines. Browser direct-entry checks now use fresh
-authenticated tabs, while the actual Home/Tasks/detail/Boards workflow uses
-application links and verifies an unchanged document time origin. Every page
-error still fails; no engine, route, dependency or release gate is removed.
-The complete native workflow on the resulting candidate remains required.
-Diagnostic #17 does not substitute for that full workflow or other outstanding
-release checklist items. No hosted data, agents, merge, tag or publication.
+Acceptance closure changes documentation only. Its following local documentation
+commit is distinct from the exact CI-tested SHA above; non-documentation inputs
+must match that candidate. Only Markdown/link/diff checks are repeated for this
+record; no expensive suites or new CI run are required for prose alone. No hosted
+database access, agents, merge, tag, publication or visibility change occurs.
 
 ## Earlier verification records
 

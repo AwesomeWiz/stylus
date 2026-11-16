@@ -20,8 +20,11 @@ repository migrations, SQL/RLS, JWT role, web/worker and browser gates. No hoste
 backend or optional AI/GitHub/Google credentials are required. This is a native
 CircleCI pipeline with **Docker-backed Supabase**, not Supabase's experimental
 native runtime. The retained [GitHub workflow](../.github/workflows/ci.yml) is a
-separate supported CI configuration. Machine-run acceptance is pending until an
-actual complete run passes at the exact release-candidate SHA.
+separate supported CI configuration. Native machine-run acceptance passes in
+CircleCI #21 at `5c99aaea122338556d96703f0b32e90b6de4ed83`; see the exact
+[gate evidence and remaining manual checks](RELEASE_AUDIT.md#final-native-acceptance--2026-11-16).
+Seeded login/Core/browser workflows do not close the separate unexecuted
+signup/organization/onboarding walkthrough above.
 
 Docker-compatible containers are required by the pinned Supabase CLI's local
 stack. Start Docker only on a machine where it is supported and working. The
