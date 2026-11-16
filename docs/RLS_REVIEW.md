@@ -9,9 +9,12 @@ public-table grant to service_role masked test-side privileged inspection. That
 test-only grant is removed; production migrations and grants are unchanged.
 Tenant roles and denial behavior are exercised by the permanent domain suites, not inferred solely from RLS flags.
 
-The corrected isolated result is **30 suites / 1,134 assertions**. The owner reports
-fresh Docker Supabase and all 53 migrations passing on CircleCI at `06ecb41`;
-native SQL rerun and remaining authenticated release checks are still pending.
+The corrected isolated result is **30 suites / 1,138 assertions**. The owner reports
+fresh Docker Supabase, all 53 migrations and native SQL/RLS passing on CircleCI at
+`227c7cf`; the demo seed and remaining authenticated release checks are still pending.
+Organization verification has separate coverage: authenticated OWNER reads the
+exact organization/creator through membership RLS, foreign IDs remain invisible,
+and direct service-role SELECT remains denied without any grant changes.
 
 | Direct service_role SELECT contract                                                                      | Expected access                  | Verification                                |
 | -------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------- |

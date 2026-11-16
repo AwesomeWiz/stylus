@@ -28,6 +28,15 @@ linked with the CLI authenticated. This avoids widening private grants or
 enqueueing real research work merely to create demo content.
 It invokes no model or external provider.
 
+Organization verification uses the signed-in fictional owner's RLS read path,
+not the Auth-administration client's table privileges. It selects the exact
+recorded organization UUID and checks the returned UUID, creator UUID and name.
+Cleanup signs in that same owner before performing the identical ownership
+check; all account-ID, row-inventory and atomic deletion guards remain required.
+`npm run test:demo` checks seed-through-verification and cleanup control flow with
+synthetic transport/in-memory files. Actual organization RLS has separate SQL
+coverage; these unit checks do not claim a complete live Supabase seed run.
+
 Random credentials and exact record IDs are saved only in ignored
 `.release-qa/demo.json`, never printed or committed. Use the first account to
 sign in. Other accounts demonstrate MEMBER and VIEWER roles. Preserve this file

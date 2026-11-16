@@ -4,6 +4,29 @@ Last Updated: 2026-11-16
 
 ## Overall Status
 
+REDESIGN-009 demo verification 42501: remote branch and CircleCI release failure
+both identify exact candidate `227c7cf`. The owner reports fresh Docker, migrations
+and SQL/RLS now pass; seeding fails at the service-key admin client's direct
+organizations SELECT. The seed already has an authenticated fictional owner and
+has bootstrapped its organization. Shared exact-ID verification now uses that
+owner's existing RLS read path, both during setup and after owner sign-in during
+cleanup. It checks the recorded organization UUID, name and creator UUID; missing
+or mismatched identities fail without fallback searches. Auth administration,
+exact account checks, complete row inventory and atomic owner deletion remain.
+
+Focused verification passes 13 demo tests, including actual seed-through-verify
+and cleanup source executed with synthetic transports/in-memory files, and 13
+organization pgTAP assertions. Owner reads succeed while direct service-role
+organization reads remain denied. Full isolated SQL passes 30 suites / 1,138
+assertions / 53 unchanged migrations. The focused Node tests join the existing
+sequential npm test gates; no dependency or lockfile change. Application grants,
+RLS, production behavior and migrations are unchanged. A full live demo seed
+remains pending the new release-machine-ci run; no hosted backend, local Docker
+or Windows virtualization was used.
+Lint, both typechecks, repository formatting, 188 relative links, candidate-tree
+secret scanning and diff checks pass. Package metadata differs only by the added
+demo test command/gate; the lockfile and application/CI/migration files match base.
+
 REDESIGN-009 SQL role-boundary repair: the owner reports Docker-backed Supabase,
 local postgres fixture setup, Auth/Storage/pgcrypto and all 53 migrations passing
 on CircleCI candidate `06ecb41`. The following SQL errors reproduce locally when

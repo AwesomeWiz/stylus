@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { createResearchFixture } from "./research-fixture.mjs";
 import { canonicalInventory, readDemoInventory } from "./inventory.mjs";
+import { verifyDemoOrganization } from "./organization-identity.mjs";
 
 const envFile =
   process.argv.find((arg) => arg.startsWith("--env-file="))?.slice(11) ??
@@ -100,25 +101,18 @@ if (process.argv.includes("--cleanup")) {
       throw Error(
         "STOP: demo inventory changed; review and record exact expected IDs before cleanup",
       );
-    const organization = check(
-      await admin
-        .from("organizations")
-        .select("id,name,created_by")
-        .eq("id", manifest.organizationId)
-        .single(),
-      "cleanup ownership",
-    );
-    if (
-      organization.name !== manifest.name ||
-      organization.created_by !== manifest.users[0].id
-    )
-      throw Error("Demo organization identity mismatch");
     check(
       await owner.auth.signInWithPassword({
         email: manifest.users[0].email,
         password: manifest.password,
       }),
       "cleanup sign-in",
+    );
+    const organization = await verifyDemoOrganization(
+      owner,
+      manifest,
+      check,
+      "cleanup ownership",
     );
     check(
       await owner.rpc("delete_owned_organization", {
@@ -257,19 +251,12 @@ const organization = check(
 const org = organization.id;
 manifest.organizationId = org;
 save();
-const verifiedOrganization = check(
-  await admin
-    .from("organizations")
-    .select("id,name,created_by")
-    .eq("id", org)
-    .single(),
+await verifyDemoOrganization(
+  owner,
+  manifest,
+  check,
   "verify exact fixture organization",
 );
-if (
-  verifiedOrganization.name !== manifest.name ||
-  verifiedOrganization.created_by !== actor
-)
-  throw Error("STOP: fixture organization identity mismatch");
 if (!manifest.teamReady) {
   check(
     await admin.from("memberships").insert(

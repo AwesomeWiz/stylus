@@ -2,6 +2,18 @@
 
 # Current
 
+## REDESIGN-009 — Demo exact-organization verification
+
+Fix only the seed's 42501 verification boundary from `227c7cf`: use the signed-in
+fictional owner's RLS path, keep Auth administration separate, and share exact
+organization UUID/name/creator checks with guarded cleanup. Owner login precedes
+the cleanup ownership read; inventory and account-ID gates and the existing atomic
+deletion RPC remain. Thirteen focused demo/cleanup tests and thirteen organization
+RLS assertions pass; full isolated SQL passes 30 suites / 1,138 assertions.
+Lint/typechecks, formatting/links, secret scan and diff checks pass.
+No production grants/RLS/migration, dependency or lockfile change. Full live seed
+and remaining release acceptance await the next exact candidate on CircleCI.
+
 ## REDESIGN-009 — Fresh Supabase SQL test role leakage
 
 Repair test/harness boundaries only. The old isolated bootstrap's blanket table

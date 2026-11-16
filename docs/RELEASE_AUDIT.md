@@ -11,6 +11,33 @@ The candidate must be evaluated at its exact SHA.
 
 ## Environment limits
 
+### Demo exact-organization verification — 2026-11-16
+
+The remote branch and CircleCI release failure match `227c7cf`; the owner reports
+Docker/migrations/SQL now pass. The seed then fails `verify exact fixture
+organization` with 42501: its service-key administration client directly selects
+`public.organizations`, whose intended application read path is authenticated
+membership RLS. The fictional owner is already signed in and its bootstrap RPC
+has returned the exact newly recorded organization ID.
+
+The shared verifier now queries through that owner, filters only by the recorded
+UUID, and checks returned UUID, creator UUID and name. Cleanup authenticates the
+owner before the same ownership query. All existing backend/account checks,
+exact row inventory comparison, owner-confirmed atomic organization deletion,
+exact Auth deletions and absence checks remain intact. No production grants,
+RLS, migrations or application behavior changes are needed.
+
+Thirteen focused Node tests pass, including seed-through-verification and cleanup
+source execution with synthetic transports and in-memory files. They refuse wrong
+returned organization/creator IDs, missing identities, altered row inventories,
+wrong account identities and backend mismatch before any deletion. Thirteen
+organization SQL assertions pass, including actual owner-RLS success, foreign-ID
+isolation and service-role table denial. Full isolated SQL passes 30 suites /
+1,138 assertions / 53 migrations. The demo tests run after the existing sequential
+worker/web npm test gates, with no dependency or lockfile change. Full live seeding
+and remaining release gates require the next exact CircleCI candidate; neither
+hosted data nor local Docker/virtualization is used for this repair.
+
 ### Fresh Supabase SQL fixture roles — 2026-11-16
 
 The owner reports the direct CircleCI machine run at `06ecb41` successfully
