@@ -41,7 +41,7 @@
     "demo:cleanup": "node scripts/demo/seed.mjs --cleanup"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.5.8",
+    "@electric-sql/pglite": "0.5.16",
     "@electric-sql/pglite-pgtap": "0.0.9",
     "@playwright/test": "1.65.0",
     "gifenc": "1.0.3",
