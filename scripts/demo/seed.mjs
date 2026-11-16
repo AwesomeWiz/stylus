@@ -4,6 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 import { createResearchFixture } from "./research-fixture.mjs";
 import { canonicalInventory, readDemoInventory } from "./inventory.mjs";
 import { verifyDemoOrganization } from "./organization-identity.mjs";
+import { ensureDemoTeam } from "./team.mjs";
+import { ensureDemoAsset, cleanupDemoAssets } from "./assets.mjs";
 
 const envFile =
   process.argv.find((arg) => arg.startsWith("--env-file="))?.slice(11) ??
@@ -17,15 +19,12 @@ if (!url || !anon || !service)
     "Demo setup needs a configured development Supabase backend and server-only service key",
   );
 const host = new URL(url).hostname;
-const allowed = process.argv
-  .find((arg) => arg.startsWith("--allow-hosted-project="))
-  ?.slice(23);
 if (
-  !["localhost", "127.0.0.1", "[::1]"].includes(host) &&
-  (!allowed || host !== allowed + ".supabase.co")
+  !["localhost", "127.0.0.1", "[::1]"].includes(host) ||
+  process.argv.some((arg) => arg.startsWith("--allow-hosted-project="))
 )
   throw Error(
-    "Demo writes are local-only unless the exact development project is explicitly selected",
+    "Release demo writes require an isolated local Supabase stack; hosted projects are refused",
   );
 const admin = createClient(url, service, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -93,7 +92,7 @@ if (process.argv.includes("--cleanup")) {
   if (manifest.organizationId) {
     if (!manifest.recordInventory)
       throw Error("STOP: exact demo row inventory is required before cleanup");
-    const currentInventory = readDemoInventory(manifest, allowed);
+    const currentInventory = await readDemoInventory(manifest);
     if (
       JSON.stringify(currentInventory) !==
       JSON.stringify(canonicalInventory(manifest.recordInventory))
@@ -114,6 +113,15 @@ if (process.argv.includes("--cleanup")) {
       check,
       "cleanup ownership",
     );
+    await cleanupDemoAssets({
+      owner,
+      manifest,
+      check,
+      save: () =>
+        fs.writeFileSync(file, JSON.stringify(manifest, null, 2), {
+          mode: 0o600,
+        }),
+    });
     check(
       await owner.rpc("delete_owned_organization", {
         p_organization_id: organization.id,
@@ -122,7 +130,7 @@ if (process.argv.includes("--cleanup")) {
       "bounded organization cleanup",
     );
     if (
-      readDemoInventory(manifest, allowed).some((table) => table.records.length)
+      (await readDemoInventory(manifest)).some((table) => table.records.length)
     )
       throw Error("STOP: demo organization records remain after cleanup");
   }
@@ -257,20 +265,15 @@ await verifyDemoOrganization(
   check,
   "verify exact fixture organization",
 );
-if (!manifest.teamReady) {
-  check(
-    await admin.from("memberships").insert(
-      manifest.users.slice(1).map((user, index) => ({
-        organization_id: org,
-        user_id: user.id,
-        role: index ? "VIEWER" : "MEMBER",
-      })),
-    ),
-    "fictional team membership",
-  );
-  manifest.teamReady = true;
-  save();
-}
+await ensureDemoTeam({
+  owner,
+  createClient,
+  url,
+  key: anon,
+  manifest,
+  check,
+  save,
+});
 check(
   await seedRpc("set_organization_plugin_enabled", {
     p_organization_id: org,
@@ -467,20 +470,18 @@ await insert("marketing_reel_ideas", {
 // A cancelled, explicitly fictional fixture provides exact Evidence provenance
 // without claiming any model or provider execution succeeded.
 const fixtureIds = {
-  job: allocate("research-job"),
-  run: allocate("research-run"),
-  source: allocate("research-source"),
-  evidence: allocate("research-evidence"),
   invocation: allocate("research-invocation"),
 };
 journal("intent:immutable-fictional-evidence", fixtureIds);
-const { job, run, source, evidence } = createResearchFixture({
-  organizationId: org,
-  actor,
-  ids: fixtureIds,
-  hostedRef: allowed,
+const { job, run, source, evidence } = await createResearchFixture({
+  owner,
+  service: admin,
+  manifest,
+  invocation: fixtureIds.invocation,
+  check,
+  save,
 });
-journal("created:immutable-fictional-evidence", fixtureIds);
+journal("created:immutable-fictional-evidence", { job, run, source, evidence });
 manifest.ids.evidence = evidence.id;
 manifest.ids.researchRun = run.id;
 const hypothesis = allocate("hypothesis");
@@ -599,7 +600,7 @@ check(
   "reviewed learning",
 );
 if (process.argv.includes("--confirm-demo-memory"))
-  check(
+  manifest.ids.memory = check(
     await seedRpc("promote_marketing_learning", {
       p_organization_id: org,
       p_learning_id: learning,
@@ -708,7 +709,8 @@ const board = check(
   "native board",
 );
 manifest.ids.board = board.id;
-manifest.recordInventory = readDemoInventory(manifest, allowed);
+await ensureDemoAsset({ owner, manifest, allocate, check, save });
+manifest.recordInventory = await readDemoInventory(manifest);
 manifest.inventoryAt = new Date().toISOString();
 manifest.state = "ready";
 save();

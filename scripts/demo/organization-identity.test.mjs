@@ -283,6 +283,21 @@ async function cleanupScenario(options = {}) {
       },
     },
     "./organization-identity.mjs": { verifyDemoOrganization },
+    "./team.mjs": {
+      ensureDemoTeam() {
+        calls.push(["verification.complete"]);
+        throw Object.assign(
+          Error("Exact organization verification completed"),
+          { verificationComplete: true },
+        );
+      },
+    },
+    "./assets.mjs": {
+      cleanupDemoAssets: async () => {},
+      ensureDemoAsset() {
+        throw Error("Identity unit checks cannot upload assets");
+      },
+    },
   };
   const module = new vm.SourceTextModule(
     fs.readFileSync(new URL("./seed.mjs", import.meta.url), "utf8"),

@@ -17,7 +17,7 @@ jobs:
       - checkout:
           # History/blob scans need a full clone, not the default blobless checkout.
           method: full
-      - run:
+      - run: &checkout-verification
           name: Verify exact revision and fresh checkout
           command: |
             git rev-parse HEAD
@@ -61,7 +61,7 @@ jobs:
       - run: npm test
       - run: npm run test:db:isolated
       - run: npm run test:db:upgrade
-      - run:
+      - run: &start-stack
           name: Start fresh Docker Supabase and apply all migrations
           no_output_timeout: 20m
           command: |
@@ -90,16 +90,17 @@ jobs:
           no_output_timeout: 20m
           command: node scripts/release/ci-local-database.mjs test
       - run: node scripts/setup-local-env.mjs
-      - run: npm run demo:seed -- --confirm-demo-memory
+      - run: node scripts/demo/roundtrip.mjs prepare
       - run:
           name: Verify real Auth JWTs and OWNER/MEMBER/VIEWER Core RLS
           command: node scripts/release/ci-auth-smoke.mjs
       - run: npm run build
       - run: npx --no-install playwright install --with-deps chromium firefox webkit
       - run: npm run test:e2e
+      - run: node scripts/demo/roundtrip.mjs cleanup
       - run: git diff --check
       # No raw logs, dotenv, demo credentials or browser traces are public artifacts.
-      - run:
+      - run: &stop-stack
           name: Stop only this VM's local Supabase stack
           when: always
           command: |
@@ -109,7 +110,45 @@ jobs:
               printf 'This job did not attempt to start a fresh stack; no stack is owned for cleanup.\n'
             fi
 
+  # Only preflight branches use this short diagnostic. Actual release branches
+  # always execute every gate above, including SQL, Auth/JWT and three browsers.
+  seed-diagnostic:
+    machine:
+      image: ubuntu-2404:current
+    resource_class: medium
+    parallelism: 1
+    environment:
+      SUPABASE_EXPERIMENTAL_STACK: "0"
+      DOCKER_HOST: unix:///var/run/docker.sock
+    steps:
+      - checkout:
+          method: full
+      - run: *checkout-verification
+      - node/install:
+          node-version: "24.22.1"
+          use-nvm-cache: false
+      - run: npm ci
+      - run: node scripts/release/ci-local-database.mjs guard
+      - run: *start-stack
+      - run: node scripts/release/ci-local-database.mjs verify
+      - run: node scripts/setup-local-env.mjs
+      - run: node scripts/demo/roundtrip.mjs prepare
+      - run: node scripts/release/ci-auth-smoke.mjs
+      - run: node scripts/demo/roundtrip.mjs cleanup
+      - run: *stop-stack
+
 workflows:
   release-verification:
+    unless:
+      matches:
+        pattern: "^cci/preflight/.*"
+        value: << pipeline.git.branch >>
     jobs:
       - release
+  seed-preflight:
+    when:
+      matches:
+        pattern: "^cci/preflight/.*"
+        value: << pipeline.git.branch >>
+    jobs:
+      - seed-diagnostic
