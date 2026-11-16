@@ -19,7 +19,7 @@
     "lint": "npm run lint --workspace @stylus/web",
     "typecheck": "npm run typecheck --workspace @stylus/worker && npm run typecheck --workspace @stylus/web",
     "test": "npm run test --workspace @stylus/worker -- --maxWorkers=1 && npm run test --workspace @stylus/web -- --maxWorkers=1 && npm run test:demo",
-    "test:demo": "node --experimental-vm-modules --test --test-concurrency=1 scripts/demo/organization-identity.test.mjs scripts/demo/sequence.test.mjs",
+    "test:demo": "node --experimental-vm-modules --test --test-concurrency=1 scripts/demo/organization-identity.test.mjs scripts/demo/assets.test.mjs scripts/demo/inventory.test.mjs scripts/demo/sequence.test.mjs",
     "test:db": "supabase test db",
     "test:watch": "npm run test:watch --workspace @stylus/web",
     "worker:pair": "npm run build --workspace @stylus/worker && node apps/worker/dist/cli.js pair",

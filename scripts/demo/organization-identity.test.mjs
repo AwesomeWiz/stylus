@@ -5,6 +5,7 @@ import vm from "node:vm";
 import { randomBytes, randomUUID } from "node:crypto";
 import { canonicalInventory } from "./inventory.mjs";
 import { verifyDemoOrganization } from "./organization-identity.mjs";
+import * as responses from "./responses.mjs";
 
 const url = "http://127.0.0.1:54321";
 const fixture = () => ({
@@ -38,6 +39,29 @@ const check = (result) => {
   if (result.error) throw Error(`Fixture query failed (${result.error.code})`);
   return result.data;
 };
+test("inventory comparison preserves all values while ignoring JSON object key order", () => {
+  const a = [
+    {
+      table_name: "tasks",
+      records: [{ keys: { id: "one" }, actor: null, creator: "owner" }],
+    },
+  ];
+  const b = [
+    {
+      records: [{ creator: "owner", actor: null, keys: { id: "one" } }],
+      table_name: "tasks",
+    },
+  ];
+  assert.equal(
+    JSON.stringify(canonicalInventory(a)),
+    JSON.stringify(canonicalInventory(b)),
+  );
+  b[0].records[0].creator = "other";
+  assert.notEqual(
+    JSON.stringify(canonicalInventory(a)),
+    JSON.stringify(canonicalInventory(b)),
+  );
+});
 function queryClient(result, calls) {
   return {
     from(table) {
@@ -141,15 +165,9 @@ async function cleanupScenario(options = {}) {
     organizationDeleted = false;
   const admin = {
     from(table) {
-      if (seeding && table === "memberships") {
-        calls.push(["verification.complete"]);
-        // Stop at the first unrelated seed operation; this is not a full-seed mock.
-        throw Object.assign(
-          Error("Exact organization verification completed"),
-          { verificationComplete: true },
-        );
-      }
-      throw Error("Auth administration must not inspect application tables");
+      throw Error(
+        `Auth administration must not access application table ${table}`,
+      );
     },
     auth: {
       admin: {
@@ -224,11 +242,16 @@ async function cleanupScenario(options = {}) {
     console: { log() {} },
     process: {
       env: {
-        NEXT_PUBLIC_SUPABASE_URL: url,
+        NEXT_PUBLIC_SUPABASE_URL: options.backend ?? url,
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "unit-public",
         SUPABASE_SERVICE_ROLE_KEY: "unit-admin",
       },
-      argv: ["node", "seed.mjs", ...(seeding ? [] : ["--cleanup"])],
+      argv: [
+        "node",
+        "seed.mjs",
+        ...(seeding ? [] : ["--cleanup"]),
+        ...(options.extraArgs ?? []),
+      ],
       exit(code) {
         throw Object.assign(Error("Synthetic cleanup exit"), {
           exitCode: code,
@@ -237,6 +260,7 @@ async function cleanupScenario(options = {}) {
     },
   });
   const dependencies = {
+    "./responses.mjs": responses,
     "node:fs": {
       default: {
         existsSync() {
@@ -343,6 +367,17 @@ test("actual cleanup authenticates owner, verifies exact identity and deletes on
   assert.equal(saved.state, "cleaned");
   assert.equal(saved.password, undefined);
 });
+for (const [name, options] of [
+  ["hosted backend", { backend: "https://fixture.supabase.co" }],
+  ["legacy hosted override", { extraArgs: ["--allow-hosted-project=fixture"] }],
+])
+  test(`release seed refuses ${name} before constructing clients or writing files`, async () => {
+    const result = await cleanupScenario(options);
+    assert.match(result.failure?.message, /hosted projects are refused/);
+    assert.equal(result.calls.length, 0);
+    assert.equal(result.writes.size, 0);
+    assert.equal(result.deletedUsers.size, 0);
+  });
 
 test("actual seed signs in owner, bootstraps and verifies exact organization without an admin table read", async () => {
   const result = await cleanupScenario({ mode: "seed" });

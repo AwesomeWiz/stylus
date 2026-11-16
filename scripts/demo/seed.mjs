@@ -6,6 +6,7 @@ import { canonicalInventory, readDemoInventory } from "./inventory.mjs";
 import { verifyDemoOrganization } from "./organization-identity.mjs";
 import { ensureDemoTeam } from "./team.mjs";
 import { ensureDemoAsset, cleanupDemoAssets } from "./assets.mjs";
+import { requireData, requireObject, requireUuid } from "./responses.mjs";
 
 const envFile =
   process.argv.find((arg) => arg.startsWith("--env-file="))?.slice(11) ??
@@ -49,6 +50,7 @@ const identifiers = (value, prefix = "", found = []) => {
   return found;
 };
 const check = (result, step) => {
+  requireObject(result, step);
   if (result.error) {
     fs.writeFileSync(
       ".release-qa/demo-error.json",
@@ -63,28 +65,41 @@ const check = (result, step) => {
       `Demo step failed: ${step} (${result.error.code ?? "request"})`,
     );
   }
-  journal?.(step, result.data);
-  return result.data;
+  const data = requireData(result, step);
+  journal?.(step, data);
+  return data;
 };
 
 if (process.argv.includes("--cleanup")) {
-  const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+  const manifest = requireObject(
+    JSON.parse(fs.readFileSync(file, "utf8")),
+    "cleanup manifest",
+  );
   if (manifest.url !== url || manifest.name !== "Paper Orbit · Fictional demo")
     throw Error("Demo ownership guard failed");
   if (
     !/^[a-f0-9]{10}$/.test(manifest.token) ||
+    !Array.isArray(manifest.users) ||
     !manifest.users.length ||
     manifest.users.length > 3
   )
     throw Error("STOP: unexpected recorded fixture accounts");
   for (const [index, account] of manifest.users.entries()) {
+    requireObject(account, "cleanup account");
+    requireUuid(account.id, "cleanup account ID");
     if (account.email !== `stylus-demo-${manifest.token}-${index}@example.test`)
       throw Error("STOP: fixture account identity mismatch");
     const result = await admin.auth.admin.getUserById(account.id);
+    requireObject(result, "cleanup Auth response");
+    if (result.error) throw Error("Demo user identity mismatch");
+    const verifiedUser = requireObject(
+      requireObject(check(result, "cleanup account read"), "cleanup Auth data")
+        .user,
+      "cleanup Auth user",
+    );
     if (
-      result.error ||
-      result.data.user.id !== account.id ||
-      result.data.user.email !== account.email ||
+      verifiedUser.id !== account.id ||
+      verifiedUser.email !== account.email ||
       !account.email.endsWith("@example.test")
     )
       throw Error("Demo user identity mismatch");
@@ -92,7 +107,9 @@ if (process.argv.includes("--cleanup")) {
   if (manifest.organizationId) {
     if (!manifest.recordInventory)
       throw Error("STOP: exact demo row inventory is required before cleanup");
-    const currentInventory = await readDemoInventory(manifest);
+    const currentInventory = canonicalInventory(
+      await readDemoInventory(manifest),
+    );
     if (
       JSON.stringify(currentInventory) !==
       JSON.stringify(canonicalInventory(manifest.recordInventory))
@@ -183,6 +200,17 @@ const manifest = previousManifest ?? {
   insertResults: {},
   rpcResults: {},
 };
+requireRowsForResume();
+function requireRowsForResume() {
+  if (
+    !Array.isArray(manifest.users) ||
+    manifest.users.length > 3 ||
+    !Array.isArray(manifest.events)
+  )
+    throw Error("STOP: malformed seed journal");
+  for (const field of ["ids", "allocations", "insertResults", "rpcResults"])
+    requireObject(manifest[field], `seed ${field}`);
+}
 const save = () =>
   fs.writeFileSync(file, JSON.stringify(manifest, null, 2), { mode: 0o600 });
 save();
@@ -212,6 +240,7 @@ const seedRpc = async (name, args) => {
     return { data: manifest.rpcResults[key], error: null };
   const result = await owner.rpc(name, args);
   if (!result.error) {
+    requireData(result, `seed RPC ${name}`);
     manifest.rpcResults[key] = result.data;
     save();
   }
@@ -220,10 +249,14 @@ const seedRpc = async (name, args) => {
 for (const [index, name] of ["Alex", "Riley", "Jordan"].entries()) {
   const email = `stylus-demo-${token}-${index}@example.test`;
   if (manifest.users[index]) {
-    const existing = check(
-      await admin.auth.admin.getUserById(manifest.users[index].id),
-      "verify exact existing fixture user",
+    const existing = requireObject(
+      check(
+        await admin.auth.admin.getUserById(manifest.users[index].id),
+        "verify exact existing fixture user",
+      ),
+      "existing Auth response",
     );
+    requireObject(existing.user, "existing Auth user");
     if (
       existing.user.id !== manifest.users[index].id ||
       existing.user.email !== email ||
@@ -232,15 +265,22 @@ for (const [index, name] of ["Alex", "Riley", "Jordan"].entries()) {
       throw Error("STOP: fixture user identity mismatch");
     continue;
   }
-  const data = check(
-    await admin.auth.admin.createUser({
-      email,
-      password: manifest.password,
-      email_confirm: true,
-      user_metadata: { full_name: name },
-    }),
-    "create fictional account",
+  const data = requireObject(
+    check(
+      await admin.auth.admin.createUser({
+        email,
+        password: manifest.password,
+        email_confirm: true,
+        user_metadata: { full_name: name },
+      }),
+      "create fictional account",
+    ),
+    "created account data",
   );
+  requireObject(data.user, "created Auth user");
+  requireUuid(data.user.id, "created Auth user ID");
+  if (data.user.email !== email)
+    throw Error("STOP: created Auth email mismatch");
   manifest.users.push({ id: data.user.id, email, name });
   save();
 }
@@ -256,7 +296,10 @@ const organization = check(
   await seedRpc("create_organization", { p_name: manifest.name }),
   "create isolated organization",
 );
-const org = organization.id;
+const org = requireUuid(
+  requireObject(organization, "created organization").id,
+  "created organization ID",
+);
 manifest.organizationId = org;
 save();
 await verifyDemoOrganization(
@@ -295,18 +338,29 @@ const insert = async (table, fields, client = owner) => {
   if (cached) {
     let query = client.from(table).select().eq("organization_id", org);
     if (cached.id) query = query.eq("id", cached.id);
-    const row = check(
-      await query.single(),
-      "verify exact fixture row:" + table,
+    const row = requireObject(
+      check(await query.single(), "verify exact fixture row:" + table),
+      `cached ${table} row`,
     );
     if (row.organization_id !== org || (cached.id && row.id !== cached.id))
       throw Error("STOP: fixture record identity mismatch");
     return row;
   }
-  const row = check(
-    await client.from(table).insert(fields).select().single(),
-    table,
+  const row = requireObject(
+    check(await client.from(table).insert(fields).select().single(), table),
+    `inserted ${table} row`,
   );
+  if (row.organization_id !== org)
+    throw Error("STOP: inserted fixture organization mismatch");
+  if (
+    ![
+      "company_profiles",
+      "brand_profiles",
+      "marketing_profiles",
+      "onboarding_progress",
+    ].includes(table)
+  )
+    requireUuid(row.id, `inserted ${table} ID`);
   manifest.insertResults[key] = {
     ...(row.id ? { id: row.id } : {}),
     organizationId: org,
@@ -548,13 +602,16 @@ check(
   "canonical campaign link",
 );
 for (const status of ["RUNNING", "EVALUATING"]) {
-  const existing = check(
-    await owner
-      .from("marketing_experiments")
-      .select("updated_at")
-      .eq("id", experiment)
-      .single(),
-    "experiment version",
+  const existing = requireObject(
+    check(
+      await owner
+        .from("marketing_experiments")
+        .select("updated_at")
+        .eq("id", experiment)
+        .single(),
+      "experiment version",
+    ),
+    "experiment version row",
   );
   check(
     await seedRpc("save_marketing_experiment", {
@@ -566,13 +623,16 @@ for (const status of ["RUNNING", "EVALUATING"]) {
     "explicit experiment stage",
   );
 }
-const existing = check(
-  await owner
-    .from("marketing_experiments")
-    .select("updated_at")
-    .eq("id", experiment)
-    .single(),
-  "evaluation version",
+const existing = requireObject(
+  check(
+    await owner
+      .from("marketing_experiments")
+      .select("updated_at")
+      .eq("id", experiment)
+      .single(),
+    "evaluation version",
+  ),
+  "evaluation version row",
 );
 check(
   await seedRpc("evaluate_marketing_experiment", {
@@ -699,14 +759,17 @@ objects.push(
     { width: 400, height: 150, parent_id: section },
   ),
 );
-const board = check(
-  await seedRpc("create_board_from_template", {
-    p_organization_id: org,
-    p_title: "First-session learning board",
-    p_template_key: "research-synthesis",
-    p_elements: objects,
-  }),
-  "native board",
+const board = requireObject(
+  check(
+    await seedRpc("create_board_from_template", {
+      p_organization_id: org,
+      p_title: "First-session learning board",
+      p_template_key: "research-synthesis",
+      p_elements: objects,
+    }),
+    "native board",
+  ),
+  "created Board row",
 );
 manifest.ids.board = board.id;
 await ensureDemoAsset({ owner, manifest, allocate, check, save });

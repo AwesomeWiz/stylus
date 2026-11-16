@@ -4,6 +4,11 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Repaired fictional demo setup to use real team invitations/acceptance and
+  existing bounded research APIs. Added private-image identity/hash cleanup and
+  a repeatable isolated CI seed/cleanup gate that preserves a control workspace.
+  Native remote release acceptance remains required; hosted backends are refused.
+
 - Prepared the first AGPL-3.0-only public beta candidate with source-offer settings,
   dependency/font/asset provenance, self-host/community documentation and sequential
   release CI. Publication is not yet approved; required unexecuted gates remain open.

@@ -4,6 +4,43 @@ Last Updated: 2026-11-16
 
 ## Overall Status
 
+REDESIGN-009 complete demo-seed repair is in progress from `e5fe80e`.
+The entire interaction/role audit is in docs/DEMO.md. Direct service membership
+writes are replaced by OWNER invitations and each teammate's authenticated
+acceptance. Administrative research SQL inserts are replaced by the existing
+bounded service RPC lifecycle, cancelled before synthesis. All remaining fixture
+writes use existing authorized OWNER interfaces. A private authored PNG now has
+exact path/Storage UUID/hash verification and guarded removal before tenant
+deletion. Hosted seeding/inspection is refused; no hosted backend was accessed.
+
+Nineteen demo tests pass, including the complete actual seed source and cleanup
+twice against all 53 unchanged migrations/grants/RLS in isolated PostgreSQL with
+synthetic Auth/Storage transport. All 30 isolated SQL suites / 1,138 assertions,
+release-helper tests, lint, both typechecks and both production builds pass.
+The complete web suite passes 267 files / 1,531 tests; all 36 worker tests pass.
+Upgrade, formatting, 189 relative links and license checks pass. The new real CircleCI
+round-trip gate seeds/cleans twice, verifies zero AI/reports and exact absence,
+preserves an independently recorded control tenant/content, and retains the
+second fixture for real Auth/JWT/browser checks before final guarded cleanup.
+Only the smoke's two preallocated tasks/four exact trigger events can extend its
+cleanup inventory; any other delta stops cleanup.
+
+Real Supabase and full release acceptance are still pending. CircleCI CLI auth
+reads native logs successfully; the existing native failure is confirmed at
+membership 42501. Native manual trigger returns 404, cancellation returns 403.
+The retained diagnostic branch `cci/preflight/demo-seed-20261116-a` at
+`8a182d92d2fbc0f8a7e299e147015ec9fa987e3c` automatically selected the older
+compatibility pipeline, not the required native definition. The owner has been
+asked to start `release-machine-ci` explicitly on that diagnostic branch.
+No real seed/cleanup PASS or public-release readiness is claimed.
+No production grants, RLS, migrations, dependency/lockfile or application changes.
+The initial diagnostic snapshot predates final inventory normalization, Storage
+identity denial checks and shared verification-query coverage; the final 009 SHA
+must run the full native workflow. Official CircleCI config/Bash validation and
+candidate-tree secret scanning pass. The unchanged high-severity npm audit gate
+passes with seven moderate lint-tool-chain findings (minimatch advisory
+GHSA-g3hv-75wg-m249); dependency remediation is outside this seed-only repair.
+
 REDESIGN-009 demo verification 42501: remote branch and CircleCI release failure
 both identify exact candidate `227c7cf`. The owner reports fresh Docker, migrations
 and SQL/RLS now pass; seeding fails at the service-key admin client's direct

@@ -129,6 +129,7 @@ jobs:
           use-nvm-cache: false
       - run: npm ci
       - run: node scripts/release/ci-local-database.mjs guard
+      - run: npm run test:demo
       - run: *start-stack
       - run: node scripts/release/ci-local-database.mjs verify
       - run: node scripts/setup-local-env.mjs

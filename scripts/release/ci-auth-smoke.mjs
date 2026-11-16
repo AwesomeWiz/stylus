@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
 import { assertLoopback, assertNoProviders } from "./ci-local-database.mjs";
@@ -146,15 +145,14 @@ export async function runAuthSmoke() {
   );
 
   for (const index of [0, 1]) {
-    const id = randomUUID();
-    report.taskIds.push(id);
-    record(`${roles[index]} task identity allocated before mutation`);
+    record(
+      `${roles[index]} task creation intent; database allocates its protected identity`,
+    );
     const actor = manifest.users[index].id;
     const task = dataOrFail(
       await clients[index]
         .from("tasks")
         .insert({
-          id,
           organization_id: manifest.organizationId,
           title: `CI ${roles[index]} RLS smoke`,
           created_by: actor,
@@ -164,7 +162,10 @@ export async function runAuthSmoke() {
         .single(),
       `${roles[index]} task creation`,
     );
-    assert.equal(task.id, id);
+    assert.match(task.id, /^[0-9a-f-]{36}$/i);
+    const id = task.id;
+    report.taskIds.push(id);
+    record(`${roles[index]} returned task identity recorded before update`);
     const updated = dataOrFail(
       await clients[index]
         .from("tasks")

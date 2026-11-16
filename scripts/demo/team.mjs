@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import { requireObject, requireUuid } from "./responses.mjs";
 
 // Follow the same invitation/acceptance contract as the application. A service
 // key and direct membership writes are deliberately unnecessary here.
@@ -24,10 +25,11 @@ export async function ensureDemoTeam({
       }),
       `authenticate fictional ${role}`,
     );
-    const identity = check(
-      await member.auth.getUser(),
-      `verify fictional ${role} session`,
+    const identity = requireObject(
+      check(await member.auth.getUser(), `verify fictional ${role} session`),
+      "team Auth response",
     );
+    requireObject(identity.user, "team Auth user");
     if (identity.user.id !== user.id || identity.user.email !== user.email)
       throw Error("STOP: team session identity mismatch");
     const read = () =>
@@ -67,6 +69,7 @@ export async function ensureDemoTeam({
           }),
           `invite fictional ${role}`,
         );
+        requireUuid(invitation.id, "invitation ID");
         save();
       }
       if (invitation.userId !== user.id || invitation.role !== role)

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import test from "node:test";
 import vm from "node:vm";
+import { EventEmitter } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
@@ -10,7 +13,24 @@ import { ensureDemoTeam } from "./team.mjs";
 import { createResearchFixture } from "./research-fixture.mjs";
 import { ensureDemoAsset, cleanupDemoAssets } from "./assets.mjs";
 import { verifyDemoOrganization } from "./organization-identity.mjs";
-import { canonicalInventory, readDemoInventory } from "./inventory.mjs";
+import {
+  canonicalInventory,
+  readDemoInventory,
+  decodeLocalQueryResult,
+} from "./inventory.mjs";
+import * as responses from "./responses.mjs";
+import * as verification from "./verification.mjs";
+import {
+  assertLoopback,
+  assertNoProviders,
+} from "../release/ci-local-database.mjs";
+import {
+  controlSnapshotSql,
+  seedVerificationSql,
+  assertSeedCounts,
+  assertFixtureInventory,
+} from "./verification.mjs";
+import { sanitizeStartupLog } from "../release/supabase-start-log.mjs";
 
 // Real migrations/grants/RLS/functions, with synthetic Auth/Storage transport.
 // This is a complete SQL contract regression, not a real Supabase/Auth claim.
@@ -101,7 +121,18 @@ test(
                 (a) => a.email === input.email && a.password === input.password,
               );
               assert.ok(user);
-              return { user };
+              const token = [
+                "synthetic",
+                Buffer.from(
+                  JSON.stringify({
+                    sub: user.id,
+                    role: "authenticated",
+                    exp: Math.floor(Date.now() / 1000) + 3600,
+                  }),
+                ).toString("base64url"),
+                "synthetic",
+              ].join(".");
+              return { user, session: { access_token: token } };
             }),
           getUser: () =>
             result(async () => {
@@ -155,6 +186,7 @@ test(
         from(table) {
           let fields = "*",
             insertion,
+            updating,
             filters = [],
             single = false,
             optional = false;
@@ -163,12 +195,20 @@ test(
               insertion = value;
               return builder;
             },
+            update(value) {
+              updating = value;
+              return builder;
+            },
             select(value = "*") {
               fields = value;
               return builder;
             },
             eq(key, value) {
               filters.push([key, value]);
+              return builder;
+            },
+            in(key, value) {
+              filters.push([key, value, "in"]);
               return builder;
             },
             single() {
@@ -188,10 +228,12 @@ test(
                 ]);
                 const projection =
                   fields === "*" ? "*" : fields.split(",").map(quote).join(",");
-                const params = [],
-                  clauses = filters.map(([k, v]) => {
+                const params = updating ? Object.values(updating) : [],
+                  clauses = filters.map(([k, v, kind]) => {
                     params.push(v);
-                    return `${quote(k)}=$${params.length}`;
+                    return kind === "in"
+                      ? `${quote(k)}=any($${params.length}::uuid[])`
+                      : `${quote(k)}=$${params.length}`;
                   });
                 let query = `select ${projection} from public.${quote(table)}${clauses.length ? " where " + clauses.join(" and ") : ""}`;
                 if (insertion) {
@@ -205,6 +247,14 @@ test(
                   );
                   query = `insert into public.${quote(table)}(${Object.keys(insertion).map(quote).join(",")}) values(${params.map((_, i) => "$" + (i + 1)).join(",")}) returning ${projection}`;
                 }
+                if (updating)
+                  query = `update public.${quote(table)} set ${Object.keys(
+                    updating,
+                  )
+                    .map((key, i) => `${quote(key)}=$${i + 1}`)
+                    .join(
+                      ",",
+                    )} where ${clauses.join(" and ")} returning ${projection}`;
                 const rows = await sql(role, user?.id, query, params);
                 if (single) {
                   assert.ok(
@@ -223,6 +273,21 @@ test(
           from(bucket) {
             assert.equal(bucket, "board-images");
             return {
+              info: (name) =>
+                result(async () => {
+                  const rows = await sql(
+                    role,
+                    user?.id,
+                    "select id,name,bucket_id from storage.objects where bucket_id=$1 and name=$2",
+                    [bucket, name],
+                  );
+                  assert.equal(rows.length, 1);
+                  return {
+                    id: rows[0].id,
+                    name: rows[0].name,
+                    bucketId: rows[0].bucket_id,
+                  };
+                }),
               upload: (name, data) =>
                 result(async () => {
                   const id = randomUUID();
@@ -264,10 +329,26 @@ test(
       };
       return client;
     }
-    const inventory = (manifest) =>
-      readDemoInventory(manifest, async (query) =>
-        sql("postgres", null, query),
+    let agentEnvelope = false;
+    const localRead = async (query) => {
+      const rows = await sql("postgres", null, query);
+      return decodeLocalQueryResult(
+        {
+          status: 0,
+          stdout: JSON.stringify(
+            agentEnvelope
+              ? {
+                  rows,
+                  boundary: "fixture",
+                  warning: "Untrusted database data",
+                }
+              : rows,
+          ),
+        },
+        "contract query",
       );
+    };
+    const inventory = (manifest) => readDemoInventory(manifest, localRead);
     async function execute(args) {
       const context = vm.createContext({
         URL,
@@ -286,6 +367,7 @@ test(
         },
       });
       const deps = {
+        "./responses.mjs": responses,
         "node:fs": {
           default: {
             existsSync: (file) => files.has(file),
@@ -330,6 +412,114 @@ test(
         );
       }
     }
+    async function executeRoundtrip(phase, authSmoke = false) {
+      const context = vm.createContext({
+        URL,
+        Buffer,
+        structuredClone,
+        console: { log() {} },
+        process: {
+          env: { CIRCLECI: "true" },
+          execPath: process.execPath,
+          argv: ["node", "roundtrip.mjs", phase],
+          loadEnvFile() {
+            Object.assign(this.env, {
+              NEXT_PUBLIC_SUPABASE_URL: url,
+              NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+                "sb_publishable_test_contract",
+              SUPABASE_SERVICE_ROLE_KEY: "test-service",
+            });
+          },
+        },
+      });
+      const deps = {
+        "node:fs": {
+          default: {
+            existsSync: (file) => files.has(file),
+            readFileSync: (file) => {
+              assert.ok(files.has(file), file);
+              return files.get(file);
+            },
+            writeFileSync: (file, text) => files.set(file, text),
+            renameSync: (from, to) => {
+              assert.ok(files.has(from));
+              assert.ok(!files.has(to));
+              files.set(to, files.get(from));
+              files.delete(from);
+            },
+          },
+        },
+        // Normalize only VM-realm prototypes; the full values/keys still compare.
+        "node:assert/strict": {
+          default: {
+            ...assert,
+            deepEqual: (a, b, message) =>
+              assert.deepEqual(
+                JSON.parse(JSON.stringify(a)),
+                JSON.parse(JSON.stringify(b)),
+                message,
+              ),
+          },
+        },
+        "node:crypto": { randomBytes, randomUUID },
+        "node:path": { default: path },
+        "node:url": { pathToFileURL },
+        "node:child_process": {
+          spawn(_exe, args, options) {
+            assert.equal(args[0], "scripts/demo/seed.mjs");
+            assert.equal(options.env.NEXT_PUBLIC_SUPABASE_URL, undefined);
+            const child = new EventEmitter();
+            Promise.resolve()
+              .then(() => execute(args.slice(1)))
+              .then(
+                () => child.emit("close", 0, null),
+                (error) => child.emit("error", error),
+              );
+            return child;
+          },
+        },
+        "@supabase/supabase-js": { createClient },
+        "../release/ci-local-database.mjs": {
+          assertLoopback,
+          assertNoProviders,
+        },
+        "./ci-local-database.mjs": { assertLoopback, assertNoProviders },
+        "./supabase-start-log.mjs": { sanitizeStartupLog },
+        "./inventory.mjs": {
+          canonicalInventory,
+          readDemoInventory: inventory,
+          readLocalDemoRows: localRead,
+        },
+        "./assets.mjs": {
+          verifyDemoAssets: (await import("./assets.mjs")).verifyDemoAssets,
+        },
+        "./verification.mjs": verification,
+        "./responses.mjs": responses,
+      };
+      const source = new vm.SourceTextModule(
+        fs.readFileSync(
+          new URL(
+            authSmoke ? "../release/ci-auth-smoke.mjs" : "./roundtrip.mjs",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+        { context },
+      );
+      await source.link((name) => {
+        assert.ok(deps[name], name);
+        return new vm.SyntheticModule(
+          Object.keys(deps[name]),
+          function () {
+            for (const [key, value] of Object.entries(deps[name]))
+              this.setExport(key, value);
+          },
+          { context },
+        );
+      });
+      await source.evaluate();
+      if (authSmoke) await source.namespace.runAuthSmoke();
+    }
     try {
       await db.exec(fs.readFileSync("scripts/database/bootstrap.sql", "utf8"));
       for (const file of fs
@@ -358,7 +548,28 @@ test(
         organizationId: controlOrg.data.id,
         users: [{ id: auth.data.user.id }],
       };
-      const before = await inventory(controlManifest);
+      const controlNote = randomUUID();
+      assert.equal(
+        (
+          await control.rpc("save_core_note", {
+            p_organization_id: controlManifest.organizationId,
+            p_id: controlNote,
+            p_title: "Preserved content",
+            p_content: "Preserve this exact pre-existing control content.",
+            p_archived: false,
+            p_expected_updated_at: null,
+          })
+        ).error,
+        null,
+      );
+      const controlQuery = controlSnapshotSql({
+        organizationId: controlManifest.organizationId,
+        noteId: controlNote,
+        user: { id: auth.data.user.id },
+      });
+      const controlData = await sql("postgres", null, controlQuery);
+      assert.equal(controlData[0].note.id, controlNote);
+      const controlInventory = await inventory(controlManifest);
       for (let round = 0; round < 2; round++) {
         await execute(["--confirm-demo-memory"]);
         const manifest = JSON.parse(files.get(".release-qa/demo.json"));
@@ -366,6 +577,10 @@ test(
         assert.equal(manifest.teamReady, true);
         assert.ok(manifest.ids.memory);
         assert.ok(manifest.assets[0].storageId);
+        assertSeedCounts(
+          (await sql("postgres", null, seedVerificationSql(manifest)))[0],
+        );
+        assertFixtureInventory(manifest, await inventory(manifest));
         assert.equal(accounts.size, 4);
         assert.equal(
           (
@@ -390,7 +605,11 @@ test(
         );
         assert.equal(accounts.size, 1);
         assert.equal(bytes.size, 0);
-        assert.deepEqual(await inventory(controlManifest), before);
+        assert.deepEqual(await inventory(controlManifest), controlInventory);
+        assert.deepEqual(
+          await sql("postgres", null, controlQuery),
+          controlData,
+        );
         files.delete(".release-qa/demo.json");
       }
       assert.ok(
@@ -405,6 +624,45 @@ test(
           .length,
         4,
       );
+      // Exercise the actual controller, CLI response decoder, both complete seed
+      // rounds, its smoke-inventory extension and final control/global absence.
+      agentEnvelope = true;
+      await executeRoundtrip("prepare");
+      const prepared = JSON.parse(files.get(".release-qa/demo-roundtrip.json"));
+      assert.equal(prepared.state, "prepared");
+      assert.equal(prepared.rounds.length, 2);
+      const demo = JSON.parse(files.get(".release-qa/demo.json"));
+      await executeRoundtrip("auth", true);
+      assert.equal(
+        JSON.parse(files.get(".release-qa/auth-smoke.json")).taskIds.length,
+        2,
+      );
+      const malformed = structuredClone(prepared);
+      delete malformed.controlSnapshot.assets;
+      files.set(".release-qa/demo-roundtrip.json", JSON.stringify(malformed));
+      const identitiesBefore = [...accounts.keys()];
+      await assert.rejects(executeRoundtrip("cleanup"), /asset inventory/);
+      assert.deepEqual([...accounts.keys()], identitiesBefore);
+      assert.equal(bytes.size, 1);
+      files.set(".release-qa/demo-roundtrip.json", JSON.stringify(prepared));
+      const changed = structuredClone(prepared);
+      changed.controlSnapshot.data.note.content = "Unexpected baseline content";
+      files.set(".release-qa/demo-roundtrip.json", JSON.stringify(changed));
+      await assert.rejects(
+        executeRoundtrip("cleanup"),
+        /changed before cleanup/,
+      );
+      assert.deepEqual([...accounts.keys()], identitiesBefore);
+      assert.equal(bytes.size, 1);
+      files.set(".release-qa/demo-roundtrip.json", JSON.stringify(prepared));
+      await executeRoundtrip("cleanup");
+      assert.equal(
+        JSON.parse(files.get(".release-qa/demo-roundtrip.json")).state,
+        "cleaned",
+      );
+      assert.equal(accounts.size, 1);
+      assert.equal(bytes.size, 0);
+      assert.deepEqual(await inventory(controlManifest), controlInventory);
     } finally {
       await db.close();
     }
