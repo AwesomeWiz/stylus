@@ -5,8 +5,12 @@
 Stylus is an open-source operating system for early-stage teams to turn customer
 and market evidence into experiments, decisions, execution and learning.
 
-An early beta for teams that need a shared place to decide what to test, do the
-work and remember what they learned. Core works without AI or connected providers.
+Bring research, ideas, Experiments, Tasks, Boards and team knowledge into one
+connected workspace. See what needs doing, the evidence behind it and what your
+team has learned.
+
+Built for founders and small teams. Self-hostable, with optional AI and
+integrations; Core works without either.
 
 ![Stylus Home with the fictional Paper Orbit team's daily attention](docs/media/home.png)
 
@@ -25,20 +29,29 @@ Evidence → Hypothesis → Experiment → Tasks and decisions → Learning
 The links are canonical records with exact provenance. A Board card points to the
 original work. A Learning becomes Company Memory only through reviewed promotion.
 
+A fictional team hears in customer interviews that new users struggle with setup.
+They record the Evidence, hypothesize that a shorter checklist could help, and
+plan an Experiment with assigned Tasks. They review the result as Learning and
+explicitly choose whether to promote it to Company Memory.
+
 ![Navigating fictional Evidence, Hypothesis, Experiment, execution context and Learning](docs/media/operating-loop.gif)
 
 ## A workspace for the operating loop
 
-- **Daily execution:** Home highlights attention; Tasks support owners, deadlines,
-  prerequisites and Milestones. Detail opens without losing the list.
-- **Visual work:** Boards combine Sections, notes, images and native Stylus cards,
-  with collaboration, comments, visible voting and Section presentation.
-- **Growth and learning:** Marketing connects Evidence, Hypotheses, Experiments,
-  Campaigns and Learnings. Creative Studio and Ask Council are distinct bounded workflows.
-- **Context:** working Notes stay separate from approved Company Memory.
-  Onboarding supplies explicit company context.
-- **Connected tools:** link GitHub repositories/Issues/PRs/Commits, Drive metadata
-  and Calendar events. Calendar creation is explicit; there is no automatic sync.
+- **Daily execution:** See what needs attention and why. Tasks connect owners,
+  deadlines, prerequisites and Milestones, with detail that opens alongside the list.
+- **Visual work:** Explore ideas together on Boards with Sections, notes and images.
+  Native cards link back to actual Stylus records; comments, voting and Section
+  presentation help teams review and decide.
+- **Growth and learning:** Marketing connects Evidence, Hypotheses, Experiments and
+  Campaigns so teams can test ideas and record Learning. Creative Studio and Ask
+  Council support distinct bounded workflows.
+- **Context:** Keep working Notes separate from approved Company Memory, so
+  exploratory thinking stays distinct from reviewed knowledge. Onboarding supplies
+  explicit company context.
+- **Connected tools:** Keep execution linked to GitHub repositories/Issues/PRs/Commits,
+  Drive metadata and Calendar events. Create Calendar events explicitly; automatic
+  sync is not implemented.
 
 ![Board placement followed by a native Task card and contextual arrangement menu](docs/media/boards.gif)
 
@@ -75,9 +88,12 @@ First-time backend downloads can take longer than the application install.
 
 The [self-host guide](docs/SELF_HOSTING.md) covers your own hosted Supabase project,
 forward migrations, production hosting and troubleshooting. There is no dependency
-on the maintainer's backend. [Release verification](docs/RELEASE_AUDIT.md) records
-executed/pending checks, including the pending full local-stack authenticated
-clean-install gate. This pre-release candidate is not a production SLA.
+on the maintainer's backend.
+
+Native Linux CI covers fresh Supabase setup, web/worker tests, SQL/RLS assertions,
+real authentication and Chromium/Firefox/WebKit smoke tests.
+[Release verification](docs/RELEASE_AUDIT.md) records the exact CI-tested candidate,
+guarded demo cleanup and remaining manual checks.
 
 Try the [optional fictional demo](docs/DEMO.md), or start empty.
 
@@ -91,7 +107,8 @@ handles heavy media jobs, which remain queued while it is offline.
 End users connect the deployment's configured GitHub/Google app. Only self-hosting
 operators create provider apps and manage encryption keys.
 [Integration setup](docs/INTEGRATIONS.md) documents those roles and exact scopes.
-Drive's restricted metadata scope can require Google's public-deployment verification.
+For deployments that enable Google Drive, its restricted metadata scope can
+require Google's OAuth verification.
 File ingestion, GitHub writes and automatic Calendar sync are not implemented.
 
 ## Architecture and security
@@ -124,6 +141,8 @@ Original code is [AGPL-3.0-only](LICENSE). Dependencies/fonts retain their
 Modified network deployments must review corresponding-source requirements.
 Future commercial/dual licensing is not promised by contributor terms.
 
-The proposed first public version is **0.1.0-beta.1**. Read the
+The upcoming beta is **0.1.0-beta.1**; it has not yet been tagged or published as a
+GitHub release. The source is public and self-hostable; hosted services have their
+own deployment and operating requirements. Read the
 [release notes](docs/RELEASE_NOTES.md) and [audit](docs/RELEASE_AUDIT.md) for known
-limitations and gates that must close before publication.
+limitations and remaining beta-release checks.
