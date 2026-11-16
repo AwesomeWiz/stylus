@@ -1,8 +1,15 @@
 # Stylus — Project State
 
-Last Updated: 2026-11-15
+Last Updated: 2026-11-16
 
 ## Overall Status
+
+REDESIGN-009.1 follow-up: CircleCI confirmed the npm-cache fix at `ca86b31`,
+then exposed host-dependent Windows model-path basename handling on Linux.
+Transcript model metadata remains filename-only; execution retains the full
+configured path. The four path-form regression cases, media suite (22), full
+worker suite (36), worker typecheck and build pass. Remote full-workflow/native
+acceptance remains pending on the new candidate recorded in the final handoff.
 
 REDESIGN-009 LOCAL VALIDATION VERIFIED / PUBLIC RELEASE GATES OPEN
 

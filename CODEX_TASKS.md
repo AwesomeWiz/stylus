@@ -2,6 +2,13 @@
 
 # Current
 
+## REDESIGN-009.1 — Worker model metadata portability follow-up
+
+Local verification passes: 22 media tests, 36 full worker tests, worker typecheck
+and build. Normalize Windows/POSIX separators for filename-only transcript model
+metadata while preserving the full native execution path. CircleCI must validate
+the new candidate; dependencies, lockfile and release gates remain unchanged.
+
 ## REDESIGN-009 — Open-source and public release hardening
 
 LOCAL VALIDATION VERIFIED / RELEASE GATES OPEN on

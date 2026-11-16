@@ -168,6 +168,29 @@ describe("whisper.cpp execution boundary", () => {
     expect(transcript.model).toBe("ggml-base.bin");
   });
 
+  it.each([
+    "C:\\models\\ggml-base.bin",
+    "C:/models/ggml-base.bin",
+    "/models/ggml-base.bin",
+    "ggml-base.bin",
+  ])("serializes only the model filename from %s", async (modelPath) => {
+    const run = vi.fn().mockResolvedValue("");
+    const transcript = await transcribeWithWhisperCpp(
+      "audio.wav",
+      "transcript",
+      3,
+      { ...dependencies, whisperModelPath: modelPath },
+      new AbortController().signal,
+      {
+        readFile: vi.fn().mockResolvedValue(whisperJson),
+        run,
+        stat: vi.fn().mockResolvedValue({ isFile: () => true, size: 500 }),
+      } as never,
+    );
+    expect(transcript.model).toBe("ggml-base.bin");
+    expect(run.mock.calls[0]![1].slice(0, 2)).toEqual(["--model", modelPath]);
+  });
+
   it("rejects an oversized JSON sidecar before reading it", async () => {
     const readOutput = vi.fn();
     await expect(
