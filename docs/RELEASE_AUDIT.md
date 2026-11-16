@@ -11,6 +11,37 @@ The candidate must be evaluated at its exact SHA.
 
 ## Environment limits
 
+### Full native #19 and browser navigation isolation — 2026-11-16
+
+[Native release #19](https://app.circleci.com/workflow/59bf625c-bc8e-4588-ae1d-d7743d9380ad/job/0afa91af-600d-4bf3-b3d6-f4cb17f1f323)
+at `ea521df3d16c38ef506829c0f3201e07014a5f29` passes install, static/security
+gates, web/worker/demo tests, isolated/upgrade/native SQL, both seed preparations,
+real Auth/JWT checks and production builds. Native SQL passes all 30 suites /
+1,138 assertions. Browser QA is eight PASS / one FAIL: authenticated WebKit
+reports seven Home-prefetch access-control diagnostics. Final round-trip cleanup
+is not reached; the always-run owned-stack stop succeeds. No full PASS is claimed.
+
+The test replaced Home's document immediately after an SPA login, then repeatedly
+used document navigation for its route inventory. A load state already reached
+by that document does not wait for new SPA work, as described by
+[Playwright's load-state contract](https://playwright.dev/docs/api/class-page#page-wait-for-load-state).
+An owned loopback-only probe reproduces the same WebKit error when a same-origin
+fetch starts during document replacement: no API request reaches the server.
+The no-replacement controls return successful data without errors in Chromium,
+Firefox and WebKit. This matches the independently reproduced
+[WebKit loader issue](https://github.com/microsoft/playwright/issues/43120);
+it does not demonstrate a product CORS/authorization failure.
+
+The smoke test now checks every direct entry in a fresh authenticated tab and
+uses actual Home → Tasks → task detail → Boards navigation for the workflow.
+It additionally verifies unchanged document time origin through that workflow.
+Every page's errors remain fatal; no filtering, retry, browser skip, prefetch
+disablement, dependency or application change is introduced. Real three-engine
+acceptance and final cleanup on the next exact native candidate remain required.
+Local validation passes all 64 demo regressions, lint, both typechecks, browser
+test discovery, formatting, 190 local links and workflow/Bash checks. The local
+probe is mechanism evidence; it does not replace real authenticated browser QA.
+
 ### Real demo round-trip verified — 2026-11-16
 
 [Native diagnostic #17](https://app.circleci.com/workflow/9ce63cc6-05b4-4ddc-bedc-5c7c2e429f0c/job/cb038336-61d6-4d9c-a918-9e2123aa397c)

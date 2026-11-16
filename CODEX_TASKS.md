@@ -8,8 +8,13 @@ The inventory/round-trip repair is verified by native CircleCI #17 at
 `6ac08ac7501bc70a82c90ba6663b4ac6b25cb34c`: complete seed/verify/cleanup/baseline
 sequence succeeds twice against fresh Supabase, including actual Auth/JWT role
 checks, explicit Memory, private assets, exact absence and final control cleanup.
-Carry this complete audited repair onto the existing 009 branch and validate its
-new exact candidate with every mandatory native release gate. Preserve other
+The repair is on the 009 branch at `ea521df`. Full native #19 passes backend,
+SQL/security/test/build gates and eight browser cases, then fails authenticated
+WebKit on document-replacement prefetch diagnostics; final cleanup is not run.
+Keep direct-entry checks in fresh authenticated tabs and exercise real application
+navigation with unchanged document identity. The diagnostic is reproduced in an
+owned loopback probe; no page errors are filtered. Validate the resulting exact
+candidate with every mandatory native release gate. Preserve other
 open checklist items; no merge, tag, publication, hosted access or agents.
 
 64 demo regressions, seven helper tests, 30 SQL suites / 1,138 assertions,

@@ -24,9 +24,21 @@ All 30 local SQL suites / 1,138 assertions, lint/typechecks, production builds,
 formatting/links, secret and workflow/Bash checks pass. Application code,
 production grants/RLS/migrations, dependencies and lockfile are unchanged.
 
-The verified repair is being carried onto the 009 release branch. The complete
-native release workflow at its resulting exact candidate, including all SQL,
-web/worker/security/build and three-engine browser gates, remains required.
+The complete native release #19 at `ea521df3d16c38ef506829c0f3201e07014a5f29`
+passes install, security/static gates, all tests, native SQL (30 suites / 1,138
+assertions), both seeds, real Auth/JWT role checks and production builds. Browser
+QA passes eight of nine cases; authenticated WebKit reports Home prefetches
+started during document replacement as access-control page errors. Final guarded
+cleanup is not reached in #19; its owned stack stop succeeds. This is a failed
+full workflow, separate from #17's successful complete cleanup proof.
+
+A loopback-only three-engine probe reproduces that WebKit diagnostic without
+Auth, CORS restrictions or Supabase; Chromium/Firefox do not emit it. Fresh-tab
+controls pass in all three engines. Browser direct-entry checks now use fresh
+authenticated tabs, while the actual Home/Tasks/detail/Boards workflow uses
+application links and verifies an unchanged document time origin. Every page
+error still fails; no engine, route, dependency or release gate is removed.
+The complete native workflow on the resulting candidate remains required.
 Diagnostic #17 does not substitute for that full workflow or other outstanding
 release checklist items. No hosted data, agents, merge, tag or publication.
 

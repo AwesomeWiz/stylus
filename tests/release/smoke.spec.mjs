@@ -60,10 +60,13 @@ test("authenticated fictional Core and growth workflow", async ({ page }) => {
   await page.getByLabel("Password", { exact: true }).fill(demo.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL((url) => url.pathname === "/");
-  // This inventory deliberately uses document entrypoints. Let each page's
-  // bounded prefetches finish before tearing its document down; real Link
-  // navigation is checked separately. Keep the pageerror assertion enabled.
-  await page.waitForLoadState("networkidle");
+  await expect(
+    page.getByRole("heading", { name: "Home", exact: true }),
+  ).toBeVisible();
+  // Direct-entry coverage uses fresh authenticated tabs. Replacing a document
+  // while Next starts its queued prefetches produces WebKit loader diagnostics
+  // (playwright#43120); networkidle may already be satisfied after an SPA login.
+  // Keep every pageerror, and exercise actual client navigation below.
   for (const route of [
     "/",
     "/tasks?view=all",
@@ -75,20 +78,41 @@ test("authenticated fictional Core and growth workflow", async ({ page }) => {
     "/apps/marketing/learn",
     "/memory",
     "/settings/integrations",
+    `/tasks?view=all&task=${demo.ids.tasks[1]}`,
+    `/whiteboards/${demo.ids.board}`,
   ]) {
-    await page.goto(route);
-    await expect(page.locator("main")).toBeVisible();
-    await expect(page.locator("h1")).toHaveCount(1);
-    await expect(page).toHaveURL(
-      (url) => url.pathname === new URL(route, "http://localhost").pathname,
-    );
-    await expect(page).not.toHaveTitle("Page not found — Stylus");
-    await expect(
-      page.getByText("Something slipped out of place.", { exact: true }),
-    ).toHaveCount(0);
-    await page.waitForLoadState("networkidle");
+    const entry = await page.context().newPage();
+    entry.on("pageerror", (error) => errors.push(error.message));
+    try {
+      await entry.goto(route);
+      await expect(entry.locator("main")).toBeVisible();
+      await expect(entry.locator("h1")).toHaveCount(1);
+      await expect(entry).toHaveURL(
+        (url) => url.pathname === new URL(route, "http://localhost").pathname,
+      );
+      await expect(entry).not.toHaveTitle("Page not found — Stylus");
+      await expect(
+        entry.getByText("Something slipped out of place.", { exact: true }),
+      ).toHaveCount(0);
+      await entry.waitForLoadState("networkidle");
+    } finally {
+      await entry.close();
+    }
   }
-  await page.goto(`/tasks?view=all&task=${demo.ids.tasks[1]}`);
+  const documentStarted = await page.evaluate(() => performance.timeOrigin);
+  await page
+    .getByRole("navigation", { name: "Primary navigation", exact: true })
+    .getByRole("link", { name: "Tasks", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Tasks", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "All tasks", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.searchParams.get("view") === "all");
+  await page.locator(`[data-task-open="${demo.ids.tasks[1]}"]`).click();
+  await expect(page).toHaveURL(
+    (url) => url.searchParams.get("task") === demo.ids.tasks[1],
+  );
   await expect(
     page.getByRole("heading", {
       name: "Instrument first-session completion",
@@ -101,9 +125,16 @@ test("authenticated fictional Core and growth workflow", async ({ page }) => {
   await expect(
     page.getByText("Loading related work…", { exact: true }),
   ).toHaveCount(0);
-  await page.waitForLoadState("networkidle");
   await page.getByRole("button", { name: "Back to list", exact: true }).click();
-  await page.goto(`/whiteboards/${demo.ids.board}`);
+  await expect(page).toHaveURL((url) => !url.searchParams.has("task"));
+  await page
+    .getByRole("navigation", { name: "Primary navigation", exact: true })
+    .getByRole("link", { name: "Boards", exact: true })
+    .click();
+  await page
+    .locator(`a[href="/whiteboards/${demo.ids.board}"]`)
+    .first()
+    .click();
   await expect(page.getByLabel("Board canvas", { exact: true })).toBeVisible();
   await page.locator('summary[aria-label="Shapes"]').click();
   await page.getByRole("button", { name: "Rectangle", exact: true }).click();
@@ -115,6 +146,9 @@ test("authenticated fictional Core and growth workflow", async ({ page }) => {
   await expect(page.locator("[data-board-placement]")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.locator("[data-board-placement]")).toHaveCount(0);
+  expect(await page.evaluate(() => performance.timeOrigin)).toBe(
+    documentStarted,
+  );
   expect(errors).toEqual([]);
 });
 
