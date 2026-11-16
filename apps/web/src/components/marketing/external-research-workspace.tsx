@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import {
   useActionState,
@@ -50,6 +51,7 @@ export function ExternalResearchWorkspace({
   runs,
   sourcePlanPreviews = [],
   sources,
+  selectedEvidenceId,
 }: {
   evidence: MarketingExternalResearchEvidenceRow[];
   initialInvocationKey: string;
@@ -58,8 +60,14 @@ export function ExternalResearchWorkspace({
   runs: MarketingExternalResearchRunRow[];
   sourcePlanPreviews?: FashionResearchPlanPreview[];
   sources: MarketingExternalResearchSourceRow[];
+  selectedEvidenceId?: string;
 }) {
   const router = useRouter();
+  useEffect(() => {
+    const item = evidence.find((row) => row.id === selectedEvidenceId);
+    if (item)
+      document.getElementById(`${item.run_id}-${item.evidence_id}`)?.focus();
+  }, [evidence, selectedEvidenceId]);
   const editable = canMutateMarketing(role);
   const [invocationKey, setInvocationKey] = useState(initialInvocationKey);
   const [intent, setIntent] =
@@ -120,7 +128,7 @@ export function ExternalResearchWorkspace({
           </Field>
           <div className="space-y-4">
             <Field label="Primary marketing intent">
-              <select
+              <Select
                 className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
                 disabled={pending || active}
                 name="intent"
@@ -137,7 +145,7 @@ export function ExternalResearchWorkspace({
                     {label(researchIntent)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
             <Field label="Query terms (1–5)">
               <div className="grid gap-2 sm:grid-cols-2">
@@ -159,7 +167,7 @@ export function ExternalResearchWorkspace({
           </div>
           {intent === "FASHION_TECH" ? (
             <Field label="Hacker News stream">
-              <select
+              <Select
                 className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
                 defaultValue="new"
                 disabled={pending || active}
@@ -168,7 +176,7 @@ export function ExternalResearchWorkspace({
                 <option value="new">New stories</option>
                 <option value="top">Top stories</option>
                 <option value="ask">Ask HN</option>
-              </select>
+              </Select>
             </Field>
           ) : null}
           <div className="space-y-2 lg:col-span-2">
@@ -233,6 +241,7 @@ export function ExternalResearchWorkspace({
         </p>
       )}
       <ResearchHistory
+        selectedEvidenceId={selectedEvidenceId}
         evidence={evidence}
         reports={reports}
         runs={runs}
@@ -243,11 +252,13 @@ export function ExternalResearchWorkspace({
 }
 
 function ResearchHistory({
+  selectedEvidenceId,
   evidence,
   reports,
   runs,
   sources,
 }: {
+  selectedEvidenceId?: string;
   evidence: MarketingExternalResearchEvidenceRow[];
   reports: MarketingExternalResearchReportRow[];
   runs: MarketingExternalResearchRunRow[];
@@ -294,7 +305,12 @@ function ResearchHistory({
               )
             ) : null}
             {runEvidence.length ? (
-              <details>
+              <details
+                open={
+                  runEvidence.some((item) => item.id === selectedEvidenceId) ||
+                  undefined
+                }
+              >
                 <summary className="cursor-pointer text-sm font-medium">
                   Evidence and sources
                 </summary>
@@ -308,6 +324,9 @@ function ResearchHistory({
                       <li
                         className="border-l pl-3 text-sm"
                         id={`${run.id}-${item.evidence_id}`}
+                        tabIndex={
+                          item.id === selectedEvidenceId ? -1 : undefined
+                        }
                         key={item.id}
                       >
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -612,6 +631,7 @@ function FashionReport({
               <article
                 className="space-y-2 py-3"
                 key={`${opportunity.title}-${index}`}
+                id={`opportunity-${runId}-${index}`}
               >
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <h5 className="text-sm font-semibold">{opportunity.title}</h5>

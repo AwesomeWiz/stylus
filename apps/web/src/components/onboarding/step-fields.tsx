@@ -1,4 +1,6 @@
+"use client";
 import { CompetitorEditor } from "@/components/onboarding/competitor-editor";
+import { useOnboardingDraft } from "./draft-context";
 import { FormField, Select } from "@/components/onboarding/form-field";
 import { ListField } from "@/components/onboarding/list-field";
 import { Input } from "@/components/ui/input";
@@ -47,6 +49,7 @@ export function StepFields({
   step: OnboardingStepSlug;
 }) {
   const company = data.company;
+  const draft = useOnboardingDraft();
   if (step === "company")
     return (
       <div className="space-y-5">
@@ -495,8 +498,24 @@ export function StepFields({
             ))}
           </Select>
         </FormField>
-        <fieldset className="space-y-2">
+        <fieldset
+          className="space-y-2"
+          aria-describedby={
+            errors?.secondaryObjectives
+              ? "secondary-objectives-error"
+              : undefined
+          }
+        >
           <legend className="text-sm font-medium">Secondary objectives</legend>
+          {firstError(errors, "secondaryObjectives") ? (
+            <p
+              id="secondary-objectives-error"
+              role="alert"
+              className="text-destructive text-xs"
+            >
+              {firstError(errors, "secondaryObjectives")}
+            </p>
+          ) : null}
           <div className="grid gap-2 sm:grid-cols-2">
             {marketingObjectiveValues.map((item) => (
               <label
@@ -504,10 +523,13 @@ export function StepFields({
                 key={item}
               >
                 <input
-                  defaultChecked={marketing?.secondary_objectives.includes(
-                    item,
-                  )}
+                  defaultChecked={
+                    draft
+                      ? !!draft.secondaryObjectives?.includes(item)
+                      : marketing?.secondary_objectives.includes(item)
+                  }
                   name="secondaryObjectives"
+                  aria-invalid={!!errors?.secondaryObjectives || undefined}
                   type="checkbox"
                   value={item}
                 />
@@ -523,11 +545,6 @@ export function StepFields({
           name="primaryChannels"
           placeholder="Instagram, LinkedIn, events…"
         />
-        {firstError(errors, "primaryChannels") ? (
-          <p className="text-destructive text-xs" role="alert">
-            {firstError(errors, "primaryChannels")}
-          </p>
-        ) : null}
         <ListField
           initialValues={marketing?.content_focus}
           label="Content focus"

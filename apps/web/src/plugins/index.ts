@@ -1,5 +1,4 @@
 import { createPluginRegistry, definePlugin } from "@/core/plugins/public";
-import { getPluginIcon } from "@/core/plugins/icons";
 import {
   coreNavigationGroups,
   type NavigationGroup,
@@ -22,21 +21,47 @@ export const builtInPluginRegistry = createPluginRegistry([
   marketingPluginWithServerlessJobs,
 ]);
 
+/** Server-only provider composition is loaded only at authorized data boundaries. */
+export async function getWorkspaceAttention(
+  organizationId: string,
+  now: string,
+) {
+  const { workspacePluginAttention } = await import("./attention");
+  return workspacePluginAttention(organizationId, now);
+}
+export async function getEntityProvenance(input: unknown) {
+  return (await import("./entity-provenance")).readEntityProvenance(input);
+}
+export async function getBoardEntityRegistry() {
+  return (await import("./board-entities")).boardEntityRegistry;
+}
+
+/** Shared canonical authority for external references, without Board execution. */
+export async function getIntegrationEntityRegistry() {
+  return (await import("./board-entities")).boardEntityRegistry;
+}
+
 export function getApplicationNavigation(
   enabledPluginIds: Iterable<string>,
 ): NavigationGroup[] {
   const pluginItems = builtInPluginRegistry
     .getNavigation(enabledPluginIds)
+    .filter(
+      (item) =>
+        item.route === `/apps/${item.pluginId}` &&
+        builtInPluginRegistry.get(item.pluginId)?.manifest.category !==
+          "development",
+    )
     .map((item) => ({
       href: item.route,
-      icon: getPluginIcon(item.icon),
-      label: item.label,
+      icon: item.icon,
+      label: builtInPluginRegistry.get(item.pluginId)!.manifest.name,
     }));
-  return pluginItems.length
-    ? [
-        ...coreNavigationGroups.slice(0, 1),
-        { items: pluginItems, label: "Apps" },
-        ...coreNavigationGroups.slice(1),
-      ]
-    : coreNavigationGroups;
+  return [
+    {
+      ...coreNavigationGroups[0]!,
+      items: [...coreNavigationGroups[0]!.items, ...pluginItems],
+    },
+    ...coreNavigationGroups.slice(1),
+  ];
 }

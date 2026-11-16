@@ -101,6 +101,31 @@ export const getCurrentOrganizationContext = cache(
       return null;
     }
 
-    return requireOrganizationMembership(membership.organization_id);
+    // This row was just read for the authenticated user. Validate it without
+    // selecting it a second time. React cache lasts only for this request;
+    // requireOrganizationMembership remains an uncached explicit boundary.
+    await authorizeOrganizationMembership({
+      lookup: { findMembership: async () => membership },
+      organizationId: membership.organization_id,
+      userId: user.id,
+    });
+    const { data: organization, error: organizationError } = await supabase
+      .from("organizations")
+      .select("created_at, created_by, id, name, updated_at")
+      .eq("id", membership.organization_id)
+      .single();
+    if (organizationError || !organization) {
+      throw new OrganizationAccessDeniedError();
+    }
+    return { membership, organization, user } satisfies OrganizationContext;
+  },
+);
+
+/** Read-only composition within one server render, never a cross-request cache. */
+export const getOrganizationContextForRead = cache(
+  async (organizationId: string) => {
+    const current = await getCurrentOrganizationContext();
+    if (current?.organization.id === organizationId) return current;
+    return requireOrganizationMembership(organizationId);
   },
 );

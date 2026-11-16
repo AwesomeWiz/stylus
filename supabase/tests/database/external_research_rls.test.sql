@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(52);
+select plan(54);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000000','authenticated','authenticated','research-owner@example.test','',now(),'{}','{}',now(),now()),
@@ -68,9 +68,12 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000173'
 select results_eq($$
   select count(*)::integer from public.marketing_competitor_social_profiles
 $$,array[1]::integer[],'VIEWER reads social profiles for the enabled organization');
-select throws_ok($$
-  update public.marketing_competitor_social_profiles set status='POLICY_DENIED'
-$$,'42501',null,'VIEWER cannot modify social profiles');
+do $$declare affected integer;begin
+  update public.marketing_competitor_social_profiles set status='POLICY_DENIED';
+  get diagnostics affected = row_count;
+  perform set_config('qa.research_viewer_updated',affected::text,true);
+end$$;
+select is(current_setting('qa.research_viewer_updated'),'0','VIEWER cannot modify any social profile through the update RLS policy');
 select throws_ok($$
   delete from public.marketing_competitor_social_profiles
 $$,'42501',null,'authenticated users receive no social-profile hard-delete grant');
@@ -80,14 +83,14 @@ select results_eq($$
 $$,array[0]::integer[],'cross-organization social profiles are isolated');
 reset role;
 
-select results_eq($$ select public.has_function_privilege('authenticated','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[false],'browser cannot invoke atomic research enqueue');
-select results_eq($$ select public.has_function_privilege('service_role','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[true],'service role may invoke atomic research enqueue');
-select results_eq($$ select public.has_function_privilege('authenticated','public.record_marketing_external_research_retrieval(uuid,uuid,jsonb,jsonb,boolean,text[],integer,integer,integer,integer)','execute') $$,array[false],'browser cannot persist enriched research evidence');
-select results_eq($$ select public.has_function_privilege('authenticated','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[false],'browser cannot target a SERVERLESS claim');
-select results_eq($$ select public.has_function_privilege('service_role','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[true],'service role may target a SERVERLESS claim');
-select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel in ('reddit','fashion-editorial') order by enumlabel $$,array['fashion-editorial','reddit'],'fashion source adapters extend the enum forward');
-select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='social' $$,array['social'],'social adapter extends the enum forward');
-select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='web-discovery' $$,array['web-discovery'],'web discovery adapter extends the enum forward');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[false],'browser cannot invoke atomic research enqueue');
+select results_eq($$ select pg_catalog.has_function_privilege('service_role','public.enqueue_marketing_external_research(uuid,uuid,jsonb,uuid)','execute') $$,array[true],'service role may invoke atomic research enqueue');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.record_marketing_external_research_retrieval(uuid,uuid,jsonb,jsonb,boolean,text[],integer,integer,integer,integer)','execute') $$,array[false],'browser cannot persist enriched research evidence');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[false],'browser cannot target a SERVERLESS claim');
+select results_eq($$ select pg_catalog.has_function_privilege('service_role','public.claim_serverless_job(uuid,text,integer)','execute') $$,array[true],'service role may target a SERVERLESS claim');
+select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel in ('reddit','fashion-editorial') order by enumlabel $$,array['fashion-editorial','reddit']::name[],'fashion source adapters extend the enum forward');
+select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='social' $$,array['social']::name[],'social adapter extends the enum forward');
+select results_eq($$ select enumlabel from pg_enum join pg_type on pg_type.oid=pg_enum.enumtypid where pg_type.typname='marketing_external_research_adapter' and enumlabel='web-discovery' $$,array['web-discovery']::name[],'web discovery adapter extends the enum forward');
 select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000171' $$,array[0]::integer[],'social-profile setup writes no durable memory');
 
 set local role service_role;
@@ -98,10 +101,18 @@ select lives_ok($$
     '20000000-0000-4000-8000-000000000171'
   )
 $$,'MEMBER atomically enqueues bounded external research');
+reset role;
+-- Administrative fixture identity lookup, not a service-role table read.
+select set_config('qa.research_job_id',(select job_id from public.marketing_external_research_runs limit 1)::text,true);
+select set_config('qa.research_run_id',(select id from public.marketing_external_research_runs limit 1)::text,true);
+
 select results_eq($$ select count(*)::integer from public.marketing_external_research_runs $$,array[1]::integer[],'one research run persists');
 select results_eq($$ select requested_source_count from public.marketing_external_research_runs limit 1 $$,array[2::smallint],'persisted deterministic plan records two selected source families');
 select results_eq($$ select count(*)::integer from public.jobs where job_type='marketing.external-research.run' and capability='marketing.external-research.execute' and execution_class='SERVERLESS' $$,array[1]::integer[],'one exact SERVERLESS job persists');
 select results_eq($$ select count(*)::integer from public.marketing_external_research_runs as run join public.jobs as job on job.id=run.job_id where job.input_metadata->>'runId'=run.id::text $$,array[1]::integer[],'run and job are linked atomically');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select results_eq($$
   select (public.enqueue_marketing_external_research(
     '10000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000172',
@@ -140,69 +151,81 @@ $$,'22023',null,'invalid feed request is rejected');
 
 select lives_ok($$
   select public.claim_serverless_job(
-    (select job_id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
     'task-017-lifecycle',120
   )
 $$,'immediate hosted executor atomically claims the exact research job');
 select results_eq($$
   select (public.claim_serverless_job(
-    (select job_id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
     'task-017-concurrent',120
   )).id is null
 $$,array[true],'concurrent immediate or Cron execution cannot claim the running job twice');
 select lives_ok($$
   select public.begin_marketing_external_research(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    (select id from public.marketing_external_research_runs limit 1)
+    (current_setting('qa.research_job_id')::uuid),
+    (current_setting('qa.research_run_id')::uuid)
   )
 $$,'claimed research run begins');
 select lives_ok($$
   select public.record_marketing_external_research_retrieval(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    (select id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
+    (current_setting('qa.research_run_id')::uuid),
     '[{"sourceKey":"SRC-1","adapter":"reddit","status":"SUCCEEDED","nativeId":"post-1","canonicalUrl":"https://www.reddit.com/r/fashion/comments/post-1/","title":"Sizing","author":"shopper","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","failureCategory":null,"safeMetadata":{"sourceRequest":"reddit:fashion","community":"fashion"}}]'::jsonb,
     '[{"evidenceId":"EVID-1","evidenceType":"REDDIT_POST","excerpt":"Sizing labels vary between brands.","sourceKey":"SRC-1","nativeId":"post-1","parentNativeId":null,"canonicalUrl":"https://www.reddit.com/r/fashion/comments/post-1/","title":"Sizing","author":"shopper","publishedAt":"2026-08-29T00:00:00Z","fetchedAt":"2026-08-29T00:01:00Z","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","safeMetadata":{"score":10,"community":"fashion"}}]'::jsonb,
     false,'{}',1,0,100,24
   )
 $$,'retrieval persists source and evidence provenance');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select evidence_type || ':' || native_id || ':' || (safe_metadata->>'score') from public.marketing_external_research_evidence limit 1 $$,array['REDDIT_POST:post-1:10'],'Reddit evidence keeps its exact type and native provenance');
 select results_eq($$ select status::text from public.marketing_external_research_runs limit 1 $$,array['SYNTHESIZING'],'evidence advances the run to synthesis');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select lives_ok($$
   select public.start_marketing_external_research_ai_run(
-    (select job_id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
     '30000000-0000-4000-8000-000000000171','generate_structured',
     'marketing.external-research.execute','BALANCED','{}'
   )
 $$,'one trusted balanced synthesis trace starts');
 select lives_ok($$
   select public.complete_marketing_external_research_ai_run(
-    (select job_id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
     '30000000-0000-4000-8000-000000000171','SUCCEEDED','test-model','test-provider',false,
     10,10,10,20,0,null,'{}'
   )
 $$,'trusted synthesis trace completes');
 select throws_ok($$
   select public.complete_marketing_external_research(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    (select id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
+    (current_setting('qa.research_run_id')::uuid),
     '30000000-0000-4000-8000-000000000171',
     '{"schemaVersion":"marketing-fashion-research-report-v1","audienceSignals":[{"evidenceRefs":["EVID-2"]}],"languageSignals":[],"trendSignals":[],"objections":[],"debates":[],"contentOpportunities":[]}'::jsonb
   )
 $$,'22023',null,'invented evidence reference cannot create a report');
 select lives_ok($$
   select public.complete_marketing_external_research(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    (select id from public.marketing_external_research_runs limit 1),
+    (current_setting('qa.research_job_id')::uuid),
+    (current_setting('qa.research_run_id')::uuid),
     '30000000-0000-4000-8000-000000000171',
     '{"schemaVersion":"marketing-fashion-research-report-v1","summary":"Summary","audienceSignals":[{"evidenceRefs":["EVID-1"]}],"languageSignals":[],"trendSignals":[],"objections":[],"debates":[],"contentOpportunities":[]}'::jsonb
   )
 $$,'valid evidence references create an immutable report');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select count(*)::integer from public.marketing_external_research_reports $$,array[1]::integer[],'one immutable report persists');
 select results_eq($$ select schema_version from public.marketing_external_research_reports $$,array['marketing-fashion-research-report-v1'],'fashion report schema version persists immutably');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select lives_ok($$
   select public.complete_job(
-    (select job_id from public.marketing_external_research_runs limit 1),
-    'task-017-lifecycle',jsonb_build_object('runId',(select id from public.marketing_external_research_runs limit 1))
+    (current_setting('qa.research_job_id')::uuid),
+    'task-017-lifecycle',jsonb_build_object('runId',(current_setting('qa.research_run_id')::uuid))
   )
 $$,'job completes after the domain report');
 
@@ -220,7 +243,13 @@ begin
   end loop;
 end;
 $$;
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select count(*)::integer from public.marketing_external_research_runs $$,array[5]::integer[],'five submissions in one hour are retained');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select throws_ok($$
   select public.enqueue_marketing_external_research(
     '10000000-0000-0000-0000-000000000171','00000000-0000-0000-0000-000000000172',
@@ -242,7 +271,7 @@ select throws_ok($$
   )
 $$,'42501',null,'removed MEMBER cannot execute external research');
 reset role;
-update public.organization_plugins set enabled=false
+update public.organization_plugins set enabled=false,disabled_at=now()
 where organization_id='10000000-0000-0000-0000-000000000172' and plugin_id='marketing';
 set local role service_role;
 select throws_ok($$
@@ -265,8 +294,16 @@ reset role;
 select throws_ok($$ update public.marketing_external_research_sources set title='changed' $$,'55000',null,'persisted sources are immutable');
 select throws_ok($$ update public.marketing_external_research_evidence set excerpt='changed' $$,'55000',null,'enriched evidence is immutable');
 select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000171' $$,array[0]::integer[],'external research writes no durable memory');
-select results_eq($$ select max_attempts from public.job_definitions where job_type='marketing.external-research.run' $$,array[1],'research job has no platform retry multiplication');
+select results_eq($$ select max_attempts::integer from public.job_definitions where job_type='marketing.external-research.run' $$,array[1],'research job has no platform retry multiplication');
 select results_eq($$ select timeout_seconds from public.job_definitions where job_type='marketing.external-research.run' $$,array[120],'research job has a 120-second workflow bound');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.role','authenticated',true);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000171',true);
+select lives_ok($$ select public.delete_owned_organization('10000000-0000-0000-0000-000000000171','Research Org A') $$,'confirmed OWNER deletes populated tenant including immutable history');
+reset role;
+select is((select count(*)::integer from public.organizations where id='10000000-0000-0000-0000-000000000172'),1,'tenant deletion preserves the unrelated organization');
 
 select * from finish();
 rollback;

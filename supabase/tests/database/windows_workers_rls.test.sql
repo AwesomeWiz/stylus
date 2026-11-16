@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(23);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000211','00000000-0000-0000-0000-000000000000','authenticated','authenticated','owner-worker@example.test','',now(),'{}','{}',now(),now()),
@@ -38,25 +38,49 @@ reset role; update public.worker_pairing_requests set created_at=now()-interval 
 set local role service_role;
 select throws_ok($$select public.pair_windows_worker('admin-token','windows','0.1.0',array['core.worker.echo'])$$,'42501','Worker pairing failed','expired pairing fails');
 select lives_ok($$create temporary table paired as select public.pair_windows_worker('owner-token-2','windows','0.1.0',array['core.worker.echo']) value$$,'valid pairing succeeds');
+-- The authenticated OWNER needs the fixture's public worker ID to revoke it,
+-- not access to the service-role fixture containing its raw credential.
+create temporary table paired_worker as select (value->>'workerId')::uuid id from paired;
+grant select on paired_worker to authenticated;
 select isnt((select value->>'credential' from paired),null,'durable credential returned once');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select ok(not exists(select 1 from public.worker_registrations where encode(credential_hash,'hex')=(select value->>'credential' from paired)),'raw credential is not persisted');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select throws_ok($$select public.pair_windows_worker('owner-token-2','windows','0.1.0',array['core.worker.echo'])$$,'42501','Worker pairing failed','consumed pairing cannot replay');
 
 set local role authenticated; select set_config('request.jwt.claim.role','authenticated',true); select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000211',true);
 select lives_ok($$select public.enqueue_job('10000000-0000-0000-0000-000000000211',null,'core.test.worker-echo','core.worker.echo','EXTERNAL_WORKER',50::smallint,now(),2::smallint,30,'{"message":"Stylus worker check"}','worker-e2e','core.test.worker-echo')$$,'external diagnostic enqueues');
 select lives_ok($$select public.enqueue_job('10000000-0000-0000-0000-000000000211',null,'core.test.echo','core.jobs.test','DATABASE',50::smallint,now(),2::smallint,60,'{"message":"database"}','database-job','core.test.echo')$$,'database diagnostic remains available');
+reset role;
+-- Keep canonical job IDs separate from the service credential fixture.
+select set_config('qa.worker_database_job_id',(select id from public.jobs where idempotency_key='database-job')::text,true);
+select set_config('qa.worker_external_job_id',(select id from public.jobs where idempotency_key='worker-e2e')::text,true);
 set local role service_role;
 select is((public.worker_claim_job((select value->>'credential' from paired),array['core.worker.echo'])).job_type,'core.test.worker-echo','worker claims only authorized external job');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select is((select status from public.jobs where idempotency_key='database-job'),'QUEUED'::public.job_status,'worker does not claim DATABASE job');
-select throws_ok($$select public.worker_job_operation((select value->>'credential' from paired),(select id from public.jobs where idempotency_key='database-job'),'progress','{"progress":50,"message":"forged"}')$$,'42501','Worker job ownership required','worker cannot mutate unowned job');
-select lives_ok($$select public.worker_job_operation((select value->>'credential' from paired),(select id from public.jobs where idempotency_key='worker-e2e'),'progress','{"progress":50,"message":"Halfway"}')$$,'claimed worker reports progress');
-select lives_ok($$select public.worker_job_operation((select value->>'credential' from paired),(select id from public.jobs where idempotency_key='worker-e2e'),'complete','{"result":{"acknowledged":true}}')$$,'claimed worker completes');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
+select throws_ok($$select public.worker_job_operation((select value->>'credential' from paired),(current_setting('qa.worker_database_job_id')::uuid),'progress','{"progress":50,"message":"forged"}')$$,'42501','Worker job ownership required','worker cannot mutate unowned job');
+select lives_ok($$select public.worker_job_operation((select value->>'credential' from paired),(current_setting('qa.worker_external_job_id')::uuid),'progress','{"progress":50,"message":"Halfway"}')$$,'claimed worker reports progress');
+select lives_ok($$select public.worker_job_operation((select value->>'credential' from paired),(current_setting('qa.worker_external_job_id')::uuid),'complete','{"result":{"acknowledged":true}}')$$,'claimed worker completes');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select ok((select status='SUCCEEDED' and progress=100 and result_metadata='{"acknowledged":true}' from public.jobs where idempotency_key='worker-e2e'),'external diagnostic reaches safe success');
 
 set local role authenticated; select set_config('request.jwt.claim.role','authenticated',true); select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000215',true);
 select throws_ok($$select public.list_organization_workers('10000000-0000-0000-0000-000000000211')$$,'42501','Organization worker read permission required','cross-organization worker reads denied');
 set local role authenticated; select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000211',true);
-select lives_ok($$select public.revoke_worker('10000000-0000-0000-0000-000000000211',(select (value->>'workerId')::uuid from paired))$$,'OWNER revokes worker');
+select throws_ok($$select value from paired$$,'42501',null,'authenticated OWNER cannot read the service credential fixture');
+select lives_ok($$select public.revoke_worker('10000000-0000-0000-0000-000000000211',(select id from paired_worker))$$,'OWNER revokes worker');
 set local role service_role;
 select throws_ok($$select public.worker_heartbeat((select value->>'credential' from paired),'0.1.0',array['core.worker.echo'])$$,'42501','Worker authentication failed','revoked credential fails immediately');
 

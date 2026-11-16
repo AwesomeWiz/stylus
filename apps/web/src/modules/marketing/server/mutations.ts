@@ -137,7 +137,15 @@ export async function saveMarketingReelIdea(
     status: "IDEA" | "DRAFT" | "READY";
     campaignId: string | null;
   }>,
+  conversionId?: string,
 ) {
+  if (conversionId) {
+    const result = await db.rpc("create_marketing_idea_from_board", {
+      p_conversion_id: conversionId,
+    });
+    if (result.error) throw result.error;
+    return result.data;
+  }
   const record = {
     call_to_action: value.callToAction,
     campaign_id: value.campaignId,
@@ -194,7 +202,15 @@ export async function saveMarketingResearch(
     sourceUrl: string | null;
     category: "CUSTOMER" | "COMPETITOR" | "TREND" | "CONTENT" | "OTHER";
   }>,
+  conversionId?: string,
 ) {
+  if (conversionId) {
+    const result = await db.rpc("create_marketing_note_from_board", {
+      p_conversion_id: conversionId,
+    });
+    if (result.error) throw result.error;
+    return result.data;
+  }
   const record = {
     category: value.category,
     content: value.content,

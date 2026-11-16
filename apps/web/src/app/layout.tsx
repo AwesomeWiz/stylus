@@ -9,11 +9,40 @@ import "@xyflow/react/dist/style.css";
 void serverEnv;
 
 export const metadata: Metadata = {
-  title: "Stylus",
-  description: "The collaborative operating system for startup teams.",
+  metadataBase: new URL(serverEnv.NEXT_PUBLIC_SITE_URL),
+  title: { default: "Stylus", template: "%s — Stylus" },
+  description:
+    "From evidence to execution. A shared operating system for early-stage teams.",
+  robots: { index: false, follow: false },
+  openGraph: {
+    title: "Stylus",
+    description: "From evidence to execution.",
+    siteName: "Stylus",
+    type: "website",
+    images: [
+      {
+        url: "/brand/stylus-icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Stylus",
+      },
+    ],
+  },
   icons: {
-    icon: "/brand/stylus-mark.png",
-    apple: "/brand/stylus-mark.png",
+    icon: [
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      {
+        url: "/brand/stylus-icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "/brand/stylus-icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+    apple: "/brand/apple-touch-icon.png",
   },
 };
 
@@ -25,6 +54,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link
+          rel="preload"
+          href="/fonts/geist/Geist-Variable.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>{children}</body>

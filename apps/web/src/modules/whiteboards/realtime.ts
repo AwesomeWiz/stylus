@@ -5,6 +5,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   BoardCommentRow,
   BoardElementRow,
+  BoardReactionRow,
+  BoardVotingSessionRow,
   Database,
   TaskMember,
 } from "@/lib/supabase/database.types";
@@ -32,6 +34,8 @@ type SubscriptionOptions = {
   onElement: (element: BoardElementRow) => void;
   onCursor: (cursor: BoardCursorUpdate) => void;
   onPresence: (presence: BoardPresence[]) => void;
+  onReaction?: (row: BoardReactionRow) => void;
+  onVoting?: (row: BoardVotingSessionRow) => void;
   supabase?: SupabaseClient<Database>;
 };
 
@@ -45,6 +49,8 @@ export function subscribeToBoardCollaboration({
   onCursor,
   onElement,
   onPresence,
+  onReaction,
+  onVoting,
   supabase = createBrowserSupabaseClient(),
 }: SubscriptionOptions) {
   let disposed = false;
@@ -114,6 +120,26 @@ export function subscribeToBoardCollaboration({
         table: "board_comments",
       },
       (payload) => onComment(payload.new as BoardCommentRow),
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        filter: `board_id=eq.${boardId}`,
+        schema: "public",
+        table: "board_reactions",
+      },
+      (payload) => onReaction?.(payload.new as BoardReactionRow),
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        filter: `board_id=eq.${boardId}`,
+        schema: "public",
+        table: "board_voting_sessions",
+      },
+      (payload) => onVoting?.(payload.new as BoardVotingSessionRow),
     )
     .on("broadcast", { event: "cursor" }, ({ payload }) => {
       const cursor = normalizeBoardCursorBroadcast(

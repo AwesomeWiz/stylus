@@ -38,6 +38,41 @@ const board: BoardRow = {
 };
 
 describe("BoardList", () => {
+  it("shows actual directory identities and never infers a template for legacy boards", () => {
+    render(
+      <BoardList
+        boards={[board]}
+        canMutate={false}
+        currentUserId="viewer"
+        members={[
+          {
+            member_user_id: board.created_by,
+            display_name: "Asha",
+            role: "MEMBER",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Board · Owner: Asha")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/person here|people here/),
+    ).not.toBeInTheDocument();
+  });
+  it("offers seven bounded templates and submits the explicitly selected type", async () => {
+    render(<BoardList boards={[]} canMutate currentUserId="user-1" />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create your first board" }),
+    );
+    expect(screen.getAllByRole("radio")).toHaveLength(7);
+    fireEvent.click(screen.getByRole("radio", { name: /Campaign Board/ }));
+    fireEvent.change(screen.getByLabelText("Board name"), {
+      target: { value: "Launch thinking" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create board" }));
+    await waitFor(() =>
+      expect(mocks.create).toHaveBeenCalledWith("Launch thinking", "campaign"),
+    );
+  });
   afterEach(cleanup);
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,7 +86,9 @@ describe("BoardList", () => {
 
   it("shows a useful empty state and creates a board", async () => {
     render(<BoardList boards={[]} canMutate currentUserId="user-1" />);
-    expect(screen.getByText("Start a visual workspace")).toBeInTheDocument();
+    expect(
+      screen.getByText("Make room for your team's ideas"),
+    ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Create your first board" }),
     );
@@ -60,7 +97,7 @@ describe("BoardList", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Create board" }));
     await waitFor(() =>
-      expect(mocks.create).toHaveBeenCalledWith("Brand direction"),
+      expect(mocks.create).toHaveBeenCalledWith("Brand direction", "blank"),
     );
     expect(mocks.push).toHaveBeenCalledWith(`/whiteboards/${board.id}`);
   });
@@ -85,7 +122,7 @@ describe("BoardList", () => {
       <BoardList boards={[board]} canMutate={false} currentUserId="viewer" />,
     );
     expect(
-      screen.getByRole("link", { name: "Open Brand direction" }),
+      screen.getByRole("link", { name: "Brand direction" }),
     ).toHaveAttribute("href", `/whiteboards/${board.id}`);
     expect(
       screen.queryByRole("button", { name: /Rename/ }),

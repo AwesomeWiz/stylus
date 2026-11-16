@@ -11,6 +11,7 @@ import type {
 } from "@/lib/supabase/database.types";
 
 import { FormField, Select } from "./form-field";
+import { useOnboardingDraft } from "./draft-context";
 
 type EditableCompetitor = Pick<
   CompetitorRow,
@@ -38,7 +39,25 @@ export function CompetitorEditor({
 }: {
   initialCompetitors: EditableCompetitor[];
 }) {
-  const [competitors, setCompetitors] = useState(initialCompetitors);
+  const draft = useOnboardingDraft();
+  const [competitors, setCompetitors] = useState<EditableCompetitor[]>(() => {
+    if (!draft?.competitors) return initialCompetitors;
+    try {
+      return (
+        JSON.parse(draft.competitors[0] ?? "[]") as {
+          id: string;
+          name: string;
+          instagram: string;
+          relevance: string;
+          shortDescription: string;
+          type: CompetitorType;
+          website: string;
+        }[]
+      ).map((row) => ({ ...row, short_description: row.shortDescription }));
+    } catch {
+      return initialCompetitors;
+    }
+  });
   const update = (
     index: number,
     field: keyof EditableCompetitor,
@@ -57,9 +76,7 @@ export function CompetitorEditor({
         type="hidden"
         value={JSON.stringify(
           competitors.map((competitor) => ({
-            id: initialCompetitors.some(({ id }) => id === competitor.id)
-              ? competitor.id
-              : undefined,
+            id: competitor.id,
             instagram: competitor.instagram ?? "",
             name: competitor.name,
             relevance: competitor.relevance ?? "",
@@ -167,6 +184,7 @@ export function CompetitorEditor({
         </section>
       ))}
       <Button
+        disabled={competitors.length >= 20}
         onClick={() =>
           setCompetitors((current) => [...current, emptyCompetitor()])
         }

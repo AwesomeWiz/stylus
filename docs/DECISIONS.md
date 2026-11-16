@@ -901,3 +901,559 @@ users, and reuses only after the palette is exhausted. User—not session—is t
 identity key, and avatar/cursor/label all consume the same assignment. This is
 presentation state only: Presence, Broadcast, RLS, throttling and persistence
 contracts are unchanged.
+
+## ADR-040 — Define a neutral V2 workspace and separate immersive Boards
+
+Status: SPECIFICATION DEFINED / IMPLEMENTATION PENDING (2026-11-01)
+
+REDESIGN-001 establishes [Stylus V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md)
+as the canonical redesign direction. It is documentation only; subsequent tasks
+require their own approved scope and verification. It supersedes only ADR-039's
+default editorial/pastel section-color guidance for future UI implementation.
+Canonical cyan, accessible action variants, real Home data and stable active-set
+collaborator identity remain intact. DESIGN_SYSTEM and UI_PATTERNS now define
+V2 targets rather than claim the application has changed.
+
+The global IA proposal is Home, Tasks, Boards, enabled Marketing and Settings.
+Local Marketing navigation contains Overview, Ideas, Studio, Research and
+Campaigns, with discoverable Performance, Competitors, Ask Council and human
+Creative Briefs paths. Settings retains current member read rights independently
+of manager-only mutations. Every existing URL remains initially; hiding a normal
+nav item never becomes authorization. The user-facing Boards name requires no
+SQL/table/route rename.
+
+Future workspace routes share a persistent authenticated shell; the board editor
+uses an immersive BoardShell outside that chrome with the same server-derived
+tenant boundary. Render-only request-scoped context deduplication must preserve
+fresh direct-entry/data/mutation checks and RLS. No cross-user cache is authorized.
+Performance causes are source-identified mechanisms, not measured latency claims.
+
+Boards stays Core. Native Marketing cards/conversions require documented public
+entity resolver/opener/action contracts with plugin and tenant checks; Core must
+not import Marketing-private modules. Cards reference canonical objects and exact
+artifact versions. Selected-content AI needs a separate bounded approved gateway
+workflow; neither selection nor a board insertion grants memory-domain access or
+promotes working data into Company Knowledge. Existing private Realtime, Storage,
+local operation history and TASK-015/016/017/018/020 contracts remain unchanged.
+
+## ADR-041 — Separate Task list, selected detail and discussion reads
+
+Date: 2026-11-01. Status: Accepted for REDESIGN-003.
+
+Initial Tasks data is a summary projection and member directory, with no comment
+bodies. Task selection uses URL query state and native App Router-compatible
+history so opening/closing detail retains list context without a full list read.
+Direct selection never relies on membership in the visible filtered array.
+
+Read actions validate expected organization/task UUIDs and freshly resolve server
+context, then enforce explicit organization/task predicates under existing RLS.
+Comment batches recheck task availability, display at most 50 records and use a
+timestamp/ID keyset cursor for earlier records. Keyed client boundaries and active
+request lifecycles prevent stale responses from crossing selections.
+
+The total summary list stays complete for existing client filtering, archive and
+deadline semantics, using deterministic ID-keyset transport batches of 1,000.
+Product pagination/filtering may be introduced together in a later bounded task;
+silently presenting a first-N list is rejected. Home uses independent bounded
+priority arms because its explicitly six-item attention surface needs no complete
+history. These changes do not add persistence, change task business rules or
+promote working content into Company Knowledge.
+
+## ADR-042 — Expressive auth identity with a static-first SVG boundary
+
+Date: 2026-11-02. Status: Accepted for REDESIGN-003.1.
+
+Quiet work surfaces allow expressive moments of identity at authentication,
+onboarding and selected first-run/brand moments. This task implements the
+exception only for login/signup; it does not change normal application chrome.
+Original abstract contours/planes and sparse geometry replace the workflow-card
+showcase. The same composition has authored light/dark palettes, a reduced static
+tablet field and a small mobile accent. No generated raster, copied reference
+artwork, WebGL, external asset or animation dependency is introduced.
+
+Server-rendered SVG passes through a small presentation-only client wrapper.
+Pointer position only drives clamped CSS variables and a soft local line-reveal
+mask in finite animation-frame bursts. No ambient loop or velocity effect is
+needed. Media/visibility changes cancel movement; reduced motion is also enforced
+in CSS. Pointer data is never persisted, logged or transmitted. The art is hidden
+from assistive technology and creates no tab stop. Auth business logic, providers,
+schemas, return-path validation, RLS and database remain unchanged.
+
+## ADR-043 — Atomic native board ownership and an immersive editor boundary
+
+Date: 2026-11-02. Status: Accepted for REDESIGN-004.
+
+Boards keeps its existing routes/tables and independently addressed world-space
+objects. Sections and Groups require real composite tenant/board ownership and
+bounded transactions; opaque arbitrary JSON and independent child saves cannot
+protect those invariants. Two forward migrations add committed enum values,
+minimal parent/lock/template fields, direct-write validation and authenticated
+atomic operation/template RPCs. Board row locks serialize both API and direct
+writes. One intent touches at most 200 objects; a container owns at most 199
+descendants. Nested Sections/Groups are deliberately rejected. Moving carries
+children; resizing only changes bounds. No canonical business objects are created.
+
+BoardShell lives outside AppShell, shares verified identity/public plugin
+navigation, and never fetches global notification/search UI to hide it. The
+account/organization/board/role key clears private client state when authority
+changes. Initial reads omit discussion and signing; new read actions reauthorize
+bounded comment pages and supported Storage batch signing after the canvas.
+URLs stay transient; replacement retains original assets and object identity.
+The body-size limit accommodates one existing-policy image, not an unbounded batch.
+
+Local patch history remains conflict-aware. Realtime keeps its private channels,
+directory identities, unique people and stable colors. Duplicate/older rows are
+ignored, active edits queue updates, and a failed intent changed by a collaborator
+requires reload instead of blind replay. No CRDT, offline-durable document,
+provider access, plugin-private import or implicit Knowledge promotion is added.
+Native entity/conversion/selection-intelligence contracts remain REDESIGN-005 or
+separately approved execution scope. See [Boards](BOARDS.md) for implementation
+and the explicit limits of local PostgreSQL/browser verification.
+
+
+## ADR-044 — Cobalt identity, warm work surfaces and self-hosted Geist
+
+Date: 2026-11-03. Status: Accepted for REDESIGN-004.1.
+
+“Calm where people work. Expressive where the product speaks.” supersedes the
+cyan-primary and system-font-only portions of ADR-038/039/040 and the SVG art
+implementation in ADR-042. Historical records remain historical. Canonical
+primary is #4F5BD5; dark actions use a separately tested lighter value with dark
+ink. Warm neutral work surfaces remain quiet. Supporting apricot/mint/butter/sky
+are editorial artwork roles, separate from semantic states and collaborator
+identity. Approved user-supplied blue–coral logos are copied unchanged; theme
+variants preserve the actual wordmark. Geist is an unmodified locally served
+font from the official package with its SIL OFL license, no runtime CDN.
+
+Auth uses deterministic server-rendered CSS tiles and a small client wrapper.
+Finite local proximity easing supplies depth, tilt and directional light/shadow;
+no WebGL or continuous React pointer renders are necessary. Reduced motion,
+coarse/small screens and hidden documents stay static. Auth logic, schemas,
+Board data/Realtime, task behavior, database and domain boundaries are unchanged.
+See [Brand](BRAND.md) for sources, tokens and verification.
+
+## ADR-045 — Confirmed-state board recovery, one click-selection authority and bounded previews
+
+Date: 2026-11-03. Status: Accepted for REDESIGN-004.2.
+
+Hosted mutation failures came from two unapplied Boards migrations. The owner
+explicitly authorized the configured project as this task's development backend.
+Ledger inspection, source review and the supported CLI dry run preceded applying
+exactly those two forward files unchanged. A developer read-only diagnostic
+makes future schema mismatch explicit; no application action auto-migrates a
+database.
+
+Failed optimistic operations restore confirmed document/history state, preserve
+received remote work and keep the board usable. Retry uses stable identities;
+same-object conflicts require a freshly authorized snapshot instead of page
+reload or blind replay. Safe error categories cross the action boundary; raw
+SQL/provider bodies do not. Layout state and prior success never substitute for
+server authority.
+
+Custom click selection is the only authority for Shift toggles; React Flow
+select changes apply only during marquee. This removes competing updates without
+replacing the canvas library. Group means manipulation; Section means visible
+organization. Properties, Layers, context menus and shortcuts share bounded
+native operations and existing ownership. They introduce no second hierarchy or
+entity model.
+
+Landing previews are viewport-deferred, freshly authorized projections of at
+most 128 deterministic native objects, rendered locally as simplified
+geometry/text. Private image glyphs avoid signing for thumbnails. No persisted
+screenshots, privileged snapshots, external fetches, tenant-wide cache or new
+dependencies are needed. AI and canonical plugin references remain later
+explicitly approved work.
+
+## ADR-046 — Stable Board manipulation and bounded social feedback
+
+Date: 2026-11-03. Status: Accepted for REDESIGN-004.3.
+
+Retain React Flow and the bounded atomic document model. Authoritative Board
+selection owns click and drag intent; descendants participate in whole-container
+movement while only selection roots draw controls. Controlled nodes retain
+measured dimensions and unchanged identities, and save state does not remove
+resize handles. Local pointer previews persist once on release. Atomic actions
+return operation results rather than triggering full editor rendering. A
+content-free account/organization-local marker refreshes the landing list on
+return. This changes no authorization or shared server-cache policy.
+
+Layers and Properties become independent desktop docks, with one narrow-screen
+modal panel. Explicit Layers drops preserve world coordinates and relational
+ownership. Guides use a bounded per-gesture index. Three curated content font
+families cover sans/serif/mono; application chrome retains Geist. Self-hosted
+OFL assets are lazy and introduce no font dependency or runtime CDN.
+
+Social reactions use explicit idempotent state with composite uniqueness,
+fresh editor authorization and SELECT-only RLS reads. Counts are recomputed from
+authorized records after private realtime events, never trusted increments.
+Comment resolution is reversible root-thread state, separate from archival.
+Both systems use bounded object projections without loading discussion bodies
+or copying content into Board JSON. Small requested emoji feedback is content,
+separate from Lucide tool icons. Voting, presentation, attached connectors,
+canonical entity cards and AI execution remain deferred. No Board action
+promotes Company Knowledge or grants another memory domain.
+
+## ADR-047 — Profiled Board rendering and local projections
+
+Date: 2026-11-04. Status: Accepted for REDESIGN-004.3.1.
+
+Keep React Flow, canonical Board rows and existing bounded atomic operations.
+Profiles identify broad host/SVG updates and repeated text-default validation;
+optimize those paths rather than replace the editor or change persistence.
+Share one local object index, retain structure/search projections while their
+inputs are unchanged, and use stable event identities that delegate to the
+latest committed callback. Never freeze a role, selection or tenant in a stale
+closure or ignore changed callbacks in an unsafe memo comparator.
+
+Retain the desktop Layers tree through collapse/search and use browser offscreen
+render containment instead of adding a virtualization dependency. Logical rows,
+keyboard navigation and accessible ownership remain available; hidden trees are
+removed from focus/accessibility navigation. Existing account/organization/Board
+keys discard these local projections. No new shared cache, data model, migration,
+authorization shortcut or AI/memory operation is introduced. Measurements and
+remaining initial-render/marquee costs are documented in [Boards](BOARDS.md).
+
+## ADR-048 — Board content controls and Group selection context
+
+Date: 2026-11-04. Status: Accepted for REDESIGN-004.3.2.
+
+Extend the existing bounded Board style schema and local font-face assets rather
+than add a font package, runtime CDN or global typography change. The curated
+registry owns categories and real supported weights. Picker previews only use
+already-loaded faces. Shared Board-local popovers stay inside an enclosing
+modal's focus boundary and provide consistent keyboard/outside dismissal.
+
+Group drill-in is derived from canonical selected IDs and the existing ownership
+index, not persisted or stored in a second object model. First double-click
+selects a browser-hit child; later text activation edits it. Keep native z-order,
+stable node/event identities, inherited locks and keyboard Layers access. Group
+insertion uses the existing atomic operation and expands bounds without changing
+child world coordinates. No hierarchy migration, authorization shortcut, shared
+cache, AI execution or memory promotion is introduced.
+
+Project quarter-step frame offsets to positive integer CSS layers in the same
+index. Browsers reject fractional z-index; leaving those frames at `auto` can
+intercept children after a negative persisted reorder. Keep persisted layer
+values unchanged and verify both ordered projection and native pointer editing.
+
+## ADR-049 — Visible Board voting, local presentation and color previews
+
+Date: 2026-11-04. Status: Accepted for REDESIGN-004.3.3.
+
+Voting uses one active persisted session per Board and one versioned allocation
+slot per participant/allowance position. Board-row locking, fresh editor authority,
+slot versions and request identities protect concurrent and delayed requests.
+Only scoped RPCs write; SELECT-only RLS protects reads. Ending freezes allocations.
+Session revision events on the existing private channel invalidate bounded,
+authorized aggregates. No client count, participant name or reaction is authority.
+Optimistic projection replaces only the current participant's allocation; failure
+removes that overlay while retaining newer remote counts. Per-object subscriptions
+keep vote updates outside canonical object/render/history state.
+
+Use `PT409` for an application version conflict. A hosted overlap test exposed
+PostgREST retry behavior when a serialization error (`40001`) is deliberately
+raised; an additional forward migration replaces only that response code.
+Applied migrations remain unchanged. See the
+[Supabase explanation](https://supabase.com/kb/troubleshooting/high-cpu-and-infinite-transaction-retries-when-using-custom-error-codes-in-rpc-functions).
+
+Presentation derives local stops from active top-level Sections in persisted
+Layers order. It retains the mounted Flow canvas, uses the existing Section-fit
+path and restores editor viewport/panels/selection. It neither creates slides
+nor changes routes or permissions. Remote content does not refit the viewport;
+active Section removal chooses the nearest surviving stop. Fullscreen is optional.
+
+Visual color gestures use a component-local, per-object style preview store.
+Pointer movement never writes canonical history or the database. Gesture completion,
+HEX submission or normal outside dismissal commits one existing operation;
+Escape restores the latest confirmed color for the unfinished gesture. Existing
+HEX-alpha fields encode opacity and transparent Shape paints. A Board-local
+popover floats left of Properties when space permits and stays inside narrow
+modal focus scopes. Native EyeDropper is explicit and feature detected. Board
+sampling is deferred because it needs a separate canvas input/sampling contract.
+No shared cache, provider access, AI execution or Knowledge promotion is added.
+
+Voting projections use private `POST /api/boards/voting`, rather than the client
+Server Action queue. A production trace showed background read actions delaying
+Board saves. The route delegates to the same fresh tenant/membership/active-Board
+check and bounded aggregate projection. It caps streamed JSON at 16KB, checks the
+browser Origin against the received Host (including port), emits private/no-store
+responses and exposes no mutations. The client validates output, applies a
+20-second timeout and discards stale generations. This changes transport, not
+read authority. Voting start/cast/end remain Server Actions and scoped RPCs.
+
+## ADR-050 - Public native entity references and recoverable domain creation
+
+Date: 2026-11-04. Status: Accepted for REDESIGN-005 implementation.
+
+Core owns a bounded entity-reference/provider/projection/opening contract. A
+trusted static application host composes Core Tasks and Marketing-owned adapters,
+checking declared plugin read capabilities. Core Boards import no private
+Marketing implementation. Browser metadata is declarative; it cannot execute
+plugin UI or provider code. Live domain objects resolve current authorized state;
+Evidence binds its exact immutable row/run/EVID identities, not an invented
+version or a mutable latest-record lookup.
+
+Native cards store references only. Current projections live in a Board-local
+store outside document/Flow state and are grouped in batches of at most 50.
+Fresh server membership, active-Board, plugin and entity checks plus RLS govern
+every data boundary. Focus/explicit refresh purges projections before loading;
+visible-tab polling bounds ordinary staleness at 30 seconds without per-card
+subscriptions. Unavailable titles/openers are removed from cards, Layers and
+search. Generic geometry/lifecycle remains usable for existing unavailable cards;
+new insertion/duplication/paste requires fresh target authority.
+
+Canonical creation and Board linking are separate domains. A durable own-creator
+receipt reserves target/card UUIDs and the reviewed bounded input/source mapping.
+Domain RPCs atomically create the real Task/Idea/manual Note plus the receipt's
+CREATED marker, preserving existing validation, lifecycle and activity triggers.
+Link failure/reload reuses those identities. Deleted targets are not recreated;
+archived Board cards are not resurrected and newer collaborator rows are not
+overwritten by recovery. Board deletion retains canonical targets and nulls its
+receipt association. Receipt mutation is denied outside bounded RPCs.
+
+Manual Research Notes already exist and receive a conversion-only provider,
+remaining distinct from immutable Research Evidence and permanent Knowledge.
+Source objects remain by default; optional replacement and native vote eligibility
+are deferred. Generic editor mechanics/design, voting and presentation remain
+frozen. No AI execution or automatic memory promotion follows entity insertion,
+resolution, opening or conversion. See [Native entities](NATIVE_ENTITIES.md).
+
+## ADR-051 - Explicit startup experiments and reviewed learning
+
+Date: 2026-11-10. Status: Accepted for REDESIGN-006 implementation.
+
+Marketing owns Hypothesis, Experiment and human Learning records. Existing Content
+Opportunities remain immutable report candidates and deterministic Performance
+Learnings keep their metric-specific meaning. Typed tenant-constrained joins
+connect exact research provenance and canonical execution. A completed Experiment
+freezes evaluation, source identities and evaluated statement. Qualitative criteria
+and Inconclusive results are valid. Optional Learning and Hypothesis status changes
+are explicit parts of one atomic evaluation, never inferred.
+
+Permanent Company Memory stays a separate preview/edit/confirmation. Marketing
+validates its source and delegates to Core's public human company-memory contract.
+A tenant-scoped creation key makes retry duplicate-safe without overwriting
+content or recreating archived memory. Nothing broadens memory-domain access or
+adds model execution.
+
+Native providers/conversions extend the existing public registry and receipts.
+A reviewed provider preview maps a freshly authorized native source to bounded
+fields. Old plaintext target guards remain distinct from the new native guard.
+Canonical creation/receipt and Board linking retain separate recovery steps.
+A public provenance host resolves the canonical target before requesting bounded
+trusted-plugin backlinks. Core has no private Marketing imports; generic Board
+mechanics remain frozen. See [Growth and learning](GROWTH_LEARNING.md).
+
+## ADR-052 - Core delivery relationships, working Notes and recoverable setup
+
+Date: 2026-11-10. Status: Accepted for REDESIGN-007 implementation.
+
+Task prerequisites are bounded tenant-constrained edges with serialized cycle
+checks and derived blocked state. A minimal optional Milestone captures delivery
+date/ownership and progress from existing Tasks. Goals are deferred: Company and
+Campaign objectives, Experiment criteria and Milestones cover the demonstrated
+need without another planning hierarchy.
+
+General working Notes are a separate Core entity because Company Profile, Memory,
+Marketing Research Notes/briefs and Board text have different lifecycles. Notes
+provide safe plain Markdown, bounded metadata search, explicit Core links and a
+live native provider. Durable Company Memory requires an edited confirmation,
+exact reviewed revision and organization-scoped create-once key. Note editing,
+Task completion and Milestones never promote Memory automatically.
+
+Home receives generic authorized attention from a trusted composition host;
+Marketing owns its projection and exact provenance. Core has no plugin-private
+schema dependency. Detail/prefetch behavior must preserve bounded list payloads.
+
+Manager-only raw setup drafts remain outside canonical Knowledge. Debounced
+saves do not advance progress. Continue atomically validates/commits profile rows,
+progress and draft removal. Revision checks plus explicit conflict resolution
+preserve shared editing intent. Input arriving during hydration is dirty until a
+server acknowledgement, never inferred to be persisted from current DOM values.
+Review return paths, invited-user bypass and existing management roles remain.
+Core execution does not change Board mechanics, AI workflows or notifications.
+The explicitly approved UI/input exception is recorded in ADR-053.
+See [Core execution](CORE_EXECUTION.md).
+
+## ADR-053 - Shared selects and bounded Board input/overlay corrections
+
+Date: 2026-11-10. Status: Accepted for the explicit REDESIGN-007 continuation.
+
+Extract the generic existing Board popup and stable event hook into public UI;
+retain Board panel/focus settings in a compatibility wrapper. Normal form selects
+use that layer with native payload/change-event preservation and unchanged option
+sets. Modal popups compensate translated host coordinates and handle Escape
+before their enclosing sheet. Core never imports a Board-private UI primitive.
+
+Context menus measure actual viewport bounds outside canvas transforms. Pointer
+opening has no synthetic active item; keyboard opening remains navigable. Adjacent
+hover/tap submenus retain transfer stability, independent flipping and Right/Left/
+Escape navigation. Focused-node Delete/Backspace delegates to existing atomic
+archive/history, with editing, lock, ownership and read-only guards. Native-card
+hierarchy changes presentation only. No new migration, generic editor redesign,
+entity contract, selection mechanic, voting, Presentation or model execution is
+authorized by these fixes. See [Core execution](CORE_EXECUTION.md).
+
+## ADR-054 - Ephemeral creation feedback and authorized page metadata
+
+Date: 2026-11-10. Status: Accepted for the small post-REDESIGN-007 polish.
+
+Creation feedback belongs in a local screen-space overlay; live drawn geometry
+uses the existing world conversion and guide engine. A six-pixel drag threshold
+keeps simple click insertion. Only pointer release delegates to existing atomic
+creation/history. Existing ellipse/rotation fields support Shape and Line/Arrow
+drawing without a migration. Section containment is unchanged. Image files and
+blob thumbnails remain local until explicit placement; drag-sized images and
+center-origin modifiers are deferred. Only new Shapes consume visible theme
+defaults; persisted authored colors are never migrated.
+
+Use Next metadata and a shared bounded plain-text helper for meaningful tab
+titles. A Board name is obtained only through current workspace authority and
+an active tenant/RLS-filtered record. React memoization shares that row within
+the render request; no global cache or additional entity payload is introduced.
+No transient save/count states or invented detail routes enter titles.
+
+Placement cursor stability follow-up: use fixed dual-tone SVG paint in the
+screen-space placement layer instead of native crosshair/text/copy cursors, which
+can vary with browser/OS settings. A 20px indicator has a dark centre and white
+halo in both themes, independent of content and delayed theme resolution. Native
+cursors are hidden only within placement; ordinary UI/dialog cursors remain.
+Unmounting the layer resets the cursor without global document cursor overrides.
+
+## ADR-055 - Optional integrations as explicit execution context
+
+2026-11-11 · REDESIGN-008 direction; acceptance closed in REDESIGN-008.1.
+
+GitHub, Drive and Calendar remain external systems. Core stores bounded references
+on canonical work rather than copying files, code, calendars or business records.
+Reuse existing entity authority through the trusted plugin host; a migration-only
+target registry repeats tenant/plugin/read/edit boundaries in SQL. Marketing
+registers targets without a Core-private import. Generic Boards remain unchanged.
+
+GitHub is organization-scoped, manager-configured App access with explicit
+repository selection. Temporary user OAuth proves the App/user intersection before
+restricted installation tokens are issued. Drive and Calendar are separate private,
+organization-bound user connections sharing Google client setup, with independent
+grants/health. Explicit metadata links never change provider permissions or allow
+browsing another user's Google account. Disconnect reliably clears local secrets;
+remote App-grant revocation remains available at the provider.
+
+No encryption/OAuth helper existed. Use Node AES-256-GCM, per-record authenticated
+identity, fresh nonce, version/key ID and server keyring separate from persistence.
+One-time ten-minute OAuth state binds browser, actor and current organization,
+with S256 PKCE and fixed callbacks. Credential/state/cache/receipt tables remain
+service-only. Connection generations reject late refresh/callback/cache writes.
+
+Metadata loads after Core content in bounded batches/pages. Pickers debounce and
+paginate fixed metadata fields; GitHub GraphQL avoids source/patches and full issue
+bodies. Server/client freshness is at most 60 seconds, with focus expiry and
+explicit refresh. Failure suppresses old titles. No polling, webhooks, sync
+platform, provider analytics, content ingestion, new AI or Memory writes.
+
+Only confirmed Calendar event creation is a provider business write. It requires
+a dated editable Task/Milestone/Experiment and owned calendar. Account-bound input
+receipts, one pending intent per scope and exact event IDs recover lost responses
+and link failures, including after reopening. A definitive invalid request may be
+corrected; an unknown outcome retains its identity. Date changes and unlink never
+synchronize or delete provider events. Home's existing attention hierarchy stays
+focused; the optional upcoming Home widget is deferred. The Calendar picker shows
+a bounded upcoming window instead. External Board cards and all other providers,
+automatic ingestion and integration-powered AI remain deferred.
+
+## ADR-056 - Public beta verification and independent Task reads
+
+2026-11-15 · REDESIGN-009, release gates remain open.
+
+Original repository code uses AGPL-3.0-only. Retain canonical license text and
+third-party/font notices; contributors retain copyright with inbound licensing
+equal to outbound licensing. Modified network deployments must offer their exact
+corresponding source. The optional server-only `STYLUS_SOURCE_URL` supplies the
+member-visible source link; it accepts credential-free public HTTPS links only.
+
+Release verification has distinct layers: isolated PostgreSQL with real pgcrypto
+and pgTAP; native Supabase/Auth/Storage/Realtime tests; and authenticated browser
+checks. A passing isolated layer never certifies the others. WSL/virtualization
+must not be enabled on the current Windows host after its boot failure. The
+Docker-dependent full local authenticated clean-install gate remains pending.
+GitHub CI prepares a fresh isolated native stack, without a hosted project or
+repository credentials; remote execution remains a separate required gate.
+
+Task lists retain all matching summaries but render an initial 50 rows and an
+explicit progressive-display action. Read-only detail, discussion, execution and
+provenance use independently authorized private/no-store GET requests, following
+the existing Board voting read separation. Mutations remain Server Actions. Each
+read verifies current identity and organization, then retains existing entity
+authorization; layout state and a client organization ID confer no authority.
+No cross-request user cache, persistence model, provider call or new business feature is
+introduced. Actual before/after transport measurements remain required.
+
+Platform default grants are part of the isolated security fixture. This exposed
+overbroad original Board table grants; a new forward migration removes them and
+restores explicit column grants. Preserve the applied SQL, legitimate upload IDs,
+RLS and atomic RPCs. Anonymous table reads now fail before RLS with 42501; existing
+denial tests require this stronger outcome. Full SQL/upgrade tests pass; hosted
+deployment remains separately recorded, never inferred from isolated success.
+
+Public error recovery uses shared, original, static artwork and safe messages.
+Unexpected errors expose a real reset action without serializing exceptions.
+Unknown top-level routes can reach the public 404; every implemented application
+route root remains covered by the session proxy inventory regression test.
+
+Board collaboration subscriptions retain stable identity across equivalent RSC
+refresh objects. A component-local canonical directory and primitive account
+identity prevent each successful save from tearing down the private channel.
+Actual role/directory/account/organization/board changes still replace it; no
+shared user cache or authority change is introduced. PostgreSQL comment cursors
+retain their timezone offset and microsecond precision during bounded pagination.
+
+## ADR-057 - Atomic owner-confirmed tenant deletion
+
+2026-11-15 · REDESIGN-009; hosted application separately approved and verified.
+
+The original owner/name-confirmed organization RPC succeeds only for empty
+tenants. The actual fictional demo reproduces membership FK ordering failure;
+immutable child tables also lack a root organization cascade. A populated
+permanent regression fails before the repair. Forward migration `20261115000200`
+adds the missing validated root lifecycle edges and makes existing tenant
+references deferrable, retaining composite columns, referenced keys, update
+actions and initial checking modes. RESTRICT becomes NO ACTION with the same
+commit-time invariant. No existing records change on deployment.
+
+The existing RPC retains authentication, row locking, active OWNER authority and
+exact-name confirmation. It defers references during its single bounded cascade
+and validates them before return. Immutable Research, Performance and Council
+triggers permit DELETE only after the actual parent organization is absent;
+normal updates/deletes remain rejected. No client flag, trigger disabling,
+provider call, generic arbitrary-table action or weaker RLS is introduced.
+Organization lifecycle ownership is a database contract shared with plugins;
+Core application code imports no Marketing persistence. Deployment must fail on
+unexpected existing orphans instead of silently repairing or deleting them.
+
+Permanent SQL coverage now deletes populated Core and immutable-domain fixtures,
+preserves unrelated organizations/accounts, and checks validated lifecycle/FK
+invariants. All original role, tenant and immutability denials remain enabled.
+
+## ADR-058 - Direct CircleCI machine release verification
+
+2026-11-16 · REDESIGN-009; owner-selected alternate CI path, remote acceptance pending.
+
+Use `.circleci/config.yml` directly rather than CircleCI's GitHub Actions
+compatibility layer. One Ubuntu 24.04 machine VM provides direct Docker sockets,
+volumes and loopback networking. The pinned Supabase CLI uses ordinary Docker;
+the experimental native runtime is disabled. Keep GitHub Actions supported and
+retain every release gate. No linked backend, application credential, optional
+provider, local Windows Docker or virtualization change is required.
+
+Before SQL tests, verify a fresh stack, all repository migration versions, real
+platform prerequisites and an explicit local postgres connection. Inspect worker
+table grants and fixture privileges instead of modifying RLS for an unclassified
+compatibility-run denial. Add real password-grant Auth JWT checks for the existing
+fictional OWNER/MEMBER/VIEWER accounts; public-key user sessions enforce role
+assertions. Auth account administration remains separate; team setup uses owner
+invitations and each user's acceptance, operational fixtures use owner APIs, and
+synthetic evidence uses only existing bounded service RPCs cancelled before
+synthesis. Read-only administrative inventory never becomes a fixture-write
+bypass. Real seed/cleanup round trips verify exact absence and unchanged control
+content before release acceptance. An always-run final step stops only the
+job-owned local stack. Official
+configuration validation is not proof of a successful remote release run.

@@ -14,11 +14,10 @@ export default async function LoginPage({
   }
 
   return (
-    <AuthShell
-      description="Use your work email and password to continue to your workspace."
-      title="Sign in to Stylus"
-    >
+    <AuthShell showcase title="Sign in to Stylus">
       <AuthForm mode="login" returnPath={(await searchParams).next} />
     </AuthShell>
   );
 }
+
+export const metadata = { title: "Sign in" };

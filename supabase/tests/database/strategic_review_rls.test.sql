@@ -47,8 +47,8 @@ insert into public.marketing_reel_brief_versions(
   'Try it','Caption','[]'::jsonb,'{}'::jsonb,'00000000-0000-0000-0000-000000000161'
 );
 
-select results_eq($$ select public.has_function_privilege('authenticated','public.start_marketing_strategic_review(uuid,uuid,uuid,uuid,jsonb)','execute') $$,array[false],'browser cannot invoke strategic-review start');
-select results_eq($$ select public.has_function_privilege('service_role','public.start_marketing_strategic_review(uuid,uuid,uuid,uuid,jsonb)','execute') $$,array[true],'service role may invoke strategic-review start');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.start_marketing_strategic_review(uuid,uuid,uuid,uuid,jsonb)','execute') $$,array[false],'browser cannot invoke strategic-review start');
+select results_eq($$ select pg_catalog.has_function_privilege('service_role','public.start_marketing_strategic_review(uuid,uuid,uuid,uuid,jsonb)','execute') $$,array[true],'service role may invoke strategic-review start');
 
 set local role service_role;
 select lives_ok($$
@@ -58,8 +58,15 @@ select lives_ok($$
     '{"company":{},"reelBrief":{"sourceReelBriefVersionId":"50000000-0000-4000-8000-000000000161","sourceReelIdeaId":"20000000-0000-4000-8000-000000000161","versionNumber":1}}'::jsonb
   )
 $$,'MEMBER starts a bounded review of an exact brief');
+reset role;
+-- Administrative fixture identity lookup, not a service-role table read.
+select set_config('qa.strategic_run_id',(select id from public.marketing_strategic_review_runs limit 1)::text,true);
+
 select results_eq($$ select count(*)::integer from public.marketing_strategic_review_runs $$,array[1]::integer[],'one strategic-review run persists');
 select results_eq($$ select count(*)::integer from public.marketing_strategic_review_runs where source_reel_brief_version_id='50000000-0000-4000-8000-000000000161' and source_reel_idea_id='20000000-0000-4000-8000-000000000161' $$,array[1]::integer[],'run binds exact source brief and idea');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select results_eq($$
   select (public.start_marketing_strategic_review(
     '10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',
@@ -94,7 +101,7 @@ set local role service_role;
 select throws_ok($$
   select public.complete_marketing_strategic_review(
     '10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',
-    (select id from public.marketing_strategic_review_runs limit 1),
+    (current_setting('qa.strategic_run_id')::uuid),
     '70000000-0000-4000-8000-000000000161','{}'::jsonb
   )
 $$,'22023',null,'final review cannot be created before Judge and prior stages');
@@ -116,19 +123,37 @@ from (values
 ) as input(id,tier);
 
 set local role service_role;
-select lives_ok($$ select public.record_marketing_strategic_review_stage('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(select id from public.marketing_strategic_review_runs limit 1),'AUDIENCE','70000000-0000-4000-8000-000000000161','{}') $$,'Audience result persists');
+select lives_ok($$ select public.record_marketing_strategic_review_stage('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(current_setting('qa.strategic_run_id')::uuid),'AUDIENCE','70000000-0000-4000-8000-000000000161','{}') $$,'Audience result persists');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select current_stage::text from public.marketing_strategic_review_runs $$,array['BRAND'],'Audience advances exactly to Brand');
-select lives_ok($$ select public.record_marketing_strategic_review_stage('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(select id from public.marketing_strategic_review_runs limit 1),'BRAND','70000000-0000-4000-8000-000000000162','{}') $$,'Brand result persists');
-select lives_ok($$ select public.record_marketing_strategic_review_stage('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(select id from public.marketing_strategic_review_runs limit 1),'STRATEGY','70000000-0000-4000-8000-000000000163','{}') $$,'Strategy result persists');
-select lives_ok($$ select public.record_marketing_strategic_review_stage('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(select id from public.marketing_strategic_review_runs limit 1),'CHALLENGE','70000000-0000-4000-8000-000000000164','{}') $$,'Challenge result persists once');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
+select lives_ok($$ select public.record_marketing_strategic_review_stage('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(current_setting('qa.strategic_run_id')::uuid),'BRAND','70000000-0000-4000-8000-000000000162','{}') $$,'Brand result persists');
+select lives_ok($$ select public.record_marketing_strategic_review_stage('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(current_setting('qa.strategic_run_id')::uuid),'STRATEGY','70000000-0000-4000-8000-000000000163','{}') $$,'Strategy result persists');
+select lives_ok($$ select public.record_marketing_strategic_review_stage('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(current_setting('qa.strategic_run_id')::uuid),'CHALLENGE','70000000-0000-4000-8000-000000000164','{}') $$,'Challenge result persists once');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select count(*)::integer from public.marketing_strategic_council_review_versions $$,array[0]::integer[],'no final artifact exists before Judge');
-select lives_ok($$ select public.complete_marketing_strategic_review('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(select id from public.marketing_strategic_review_runs limit 1),'70000000-0000-4000-8000-000000000165','{}') $$,'Judge completes the review');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
+select lives_ok($$ select public.complete_marketing_strategic_review('10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',(current_setting('qa.strategic_run_id')::uuid),'70000000-0000-4000-8000-000000000165','{}') $$,'Judge completes the review');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select count(*)::integer from public.marketing_strategic_review_stages $$,array[5]::integer[],'exactly five successful stages persist');
 select results_eq($$ select count(*)::integer from public.marketing_strategic_council_review_versions $$,array[1]::integer[],'one immutable final review persists');
 select results_eq($$ select count(*)::integer from public.marketing_strategic_review_runs where status='SUCCEEDED' and current_stage='COMPLETE' $$,array[1]::integer[],'run reaches successful completion');
 select results_eq($$ select version_number from public.marketing_strategic_council_review_versions $$,array[1],'first review uses version one');
 select results_eq($$ select count(*)::integer from public.marketing_reel_brief_versions where id='50000000-0000-4000-8000-000000000161' and title='Immutable source brief' $$,array[1]::integer[],'source Reel Brief remains unchanged');
 select results_eq($$ select count(*)::integer from public.knowledge_memories where organization_id='10000000-0000-0000-0000-000000000161' $$,array[0]::integer[],'review writes no durable memory');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select lives_ok($$
   select public.start_marketing_strategic_review(
     '10000000-0000-0000-0000-000000000161','00000000-0000-0000-0000-000000000162',
@@ -136,6 +161,9 @@ select lives_ok($$
     '{"company":{},"reelBrief":{"sourceReelBriefVersionId":"50000000-0000-4000-8000-000000000161","sourceReelIdeaId":"20000000-0000-4000-8000-000000000161","versionNumber":1}}'::jsonb
   )
 $$,'an intentional later review is allowed');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select count(*)::integer from public.marketing_strategic_review_runs $$,array[2]::integer[],'later review creates a distinct immutable run');
 select results_eq($$ select count(*)::integer from public.marketing_strategic_council_review_versions $$,array[1]::integer[],'later active run does not duplicate the final artifact');
 

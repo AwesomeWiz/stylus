@@ -1,5 +1,111 @@
 # Stylus — Roadmap
 
+## Stylus V2 experience — redesign track
+
+Status: REDESIGN-008 VERIFIED / REDESIGN-009 ENGINEERING ACCEPTANCE PASS; MANUAL PUBLICATION GATES OPEN
+
+The owner's 008 closure records live GitHub, Drive and Calendar QA as passed.
+REDESIGN-009's complete native CircleCI #21 is verified successful at exact
+release candidate `5c99aaea122338556d96703f0b32e90b6de4ed83`: fresh install and
+53 migrations, 30 SQL/RLS suites / 1,138 assertions, upgrade, real Auth/JWT roles,
+web/worker/demo tests, security/static checks, production builds, nine browser
+cases and both exact seed/cleanup/baseline rounds pass. See
+[the release audit](RELEASE_AUDIT.md) for exact evidence and limits.
+
+Engineering hardening is complete; public release remains blocked on the listed
+manual checks and explicit authorization. Supported-host signup/organization/
+onboarding and physical NVDA coverage are not inferred from seeded CI workflows.
+The owner-disabled Windows virtualization remains disabled. Live GitHub settings,
+history/privacy and applicable distribution/legal/Google verification checks are
+still open. No feature scope is expanded and no publication action is performed.
+
+- [x] Canonical product, visual and navigation direction specified
+- [x] All 30 current page routes and retained entrypoints mapped
+- [x] Boards V2 and immersive BoardShell specified with P0/P1/P2 priorities
+- [x] Source-based performance audit and future measurement plan specified
+- [x] REDESIGN-002: shared shell/navigation/auth and foundational performance
+- [x] REDESIGN-003: Home and Tasks
+- [x] REDESIGN-003.1: auth visual identity and interactive abstract artwork
+- [x] REDESIGN-004: Boards foundation
+- [x] REDESIGN-004.1: brand identity, Geist typography and premium auth
+- [x] REDESIGN-004.2: Boards stabilization and UX polish
+- [x] REDESIGN-004.3: Boards interaction and creative usability
+- [x] REDESIGN-004.3.1: measured large Board performance hardening
+- [x] REDESIGN-004.3.2: Board UI/input polish and Group-child selection
+- [x] REDESIGN-004.3.3: visible voting, Section presentation and visual colors
+- [x] REDESIGN-005: native entities, canonical openers and recoverable conversions
+- [x] REDESIGN-006: startup growth and learning workflow (approved revised scope)
+- [x] REDESIGN-007: Core execution and startup essentials (approved revised scope)
+- [x] REDESIGN-008: Integrations & Context Bridge (approved revised scope)
+- [x] REDESIGN-009 engineering hardening and complete native release pipeline
+- [ ] Manual public-release acceptance and explicit publication authorization;
+  retain the unexecuted checks in the release audit/checklist
+
+Generic Board editor scope is frozen after 004.3.3 except for the explicitly
+approved REDESIGN-007 select/menu/Delete/native-card presentation corrections.
+The small authorized post-007 placement/default-paint/title polish is an additional
+bounded follow-up, not a new phase or permission to redesign other Board systems.
+Persistence, entity contracts, selection mechanics, voting and Presentation stay
+unchanged. Pick from Board, full voting
+analytics and public slide/sharing features remain deferred. Native OS EyeDropper,
+manual NVDA and other browser/device engines remain explicitly recorded QA limits.
+005 native integration is verified; optional native voting/source replacement stay
+deferred. REDESIGN-006 delivers the approved growth/learning scope with exact
+provenance, explicit Memory and native integration. Verification/cleanup and
+remaining environment limits are recorded in PROJECT_STATE and Growth and learning.
+See [Boards](BOARDS.md) for final verification and performance observations.
+
+REDESIGN-007 delivers action-led attention, bounded Task prerequisites, minimal
+Milestones, working Notes with explicit Memory confirmation, recoverable setup
+and exact execution provenance. Goals are deferred after the existing-domain
+audit. The explicit continuation also polishes shared selects and narrow Board
+menu/input/card paths. Final web verification passes 252 files / 1,409 tests;
+SQL, hosted/browser, responsive checks, lint/typecheck/build and exact fixture
+cleanup pass. Large-list payload, secondary-detail latency and manual NVDA/device/
+engine limits are recorded in [Core execution](CORE_EXECUTION.md). No new AI or
+future business module is delivered; 008 requires its own approved scope.
+
+REDESIGN-001 is the completed specification milestone; REDESIGN-002 implements
+the verified shell/auth/performance foundation. REDESIGN-003 adds attention-led
+Home, viewer-local timestamps, URL-preserving responsive Task detail and lazy,
+authorized discussions with zero initial organization comment bodies. Complete
+summary-list search/filtering remains; total-list product pagination is
+deferred. REDESIGN-003.1 adds a bounded expressive identity at login/signup:
+original SVG, authored theme palettes, finite desktop interaction and static
+smaller-screen/ reduced-motion treatments. Existing authentication logic remains
+unchanged. REDESIGN-004 adds the immersive BoardShell and native templates,
+atomic Sections/ Groups and manipulation, private image editing, safe links,
+outline/Inspector and deferred authorized discussion/preview reads. Native
+integrations remain 005 scope. REDESIGN-004.1 supersedes the earlier
+cyan/system-font identity with cobalt, warm neutrals, licensed self-hosted
+Geist, the approved logo package and full-height CSS auth tiles. No later
+workflow scope starts with this visual change. REDESIGN-004.2 verifies real
+hosted board persistence after applying the two reviewed missing forward
+migrations, fixes failed-intent rollback and Shift selection, and adds context
+menus, Properties, Layers, card previews and compact controls/help. All
+task-owned hosted fixtures were removed. Existing owner organization-deletion
+ordering needs a separate fix; see PROJECT_STATE. Signed-in transition timing
+and manual NVDA remain target-environment acceptance, not measured local claims.
+REDESIGN-004.3 adds stable drag, simultaneous desktop docks, bottom tools, direct
+Layers, content typography, guides/snapping, Alt copies, reactions, reversible
+thread resolution and local search/Section focus. Its two forward migrations and
+real authenticated tests pass; all task fixtures are removed. Large-document
+latency/payload and manual NVDA/additional engines remain explicit limits. Voting,
+presentation, native integrations and AI remain deferred. Later follow-up tasks
+are not started. REDESIGN-004.3.2 polishes Board Properties, the licensed local
+15-font library, custom colors/controls, Group layer insertion/extraction,
+canvas child drill-in, links and natural input. Authenticated persistence,
+responsive/keyboard/font-network checks, production regression comparison and
+full web 211 files / 1,206 tests pass. All exact fixtures/helpers are cleaned up;
+no schema change or new workflow scope is introduced. Manual NVDA/other engines
+and measured initial-render/large-selection costs remain explicit limits. See
+[V2 Product Experience](STYLUS_V2_PRODUCT_EXPERIENCE.md) for scope, dependency
+order, security invariants and acceptance. Earlier product milestones below
+remain historical; no existing feature or hosted QA requirement is removed.
+TASK-019 remains deferred.
+
+---
+
 ## Phase 0 — Foundation
 
 Status: COMPLETE

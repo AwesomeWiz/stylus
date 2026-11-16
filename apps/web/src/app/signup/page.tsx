@@ -14,11 +14,10 @@ export default async function SignupPage({
   }
 
   return (
-    <AuthShell
-      description="Create your account, then set up the organization your team will share."
-      title="Create your account"
-    >
+    <AuthShell showcase title="Create your account">
       <AuthForm mode="signup" returnPath={(await searchParams).next} />
     </AuthShell>
   );
 }
+
+export const metadata = { title: "Create account" };

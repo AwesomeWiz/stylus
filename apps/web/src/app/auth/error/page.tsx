@@ -25,3 +25,5 @@ export default function AuthErrorPage() {
     </AuthShell>
   );
 }
+
+export const metadata = { title: "Account confirmation" };

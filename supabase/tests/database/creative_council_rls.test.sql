@@ -41,8 +41,8 @@ select ok(private.marketing_creative_council_executable('10000000-0000-0000-0000
 select ok(private.marketing_creative_council_executable('10000000-0000-0000-0000-000000000151','00000000-0000-0000-0000-000000000153'),'MEMBER may execute');
 select ok(not private.marketing_creative_council_executable('10000000-0000-0000-0000-000000000151','00000000-0000-0000-0000-000000000154'),'VIEWER may not execute');
 select ok(not private.marketing_creative_council_executable('10000000-0000-0000-0000-000000000151','00000000-0000-0000-0000-000000000155'),'cross-organization actor may not execute');
-select results_eq($$ select public.has_function_privilege('authenticated','public.start_marketing_creative_council_run(uuid,uuid,uuid,uuid,jsonb,jsonb)','execute') $$,array[false],'authenticated browser cannot invoke start transition');
-select results_eq($$ select public.has_function_privilege('service_role','public.start_marketing_creative_council_run(uuid,uuid,uuid,uuid,jsonb,jsonb)','execute') $$,array[true],'trusted hosted service may invoke start transition');
+select results_eq($$ select pg_catalog.has_function_privilege('authenticated','public.start_marketing_creative_council_run(uuid,uuid,uuid,uuid,jsonb,jsonb)','execute') $$,array[false],'authenticated browser cannot invoke start transition');
+select results_eq($$ select pg_catalog.has_function_privilege('service_role','public.start_marketing_creative_council_run(uuid,uuid,uuid,uuid,jsonb,jsonb)','execute') $$,array[true],'trusted hosted service may invoke start transition');
 
 set local role service_role;
 select lives_ok($$
@@ -55,8 +55,14 @@ select lives_ok($$
     '[{"analysisId":"50000000-0000-4000-8000-000000000151","hookType":"abstract"}]'::jsonb
   )
 $$,'MEMBER starts one trusted bounded run');
+-- Inspect protected persisted state through the administrative fixture connection.
+reset role;
+
 select results_eq($$ select count(*)::integer from public.marketing_creative_council_runs $$,array[1]::integer[],'one council run is persisted');
 select results_eq($$ select count(*)::integer from public.marketing_creative_council_evidence $$,array[1]::integer[],'only explicitly supplied evidence is persisted');
+-- Resume the application operation under the intended service role.
+set local role service_role;
+
 select results_eq($$
   select (public.start_marketing_creative_council_run(
     '10000000-0000-0000-0000-000000000151',

@@ -1,24 +1,19 @@
-import Image from "next/image";
+import { BrandLogo } from "./brand-logo";
 import Link from "next/link";
 
-export function Brand() {
+export function Brand({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <Link
-      className="flex h-16 items-center gap-2.5 px-4"
+      className={
+        collapsed
+          ? "flex h-12 shrink-0 items-center justify-center"
+          : "flex h-12 shrink-0 items-center gap-2.5 px-4 [&_.brand-wordmark]:w-28"
+      }
       href="/"
       aria-label="Stylus home"
     >
-      <Image
-        alt=""
-        className="size-8 object-contain"
-        height={32}
-        priority
-        src="/brand/stylus-mark.png"
-        width={32}
-      />
-      <span className="text-sidebar-foreground text-[15px] font-semibold tracking-tight">
-        Stylus
-      </span>
+      <BrandLogo mark={collapsed} />
+      <span className="sr-only">Stylus</span>
     </Link>
   );
 }

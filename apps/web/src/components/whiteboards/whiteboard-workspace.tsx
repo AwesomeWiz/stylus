@@ -1,887 +1,1819 @@
 "use client";
-
+import "./board-content-fonts.css";
 import {
-  applyNodeChanges,
-  Background,
-  BackgroundVariant,
-  Controls,
-  ReactFlow,
-  type NodeChange,
-  type ReactFlowInstance,
-  type Viewport,
-} from "@xyflow/react";
+  MessageSquare,
+  Presentation,
+  PackagePlus,
+  RefreshCw,
+} from "lucide-react";
+import type { EntityReference } from "@/core/entities/public";
+import { createBoardEntityStore, nativeReference } from "./board-entity-store";
+import { BoardNativeProviders } from "./board-native-providers";
+import { useBoardEntities } from "./use-board-entities";
+import { BoardEntityDialog, type NativeRequest } from "./board-entity-dialog";
+import { nativeInsertionPoint } from "@/modules/whiteboards/native-placement";
+import {
+  copyNativeReferences,
+  pasteNativeReferences,
+} from "@/modules/whiteboards/native-clipboard";
+
+import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  useTransition,
+  type ComponentProps,
 } from "react";
-
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import type {
   BoardCommentRow,
   BoardElementRow,
   BoardRow,
   TaskMember,
 } from "@/lib/supabase/database.types";
+import { renameBoardAction } from "@/modules/whiteboards/actions";
+import { reconcileBoardComment } from "@/modules/whiteboards/collaboration";
+import { dropLayer, type LayerDrop } from "@/modules/whiteboards/layers";
 import {
-  archiveBoardElementAction,
-  createBoardElementAction,
-  renameBoardAction,
-  restoreBoardElementAction,
-  updateBoardElementAction,
-  uploadBoardImageAction,
-} from "@/modules/whiteboards/actions";
+  canMoveObject,
+  alignObjects,
+  ancestors,
+  expandedIds,
+  objectBounds,
+  objectTitle,
+  sectionFromSelection,
+  archiveObjects,
+  assignSection,
+  createLocalObject,
+  distributeObjects,
+  duplicateObjects,
+  groupObjects,
+  isObjectLocked,
+  layerObjects,
+  matchObjectSize,
+  moveObjects,
+  selectionRoots,
+  ungroupObjects,
+  indexBoardObjects,
+} from "@/modules/whiteboards/operations";
 import {
-  defaultElementData,
-  defaultElementSize,
-  nextZIndex,
-  reorderElement,
-} from "@/modules/whiteboards/elements";
-import {
-  createWhiteboardHistory,
-  diffWhiteboardSnapshots,
-  recordWhiteboardHistory,
-  reconcileRemoteElement,
-  redoWhiteboardHistory,
-  undoWhiteboardHistory,
-} from "@/modules/whiteboards/history";
-import {
-  allocateBoardCollaboratorColors,
-  chooseCommittedElement,
-  includeLocalBoardPresence,
-  reconcileBoardComment,
-  type BoardCursorUpdate,
-  type BoardCollaboratorColorAssignments,
-  type BoardPresence,
-} from "@/modules/whiteboards/collaboration";
-import {
-  subscribeToBoardCollaboration,
-  type CollaborationConnectionState,
-} from "@/modules/whiteboards/realtime";
-import { boardImageFileSchema } from "@/modules/whiteboards/schemas";
+  readBoardCommentsAction,
+  readBoardSnapshotAction,
+} from "@/modules/whiteboards/read-actions";
 
-import { WhiteboardNode, type WhiteboardFlowNode } from "./whiteboard-node";
+import { BoardContextMenu, type BoardCommand } from "./board-context-menu";
+import { alignmentCommands, layerCommands } from "./board-arrange-controls";
+import { BoardInspector, type SelectionAction } from "./board-inspector";
 import {
-  SelectionToolbar,
-  WhiteboardHeader,
-  type WhiteboardSaveState,
-} from "./whiteboard-chrome";
-import { WhiteboardToolbar, type WhiteboardTool } from "./whiteboard-toolbar";
-import { WhiteboardInspector } from "./whiteboard-inspector";
-import { WhiteboardCommentsPanel } from "./whiteboard-comments-panel";
-import { WhiteboardCursors } from "./whiteboard-cursors";
+  BoardNavigation,
+  focusBoardCanvas,
+  type BoardNavigationState,
+} from "./board-navigation";
+import { BoardOutline } from "./board-outline";
+import { BoardPanel, useBoardDesktop } from "./board-panel";
+import { useBoardPanels } from "./use-board-view";
+import { useBoardReactions } from "./use-board-reactions";
+import { reactionChoices } from "./board-reactions";
+import { measureBoardText } from "./measure-board-text";
+import { sameElement } from "@/modules/whiteboards/history";
+import { useBoardCollaboration } from "./use-board-collaboration";
+import { useBoardDocument } from "./use-board-document";
+import { useBoardImages } from "./use-board-images";
+import { useBoardUploads } from "./use-board-uploads";
+import { WhiteboardHeader } from "./whiteboard-chrome";
 import { WhiteboardCollaborators } from "./whiteboard-collaborators";
+import { WhiteboardCommentsPanel } from "./whiteboard-comments-panel";
+import { BoardHelp, BoardLinkDialog, BoardMenu } from "./board-controls";
+import type { WhiteboardTool } from "./whiteboard-toolbar";
+import { BoardCanvas, type BoardCanvasHandle } from "./board-canvas";
+import { useBoardEvent } from "./use-board-event";
+import type { CreationGeometry } from "@/modules/whiteboards/creation-geometry";
+import { boardPaint } from "@/modules/whiteboards/elements";
+import { boardImageFileSchema } from "@/modules/whiteboards/schemas";
+import { pageTitle } from "@/lib/page-title";
+import { createBoardVotingStore } from "@/modules/whiteboards/voting-store";
+import { BoardVotingContext } from "./board-voting-context";
+import { BoardVoting, type BoardVotingHandle } from "./board-voting";
+import { useBoardPresentation } from "./use-board-presentation";
+import { BoardPresentation } from "./board-presentation";
+import { presentationTitle } from "@/modules/whiteboards/presentation";
+import { createBoardColorPreview } from "./board-color-preview";
 
-const nodeTypes = { whiteboard: WhiteboardNode };
-
-function flowNode(
-  element: BoardElementRow,
-  imageUrl?: string,
-): WhiteboardFlowNode {
-  return {
-    data: {
-      canMutate: false,
-      commentCount: 0,
-      element,
-      imageUrl,
-      onInteractionCancel: () => undefined,
-      onInteractionStart: () => undefined,
-      onContentCommit: () => undefined,
-      onResizeCommit: () => undefined,
-    },
-    draggable: true,
-    id: element.id,
-    position: { x: element.x, y: element.y },
-    style: {
-      height: element.height,
-      width: element.width,
-      zIndex: element.z_index,
-    },
-    type: "whiteboard",
-  };
-}
+const anonymous = { displayName: "Current user", id: "" };
+const emptyMembers: TaskMember[] = [];
+type Panel = "INSPECTOR" | "OUTLINE" | "COMMENTS" | null;
+type Point = { x: number; y: number };
 
 export function WhiteboardWorkspace({
   board,
   canMutate,
   comments: initialComments = [],
-  currentUser = { displayName: "Current user", id: "" },
+  currentUser = anonymous,
   elements,
   imageUrls,
-  members = [],
+  members = emptyMembers,
+  shell,
 }: {
   board: BoardRow;
   canMutate: boolean;
   comments?: BoardCommentRow[];
-  currentUser?: { displayName: string; id: string };
+  currentUser?: typeof anonymous;
   elements: BoardElementRow[];
   imageUrls: Record<string, string>;
   members?: TaskMember[];
+  shell?: BoardNavigationState;
 }) {
-  const [nodes, setNodes] = useState<WhiteboardFlowNode[]>(() =>
-    elements.map((element) => flowNode(element, imageUrls[element.id])),
-  );
-  const [history, setHistory] = useState(() =>
-    createWhiteboardHistory(elements),
-  );
-  const [activeTool, setActiveTool] = useState<WhiteboardTool>("SELECT");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<WhiteboardSaveState>("SAVED");
-  const [error, setError] = useState<string | null>(null);
-  const [lastRetry, setLastRetry] = useState<(() => Promise<void>) | null>(
+  const router = useRouter();
+  const [entityStore] = useState(createBoardEntityStore);
+  const [nativeRequest, setNativeRequest] = useState<NativeRequest | null>(
     null,
   );
-  const [title, setTitle] = useState(board.title);
-  const [renaming, setRenaming] = useState(false);
-  const [comments, setComments] = useState(initialComments);
-  const [presence, setPresence] = useState<BoardPresence[]>(() =>
-    includeLocalBoardPresence([], currentUser, members),
+  const entityScope = useMemo(
+    () => ({ organizationId: board.organization_id, boardId: board.id }),
+    [board.organization_id, board.id],
   );
-  const [collaboratorColors, setCollaboratorColors] =
-    useState<BoardCollaboratorColorAssignments>(() =>
-      allocateBoardCollaboratorColors(
-        includeLocalBoardPresence([], currentUser, members).map(
-          (person) => person.userId,
-        ),
-      ),
-    );
-  const [remoteCursors, setRemoteCursors] = useState<BoardCursorUpdate[]>([]);
-  const [connection, setConnection] =
-    useState<CollaborationConnectionState>("CONNECTING");
-  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
-  const [pending, startTransition] = useTransition();
-  const flowRef = useRef<ReactFlowInstance<WhiteboardFlowNode> | null>(null);
-  const collaborationRef = useRef<ReturnType<
-    typeof subscribeToBoardCollaboration
-  > | null>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const imagePositionRef = useRef({ x: 0, y: 0 });
-  const historyRef = useRef(history);
-  const imageUrlsRef = useRef(imageUrls);
-  const mutationLockRef = useRef(false);
-  const activeElementsRef = useRef(new Set<string>());
-  const queuedRemoteRef = useRef(new Map<string, BoardElementRow>());
-  const expectedEchoRef = useRef(new Map<string, string>());
-  const selectedIdRef = useRef(selectedId);
+  const [votingStore] = useState(() =>
+    createBoardVotingStore(currentUser.id, canMutate),
+  );
+  const [colorPreview] = useState(createBoardColorPreview);
+  const votingApi = useRef<BoardVotingHandle>(null);
+  const desktop = useBoardDesktop();
+  const panels = useBoardPanels(currentUser.id);
   useEffect(() => {
-    selectedIdRef.current = selectedId;
-  }, [selectedId]);
-
-  const syncNodes = useCallback((snapshot: BoardElementRow[]) => {
-    setNodes((current) => {
-      const byId = new Map(current.map((node) => [node.id, node]));
-      return snapshot.map((element) => {
-        const existing = byId.get(element.id);
-        return {
-          ...flowNode(
-            element,
-            existing?.data.imageUrl ?? imageUrlsRef.current[element.id],
-          ),
-          selected: existing?.selected,
-        };
-      });
-    });
+    document.title = pageTitle(board.title);
+  }, [board.title]);
+  const {
+    history,
+    rows,
+    pending,
+    error: documentError,
+    commit,
+    navigate,
+    receive,
+    adopt,
+    retry,
+    startInteraction,
+    cancelInteraction,
+    isBusy,
+    isDirty,
+    dirty,
+    dismissError,
+    hasRetry,
+    hasReload,
+    getRows,
+    getRevision,
+    mergeSnapshot,
+  } = useBoardDocument(board, elements, canMutate, currentUser.id);
+  const nativeItems = useBoardEntities(entityScope, rows, entityStore);
+  const objectIndex = useMemo(() => indexBoardObjects(rows), [rows]);
+  const [selected, setSelected] = useState<string[]>([]),
+    [panel, setPanel] = useState<Panel>(null);
+  const presentation = useBoardPresentation(rows, selected);
+  const presenting = !!presentation.state;
+  useEffect(
+    () => votingStore.setPresentation(presenting),
+    [votingStore, presenting],
+  );
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [textLayoutPending, setTextLayoutPending] = useState(false);
+  const textLayoutBusy = useRef(false);
+  const interactionBusy = useCallback(
+    () => isBusy() || textLayoutBusy.current,
+    [isBusy],
+  );
+  const [visibleObjectIds, setVisibleObjectIds] = useState<string[]>([]);
+  const visibleIds = useMemo(
+    () => [...new Set([...selected, ...visibleObjectIds])],
+    [selected, visibleObjectIds],
+  );
+  const reactionIds = useMemo(() => visibleIds.slice(0, 200), [visibleIds]);
+  const reactions = useBoardReactions(
+    board,
+    currentUser.id,
+    reactionIds,
+    canMutate,
+  );
+  const {
+    url: imageUrl,
+    retry: retryImage,
+    accept: acceptImage,
+  } = useBoardImages(board, rows, imageUrls, visibleIds);
+  const [tool, setTool] = useState<WhiteboardTool>("SELECT"),
+    [shape, setShape] = useState("rectangle");
+  const [placementImages, setPlacementImages] = useState<{
+    files: File[];
+    url?: string;
+  } | null>(null);
+  useEffect(
+    () => () => {
+      if (placementImages?.url) URL.revokeObjectURL(placementImages.url);
+    },
+    [placementImages],
+  );
+  const changeTool = useCallback((next: WhiteboardTool) => {
+    setPlacementImages(null);
+    setTool(next);
   }, []);
-
-  const recordSnapshot = useCallback(
-    (snapshot: BoardElementRow[]) => {
-      const next = recordWhiteboardHistory(historyRef.current, snapshot);
-      historyRef.current = next;
-      setHistory(next);
-      syncNodes(snapshot);
-    },
-    [syncNodes],
-  );
-
-  const recordCreatedElement = useCallback(
-    (element: BoardElementRow) => {
-      const base = historyRef.current.present.filter(
-        (candidate) => candidate.id !== element.id,
-      );
-      const next = recordWhiteboardHistory(
-        { ...historyRef.current, present: base },
-        [...base, element],
-      );
-      historyRef.current = next;
-      setHistory(next);
-      syncNodes(next.present);
-      expectedEchoRef.current.set(element.id, element.updated_at);
-    },
-    [syncNodes],
-  );
-
-  const applyRemoteElement = useCallback(
-    (element: BoardElementRow, preserveHistory = false) => {
-      const next = reconcileRemoteElement(historyRef.current, element, {
-        preserveHistory,
-      });
-      historyRef.current = next;
-      setHistory(next);
-      syncNodes(next.present);
-      if (element.archived_at && selectedIdRef.current === element.id)
-        setSelectedId(null);
-    },
-    [syncNodes],
-  );
-
-  const receiveRemoteElement = useCallback(
-    (element: BoardElementRow) => {
-      if (expectedEchoRef.current.get(element.id) === element.updated_at) {
-        expectedEchoRef.current.delete(element.id);
-        applyRemoteElement(element, true);
-        return;
-      }
-      if (activeElementsRef.current.has(element.id)) {
-        const queued = queuedRemoteRef.current.get(element.id) ?? null;
-        queuedRemoteRef.current.set(
-          element.id,
-          chooseCommittedElement(queued, element),
-        );
-        return;
-      }
-      applyRemoteElement(element);
-    },
-    [applyRemoteElement],
-  );
-
-  const finishElementMutation = useCallback(
-    (elementId: string, persisted: BoardElementRow | null) => {
-      activeElementsRef.current.delete(elementId);
-      const queued = queuedRemoteRef.current.get(elementId);
-      queuedRemoteRef.current.delete(elementId);
-      if (queued) {
-        const winner = chooseCommittedElement(persisted, queued);
-        if (winner === persisted && persisted)
-          expectedEchoRef.current.set(elementId, persisted.updated_at);
-        applyRemoteElement(winner, winner === persisted);
-      } else if (persisted) {
-        expectedEchoRef.current.set(elementId, persisted.updated_at);
-        applyRemoteElement(persisted, true);
-      }
-    },
-    [applyRemoteElement],
-  );
-
-  const cancelElementInteraction = useCallback(
-    (elementId: string) => finishElementMutation(elementId, null),
-    [finishElementMutation],
-  );
-
+  const [title, setTitle] = useState(board.title),
+    [renaming, setRenaming] = useState(false),
+    [titlePending, setTitlePending] = useState(false);
+  const [error, setError] = useState<string | null>(null),
+    [help, setHelp] = useState(false),
+    [shortcuts, setShortcuts] = useState(true);
+  const [archiveChoice, setArchiveChoice] = useState(false),
+    [linkAt, setLinkAt] = useState<Point | null>(null);
+  const [minimap, setMinimap] = useState(false),
+    [grid, setGrid] = useState(true);
+  const [snapObjects, setSnapObjects] = useState(true),
+    [snapGrid, setSnapGrid] = useState(false);
+  const [context, setContext] = useState<{
+    x: number;
+    y: number;
+    point: Point;
+    keyboard?: boolean;
+  } | null>(null);
+  const [clipboard, setClipboard] = useState<BoardElementRow[]>([]);
+  const [comments, setComments] = useState(initialComments),
+    [commentsLoading, setCommentsLoading] = useState(false),
+    [commentsError, setCommentsError] = useState<string | null>(null);
+  const commentsLoaded = useRef(initialComments.length > 0),
+    commentsBusy = useRef(false);
+  const [beforeComment, setBeforeComment] = useState<{
+    createdAt: string;
+    id: string;
+  } | null>(null);
+  const canvasApi = useRef<BoardCanvasHandle>(null),
+    picker = useRef<HTMLInputElement>(null);
+  const imagePosition = useRef<Point>({ x: 0, y: 0 }),
+    replacement = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (!currentUser.id) return;
-    const collaboration = subscribeToBoardCollaboration({
-      boardId: board.id,
-      organizationId: board.organization_id,
-      currentUser,
-      members,
-      onComment: (comment) =>
-        setComments((current) => reconcileBoardComment(current, comment)),
-      onConnection: setConnection,
-      onCursor: (update) =>
-        setRemoteCursors((current) => {
-          const withoutUser = current.filter(
-            (cursor) => cursor.userId !== update.userId,
-          );
-          return update.cursor ? [...withoutUser, update] : withoutUser;
-        }),
-      onElement: receiveRemoteElement,
-      onPresence: (people) => {
-        setPresence(people);
-        setCollaboratorColors((current) =>
-          allocateBoardCollaboratorColors(
-            people.map((person) => person.userId),
-            current,
-          ),
-        );
-      },
-    });
-    collaborationRef.current = collaboration;
-    return () => {
-      collaborationRef.current = null;
-      collaboration.unsubscribe();
+    const input = picker.current;
+    const cancel = () => {
+      replacement.current = undefined;
+      changeTool("SELECT");
+      focusBoardCanvas();
     };
-  }, [
-    board.id,
-    board.organization_id,
-    currentUser,
-    members,
-    receiveRemoteElement,
-  ]);
-
-  const runMutation = useCallback((operation: () => Promise<void>) => {
-    if (mutationLockRef.current) return;
-    mutationLockRef.current = true;
-    setSaveState("SAVING");
-    setError(null);
-    startTransition(async () => {
-      try {
-        await operation();
-        setSaveState("SAVED");
-        setLastRetry(null);
-      } catch (caught) {
-        setSaveState("ERROR");
-        setError(
-          caught instanceof Error
-            ? caught.message
-            : "The change could not be saved.",
-        );
-        setLastRetry(() => operation);
-      } finally {
-        mutationLockRef.current = false;
-      }
-    });
-  }, []);
-
-  const replaceElement = useCallback(
-    (element: BoardElementRow, signedUrl?: string) => {
-      setNodes((current) =>
-        current.map((node) =>
-          node.id === element.id
-            ? {
-                ...flowNode(
-                  element,
-                  signedUrl ?? (node.data.imageUrl as string | undefined),
-                ),
-                selected: node.selected,
-              }
-            : node,
-        ),
-      );
-    },
-    [],
+    input?.addEventListener("cancel", cancel);
+    return () => input?.removeEventListener("cancel", cancel);
+  }, [changeTool]);
+  const selectedRows = useMemo(
+    () => selectionRoots(rows, selected),
+    [rows, selected],
   );
 
-  const persistUpdate = useCallback(
-    (
-      elementId: string,
-      changes: Parameters<typeof updateBoardElementAction>[0],
-    ) => {
-      activeElementsRef.current.add(elementId);
-      runMutation(async () => {
-        let persisted: BoardElementRow | null = null;
-        try {
-          const result = await updateBoardElementAction({
-            ...changes,
-            elementId,
-          });
-          if (result.status === "error") throw new Error(result.message);
-          persisted = result.data;
-          replaceElement(result.data);
-        } finally {
-          finishElementMutation(elementId, persisted);
+  const onUploaded = useCallback(
+    (row: BoardElementRow, url: string, created: boolean) => {
+      adopt(row, created);
+      acceptImage(row, url);
+      setSelected([row.id]);
+      setPlacementImages(null);
+      setTool("SELECT");
+    },
+    [adopt, acceptImage],
+  );
+  const uploads = useBoardUploads(
+    board,
+    getRows,
+    startInteraction,
+    cancelInteraction,
+    onUploaded,
+  );
+  const uploadFailed = uploads.items.some((item) => item.state === "Error");
+  const busy = pending || uploads.pending || titlePending || textLayoutPending;
+  const editable = canMutate && !busy && !dirty && !presenting;
+  const focusName = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !busy &&
+      panel === "INSPECTOR" &&
+      focusName.current &&
+      selected.includes(focusName.current)
+    ) {
+      requestAnimationFrame(() => {
+        const field = document.querySelector<HTMLInputElement>(
+          '[aria-label="Name"]',
+        );
+        if (field) {
+          field.focus();
+          field.select();
+          focusName.current = null;
         }
       });
-    },
-    [finishElementMutation, replaceElement, runMutation],
-  );
-
-  const persistHistoryTransition = useCallback(
-    async (from: BoardElementRow[], to: BoardElementRow[]) => {
-      const diff = diffWhiteboardSnapshots(from, to);
-      const elementIds = [
-        ...diff.archiveIds,
-        ...diff.restore.map((element) => element.id),
-        ...diff.update.map((element) => element.id),
-      ];
-      elementIds.forEach((id) => activeElementsRef.current.add(id));
-      const results = await Promise.all([
-        ...diff.archiveIds.map((id) => archiveBoardElementAction(id)),
-        ...diff.restore.map((element) => restoreBoardElementAction(element.id)),
-        ...diff.update.map((element) =>
-          updateBoardElementAction({
-            content: element.content,
-            elementId: element.id,
-            height: element.height,
-            metadata: element.metadata,
-            rotation: element.rotation,
-            style: element.style,
-            width: element.width,
-            x: element.x,
-            y: element.y,
-            zIndex: element.z_index,
-          }),
-        ),
-      ]);
-      results.forEach((result, index) =>
-        finishElementMutation(
-          elementIds[index]!,
-          result.status === "success" ? result.data : null,
-        ),
-      );
-      const failed = results.find((result) => result.status === "error");
-      if (failed?.status === "error") throw new Error(failed.message);
-    },
-    [finishElementMutation],
-  );
-
-  const navigateHistory = useCallback(
-    (direction: "UNDO" | "REDO") => {
-      if (!canMutate || mutationLockRef.current) return;
-      const current = historyRef.current;
-      const next =
-        direction === "UNDO"
-          ? undoWhiteboardHistory(current)
-          : redoWhiteboardHistory(current);
-      if (next === current) return;
-      historyRef.current = next;
-      setHistory(next);
-      syncNodes(next.present);
-      if (!next.present.some((element) => element.id === selectedId))
-        setSelectedId(null);
-      runMutation(() =>
-        persistHistoryTransition(current.present, next.present),
-      );
-    },
-    [canMutate, persistHistoryTransition, runMutation, selectedId, syncNodes],
-  );
-
-  const onContentCommit = useCallback(
-    (elementId: string, content: Record<string, unknown>) => {
-      if (mutationLockRef.current) return;
-      recordSnapshot(
-        historyRef.current.present.map((element) =>
-          element.id === elementId ? { ...element, content } : element,
-        ),
-      );
-      persistUpdate(elementId, { elementId, content });
-    },
-    [persistUpdate, recordSnapshot],
-  );
-
-  const onStyleCommit = useCallback(
-    (elementId: string, style: Record<string, unknown>) => {
-      if (mutationLockRef.current) return;
-      recordSnapshot(
-        historyRef.current.present.map((element) =>
-          element.id === elementId ? { ...element, style } : element,
-        ),
-      );
-      persistUpdate(elementId, { elementId, style });
-    },
-    [persistUpdate, recordSnapshot],
-  );
-
-  const onResizeCommit = useCallback(
-    (
-      elementId: string,
-      dimensions: { height: number; width: number; x: number; y: number },
-    ) => {
-      if (mutationLockRef.current) return;
-      recordSnapshot(
-        historyRef.current.present.map((element) =>
-          element.id === elementId ? { ...element, ...dimensions } : element,
-        ),
-      );
-      persistUpdate(elementId, { elementId, ...dimensions });
-    },
-    [persistUpdate, recordSnapshot],
-  );
-
-  const renderedNodes = useMemo(() => {
-    const commentCounts = comments.reduce((counts, comment) => {
-      if (!comment.archived_at && comment.element_id)
-        counts.set(
-          comment.element_id,
-          (counts.get(comment.element_id) ?? 0) + 1,
-        );
-      return counts;
-    }, new Map<string, number>());
-    return nodes.map((node) => ({
-      ...node,
-      data: {
-        ...node.data,
-        canMutate,
-        commentCount: commentCounts.get(node.id) ?? 0,
-        onContentCommit,
-        onInteractionCancel: cancelElementInteraction,
-        onInteractionStart: (elementId: string) =>
-          activeElementsRef.current.add(elementId),
-        onResizeCommit,
-      },
-      draggable: canMutate && activeTool === "SELECT",
-    }));
-  }, [
-    activeTool,
-    canMutate,
-    cancelElementInteraction,
-    comments,
-    nodes,
-    onContentCommit,
-    onResizeCommit,
-  ]);
-  const selectedElement = nodes.find((node) => node.id === selectedId)?.data
-    .element;
-
-  const removeSelected = useCallback(() => {
-    if (!canMutate || !selectedId || pending || mutationLockRef.current) return;
-    const removed = historyRef.current.present.find(
-      (element) => element.id === selectedId,
+    }
+  }, [busy, panel, selected, rows]);
+  const beforeLeave = () =>
+    (!isDirty() &&
+      !textLayoutBusy.current &&
+      !uploads.pending &&
+      !uploadFailed &&
+      !titlePending &&
+      (!renaming || title === board.title)) ||
+    window.confirm(
+      "This board has unsaved work. Stay to retry saving, or leave and discard unsaved changes?",
     );
-    if (!removed) return;
-    recordSnapshot(
-      historyRef.current.present.filter((element) => element.id !== selectedId),
-    );
-    setSelectedId(null);
-    activeElementsRef.current.add(selectedId);
-    runMutation(async () => {
-      let persisted: BoardElementRow | null = null;
-      try {
-        const result = await archiveBoardElementAction(selectedId);
-        if (result.status === "error") throw new Error(result.message);
-        persisted = result.data;
-      } finally {
-        finishElementMutation(selectedId, persisted);
-      }
-    });
-  }, [
-    canMutate,
-    finishElementMutation,
-    pending,
-    recordSnapshot,
-    runMutation,
-    selectedId,
-  ]);
-
-  useEffect(() => {
-    const listener = (event: KeyboardEvent) => {
-      const target = event.target;
-      if (
-        target instanceof Element &&
-        target.matches("input, textarea, select, [contenteditable='true']")
+  const nativeBeforeOpen = useBoardEvent(beforeLeave);
+  async function insertNative(
+    reference: EntityReference,
+    id?: string,
+    conversionId?: string,
+  ) {
+    if (!canMutate || interactionBusy() || isDirty() || presenting)
+      return false;
+    const current = getRows();
+    if (id && current.some((row) => row.id === id)) {
+      setSelected([id]);
+      return true;
+    }
+    const one = selectedRows.length === 1 ? selectedRows[0] : undefined;
+    const parent =
+      one?.element_type === "SECTION" && !isObjectLocked(one, current)
+        ? one
+        : one?.parent_id
+          ? current.find(
+              (row) =>
+                row.id === one.parent_id &&
+                row.element_type === "SECTION" &&
+                !isObjectLocked(row, current),
+            )
+          : undefined;
+    const bounds =
+      selectedRows.length &&
+      !selectedRows.some((row) =>
+        ["SECTION", "GROUP"].includes(row.element_type),
       )
-        return;
-      const modifier = event.ctrlKey || event.metaKey;
-      if (modifier && event.key.toLowerCase() === "z") {
+        ? objectBounds(selectedRows)
+        : undefined;
+    const point = nativeInsertionPoint(
+      current,
+      bounds
+        ? { x: bounds.x + bounds.width + 24, y: bounds.y }
+        : parent
+          ? { x: parent.x + 24, y: parent.y + 48 }
+          : (canvasApi.current?.center() ?? { x: 0, y: 0 }),
+    );
+    const row = createLocalObject(
+      "ENTITY_CARD",
+      board.id,
+      board.organization_id,
+      currentUser.id,
+      current,
+      point,
+      {
+        ...(id ? { id } : {}),
+        parent_id: parent?.id ?? null,
+        content: { reference },
+        style: {},
+        metadata: conversionId ? { conversionId } : {},
+      },
+    );
+    const saved = await commit([...current, row]);
+    if (saved) {
+      setSelected([row.id]);
+      nativeItems.refresh();
+    }
+    return saved;
+  }
+  const receiveComment = reactions.receiveComment;
+  const onComment = useCallback(
+    (row: BoardCommentRow) => {
+      if (
+        row.organization_id === board.organization_id &&
+        row.board_id === board.id
+      )
+        setComments((rows) => reconcileBoardComment(rows, row));
+      receiveComment(row);
+    },
+    [board.id, board.organization_id, receiveComment],
+  );
+  const receiveVoting = useBoardEvent(
+    (row: import("@/lib/supabase/database.types").BoardVotingSessionRow) => {
+      if (
+        row.board_id === board.id &&
+        row.organization_id === board.organization_id
+      )
+        votingApi.current?.invalidate();
+    },
+  );
+  const collaboration = useBoardCollaboration(
+    board,
+    currentUser,
+    members,
+    receive,
+    onComment,
+    reactions.receive,
+    receiveVoting,
+  );
+  useEffect(() => {
+    if (collaboration.connection === "CONNECTED")
+      votingApi.current?.invalidate();
+  }, [collaboration.connection]);
+  const refreshBoard = useCallback(() => {
+    router.refresh();
+    const revision = getRevision();
+    void readBoardSnapshotAction({
+      boardId: board.id,
+      organizationId: board.organization_id,
+    })
+      .then((result) => {
+        if (result.status === "success" && result.canMutate === canMutate)
+          mergeSnapshot(result.rows, revision);
+        else if (result.status === "error") setError(result.message);
+      })
+      .catch(() =>
+        setError(
+          "Board access could not be refreshed. Reload to check access.",
+        ),
+      );
+  }, [
+    router,
+    getRevision,
+    mergeSnapshot,
+    board.id,
+    board.organization_id,
+    canMutate,
+  ]);
+  const previousConnection = useRef(collaboration.connection);
+  useEffect(() => {
+    if (
+      previousConnection.current === "DEGRADED" &&
+      collaboration.connection === "CONNECTED"
+    )
+      refreshBoard();
+    previousConnection.current = collaboration.connection;
+  }, [collaboration.connection, refreshBoard]);
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      if (
+        isDirty() ||
+        textLayoutPending ||
+        uploads.pending ||
+        uploadFailed ||
+        titlePending ||
+        renaming
+      ) {
         event.preventDefault();
-        navigateHistory(event.shiftKey ? "REDO" : "UNDO");
-        return;
-      }
-      if (modifier && event.key.toLowerCase() === "y") {
-        event.preventDefault();
-        navigateHistory("REDO");
-        return;
-      }
-      if ((event.key === "Delete" || event.key === "Backspace") && selectedId) {
-        event.preventDefault();
-        removeSelected();
-      }
-      if (event.key === "Escape") {
-        setSelectedId(null);
-        setNodes((current) =>
-          current.map((node) => ({ ...node, selected: false })),
-        );
+        event.returnValue = "";
       }
     };
-    window.addEventListener("keydown", listener);
-    return () => window.removeEventListener("keydown", listener);
-  }, [navigateHistory, removeSelected, selectedId]);
-
-  function addElement(
-    type: Exclude<WhiteboardTool, "SELECT" | "PAN" | "IMAGE">,
-    position: { x: number; y: number },
-  ) {
-    if (mutationLockRef.current) return;
-    const elementRows = historyRef.current.present;
-    const size = defaultElementSize[type];
-    const defaults = defaultElementData(type);
-    runMutation(async () => {
-      const result = await createBoardElementAction({
+    window.addEventListener("beforeunload", warn);
+    window.addEventListener("focus", refreshBoard);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      window.removeEventListener("focus", refreshBoard);
+    };
+  }, [
+    isDirty,
+    textLayoutPending,
+    uploads.pending,
+    uploadFailed,
+    titlePending,
+    renaming,
+    refreshBoard,
+  ]);
+  async function loadComments(earlier = false) {
+    if (commentsBusy.current) return;
+    commentsBusy.current = true;
+    setCommentsLoading(true);
+    setCommentsError(null);
+    try {
+      const result = await readBoardCommentsAction({
         boardId: board.id,
-        ...defaults,
-        elementType: type,
-        height: size.height,
-        metadata: {},
-        rotation: 0,
-        width: size.width,
-        x: position.x,
-        y: position.y,
-        zIndex: nextZIndex(elementRows),
+        organizationId: board.organization_id,
+        ...(earlier && beforeComment ? { before: beforeComment } : {}),
       });
       if (result.status === "error") throw new Error(result.message);
-      recordCreatedElement(result.data);
-      setSelectedId(result.data.id);
-      setActiveTool("SELECT");
-    });
+      setComments((rows) =>
+        result.comments.reduce(reconcileBoardComment, rows),
+      );
+      setBeforeComment(result.before);
+      commentsLoaded.current = true;
+    } catch (caught) {
+      setCommentsError(
+        caught instanceof Error
+          ? caught.message
+          : "Comments could not load. Retry comments.",
+      );
+    } finally {
+      setCommentsLoading(false);
+      commentsBusy.current = false;
+    }
   }
-
-  function handlePaneClick(event: React.MouseEvent) {
-    if (
-      !canMutate ||
-      activeTool === "SELECT" ||
-      activeTool === "PAN" ||
-      activeTool === "IMAGE" ||
-      pending ||
-      !flowRef.current
-    )
-      return;
-    const position = flowRef.current.screenToFlowPosition({
-      x: event.clientX,
-      y: event.clientY,
-    });
-    addElement(activeTool, position);
+  function openPanel(next: Panel) {
+    if (desktop && next === "OUTLINE") panels.show("layers");
+    if (desktop && next === "INSPECTOR") panels.show("properties");
+    setPanel(next);
+    if (next === "COMMENTS" && !commentsLoaded.current) void loadComments();
   }
-
-  function requestImagePicker() {
-    if (!canMutate || pending || mutationLockRef.current) return;
-    const canvas = document.querySelector<HTMLElement>(
-      "[data-testid='whiteboard-canvas']",
+  function toggleSidebars() {
+    if (panel === "COMMENTS") panels.hide();
+    else panels.toggleBoth();
+    setPanel(null);
+  }
+  function report(operation: () => BoardElementRow[]) {
+    if (!editable) return;
+    try {
+      setError(null);
+      const previousSelection = selected;
+      void commit(operation()).then((saved) => {
+        if (!saved)
+          setSelected(
+            previousSelection.filter((id) =>
+              getRows().some((row) => row.id === id),
+            ),
+          );
+      });
+    } catch (caught) {
+      setError((caught as Error).message);
+    }
+  }
+  const update = useCallback(
+    async (id: string, patch: Partial<BoardElementRow>) => {
+      if (!canMutate || isBusy() || isDirty() || textLayoutBusy.current)
+        return null;
+      const rows = getRows(),
+        row = rows.find((entry) => entry.id === id);
+      if (
+        !row ||
+        (isObjectLocked(row, rows) &&
+          !(
+            patch.locked === false &&
+            row.locked &&
+            !ancestors(row, rows).some((parent) => parent.locked)
+          ))
+      ) {
+        cancelInteraction(id);
+        return null;
+      }
+      let next = { ...row, ...patch };
+      if (
+        (row.element_type === "IMAGE" && next.style.aspectLock !== false) ||
+        (row.element_type === "SHAPE" && next.content.shape === "circle")
+      ) {
+        if (next.width !== row.width)
+          next = {
+            ...next,
+            height:
+              row.element_type === "SHAPE"
+                ? next.width
+                : (row.height * next.width) / row.width,
+          };
+        else if (next.height !== row.height)
+          next = {
+            ...next,
+            width:
+              row.element_type === "SHAPE"
+                ? next.height
+                : (row.width * next.height) / row.height,
+          };
+      }
+      try {
+        if (
+          ["TEXT", "STICKY"].includes(next.element_type) &&
+          next.style.sizing === "auto" &&
+          patch.height === undefined
+        ) {
+          textLayoutBusy.current = true;
+          setTextLayoutPending(true);
+          try {
+            const height = await measureBoardText(next);
+            if (
+              isBusy() ||
+              !sameElement(
+                getRows().find((item) => item.id === id) ?? null,
+                row,
+              )
+            ) {
+              setError(
+                "This object changed while updating its text layout. Retry the property change.",
+              );
+              return null;
+            }
+            next = { ...next, height };
+          } finally {
+            textLayoutBusy.current = false;
+            setTextLayoutPending(false);
+          }
+        }
+        let after = rows;
+        if (
+          (row.element_type === "SECTION" || row.element_type === "GROUP") &&
+          next.width === row.width &&
+          next.height === row.height &&
+          (next.x !== row.x || next.y !== row.y)
+        )
+          after = moveObjects(rows, [id], next.x - row.x, next.y - row.y);
+        after = after.map((entry) => (entry.id === id ? next : entry));
+        const saved = await commit(after);
+        return saved
+          ? (getRows().find((entry) => entry.id === id) ?? next)
+          : null;
+      } finally {
+        cancelInteraction(id);
+      }
+    },
+    [canMutate, cancelInteraction, commit, getRows, isBusy, isDirty],
+  );
+  const onContentCommit = useCallback(
+    (id: string, content: Record<string, unknown>, height?: number) => {
+      void update(id, { content, ...(height !== undefined ? { height } : {}) });
+    },
+    [update],
+  );
+  const onResizeCommit = useCallback(
+    (
+      id: string,
+      bounds: { height: number; width: number; x: number; y: number },
+    ) => {
+      const row = getRows().find((row) => row.id === id);
+      const fixed =
+        row &&
+        ["TEXT", "STICKY"].includes(row.element_type) &&
+        row.style.sizing === "auto" &&
+        bounds.height !== row.height;
+      void update(id, {
+        ...bounds,
+        ...(fixed ? { style: { ...row.style, sizing: "fixed" } } : {}),
+      });
+    },
+    [update, getRows],
+  );
+  const commentCounts = useMemo(() => {
+    if (reactions.countsLoaded)
+      return new Map(
+        reactions.counts.map((row) => [row.element_id, row.total]),
+      );
+    const counts = new Map<string, number>();
+    for (const row of comments)
+      if (
+        row.element_id &&
+        !row.archived_at &&
+        !row.parent_id &&
+        !row.resolved_at
+      )
+        counts.set(row.element_id, (counts.get(row.element_id) ?? 0) + 1);
+    return counts;
+  }, [comments, reactions.counts, reactions.countsLoaded]);
+  const select = useCallback((id: string, additive = false) => {
+    setSelected((ids) =>
+      additive
+        ? ids.includes(id)
+          ? ids.filter((value) => value !== id)
+          : [...ids, id]
+        : [id],
     );
-    const bounds = canvas?.getBoundingClientRect();
-    if (bounds && flowRef.current) {
-      imagePositionRef.current = flowRef.current.screenToFlowPosition({
-        x: bounds.left + bounds.width / 2,
-        y: bounds.top + bounds.height / 2,
-      });
-    }
-    imageInputRef.current?.click();
+  }, []);
+  function imageRequest(id?: string, position?: Point) {
+    if (!editable) return;
+    replacement.current = id;
+    imagePosition.current = position ??
+      canvasApi.current?.center() ?? { x: 0, y: 0 };
+    changeTool(id ? "SELECT" : "IMAGE");
+    if (picker.current) picker.current.multiple = !id;
+    picker.current?.click();
   }
-
-  function uploadImage(file: File) {
-    if (mutationLockRef.current) return;
-    const validation = boardImageFileSchema.safeParse(file);
-    if (!validation.success) {
-      setSaveState("ERROR");
-      setError(validation.error.issues[0]?.message ?? "Choose a valid image.");
+  function insert(at: Point, geometry?: CreationGeometry) {
+    if (!editable || tool === "SELECT" || tool === "PAN") return;
+    if (tool === "LINK") {
+      setLinkAt(at);
+      setTool("SELECT");
       return;
     }
-    const position = imagePositionRef.current;
-    const size = defaultElementSize.IMAGE;
-    const formData = new FormData();
-    formData.set("boardId", board.id);
-    formData.set("file", file);
-    formData.set("height", String(size.height));
-    formData.set("width", String(size.width));
-    formData.set("x", String(position.x));
-    formData.set("y", String(position.y));
-    formData.set("zIndex", String(nextZIndex(historyRef.current.present)));
-    runMutation(async () => {
-      const result = await uploadBoardImageAction(formData);
-      if (result.status === "error") throw new Error(result.message);
-      imageUrlsRef.current = {
-        ...imageUrlsRef.current,
-        [result.data.element.id]: result.data.signedUrl,
+    if (tool === "IMAGE") {
+      if (placementImages) {
+        uploads.add(placementImages.files, at);
+        changeTool("SELECT");
+      } else imageRequest(undefined, at);
+      return;
+    }
+    const row = createLocalObject(
+      tool,
+      board.id,
+      board.organization_id,
+      currentUser.id,
+      getRows(),
+      at,
+      geometry,
+    );
+    if (tool === "SHAPE") {
+      row.content = { shape };
+      if (shape === "circle") {
+        if (!geometry) row.height = row.width;
+        else if (row.width !== row.height) row.content.shape = "ellipse";
+      }
+      const tokens = getComputedStyle(document.documentElement);
+      row.style = {
+        ...row.style,
+        fill: boardPaint(
+          tokens.getPropertyValue("--board-shape-fill").trim(),
+          String(row.style.fill),
+        ),
+        stroke: boardPaint(
+          tokens.getPropertyValue("--board-shape-stroke").trim(),
+          String(row.style.stroke),
+        ),
       };
-      recordCreatedElement(result.data.element);
-      setSelectedId(result.data.element.id);
-      setActiveTool("SELECT");
+    }
+    if (tool === "ARROW") row.content = { line: shape === "line" };
+    void commit([...getRows(), row]).then((saved) => {
+      if (saved) {
+        setSelected([row.id]);
+        if (row.element_type === "TEXT")
+          requestAnimationFrame(() => {
+            const text = document.querySelector<HTMLElement>(
+              `.react-flow__node[data-id="${row.id}"] [aria-label^="Text:"]`,
+            );
+            text?.focus({ preventScroll: true });
+            text?.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+            );
+          });
+      }
+    });
+    setTool("SELECT");
+  }
+  function archive(keep = false) {
+    report(() => archiveObjects(getRows(), selected, keep));
+    setArchiveChoice(false);
+  }
+  function action(value: SelectionAction) {
+    if (!editable) return;
+    if (
+      value === "ARCHIVE" &&
+      selectedRows.some((row) => row.element_type === "SECTION")
+    ) {
+      setArchiveChoice(true);
+      return;
+    }
+    report(() => {
+      const rows = getRows();
+      switch (value) {
+        case "ARCHIVE":
+          return archiveObjects(rows, selected);
+        case "SECTION": {
+          const result = sectionFromSelection(rows, selected, (bounds) =>
+            createLocalObject(
+              "SECTION",
+              board.id,
+              board.organization_id,
+              currentUser.id,
+              rows,
+              { x: bounds.x - 32, y: bounds.y - 48 },
+              {
+                width: Math.max(160, bounds.width + 64),
+                height: Math.max(120, bounds.height + 80),
+                content: { title: "New Section", collapsed: false },
+              },
+            ),
+          );
+          setSelected([result.id]);
+          focusName.current = result.id;
+          setPanel("INSPECTOR");
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() =>
+              document
+                .querySelector<HTMLInputElement>('[aria-label="Name"]')
+                ?.focus(),
+            ),
+          );
+          return result.rows;
+        }
+        case "GROUP": {
+          let groupId = "";
+          const after = groupObjects(rows, selected, (bounds, parent_id) => {
+            const group = createLocalObject(
+              "GROUP",
+              board.id,
+              board.organization_id,
+              currentUser.id,
+              rows,
+              { x: bounds.x - 8, y: bounds.y - 32 },
+              {
+                width: bounds.width + 16,
+                height: bounds.height + 40,
+                parent_id,
+              },
+            );
+            groupId = group.id;
+            return group;
+          });
+          setSelected([groupId]);
+          return after;
+        }
+        case "UNGROUP":
+          return ungroupObjects(rows, selected);
+        case "DUPLICATE": {
+          const copied = duplicateObjects(rows, selected, currentUser.id);
+          setSelected(copied.ids);
+          return copied.rows;
+        }
+        case "LOCK": {
+          const ids = new Set(
+              selectionRoots(rows, selected).map((row) => row.id),
+            ),
+            unlock = selectionRoots(rows, selected).every((row) => row.locked);
+          return rows.map((row) =>
+            ids.has(row.id) ? { ...row, locked: !unlock } : row,
+          );
+        }
+        case "WIDTH":
+        case "HEIGHT":
+          return matchObjectSize(
+            rows,
+            selected,
+            value === "WIDTH" ? "width" : "height",
+          );
+        case "DISTRIBUTE_X":
+        case "DISTRIBUTE_Y":
+          return distributeObjects(
+            rows,
+            selected,
+            value === "DISTRIBUTE_X" ? "x" : "y",
+          );
+        default:
+          return layerObjects(rows, selected, value);
+      }
     });
   }
-
-  function changeLayer(direction: "BACKWARD" | "FORWARD" | "FRONT" | "BACK") {
-    if (!selectedId || mutationLockRef.current) return;
-    const currentElements = historyRef.current.present;
-    const reordered = reorderElement(currentElements, selectedId, direction);
-    const changed = reordered.filter(
-      (element) =>
-        currentElements.find((current) => current.id === element.id)
-          ?.z_index !== element.z_index,
+  function clipboardAction(command: "COPY" | "CUT" | "PASTE", point?: Point) {
+    if (command !== "PASTE") {
+      const ids = expandedIds(getRows(), selected);
+      const nativeClipboard = copyNativeReferences(
+        getRows().filter((row) => ids.has(row.id)),
+      );
+      if (nativeClipboard)
+        void navigator.clipboard?.writeText(nativeClipboard).catch(() => {});
+      setClipboard(
+        getRows()
+          .filter((row) => ids.has(row.id))
+          .map((row) => structuredClone(row)),
+      );
+      if (command === "CUT" && editable)
+        report(() => archiveObjects(getRows(), selected));
+      return;
+    }
+    if (!editable || !clipboard.length) return;
+    const copied = duplicateObjects(
+      clipboard,
+      clipboard
+        .filter((row) => !clipboard.some((p) => p.id === row.parent_id))
+        .map((row) => row.id),
+      currentUser.id,
     );
-    if (changed.length === 0) return;
-    recordSnapshot(reordered);
-    changed.forEach((element) => activeElementsRef.current.add(element.id));
-    runMutation(async () => {
-      const results = await Promise.all(
-        changed.map((element) =>
-          updateBoardElementAction({
-            elementId: element.id,
-            zIndex: element.z_index,
-          }),
-        ),
-      );
-      results.forEach((result, index) =>
-        finishElementMutation(
-          changed[index]!.id,
-          result.status === "success" ? result.data : null,
-        ),
-      );
-      const failed = results.find((result) => result.status === "error");
-      if (failed?.status === "error") throw new Error(failed.message);
+    const copies = copied.rows.filter(
+        (row) => !clipboard.some((old) => old.id === row.id),
+      ),
+      bounds = objectBounds(selectionRoots(copies, copied.ids)),
+      at = point ?? canvasApi.current?.center() ?? { x: 0, y: 0 };
+    const after = moveObjects(
+      copies.map((row) => ({ ...row, locked: false })),
+      copied.ids,
+      at.x - bounds.x,
+      at.y - bounds.y,
+    ).map((row) => ({
+      ...row,
+      locked: copies.find((c) => c.id === row.id)!.locked,
+    }));
+    void commit([...getRows(), ...after]).then((ok) => {
+      if (ok) setSelected(copied.ids);
     });
   }
-
-  function saveTitle() {
-    if (title.trim() === board.title) return setRenaming(false);
-    runMutation(async () => {
+  function contextCommands(): BoardCommand[] {
+    const selection = selectedRows,
+      one = selection.length === 1 ? selection[0] : undefined,
+      allFree = selection.every((row) => canMoveObject(row, rows));
+    const make = (label: string, value: SelectionAction): BoardCommand => ({
+      label,
+      run: () => action(value),
+    });
+    const commands: BoardCommand[] = [];
+    if (!selection.length) {
+      if (editable)
+        commands.push({
+          label: "Insert from Stylus",
+          run: () => setNativeRequest({ mode: "insert" }),
+        });
+      if (editable && clipboard.length)
+        commands.push({
+          label: "Paste here",
+          run: () => clipboardAction("PASTE", context?.point),
+        });
+      if (editable)
+        for (const [label, type] of [
+          ["Add sticky", "STICKY"],
+          ["Add text", "TEXT"],
+          ["Add Section", "SECTION"],
+        ] as const)
+          commands.push({
+            label,
+            run: () => {
+              const row = createLocalObject(
+                type,
+                board.id,
+                board.organization_id,
+                currentUser.id,
+                getRows(),
+                context?.point ?? { x: 0, y: 0 },
+              );
+              void commit([...getRows(), row]).then((ok) => {
+                if (ok) setSelected([row.id]);
+              });
+            },
+          });
+      if (editable)
+        commands.push({
+          label: "Add image",
+          run: () => {
+            imagePosition.current = context?.point ?? { x: 0, y: 0 };
+            replacement.current = undefined;
+            picker.current?.click();
+          },
+        });
+      commands.push(
+        {
+          label: "Select all",
+          run: () =>
+            setSelected(rows.filter((r) => !r.parent_id).map((r) => r.id)),
+        },
+        { label: "Fit board", run: () => canvasApi.current?.fit() },
+        { label: "Dot grid", checked: grid, run: () => setGrid((v) => !v) },
+        {
+          label: "Minimap",
+          checked: minimap,
+          run: () => setMinimap((v) => !v),
+        },
+      );
+      return commands;
+    }
+    commands.push({ label: "Copy", run: () => clipboardAction("COPY") });
+    commands.push({ label: "Comment", run: () => openPanel("COMMENTS") });
+    if (canMutate && one)
+      commands.push({
+        label: "React",
+        children: reactionChoices.map((choice) => ({
+          label: choice.label,
+          run: () => void reactions.toggle(one.id, choice.kind),
+        })),
+      });
+    if (editable) {
+      const sources = selection.filter((row) =>
+        ["TEXT", "STICKY", "SHAPE", "ARROW", "LINK"].includes(row.element_type),
+      );
+      const sourceReference = one ? nativeReference(one) : null;
+      if (
+        (sources.length === selection.length || !!sourceReference) &&
+        sources.length <= 30 &&
+        selection.length > 0
+      ) {
+        const conversions = nativeItems.types.filter(
+          (type) =>
+            type.creatable &&
+            (sourceReference
+              ? type.sourceEntityTypes?.includes(sourceReference.entityType)
+              : type.creationSelection !== "single-reference") &&
+            (type.creationSelection !== "single-sticky" ||
+              one?.element_type === "STICKY"),
+        );
+        if (conversions.length)
+          commands.push({
+            label: "Create from selection",
+            children: conversions.map((type) => ({
+              label: `Create ${type.label}`,
+              run: () =>
+                setNativeRequest({
+                  mode: "convert",
+                  entityType: type.id,
+                  sourceIds: selection.map((row) => row.id).sort(),
+                }),
+            })),
+          });
+      }
+      if (allFree)
+        commands.push({ label: "Cut", run: () => clipboardAction("CUT") });
+      if (clipboard.length)
+        commands.push({
+          label: "Paste here",
+          run: () => clipboardAction("PASTE", context?.point),
+        });
+      commands.push(make("Duplicate", "DUPLICATE"));
+      if (one && ["GROUP", "SECTION"].includes(one.element_type))
+        commands.push({
+          label: "Rename",
+          run: () => {
+            openPanel("INSPECTOR");
+            setTimeout(
+              () =>
+                document
+                  .querySelector<HTMLInputElement>('[aria-label="Name"]')
+                  ?.focus(),
+              0,
+            );
+          },
+        });
+      if (one?.element_type === "GROUP" && allFree)
+        commands.push(make("Ungroup", "UNGROUP"));
+      if (
+        selection.length >= 2 &&
+        allFree &&
+        selection.every(
+          (r) => !["GROUP", "SECTION"].includes(r.element_type),
+        ) &&
+        new Set(selection.map((r) => r.parent_id)).size === 1 &&
+        !ancestors(selection[0]!, rows).some((r) => r.element_type === "GROUP")
+      )
+        commands.push(make("Group selection", "GROUP"));
+      if (
+        allFree &&
+        selection.every((r) => !r.parent_id && r.element_type !== "SECTION")
+      )
+        commands.push(make("Create section from selection", "SECTION"));
+      if (selection.length >= 2 && allFree)
+        commands.push({
+          label: "Alignment",
+          children: alignmentCommands.map(([value, label]) => ({
+            label,
+            run: () => report(() => alignObjects(getRows(), selected, value)),
+          })),
+        });
+      if (selection.length >= 3 && allFree)
+        commands.push({
+          label: "Distribution",
+          children: [
+            make("Distribute horizontally", "DISTRIBUTE_X"),
+            make("Distribute vertically", "DISTRIBUTE_Y"),
+          ],
+        });
+      if (
+        selection.length >= 2 &&
+        allFree &&
+        selection.every(
+          (r) => !["SECTION", "GROUP", "ARROW"].includes(r.element_type),
+        )
+      )
+        commands.push({
+          label: "Match size",
+          children: [
+            make("Same width", "WIDTH"),
+            make("Same height", "HEIGHT"),
+          ],
+        });
+      if (allFree)
+        commands.push({
+          label: "Arrange",
+          children: layerCommands.map(([value, label]) => make(label, value)),
+        });
+      commands.push(
+        make(selection.every((r) => r.locked) ? "Unlock" : "Lock", "LOCK"),
+      );
+      if (
+        allFree &&
+        selection.every(
+          (r) =>
+            r.element_type !== "SECTION" &&
+            ancestors(r, rows)[0]?.element_type !== "GROUP",
+        )
+      )
+        commands.push({
+          label: "Move to section",
+          children: [
+            {
+              label: "Loose objects",
+              run: () => report(() => assignSection(getRows(), selected, null)),
+            },
+            ...rows
+              .filter((r) => r.element_type === "SECTION" && !r.locked)
+              .map((r) => ({
+                label: objectTitle(r),
+                run: () =>
+                  report(() => assignSection(getRows(), selected, r.id)),
+              })),
+          ],
+        });
+      if (one?.element_type === "SECTION")
+        commands.push(
+          {
+            label: one.content.collapsed ? "Expand" : "Collapse",
+            run: () =>
+              void update(one.id, {
+                content: { ...one.content, collapsed: !one.content.collapsed },
+              }),
+          },
+          {
+            label: "Select contents",
+            run: () =>
+              setSelected(
+                rows.filter((r) => r.parent_id === one.id).map((r) => r.id),
+              ),
+          },
+          {
+            label: "Archive Section",
+            children: [
+              {
+                label: "Keep children on board",
+                danger: true,
+                run: () => archive(true),
+              },
+              {
+                label: "Archive contents",
+                danger: true,
+                run: () => archive(false),
+              },
+            ],
+          },
+        );
+      else if (allFree)
+        commands.push({ ...make("Delete", "ARCHIVE"), danger: true });
+    }
+    commands.push({ label: "Properties", run: () => openPanel("INSPECTOR") });
+    return commands;
+  }
+  async function rename() {
+    if (!renaming) return;
+    setRenaming(false);
+    if (title === board.title) return;
+    setTitlePending(true);
+    try {
       const result = await renameBoardAction(board.id, title);
       if (result.status === "error") throw new Error(result.message);
-      setTitle(result.data.title);
-      setRenaming(false);
-    });
+    } catch (caught) {
+      setError((caught as Error).message);
+      setRenaming(true);
+    } finally {
+      setTitlePending(false);
+    }
   }
-
+  const handleLayerDrop = useBoardEvent(
+    (id: string, target: string | null, place: LayerDrop) => {
+      if (!editable || isBusy()) return Promise.resolve(false);
+      return commit(dropLayer(getRows(), id, target, place));
+    },
+  );
+  const handleLayerBusy = useBoardEvent(() => !editable || interactionBusy());
+  const handleLayerContext = useBoardEvent(
+    (id: string, x: number, y: number, keyboard: boolean = false) => {
+      if (!selected.includes(id)) select(id);
+      setContext({
+        x,
+        y,
+        point: canvasApi.current?.center() ?? { x: 0, y: 0 },
+        keyboard,
+      });
+    },
+  );
+  const handleLayerLocate = useBoardEvent((id: string) => {
+    canvasApi.current?.locate(id);
+    setPanel(null);
+    requestAnimationFrame(focusBoardCanvas);
+  });
+  const handleObjectComment = useBoardEvent((id: string) => {
+    select(id);
+    openPanel("COMMENTS");
+  });
+  const handleStyle = useBoardEvent(
+    async (id: string, style: Record<string, unknown>) =>
+      !!(await update(id, { style })),
+  );
+  const handleCanvasContext = useBoardEvent<
+    Parameters<ComponentProps<typeof BoardCanvas>["onContext"]>,
+    void
+  >((event, id, point) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (id && !selected.includes(id)) select(id);
+    if (!id) setSelected([]);
+    setContext({
+      x: event.clientX,
+      y: event.clientY,
+      point,
+      keyboard: event.keyboard,
+    });
+  });
   return (
-    <section className="bg-muted/30 flex h-[calc(100dvh-4rem)] min-h-[34rem] flex-col overflow-hidden border-y lg:h-screen">
-      <WhiteboardHeader
-        actions={
-          <div className="ml-auto flex items-center gap-2">
-            <WhiteboardCollaborators
-              colorAssignments={collaboratorColors}
-              connection={connection}
-              currentUserId={currentUser.id}
-              presence={presence}
+    <BoardVotingContext.Provider value={votingStore}>
+      <BoardNativeProviders
+        types={nativeItems.types}
+        store={entityStore}
+        beforeOpen={nativeBeforeOpen}
+        colorPreview={colorPreview}
+      >
+        <div
+          onPasteCapture={(event) => {
+            if (
+              !editable ||
+              (event.target as Element).closest(
+                "input,textarea,[contenteditable=true]",
+              )
+            )
+              return;
+            const items = pasteNativeReferences(
+              event.clipboardData.getData("text/plain"),
+              board.organization_id,
+            );
+            if (!items) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const current = getRows(),
+              point = canvasApi.current?.center() ?? { x: 0, y: 0 };
+            const copies = items.map((item, index) =>
+              createLocalObject(
+                "ENTITY_CARD",
+                board.id,
+                board.organization_id,
+                currentUser.id,
+                current,
+                { x: point.x + item.x, y: point.y + item.y },
+                {
+                  content: { reference: item.reference },
+                  style: {},
+                  metadata: {},
+                  width: item.width,
+                  height: item.height,
+                  z_index:
+                    Math.max(0, ...current.map((row) => row.z_index)) +
+                    index +
+                    1,
+                },
+              ),
+            );
+            void commit([...current, ...copies]).then((ok) => {
+              if (ok) setSelected(copies.map((row) => row.id));
+            });
+          }}
+          onKeyDownCapture={(event) => {
+            if (presenting) {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                presentation.exit();
+                requestAnimationFrame(focusBoardCanvas);
+              } else if (
+                !event.ctrlKey &&
+                !event.metaKey &&
+                !event.altKey &&
+                (["ArrowRight", "ArrowLeft"].includes(event.key) ||
+                  (event.key === " " &&
+                    !(event.target as Element).closest(
+                      "button,a,input,textarea",
+                    )))
+              ) {
+                event.preventDefault();
+                presentation.move(
+                  event.key === "ArrowLeft" ||
+                    (event.key === " " && event.shiftKey)
+                    ? -1
+                    : 1,
+                );
+              }
+              event.stopPropagation();
+              return;
+            }
+            if (
+              (event.ctrlKey || event.metaKey) &&
+              event.shiftKey &&
+              event.code === "Backslash" &&
+              !(event.target as HTMLElement).closest(
+                "input,textarea,select,[contenteditable=true]",
+              )
+            ) {
+              event.preventDefault();
+              toggleSidebars();
+            }
+          }}
+          data-board-shell
+          data-presentation={presenting || undefined}
+          className="bg-background flex h-dvh min-h-0 flex-col overflow-hidden max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
+        >
+          <a
+            className="bg-background focus:ring-ring sr-only fixed top-2 left-2 z-[60] rounded border px-4 py-2 focus:not-sr-only focus:ring-2"
+            href="#board-canvas"
+            tabIndex={0}
+            onClick={(event) => {
+              event.preventDefault();
+              focusBoardCanvas();
+            }}
+          >
+            Skip to canvas
+          </a>
+          {presenting && presentation.section ? (
+            <BoardPresentation
+              title={presentationTitle(presentation.section)}
+              index={presentation.state!.index}
+              count={presentation.sections.length}
+              notice={presentation.state!.notice}
+              onMove={presentation.move}
+              onExit={() => {
+                presentation.exit();
+                requestAnimationFrame(focusBoardCanvas);
+              }}
             />
+          ) : null}
+          <div hidden={presenting} className="contents [&[hidden]]:hidden">
+            <WhiteboardHeader
+              canMutate={canMutate && !busy}
+              title={title}
+              setTitle={setTitle}
+              renaming={renaming}
+              onRenamingChange={setRenaming}
+              onRename={() => void rename()}
+              saveState={
+                documentError || uploadFailed
+                  ? "ERROR"
+                  : busy
+                    ? "SAVING"
+                    : renaming
+                      ? "UNSAVED"
+                      : "SAVED"
+              }
+              onRetry={hasRetry ? retry : undefined}
+              beforeLeave={beforeLeave}
+              navigation={
+                shell ? (
+                  <BoardNavigation state={shell} beforeLeave={beforeLeave} />
+                ) : undefined
+              }
+              actions={
+                <>
+                  {canMutate ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Insert from Stylus"
+                      title="Insert from Stylus"
+                      disabled={!editable}
+                      onClick={() => setNativeRequest({ mode: "insert" })}
+                    >
+                      <PackagePlus aria-hidden className="size-4" />
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Refresh linked items"
+                    aria-label="Refresh linked items"
+                    onClick={() => nativeItems.refresh(true)}
+                  >
+                    <RefreshCw aria-hidden className="size-4" />
+                  </Button>
+                  <div className="hidden sm:block">
+                    <WhiteboardCollaborators
+                      connection={collaboration.connection}
+                      colorAssignments={collaboration.colors}
+                      currentUserId={currentUser.id}
+                      presence={collaboration.presence}
+                    />
+                  </div>
+                  <Button
+                    aria-label="Open board comments"
+                    aria-pressed={panel === "COMMENTS"}
+                    onClick={() =>
+                      openPanel(panel === "COMMENTS" ? null : "COMMENTS")
+                    }
+                    size="icon"
+                    title="Comments"
+                    variant="ghost"
+                  >
+                    <MessageSquare aria-hidden="true" className="size-4" />
+                  </Button>
+                  <BoardVoting
+                    ref={votingApi}
+                    board={board}
+                    userId={currentUser.id}
+                    canMutate={canMutate}
+                    role={shell?.organization.role}
+                    members={members}
+                    ids={visibleIds}
+                    selected={selected}
+                    index={objectIndex}
+                    store={votingStore}
+                    onLocate={handleLayerLocate}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Present board"
+                    title="Present"
+                    disabled={busy || dirty}
+                    onClick={() => {
+                      if (interactionBusy() || isDirty()) {
+                        setError("Finish saving before presenting.");
+                        return;
+                      }
+                      setContext(null);
+                      setHelp(false);
+                      setLinkAt(null);
+                      setArchiveChoice(false);
+                      presentation.start();
+                      requestAnimationFrame(focusBoardCanvas);
+                    }}
+                  >
+                    <Presentation aria-hidden className="size-4" />
+                  </Button>
+                  <BoardMenu
+                    snapObjects={snapObjects}
+                    onSnapObjects={() => setSnapObjects((value) => !value)}
+                    snapGrid={snapGrid}
+                    onSnapGrid={() => setSnapGrid((value) => !value)}
+                    onToggleSidebars={toggleSidebars}
+                    sidebarsVisible={
+                      panels.layers || panels.properties || panel === "COMMENTS"
+                    }
+                    onOutline={() => openPanel("OUTLINE")}
+                    grid={grid}
+                    onGrid={() => setGrid((v) => !v)}
+                    onFit={() => canvasApi.current?.fit()}
+                    onFitSelection={() => canvasApi.current?.fit(true)}
+                    onHelp={() => setHelp(true)}
+                    shortcuts={shortcuts}
+                    onShortcuts={setShortcuts}
+                    minimap={minimap}
+                    onMinimap={() => setMinimap((value) => !value)}
+                    connection={collaboration.connection}
+                  />
+                </>
+              }
+            />
+          </div>
+          {presentation.notice ? (
+            <p role="status" className="border-b px-3 py-2 text-sm">
+              {presentation.notice}
+            </p>
+          ) : null}
+          {reactions.error && !presenting ? (
+            <div
+              role="alert"
+              className="bg-background flex items-center gap-2 border-b px-3 py-2 text-sm"
+            >
+              <p>{reactions.error}</p>
+              <Button variant="ghost" onClick={reactions.retry}>
+                Retry reactions
+              </Button>
+            </div>
+          ) : null}
+          {error || documentError || uploads.error ? (
+            <div
+              className="bg-background flex items-center justify-between gap-2 border-b px-3 py-2 text-sm"
+              role="alert"
+            >
+              <p>{error ?? documentError ?? uploads.error}</p>
+              <Button
+                onClick={() => {
+                  setError(null);
+                  dismissError();
+                  uploads.dismiss();
+                }}
+                variant="ghost"
+              >
+                Dismiss
+              </Button>
+              {hasReload ? (
+                <Button
+                  onClick={() => {
+                    dismissError();
+                    refreshBoard();
+                  }}
+                  variant="secondary"
+                >
+                  Reload latest state
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+          <main
+            className="relative flex min-h-0 flex-1"
+            aria-label="Board workspace"
+          >
+            {desktop || (!presenting && panel === "OUTLINE") ? (
+              <BoardPanel
+                title="Layers"
+                visible={!presenting && (!desktop || panels.layers)}
+                docked
+                side="left"
+                tab="OUTLINE"
+                onTab={desktop ? undefined : openPanel}
+                onClose={() =>
+                  desktop ? panels.toggle("layers") : setPanel(null)
+                }
+              >
+                <BoardOutline
+                  active={!desktop || panels.layers}
+                  rows={rows}
+                  objectIndex={objectIndex}
+                  selected={selected}
+                  onUpdate={canMutate ? update : undefined}
+                  onHover={setHovered}
+                  onDrop={canMutate ? handleLayerDrop : undefined}
+                  isBusy={handleLayerBusy}
+                  onContext={handleLayerContext}
+                  onSelect={select}
+                  onLocate={handleLayerLocate}
+                />
+                <Button
+                  className="mt-4 w-full"
+                  disabled={!selectedRows.length}
+                  onClick={() => setPanel("INSPECTOR")}
+                  variant="secondary"
+                >
+                  Inspect selected objects
+                </Button>
+              </BoardPanel>
+            ) : null}
+            <BoardCanvas
+              ref={canvasApi}
+              presentationSectionId={presentation.state?.id ?? null}
+              objectIndex={objectIndex}
+              board={board}
+              userId={currentUser.id}
+              rows={rows}
+              highlighted={hovered}
+              reactions={reactions.rows}
+              reactionPending={reactions.pending}
+              members={members}
+              onReaction={reactions.toggle}
+              onVisibleObjects={setVisibleObjectIds}
+              onStyle={handleStyle}
+              onReplace={imageRequest}
+              onObjectComment={handleObjectComment}
+              selected={selected}
+              select={select}
+              onSelection={setSelected}
+              tool={tool}
+              setTool={changeTool}
+              placementImage={placementImages?.url}
+              shape={shape}
+              setShape={setShape}
+              editable={editable}
+              canMutate={canMutate && !presenting}
+              busy={busy}
+              canUndo={history.past.length > 0}
+              canRedo={history.future.length > 0}
+              navigate={navigate}
+              action={action}
+              shortcuts={shortcuts}
+              onMove={(dx, dy) =>
+                report(() => moveObjects(getRows(), selected, dx, dy))
+              }
+              onInsert={insert}
+              onImageRequest={(position) => {
+                imageRequest(undefined, position);
+              }}
+              onFiles={uploads.add}
+              onPanel={openPanel}
+              collaboration={collaboration}
+              minimap={minimap}
+              grid={grid}
+              snapObjects={snapObjects}
+              snapGrid={snapGrid}
+              onContext={handleCanvasContext}
+              onClipboard={clipboardAction}
+              hasClipboard={clipboard.length > 0}
+              commentCounts={commentCounts}
+              imageUrl={imageUrl}
+              retryImage={retryImage}
+              onContentCommit={onContentCommit}
+              onResizeCommit={onResizeCommit}
+              startInteraction={startInteraction}
+              cancelInteraction={cancelInteraction}
+              getRows={getRows}
+              isBusy={interactionBusy}
+              commit={commit}
+              onError={setError}
+            />
+            {!presenting &&
+            (desktop
+              ? panels.properties && panel !== "COMMENTS"
+              : panel === "INSPECTOR") ? (
+              <BoardPanel
+                title="Properties"
+                docked
+                tab="INSPECTOR"
+                onTab={desktop ? undefined : openPanel}
+                onClose={() =>
+                  desktop ? panels.toggle("properties") : setPanel(null)
+                }
+              >
+                {!selectedRows.length ? (
+                  <div className="space-y-4 text-sm">
+                    <p className="font-medium">{title}</p>
+                    <p className="text-muted-foreground">
+                      {rows.length} objects · Select on the canvas or in Layers
+                      to edit.
+                    </p>
+                    <Button
+                      variant="secondary"
+                      onClick={() => canvasApi.current?.fit()}
+                    >
+                      Fit board
+                    </Button>
+                    <label className="flex min-h-10 items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={grid}
+                        onChange={() => setGrid((v) => !v)}
+                      />
+                      Dot grid
+                    </label>
+                  </div>
+                ) : (
+                  <BoardInspector
+                    members={members}
+                    key={selectedRows.map((row) => row.id).join(":")}
+                    rows={rows}
+                    selection={selectedRows}
+                    canMutate={canMutate}
+                    busy={busy || dirty}
+                    onUpdate={update}
+                    onAction={action}
+                    onAlign={(alignment) =>
+                      report(() => alignObjects(getRows(), selected, alignment))
+                    }
+                    onMembership={(id) =>
+                      report(() => assignSection(getRows(), selected, id))
+                    }
+                    onReplace={imageRequest}
+                    onSelect={(id) => select(id)}
+                  />
+                )}
+              </BoardPanel>
+            ) : null}
             <WhiteboardCommentsPanel
+              docked
+              onLocate={(id) => canvasApi.current?.locate(id)}
+              objectNames={
+                new Map(rows.map((row) => [row.id, objectTitle(row)]))
+              }
               boardId={board.id}
               canMutate={canMutate}
               comments={comments}
               currentUserId={currentUser.id}
               members={members}
-              onComment={(comment) =>
-                setComments((current) =>
-                  reconcileBoardComment(current, comment),
-                )
+              onComment={onComment}
+              selectedElementId={
+                selectedRows.length === 1 ? selectedRows[0]!.id : null
               }
-              selectedElementId={selectedId}
+              controlledOpen={!presenting && panel === "COMMENTS"}
+              onOpenChange={(open) => openPanel(open ? "COMMENTS" : null)}
+              loading={commentsLoading}
+              loadError={commentsError}
+              onLoad={() => void loadComments(Boolean(beforeComment))}
+              hasEarlier={Boolean(beforeComment)}
             />
-          </div>
-        }
-        canMutate={canMutate}
-        onRename={saveTitle}
-        onRenamingChange={setRenaming}
-        onRetry={lastRetry ? () => runMutation(lastRetry) : undefined}
-        renaming={renaming}
-        saveState={saveState}
-        setTitle={setTitle}
-        title={title}
-      />
-      {error ? (
-        <div
-          className="bg-destructive/10 text-destructive border-b px-4 py-2 text-sm"
-          role="alert"
-        >
-          {error}
-        </div>
-      ) : null}
-      <div
-        className="relative min-h-0 flex-1"
-        data-testid="whiteboard-canvas"
-        onPointerMove={(event) => {
-          const position = flowRef.current?.screenToFlowPosition({
-            x: event.clientX,
-            y: event.clientY,
-          });
-          if (position) collaborationRef.current?.updateCursor(position);
-        }}
-      >
-        <ReactFlow<WhiteboardFlowNode>
-          deleteKeyCode={null}
-          fitView
-          maxZoom={2.5}
-          minZoom={0.15}
-          nodeTypes={nodeTypes}
-          nodes={renderedNodes}
-          nodesConnectable={false}
-          nodesDraggable={canMutate && activeTool === "SELECT"}
-          onInit={(instance) => {
-            flowRef.current = instance;
-          }}
-          onNodeDragStop={(_event, node) => {
-            if (!canMutate || mutationLockRef.current) return;
-            recordSnapshot(
-              historyRef.current.present.map((element) =>
-                element.id === node.id
-                  ? { ...element, x: node.position.x, y: node.position.y }
-                  : element,
-              ),
-            );
-            persistUpdate(node.id, {
-              elementId: node.id,
-              x: node.position.x,
-              y: node.position.y,
-            });
-          }}
-          onNodeDragStart={(_event, node) =>
-            activeElementsRef.current.add(node.id)
-          }
-          onNodesChange={(changes: NodeChange<WhiteboardFlowNode>[]) =>
-            setNodes((current) => applyNodeChanges(changes, current))
-          }
-          onMove={(_event, nextViewport) => setViewport(nextViewport)}
-          onPaneClick={handlePaneClick}
-          onSelectionChange={({ nodes: selected }) =>
-            setSelectedId(selected[0]?.id ?? null)
-          }
-          panOnDrag={activeTool === "PAN" ? true : [1, 2]}
-          selectionOnDrag={activeTool === "SELECT"}
-        >
-          <Background
-            color="var(--border)"
-            gap={20}
-            size={1}
-            variant={BackgroundVariant.Dots}
-          />
-          <Controls position="bottom-right" showInteractive={false} />
-        </ReactFlow>
-        <WhiteboardCursors
-          colorAssignments={collaboratorColors}
-          currentUserId={currentUser.id}
-          cursors={remoteCursors}
-          presence={presence}
-          viewport={viewport}
-        />
-        <div className="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2">
-          <div className="pointer-events-auto">
-            <WhiteboardToolbar
-              activeTool={activeTool}
-              busy={pending}
-              canMutate={canMutate}
-              canRedo={history.future.length > 0}
-              canUndo={history.past.length > 0}
-              onImageRequest={requestImagePicker}
-              onRedo={() => navigateHistory("REDO")}
-              onToolChange={setActiveTool}
-              onUndo={() => navigateHistory("UNDO")}
-            />
-          </div>
-        </div>
-        {selectedId && canMutate ? (
-          <SelectionToolbar
-            element={selectedElement}
-            onLayerChange={changeLayer}
-            onRemove={removeSelected}
-            onShapeChange={(shape) => {
-              if (!selectedElement) return;
-              onContentCommit(selectedElement.id, {
-                ...selectedElement.content,
-                shape,
-              });
-            }}
-            pending={pending}
-          />
-        ) : null}
-        {selectedElement && canMutate ? (
-          <div className="pointer-events-none absolute top-16 left-1/2 z-10 -translate-x-1/2">
-            <div className="pointer-events-auto">
-              <WhiteboardInspector
-                element={selectedElement}
-                onStyleChange={(style) =>
-                  onStyleCommit(selectedElement.id, style)
-                }
-                pending={pending}
-              />
+          </main>
+          {uploads.items.length ? (
+            <div
+              aria-label="Image uploads"
+              className="bg-background max-h-40 overflow-y-auto border-t px-3 py-2 text-xs"
+            >
+              <div className="flex items-center justify-between">
+                <p>Images · up to 10 MB each</p>
+                <Button
+                  disabled={uploads.pending}
+                  onClick={uploads.dismiss}
+                  variant="ghost"
+                >
+                  Dismiss uploads
+                </Button>
+              </div>
+              {uploads.items.map((item) => (
+                <div className="flex items-center gap-2 py-1" key={item.id}>
+                  <span className="min-w-0 flex-1 truncate">
+                    {item.file.name}
+                  </span>
+                  <span role={item.state === "Error" ? "alert" : "status"}>
+                    {item.error ?? item.state}
+                  </span>
+                  {item.state === "Error" ? (
+                    <Button
+                      onClick={() => uploads.retry(item.id)}
+                      variant="ghost"
+                    >
+                      Retry file
+                    </Button>
+                  ) : null}
+                </div>
+              ))}
             </div>
-          </div>
-        ) : null}
-        {!canMutate ? (
-          <p className="bg-background/95 text-muted-foreground absolute bottom-3 left-3 z-10 rounded-md border px-3 py-2 text-xs shadow-sm">
-            View only
-          </p>
-        ) : null}
-        <input
-          accept="image/png,image/jpeg,image/webp"
-          aria-label="Upload board image"
-          className="sr-only"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0];
-            if (file) uploadImage(file);
-            event.currentTarget.value = "";
-          }}
-          ref={imageInputRef}
-          type="file"
-        />
-      </div>
-    </section>
+          ) : null}
+          <input
+            accept="image/png,image/jpeg,image/webp"
+            aria-label="Upload board images"
+            className="sr-only"
+            onChange={(event) => {
+              const files = Array.from(event.currentTarget.files ?? []);
+              if (replacement.current)
+                uploads.add(
+                  files.slice(0, 1),
+                  imagePosition.current,
+                  replacement.current,
+                );
+              else if (files.length) {
+                const invalid = files
+                  .map((file) => boardImageFileSchema.safeParse(file))
+                  .find((result) => !result.success);
+                if (files.length > 10 || invalid)
+                  setError(
+                    invalid && !invalid.success
+                      ? invalid.error.issues[0]!.message
+                      : "Choose up to 10 images per batch.",
+                  );
+                else {
+                  let url: string | undefined;
+                  try {
+                    url = URL.createObjectURL(files[0]!);
+                  } catch {
+                    /* A placeholder remains available. */
+                  }
+                  setPlacementImages({ files, url });
+                  setTool("IMAGE");
+                  requestAnimationFrame(focusBoardCanvas);
+                }
+              }
+              event.currentTarget.value = "";
+              replacement.current = undefined;
+            }}
+            ref={picker}
+            tabIndex={-1}
+            type="file"
+          />
+          <Dialog
+            className="max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
+            open={archiveChoice}
+            onOpenChange={setArchiveChoice}
+            title="Archive Section"
+            description="Choose what happens to its children. This is one atomic, undoable operation."
+          >
+            <div className="flex flex-wrap gap-2 p-5">
+              <Button onClick={() => archive(true)} variant="secondary">
+                Keep children on board
+              </Button>
+              <Button onClick={() => archive(false)} variant="destructive">
+                Archive Section and children
+              </Button>
+            </div>
+          </Dialog>
+          <BoardLinkDialog
+            open={Boolean(linkAt)}
+            onClose={() => setLinkAt(null)}
+            busy={busy}
+            onCreate={async (content) => {
+              const row = createLocalObject(
+                "LINK",
+                board.id,
+                board.organization_id,
+                currentUser.id,
+                getRows(),
+                linkAt ?? canvasApi.current?.center() ?? { x: 0, y: 0 },
+                { content },
+              );
+              const saved = await commit([...getRows(), row]);
+              if (saved) {
+                setSelected([row.id]);
+                setLinkAt(null);
+              }
+              return saved;
+            }}
+          />
+          {context ? (
+            <BoardContextMenu
+              keyboard={context.keyboard}
+              position={context}
+              commands={contextCommands}
+              onClose={() => setContext(null)}
+            />
+          ) : null}
+          <BoardHelp open={help} onOpenChange={setHelp} />
+          {nativeRequest && !presenting && canMutate ? (
+            <BoardEntityDialog
+              key={JSON.stringify(nativeRequest)}
+              scope={entityScope}
+              request={nativeRequest}
+              members={members}
+              onClose={() => setNativeRequest(null)}
+              onResume={(attemptId) =>
+                setNativeRequest({ mode: "recover", attemptId })
+              }
+              onInsert={insertNative}
+              onLinked={(row) => {
+                receive(row);
+                setSelected([row.id]);
+              }}
+              onRefresh={() => nativeItems.refresh(true)}
+            />
+          ) : null}
+          <Dialog
+            open={presentation.unavailable}
+            onOpenChange={presentation.setUnavailable}
+            title="Create Sections to present this Board"
+            description="Sections organize related content and become presentation stops."
+          >
+            <div className="p-5">
+              <Button onClick={() => presentation.setUnavailable(false)}>
+                Back to Board
+              </Button>
+            </div>
+          </Dialog>
+        </div>
+      </BoardNativeProviders>
+    </BoardVotingContext.Provider>
   );
 }

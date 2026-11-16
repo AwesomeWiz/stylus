@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 
 import type {
   KnowledgeMemoryRow,
@@ -15,6 +16,21 @@ import type { MemoryFilters } from "../schemas";
 
 const memoryColumns =
   "archived_at, archived_by, content, created_at, created_by, domain, effective_at, id, kind, metadata, organization_id, plugin_id, provenance, search_vector, source_reference, title, updated_at, updated_by";
+
+/** Exact canonical opener; RLS checks current membership on this data boundary. */
+export async function getCompanyMemory(organizationId: string, id: string) {
+  if (!z.uuid().safeParse(id).success) return [];
+  const db = await createServerSupabaseClient(),
+    result = await db
+      .from("knowledge_memories")
+      .select(memoryColumns)
+      .eq("organization_id", organizationId)
+      .eq("domain", "company")
+      .eq("id", id)
+      .maybeSingle();
+  if (result.error) throw Error("Company Memory could not load.");
+  return result.data ? [result.data] : [];
+}
 
 export async function getCompanyKnowledge(
   organizationId: string,

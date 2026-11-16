@@ -58,7 +58,15 @@ describe("Strategic Review panel", () => {
 
   it("submits one exact Reel Brief version through the pending-safe action", async () => {
     render(<StrategicReviewPanel {...baseProps} />);
-    expect(screen.getByLabelText("Reel Brief version")).toHaveValue(brief.id);
+    const briefControl = screen.getByRole("combobox", {
+      name: "Reel Brief version",
+    });
+    expect(briefControl).toHaveTextContent(brief.title);
+    expect(
+      new FormData(briefControl.closest("form")!).get(
+        "sourceReelBriefVersionId",
+      ),
+    ).toBe(brief.id);
     fireEvent.click(
       screen.getByRole("button", { name: "Run strategic review" }),
     );

@@ -116,6 +116,7 @@ function Field({
         {label}
       </label>
       <Input
+        className="text-base sm:text-sm"
         aria-describedby={describedBy}
         aria-invalid={Boolean(error)}
         autoComplete={autoComplete}

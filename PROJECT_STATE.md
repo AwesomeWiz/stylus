@@ -1,10 +1,1658 @@
 # Stylus — Project State
 
-Last Updated: 2026-09-05
+Last Updated: 2026-11-16
 
 ## Overall Status
 
-FINAL PRODUCTION DESIGN SYSTEM VERIFIED / FINAL VISUAL QA READY
+Current test-only follow-up: native #23 at `ce61c1c` fails on a strict selector
+matching both the loading status and Board workspace `<main>` elements. Use the
+unique semantic main landmark and accessible level-one heading, preserving all
+route/auth/error checks. The focused overlap regression passes in Chromium,
+Firefox and WebKit; full authenticated smoke and native release validation at
+the new exact commit remain required. No application/security/schema changes.
+The successful #21 evidence below applies to its original candidate only.
+
+REDESIGN-009 engineering and native release-pipeline acceptance: **PASS**.
+Exact CI-tested release SHA: `5c99aaea122338556d96703f0b32e90b6de4ed83`.
+[Native CircleCI #21](https://app.circleci.com/workflow/fb7f1bdd-b38e-4f34-947e-7a0d318273cb/job/a344e292-252d-438f-9258-14679aca6c3d)
+and its complete logs are verified successful. Fresh install, all 53 migrations
+from zero, isolated/native SQL (30 suites / 1,138 assertions), upgrade, real
+OWNER/MEMBER/VIEWER Auth/JWT/role checks, 36 worker tests, 1,531 web tests, 64 demo
+tests, lint/typechecks/security and both production builds pass. All nine browser
+cases pass in Chromium/Firefox/WebKit with one worker and zero retries. Both full
+seed/verification/exact-cleanup rounds, unchanged control baseline, final control
+cleanup and no tenant/Auth/Storage orphans are verified. The owned stack stops.
+
+**READY TO MAKE PUBLIC: NO.** The supported-host clean-clone signup/organization/
+onboarding walkthrough and physical NVDA checks remain unperformed. GitHub live
+security/branch/reviewer settings, author/history privacy, artifact legal/source
+obligations and applicable public Google OAuth verification still need maintainer
+confirmation. No failing or unexecuted manual check is relabeled as passed.
+See [release audit](docs/RELEASE_AUDIT.md) and [checklist](docs/RELEASE_CHECKLIST.md).
+
+Acceptance closure `cdd223862801b3689da5fbf15112dc81bb5b00c5` changes exactly seven
+Markdown files after the tested SHA. No later release commits are found on a fresh
+remote fetch. This final reconciliation adds documentation only and is intended
+for the release PR; executable inputs remain identical to the tested candidate.
+Only Markdown/link/diff and requested branch/history checks are repeated.
+
+Both local and remote main remain at `5b7e76a0fe6a4e80f17e14c04b119a84b43668a9`,
+an ancestor of the release head, with no main-only commits. The original main
+checkout's 58 tracked modifications and 25 untracked files outside `.worktrees`
+are preserved by content/status comparison. Merge preview has no conflicts and
+matches the release tree. Recommend a reviewed merge commit preserving ancestry;
+validate the eventual actual main merge SHA, which does not exist before merge.
+
+GitHub already reports PUBLIC visibility; this task does not change it. All 31
+advertised branches and zero tags are reviewed. Reachable-history secrets scan
+passes; no committed environment/QA artifacts are found in those remote refs.
+Historical personal author metadata, example-brand/domain and hosted-project
+references still need review, and the separate old open-source branch has Apache
+licensing rather than this candidate's AGPL license. No refs/history are deleted
+or rewritten. See the release audit for scope and exact reconciliation evidence.
+No hosted database access, agents, automatic merge, tag or visibility change.
+
+## Earlier verification records
+
+REDESIGN-009 inventory/round-trip follow-up: native diagnostic #12 at `8a182d9`
+fails before seeding because the CLI emits a plain JSON array outside agent mode,
+but the adapter unconditionally reads `.rows`. The resulting undefined value is
+indexed by the catalog consumer. The pinned CLI formatter confirms the contract;
+this is not an empty catalog or a permission-denied query. Output now pins
+non-agent JSON and validates the complete transport/result shape. Private logs
+preserve exit/signal/spawn errors and both output streams. Catalog coverage,
+primary keys, provenance and tenant identities must be complete before empty
+tenant records can count as verified absence.
+
+The entire actual round-trip and Auth-smoke sources now execute in the SQL
+contract regression, including both seed rounds, CLI response decoding, exact
+cleanup and before/after preservation checks. This caught two later defects:
+team verification now uses the existing directory RPC (direct membership reads
+are own-user only), and Auth-smoke tasks use database-generated IDs because the
+browser INSERT grant excludes `id`. Returned IDs are journaled before update.
+Smoke-inventory reconciliation permits an already-recorded exact identity once;
+unexpected rows/provenance still stop cleanup. Missing/changed baseline data stops
+before deletion. The baseline includes actual control content/Auth identity and
+fresh-VM Auth-ID/Storage inventories, with validated genuine empty Storage results.
+
+All 63 demo regressions, seven release-helper tests, lint/typechecks and 30 SQL
+suites / 1,138 assertions pass locally with 53 unchanged migrations. Auth/Storage
+transport is synthetic in the SQL test; no real Supabase PASS is claimed. The
+requested preflight branch is fast-forwarded to
+`eeab04337322438985d8e6c6845aa3517350b194`, incorporating the later 009 hardening.
+Native triggering still returns 404 through CLI and documented v3 API; automatic
+compatibility execution has ended. An owner-started native diagnostic at that
+exact SHA is requested. Hosted data, production grants, RLS, migrations,
+dependencies and the lockfile remain untouched. No agents/merge/tag/publication.
+
+Owner-started native run #15 confirms the inventory/baseline repair at `eeab043`,
+then fails at MEMBER logout: the new data validator incorrectly required `data`
+from `auth.signOut()`, whose documented SDK result is error-only. Explicit logout
+success now requires `{ error: null }`; data-bearing queries/RPCs still require
+their data field. The installed Auth and Storage SDK implementations now run
+inside the complete controller regression with fenced synthetic HTTP, replacing
+handwritten SDK result mocks. All 64 demo tests and seven release-helper tests
+pass, including actual SDK account/session/logout/upload/info/download/remove
+transformations, full SQL roles and all round-trip phases. Lint, typechecks,
+both production builds, formatting, 190 links, secret scan and workflow/Bash
+checks pass. The full real Supabase round trip remains pending a new native run;
+no PASS is inferred from #15 or local synthetic transport.
+
+REDESIGN-009 complete demo-seed repair is in progress from `e5fe80e`.
+The entire interaction/role audit is in docs/DEMO.md. Direct service membership
+writes are replaced by OWNER invitations and each teammate's authenticated
+acceptance. Administrative research SQL inserts are replaced by the existing
+bounded service RPC lifecycle, cancelled before synthesis. All remaining fixture
+writes use existing authorized OWNER interfaces. A private authored PNG now has
+exact path/Storage UUID/hash verification and guarded removal before tenant
+deletion. Hosted seeding/inspection is refused; no hosted backend was accessed.
+
+Nineteen demo tests pass, including the complete actual seed source and cleanup
+twice against all 53 unchanged migrations/grants/RLS in isolated PostgreSQL with
+synthetic Auth/Storage transport. All 30 isolated SQL suites / 1,138 assertions,
+release-helper tests, lint, both typechecks and both production builds pass.
+The complete web suite passes 267 files / 1,531 tests; all 36 worker tests pass.
+Upgrade, formatting, 189 relative links and license checks pass. The new real CircleCI
+round-trip gate seeds/cleans twice, verifies zero AI/reports and exact absence,
+preserves an independently recorded control tenant/content, and retains the
+second fixture for real Auth/JWT/browser checks before final guarded cleanup.
+Only the smoke's two preallocated tasks/four exact trigger events can extend its
+cleanup inventory; any other delta stops cleanup.
+
+Real Supabase and full release acceptance are still pending. CircleCI CLI auth
+reads native logs successfully; the existing native failure is confirmed at
+membership 42501. Native manual trigger returns 404, cancellation returns 403.
+The retained diagnostic branch `cci/preflight/demo-seed-20261116-a` at
+`8a182d92d2fbc0f8a7e299e147015ec9fa987e3c` automatically selected the older
+compatibility pipeline, not the required native definition. The owner has been
+asked to start `release-machine-ci` explicitly on that diagnostic branch.
+No real seed/cleanup PASS or public-release readiness is claimed.
+No production grants, RLS, migrations, dependency/lockfile or application changes.
+The initial diagnostic snapshot predates final inventory normalization, Storage
+identity denial checks and shared verification-query coverage; the final 009 SHA
+must run the full native workflow. Official CircleCI config/Bash validation and
+candidate-tree secret scanning pass. The unchanged high-severity npm audit gate
+passes with seven moderate lint-tool-chain findings (minimatch advisory
+GHSA-g3hv-75wg-m249); dependency remediation is outside this seed-only repair.
+
+REDESIGN-009 demo verification 42501: remote branch and CircleCI release failure
+both identify exact candidate `227c7cf`. The owner reports fresh Docker, migrations
+and SQL/RLS now pass; seeding fails at the service-key admin client's direct
+organizations SELECT. The seed already has an authenticated fictional owner and
+has bootstrapped its organization. Shared exact-ID verification now uses that
+owner's existing RLS read path, both during setup and after owner sign-in during
+cleanup. It checks the recorded organization UUID, name and creator UUID; missing
+or mismatched identities fail without fallback searches. Auth administration,
+exact account checks, complete row inventory and atomic owner deletion remain.
+
+Focused verification passes 13 demo tests, including actual seed-through-verify
+and cleanup source executed with synthetic transports/in-memory files, and 13
+organization pgTAP assertions. Owner reads succeed while direct service-role
+organization reads remain denied. Full isolated SQL passes 30 suites / 1,138
+assertions / 53 unchanged migrations. The focused Node tests join the existing
+sequential npm test gates; no dependency or lockfile change. Application grants,
+RLS, production behavior and migrations are unchanged. A full live demo seed
+remains pending the new release-machine-ci run; no hosted backend, local Docker
+or Windows virtualization was used.
+Lint, both typechecks, repository formatting, 188 relative links, candidate-tree
+secret scanning and diff checks pass. Package metadata differs only by the added
+demo test command/gate; the lockfile and application/CI/migration files match base.
+
+REDESIGN-009 SQL role-boundary repair: the owner reports Docker-backed Supabase,
+local postgres fixture setup, Auth/Storage/pgcrypto and all 53 migrations passing
+on CircleCI candidate `06ecb41`. The following SQL errors reproduce locally when
+the isolated bootstrap's accidental blanket public-table grant to service_role
+is removed. Both harness variants have postgres session/current identity; the
+grant masks intra-suite service-role fixture reads, not a connection, ordering
+or transaction-reset defect. Ask Council fails before its RPC during argument-ID
+lookup; six other suites inspect protected state without restoring postgres.
+
+The seven suites now capture fixture UUIDs under postgres in transaction-local
+test settings, keep all original RPC operations under their intended roles, and
+reset for protected result inspection. The isolated bootstrap no longer grants
+every public table to service_role. Production grants, RLS, functions, migrations,
+application code, dependencies and both CI configurations remain unchanged.
+All 255 original focused assertions retain labels/order, and 171 public function
+references retain their original roles. A new administrator-restoration assertion
+and 18 release-security assertions enforce eight direct-read denials plus explicit
+integration access. The new denial guards reject the old bootstrap with 16
+expected failures, proving sensitivity to the original masking defect.
+
+Focused suites pass individually in the requested order: Ask Council 38, Creative
+Council 21, External Research 54, Heavy Jobs 59, Reminders 32, Strategic Review 29,
+Windows Workers 23; release-security passes 104. Full isolated SQL passes 30/30
+suites / 1,134 assertions / 53 migrations, and the pre-integration upgrade passes.
+Lint, both typechecks, repository formatting, 188 relative links, candidate-tree
+secret scanning and diff checks pass; production build inputs are unchanged.
+Native SQL rerun, remaining real Auth/JWT/Core/browser/build gates and complete
+CircleCI acceptance remain pending at the new exact candidate. No hosted backend
+or local Docker/virtualization was used for this repair.
+
+REDESIGN-009 direct CircleCI machine pipeline: `.circleci/config.yml` adds one
+sequential Ubuntu 24.04 VM job with direct local Docker, exact `CIRCLE_SHA1`
+verification, Node 24.22.1, a fresh npm cache and deterministic `npm ci`. The
+existing GitHub Actions workflow is unchanged. Experimental Supabase is disabled;
+fresh-container/volume guards precede standard Docker-backed startup. Real local
+status, all repository migration versions, Auth/Storage/pgcrypto and the postgres
+fixture connection/grants are inspected before the complete pgTAP suite. No RLS,
+SQL fixture, migration, dependency or lockfile change is made for the reported
+compatibility-layer `worker_registrations` denial.
+
+The existing three-account fictional seeder exercises real Auth creation and
+owner organization bootstrap. An additional local-only gate logs in OWNER,
+MEMBER and VIEWER, verifies each JWT with Auth, tests Core reads/writes and
+management restrictions, and confirms VIEWER writes leave the original unchanged.
+It uses public-key/password sessions for assertions, never service-role
+impersonation. All previous static/security, isolated SQL/upgrade, web/worker,
+production build and three-engine browser gates remain required. Cleanup always
+stops only the stack this job attempted to create; raw logs/credentials/traces
+are not uploaded. Hosted Supabase and external providers are not used.
+
+CircleCI's official CLI 1.15.0 validates the configuration/public orb. Seven local
+guard/redaction tests, all run-step Bash syntax, script/package references,
+simulated startup failure/cleanup ownership, lint and both typechecks pass.
+Formatting, 188 documentation links, the Git-visible candidate secret scan and
+diff checks pass; all validation runners were sequential.
+The existing GitHub workflow and application build inputs remain unchanged.
+The owner must configure
+CircleCI to read `.circleci/config.yml` directly; the compatibility pipeline does
+not automatically switch. Full machine execution and release acceptance remain
+pending at the new exact candidate, including reproduction/classification of
+any SQL failure. Windows virtualization remains disabled and untouched.
+
+REDESIGN-009.1 startup diagnosis: CircleCI passed npm installation and the worker
+path fix at `7aa7924`, then failed Supabase startup with both output streams hidden
+in a file. CI now reports safe platform/tool/environment-presence diagnostics,
+bounded artifact-host reachability probes and sanitized failure output while
+preserving the startup exit status. This is a diagnostic candidate, not native
+acceptance. Locked CLI 2.115.0 top-level start/help uses legacy Docker; the repo
+does not select the current documented experimental native runtime. Actual
+CircleCI UID/architecture/glibc, startup error, downloads, Postgres, Auth and all
+53 migrations still need remote evidence. No runtime switch, dependency change,
+root workaround, health bypass or hosted database operation is included.
+Local verification passes two log-redaction tests, parsed workflow comparison
+(all other gates unchanged), Bash syntax and simulated success/failure exit
+paths, lint and both typechecks. Application build inputs remain unchanged.
+
+REDESIGN-009.1 follow-up: CircleCI confirmed the npm-cache fix at `ca86b31`,
+then exposed host-dependent Windows model-path basename handling on Linux.
+Transcript model metadata remains filename-only; execution retains the full
+configured path. The four path-form regression cases, media suite (22), full
+worker suite (36), worker typecheck and build pass. Remote full-workflow/native
+acceptance remains pending on the new candidate recorded in the final handoff.
+
+REDESIGN-009 LOCAL VALIDATION VERIFIED / PUBLIC RELEASE GATES OPEN
+
+Dedicated `codex/redesign-009-release-hardening` worktree from exact
+`72b990e221a2c353697f8edb5f64466d115feb6c`; the dirty root and 008's generated
+Next.js development-type change remain untouched. Main agent only, sequential
+runners. REDESIGN-009.1 authorizes normal task-branch pushes for remote CI;
+no merge, tag or visibility change is authorized. Scope is release
+hardening, documentation, legal/provenance, reproducibility, CI, fictional demo
+media, accessibility/browser/security and measured performance fixes; feature freeze.
+
+The maintainer confirmed public redistribution of the project-created Stylus logo
+and source raster, with no extra attribution. Baseline has no project LICENSE,
+despite the brief's Apache assumption. Reviewed dependency license expressions
+and existing OFL font provenance before adding canonical AGPL-3.0-only text and
+package metadata. Initial version recommendation is `0.1.0-beta.1`: all packages
+were 0.1.0 and no tags exist. Source-only third-party obligations are being recorded.
+
+Gitleaks 8.30.1 all-reachable-history and Git-visible candidate-tree scans have
+zero findings. Current text/path review finds no known private business/project
+reference, tracked environment or QA artifact; one personal Git author mailbox is
+flagged for maintainer review without rewriting history. Final-candidate scans
+remain required. Compatible dependency updates address reported critical/high
+runtime issues; seven moderate lint-tooling findings have a documented controlled
+development-only reachability assessment. The final sequential runtime run passes
+267 web files / 1,531 tests and 32 worker tests. Lint, both typechecks and full
+formatting pass. LF checkout rules fix Windows autocrlf-only formatter failures
+without changing canonical Git source or binary assets.
+
+The isolated SQL runner uses real pgcrypto, no privilege aliases, no environment
+or hosted connection. It passes all 30 suites / 1,115 assertions over 53 migrations.
+The pre-008 upgrade preserves organization/Task/Board/object data and permitted
+authenticated edits. All 71 organization-keyed tables have RLS; all 149 application
+security-definer functions pin empty search paths. See docs/RLS_REVIEW.md.
+
+Mirroring Supabase default grants exposed the original Boards migration's missing
+table-level revocation. Its identity-update denial assertion failed. A read-only
+hosted query confirms broad anon/authenticated grants there. New forward-only
+`20261115000100_board_explicit_browser_grants.sql` removes those grants and
+restores existing permitted columns, including stable upload IDs. No data, RLS,
+RPC or applied migration changes. Six new ACL checks pass; two anonymous-read
+assertions require the stronger 42501 outcome. The supported linked dry run lists
+only this correction. The owner authorized application and the exact fictional
+demo; the correction is now applied. All 52 hosted versions match; explicit
+column/RPC checks pass. No applied migration was rewritten.
+
+The production worker/web build passes with optional AI/providers absent.
+Chromium, Edge, Firefox and WebKit pass eight public production-browser checks:
+semantic/axe checks, Skip/Enter focus, responsive widths, themes and reduced motion.
+Native Windows WebKit requires explicit zero tabindex for skip-link Tab access;
+the main target is focusable. A sandboxed Firefox crash was rerun successfully
+with normal process permissions. Authenticated demo/media and actual Task/Board
+transport measurements now pass: all 12 final four-engine smoke checks, 64
+authenticated responsive combinations, Task failure/retry and real 50+5 comment
+pagination. Three-sample same-fixture comparisons reduce decoded Task documents
+from 656,412 to 275,882 bytes and median related/discussion readiness from 8,818
+to 3,320ms. Actual 200/300/500-object Board checks and detailed creation/group/
+menu/upload/persistence flows in Chromium, Edge, Firefox and WebKit pass. Two
+fictional users converge through private Realtime; VIEWER remains read-only.
+Memory filter labels, real PostgreSQL cursor offsets and unnecessary Board
+subscription restarts are corrected. Board cursor decoration is hidden from the
+accessibility tree; low-zoom inline edit targets have individually measured
+same-page equivalent controls. See RELEASE_AUDIT for raw-finding interpretation.
+Eight screenshots, two GIFs and two decoded/seeked masters show actual fictional UI.
+
+Exactly three users and one organization were used. The final exact-ID inventory
+contains 1,096 rows across 33 demo tables; every created object/image ID is recorded.
+All four exact private image assets were removed and verified absent. The existing
+organization-deletion RPC then failed with a membership/Board FK ordering error;
+that transaction rolled back and no accounts were deleted in that attempt.
+Guarded cleanup initially stopped for separately requested approval of the forward
+`20261115000200_atomic_organization_deletion.sql` repair. Its 16 root tenant
+cascade links and 133 deferrable reference changes preserve existing keys, initial
+modes and records on deployment. History remains immutable while its organization
+exists; owner/name checks and RLS remain. Populated Core/Research/Performance/
+Council deletion and all permanent isolation/immutability tests pass locally.
+The owner separately approved it; the supported dry run listed only this repair,
+and deployment is complete. All 53 hosted versions and Board column/RPC checks
+match. Guarded cleanup then succeeded: all 1,096 inventoried rows, the exact demo
+organization and all three Auth accounts are verified absent. The four exact
+Storage assets are absent. Non-demo aggregate account/org/provider counts match
+before and after; no full existing-content fingerprint is claimed. No AI or
+provider was invoked. The password and task-only hosted/browser credential copies
+are removed; the application uses restored placeholder configuration.
+Final lint, both typechecks, worker/web production builds, SQL/upgrade, license
+inventory, formatting, links and redacted current/history secret scans pass.
+The registry audit passes its high-severity gate with seven documented moderate
+development-only findings and zero high/critical findings. A fresh temporary clone
+with no inherited modules/environment/build output passes `npm ci`, placeholder
+example configuration, formatting, links, license inventory, both typechecks,
+worker/web builds and eight public checks across all four engines. Its tracked
+tree stays clean. Full native authenticated setup remains pending as stated below.
+Runtime/test/schema/package inputs are frozen; final documentation records these
+results. The final handoff and ignored verification manifest identify the exact
+release-candidate SHA. No major new feature or external provider execution was added.
+
+Automatic review rejected a broad existing-data fingerprint query; it was removed
+before execution. The permitted alternative records only aggregate account/org/
+provider-connection counts. Non-demo counts match; no full content comparison is
+claimed. Do not retry the rejected broad query or inventory existing tenants.
+
+The owner reports WSL/Virtual Machine Platform caused a Windows boot failure and
+were disabled. Do not enable them, require Docker or repeat requests to install
+local Supabase. Only Docker-dependent full local Supabase authenticated clean-
+install checks are pending for that reason; isolated SQL, database CI, public
+clean-clone documentation and all independent work continue. These pending checks
+must not be reported passed. Remote CI also requires a later separately authorized
+push. See docs/RELEASE_CHECKLIST.md for the initial checklist and open gates.
+
+## Prior accepted phase
+
+REDESIGN-008 PASS / ACCEPTANCE CLOSED BY REDESIGN-008.1
+
+Dedicated `codex/redesign-008-integrations` worktree, exact clean 007 base
+`6ce67b97ef098c709b8bce02aded0835f1469cc6`. The verified predecessor follow-ups
+were committed before branching; root/user changes are preserved. Main agent
+only, sequential work, no merge/push. Approved scope is GitHub organization App
+access, user-private Drive/Calendar and explicit references on five existing
+entity types, with one confirmed Calendar event write. Boards/AI remain frozen.
+
+Audit: existing organization context/RLS, service-role client, public canonical
+entity registry/provenance, trusted plugin host and shared UI are reused. No
+existing OAuth/encryption helper was found. Plan: server-only AES-GCM credentials,
+one-time browser/user/org-bound PKCE, additive RLS migrations, bounded adapters,
+Settings management and lazy connected-resource UI, focused security/provider
+tests, then final regression/build and authorized hosted migration verification.
+
+The owner's REDESIGN-008.1 brief records successful live GitHub, Drive and Calendar
+QA, including real Calendar event creation. Those results remain valid: this
+follow-up changes SQL fixtures/documentation only, with no provider, OAuth,
+application, RLS or migration change. Live provider QA is not repeated. Exact
+configuration remains in docs/INTEGRATIONS.md; no credentials or real resource
+names are recorded here. REDESIGN-009 is not started.
+
+## REDESIGN-008.1 acceptance closure
+
+Started at `2bb3bed1f54a88e0805d148e23abe2334763eab0` on the existing branch.
+The pre-existing generated `apps/web/next-env.d.ts` development-path change is
+preserved and excluded from the follow-up commit. Main agent only; sequential
+runners, no merge/push. No new hosted migration or retained test record.
+
+Each legacy suite was run individually before repair. Original sources and all
+49 migrations were also loaded directly from baseline
+`6ce67b97ef098c709b8bce02aded0835f1469cc6`, without resetting the checkout.
+
+| Suite | Original current tree | Baseline | Same root cause |
+| --- | --- | --- | --- |
+| Ask Council | FAIL | FAIL | YES |
+| Competitor analysis | FAIL | FAIL | YES |
+| Windows Workers | FAIL | FAIL | YES |
+
+These are invalid original fixture assumptions, not integration regressions or
+legitimate product semantics superseded since the tests were written:
+
+- Ask Council first stops before assertion 1: `public.has_*_privilege` does not
+  exist (`42883`). Catalog functions belong to `pg_catalog`. Diagnostic aliases
+  exposed assertion 14's integer argument to the existing `smallint` specialist
+  RPC (`42883`) and the later invalid uppercase `UNKNOWN` enum (`22P02`), which
+  also aborts assertion 23's query. AI migration `20260825000900` has always used
+  lowercase `unknown`; Ask Council migration `20260825002000` already declared
+  the smallint parameter. Repairs use the actual namespace/type/enum. Counts,
+  mutation probes and conversation lookups now target the fixture organization,
+  retaining every role, immutability and tenant-denial assertion. This also fixes
+  seven hosted failures caused by unrelated pre-existing conversations.
+- Competitor assertion 10 expected composite-FK rejection `23503`, but received
+  plugin-denial `42501`: Org B's Marketing plugin was never enabled. Its own OWNER
+  now enables it, so the original cross-tenant FK assertion reaches its intended
+  constraint. Assertion 15 then stopped on the private job registry: migration
+  `20260825001100` already revoked browser access before the competitor suite was
+  introduced with `20260825001400`. Only read-only deployment/bucket inspection
+  uses the test owner; authenticated role is restored for archive/restore. Catalog
+  privilege calls use `pg_catalog`. An added assertion proves browser registry
+  reads remain denied; no browser mutation is moved to service-role access.
+- Windows Workers originally appeared to stop on missing `paired` (`42P01`).
+  The prior local bootstrap stripped pgcrypto and supplied only digest, so valid
+  pairing assertion 8 failed first on missing `gen_random_bytes` (`42883`). The
+  installed PGlite package's real pgcrypto extension is now loaded for local QA,
+  without stubs or privilege aliases. Native hosted PostgreSQL and the baseline
+  with real pgcrypto reveal the actual fixture defect: assertion 21 cannot read
+  the service-owned temporary credential table as authenticated (`42501`), so
+  revocation never occurs and assertion 22 sees no exception. A separate temporary
+  table exposes only the worker ID to the authenticated OWNER. The original real
+  revoke and revoked-credential checks pass; an added check denies credential-table
+  reads to that OWNER. Worker runtime and permissions remain unchanged.
+
+Hosted integration regression additionally exposed three global cache counts
+that assumed an empty backend. Those lifecycle assertions now count only their
+fixture connection. Unscoped authenticated visibility checks remain unchanged,
+preserving their ability to detect foreign/private rows. All 54 assertions pass
+locally and hosted, including GitHub tenant isolation, private Google connections,
+VIEWER writes, target authorization, revoked membership and cross-tenant denial.
+
+Final SQL gate: **29/29 suites, 1,018 assertions, no skips/expected failures** in
+isolated PGlite PostgreSQL with pgTAP, real pgcrypto and all 51 repository migrations.
+No public privilege aliases or crypto substitutes are used. Focused legacy totals
+are 35/23/23; related AI/creative/jobs/plugin coverage also passes. Hosted native
+rollback-only checks pass Ask Council 35, Competitor 23, Workers 23 and integration
+54. The hosted full-gate attempt was stopped when nonempty-database assumptions
+surfaced; the complete gate is the isolated run, not a claim of 29 hosted passes.
+All hosted suites roll back; no external provider calls are made by these tests.
+Focused integration web coverage passes 10 files / 92 tests. Full web and worker
+runtime suites are not repeated for SQL-only repairs; their implementation-commit
+results below remain valid. Final lint, web/worker typechecks and the worker/web
+production build pass. Scoped formatting, diff, secret/artifact and migration
+hash/51-version ledger checks are recorded with the final follow-up review.
+Final review covers 11 scoped files, 37 local documentation links and 59 production
+client chunks; formatting, whitespace, secret and artifact checks pass. All 51
+migrations remain unchanged and match the hosted ledger. A read-only hosted probe
+confirms zero retained organizations at the eight exact closure-fixture IDs.
+No security assertion is weakened, policy broadened or VIEWER write enabled.
+REDESIGN-008 is ready for review; REDESIGN-009 may be planned but is not started.
+
+## REDESIGN-008 implementation verification
+
+Delivered: restrained Settings → Integrations; organization GitHub App/user
+intersection and explicit repository selection; separate private Drive/Calendar
+grants; shared references on Task/Milestone/Note/Hypothesis/Experiment; debounced,
+paginated metadata pickers and batched lazy resolution. Versioned AES-GCM secrets,
+browser/user/org-bound one-time PKCE and fixed callbacks protect authorization.
+Generation checks protect disconnect; 60-second server/client metadata expiry and
+local failure states prevent indefinite stale titles. Confirmed Calendar creation
+uses account-bound durable receipts and deterministic event IDs, including recovery
+after reopening. No automatic synchronization, ingestion, new AI or Board changes.
+Home's optional upcoming widget is deferred to preserve its attention hierarchy.
+
+Database: exactly two reviewed additive `202611110001*` migrations applied through
+the supported CLI. All 51 hosted/local versions match and reviewed hashes remain
+unchanged. Hosted catalogs confirm six RLS tables, five target types, two member
+RPCs and three service-only RPCs. No reset/DROP/TRUNCATE or existing-record rewrite.
+The new 54-assertion suite passes locally and hosted with transaction rollback;
+five relevant SQL suites pass 246 assertions. Real Supabase Auth JWT smoke passes
+13 persistence/isolation/role assertions using fictional task-only fixtures.
+
+Focused validation passed 200 tests across 33 files, followed by 15 passing UI
+tests after hook cleanup and 13 passing navigation/discoverability tests. The
+complete corrected web run passes 264 files / 1,512 tests with one worker. An
+initial candidate run exposed lost direct trusted-App discoverability; the
+existing Apps link was restored alongside Integrations and the strict inventory
+extended. No test was weakened. Worker tests pass 5 files / 32 tests. Final lint
+and both typechecks pass; the final worker/web production build passes.
+Production-bundled actual-component browser QA uses synthetic provider/Next
+transport: 14 width/theme combinations (320/390/430/768/1024/1440/1920), seven
+interaction/permission/failure flows, no overflow/console errors, keyboard popup/
+modal/focus checks and 15 small fixture-only performance samples. Actual production
+Next/Supabase browser checks pass for OWNER and VIEWER with optional providers
+unconfigured, zero provider requests and usable Task details. This does not prove
+live OAuth consent, real external permissions, provider latency or manual NVDA.
+Final production-build browser checks pass for both roles. All four isolated test
+accounts and both organizations are deleted through exact scoped ownership checks;
+13 follow-up checks confirm no task rows, credentials or cached metadata remain.
+Task-only Next/Vite servers and Chrome are stopped; the verified task Chrome
+profile is removed. No real provider records or personal accounts were used.
+
+Final file review: 56 scoped files (36 new), 45 local Markdown links validated,
+59 production client chunks checked for actual server secrets, scoped formatting
+and `git diff --check` pass. No environment files, private credentials, logs,
+browser profiles, screenshots, generated bundles or QA harnesses are included.
+Generic Board/worker/dependency files remain unchanged. All 51 migration versions
+still match after cleanup; applied migration hashes are unchanged. No merge/push.
+
+The initial expanded SQL audit stopped in three suites and used local catalog
+aliases. Its 26/29 result is superseded by the complete alias-free 008.1 gate above.
+
+POST-REDESIGN-007 INTERACTION / METADATA POLISH COMPLETE / VERIFIED
+
+Tasks navigation follow-up: Milestones now uses the same view-link renderer and
+explicit no-underline styling as other Tasks views. Only the selected view receives
+the primary border indicator and `aria-current`. The 19 existing Tasks tests,
+lint, web typecheck and production web build pass. No data or permission changes.
+
+Placement cursor stability follow-up: FIXED. Creation uses a 20px screen-space
+SVG crosshair with fixed dark centre/white halo; native cursors are hidden only
+inside placement. Its paint persists through drawing and viewport/theme changes,
+and unmounts on finish/cancel/tool switch. Image requests restore canvas focus;
+native file-chooser cancellation also clears placement with a cleaned-up listener.
+Escape from canvas navigation buttons also cancels placement; editing fields and
+dialog/popup keyboard handling remain guarded.
+All 32 focused placement/workspace tests pass. Automated Chrome records 266
+unchanged hover samples over 31 seconds per theme, plus drag, content hover,
+10/100/400% zoom, same-session theme/zoom/fit changes and all reset paths.
+Lint, web typecheck, production build and scoped formatting/diff checks pass.
+QA uses actual components with synthetic transport; no hosted records change.
+Temporary browser/server helpers are stopped. The earlier Tasks tab fix is preserved.
+
+## Final interaction and metadata polish (post-REDESIGN-007)
+
+Small authorized follow-up on the same branch/worktree, starting at
+`f1d83a044de4871e1e1da46ca2efcce5688fba58`. The completed 007 systems and original
+checkout remain preserved. Main agent only, sequential runners; no merge/push.
+Plan: isolate ephemeral placement feedback, reuse existing creation/coordinates/
+guides, add bounded drag geometry and local picked-image staging, improve only
+new Shape defaults, and use Next metadata with a tenant-authorized Board title.
+No schema, persisted existing-object or workflow redesign is authorized.
+
+Delivered: local constant-size cursor cues, precise tool cursors, six-pixel click/
+drag distinction, world-space Shape/Line/Arrow/Section drawing, existing snapping,
+Shift constraints and one-shot create/history. Text enters the existing editor.
+Picked image files remain local until placement, with actual blob thumbnails,
+safe fallback and URL cleanup. Only new Shapes receive visible theme defaults.
+Next metadata covers all 34 existing pages (33 static, one authorized named Board),
+with bounded plain-text titles and a stable Board fallback. No database changes.
+
+Affected regression coverage spans 68 files / 396 tests: 395 passed initially;
+one legacy upload test expected immediate upload on file selection. It now also
+asserts zero uploads before placement. The corrected Workspace/placement/title
+rerun passes all 35 tests across three files; no failure remains. Eleven new
+tests cover geometry, release-only creation, cues/fallback and title authority.
+The complete web suite is not repeated for this bounded patch; the unchanged
+baseline's full 252-file / 1,409-test result remains recorded below. Relevant
+Board/layout/metadata coverage, lint (zero warnings), worker/web typecheck and
+the final production build pass. Worker and database code remain unchanged.
+
+Actual production-bundled component browser QA passes 11 flow groups, six zooms
+in both themes (10/25/50/100/200/400%), responsive 390/768/1440px checks, touch-style
+placement, cancellation/undo/read-only safety, real local image previews and
+selected/unselected Shape paint with grid on/off. Boundary contrast exceeds 3:1
+in both themes; prior Shape colors remain unchanged. These checks use explicit
+synthetic actions/reads/Realtime, not hosted writes. Five additional checks against
+the actual production Next server verify public titles, client navigation and
+safe unauthenticated Board entry. Tenant/RLS/fallback metadata tests pass.
+Helpers and isolated browser storage are cleaned up. No backend fixtures created.
+
+Scoped formatting, all 34 route/title declarations, 57 local Markdown links,
+whitespace and secret/artifact review pass across 57 changed/new files (48
+source/test/style files). CSS formatting only normalizes line endings beyond the
+four new token declarations. No schema/dependency/provider/worker changes, subagents,
+merge or push. This is a small completed follow-up, not REDESIGN-008.
+
+Limits: image drag sizing and center-origin modifiers are deferred. Named entity
+metadata is Board-only; Competitor keeps a safe generic title rather than adding
+plugin data reads. Manual NVDA, physical devices, other browser engines and fresh
+authenticated hosted metadata/persistence smoke tests were not performed here.
+The existing hosted persistence baseline is preserved, not claimed as a new run.
+
+## REDESIGN-007 - Core execution and startup essentials
+
+Clean dedicated worktree/branch `codex/redesign-007-core-execution`, starting at
+`6afe70c7ffa07b61187ebc8eefd304318de02fba`. Original checkout and completed
+worktrees remain untouched. Main agent only, sequential runners; no merge/push.
+The inspected audit/decisions and implementation plan are in
+[Core execution](docs/CORE_EXECUTION.md). Dependencies, minimal Milestones and
+Core working Notes are justified by absent existing models. Goals are deferred.
+Onboarding keeps its eight-step canonical content and manager authorization;
+recoverable bounded drafts do not become Company Knowledge or AI context.
+No new AI execution. Generic Board changes are limited to the explicit
+continuation's menu/input/card fixes. The final fresh complete web suite must
+include all fixes and the retained route/navigation inventory assertions.
+
+Checkpoint: three reviewed forward migrations are applied to the authorized
+development backend; all 49 ledger versions, five RLS tables, 15 authenticated-only
+RPCs, private helper grants and retained Board columns/RPCs are verified. Applied
+hashes are unchanged. Thirteen related local PostgreSQL/pgTAP suites pass 455
+assertions (140 new). Existing anonymous-access fixtures now assert actual denied
+table grants; invitation revocation uses its public list RPC and onboarding test
+arguments use the real smallint signature. No security assertion was weakened.
+
+Actual production-built browser onboarding completed in a new isolated task
+organization: initial validation, incomplete-member waiting, partial resume,
+offline failure/retry, step jumps, zero competitors, Review Edit and Finish to
+Home. No automatic Memory. Real Task creation, dependency, Milestone association,
+filtered progress, working Note links and edited explicit Memory promotion have
+persisted. Browser QA identified an early-hydration draft baseline race and a
+Note locale hydration mismatch; both fixes have focused regression tests.
+
+Hosted Core checks pass 20 assertions, including concurrent cycle denial. Actual
+Growth creation/linking, exact Task/Experiment/Hypothesis/Evidence openers, Home
+evaluation/Learning attention, draft Keep/Discard conflicts, native Note insertion
+and invitation acceptance to Home pass. The initial responsive matrix passes 192
+cases; the changed shared controls receive additional current-build checks.
+
+The explicit continuation authorizes shared form selects, context-menu input/
+screen-space/collision fixes, Delete/Backspace safety and native card presentation.
+Generic Board changes are limited to those approved UI/input paths; persistence,
+entity contracts, selection semantics, voting and Presentation contracts remain.
+The shared popup is extracted into UI, retaining Board-specific configuration at
+its wrapper. Browser testing found and fixed nested-popup Escape and transformed
+modal positioning, with permanent focused coverage. Real selects and all seven
+Board zoom levels pass. Real Delete/Backspace/undo, locked/VIEWER/Presentation
+safety, boundary/modal cases and archived/unavailable card states also pass.
+
+The changed-control matrix passes another 96 cases. Practical production-built
+hosted samples cover 505 Tasks, 501 Notes, filtered/detail/Back and internal setup
+navigation. Full Task payload is about 1.57MB decoded and complete related work
+takes roughly 5.5s; these are profiling limits, not speedup/SLA claims. Manual NVDA,
+physical devices and other browser engines remain unperformed checks.
+
+Exact task fixtures are cleaned up: four Auth accounts (404), two organizations,
+two Boards/20 objects, 506 Tasks, 502 Notes, two Milestones, their dependent joins,
+synthetic Growth/Evidence/run/cancelled-job rows and one explicit Memory are absent.
+Both immutable history triggers remain enabled. Task Chrome/Next helpers are
+stopped and fixture credentials/storage cleared. No unrelated data was removed.
+
+Final complete web suite: **252 files / 1,409 tests PASS**, one worker thread,
+after all corrections. An initial incomplete attempt exposed native-select and
+Settings inventory assertions; a complete pre-correction run then found two
+remaining page fixtures (disabled policy and onboarding draft request context).
+All retain their payload/discoverability/edit/redirect checks. Focused reruns pass
+11 files / 69 tests and both page files / three tests. The final suite includes
+every correction, without skipped or weakened assertions. All 130 final
+source/test/SQL hashes remain frozen. Lint (zero warnings), worker/web typecheck
+and the final worker/web production build pass. Workers are otherwise unchanged;
+no worker test rerun is required. Scoped formatting, 56 local Markdown links,
+all 34 pages/three retained entrypoints, whitespace and credential/artifact checks
+pass across the 141-file delivery. Applied migration hashes remain unchanged.
+The task-local environment copy is removed after building; original environment
+files remain untouched. REDESIGN-007 is PASS and ready for user-managed review.
+No subagents, merge or push. REDESIGN-008 is ready for its own approved scope and
+has not started. Performance/manual-environment limits above remain explicit.
+
+## REDESIGN-006 - Startup growth and learning workflow
+
+Dedicated branch/worktree `codex/redesign-006-growth-learning` starts exactly at
+`82d854afca2f2a91162c70a5b6bf37694c0f857a`. Root and completed task worktrees,
+including the user's generated `next-env.d.ts` change in 005, remain preserved.
+Main agent only, sequential runners. No merge or push.
+
+The existing-domain audit is in [Growth and learning](docs/GROWTH_LEARNING.md).
+Content Opportunities remain immutable report candidates; deterministic
+Performance Learnings retain their metric-specific semantics. Focused new
+Marketing Hypothesis, Experiment and team Learning records are implemented.
+Evaluation stays on Experiment and freezes its result/source identities.
+Explicit Company Memory promotion delegates to the existing Core human mutation
+through an additive idempotent public SQL contract. No automatic promotion/AI.
+
+Four reviewed forward migrations are applied to the authorized development
+project. All 46 ledger versions match; schema/RLS/RPCs and unchanged hashes are
+verified. Thirteen related SQL suites pass 527 assertions in isolated PGlite,
+including 102 new growth assertions. Real authenticated and browser checks pass
+the workflow, native recovery, exact openers and role/tenant/revocation boundaries.
+Overview/Research/Experiments/Create/Campaigns/Learn navigation and bounded
+workspaces are implemented. Native providers and existing-receipt
+conversions extend only public integration contracts; generic Board mechanics,
+voting, presentation and existing AI workflow inputs/execution stay frozen.
+
+**Verification:** the full web suite ran once: 236 files / 1,330 tests; 1,328
+passed and two outdated route/navigation inventory expectations failed. Those
+expectations now explicitly cover all 30 retained routes plus three growth pages,
+six primary workflow entries and retained capabilities. The final focused rerun
+passes all nine tests across those two files and the dialog-focus regression.
+All observed failures are resolved; no duplicate full-suite run or skipped test.
+Web lint (zero warnings), worker/web typecheck and final production web build pass.
+Scoped formatting, local links, retained routes, diff and secret/artifact checks
+are recorded in ignored `.next/cache/redesign-006-qa` evidence.
+Default staged `diff --check` reports one extra EOF blank line in the already
+applied `20261109000110` migration. Its bytes/hash are deliberately preserved.
+All other files pass the default check; that file passes with only the
+`blank-at-eof` rule disabled. This formatting exception changes no SQL semantics.
+
+Production-built actual pages against the hosted development backend pass the
+explicit workflow, edited Memory confirmation, canonical backlinks, typed link
+pickers, exact immutable openers, native insertion/conversion/reload recovery,
+VIEWER/foreign/plugin-disabled/revoked-member checks. Responsive QA passes nine
+surfaces × eight widths × two themes (144 cases), plus 64 targeted repeats for
+the mobile search-row fix and modal bounds/labels/focus. Direct-create closing
+clears query state, restores a usable opener and permits native Enter reopening.
+
+Three samples per representative fixture cover Overview, 100 Hypotheses,
+110 Experiments, 100 Learnings, filtered search/detail and a 500-object mixed
+Board with 50 distinct native references. Lists stay at 25 records; metadata uses
+one 50-reference batch. Observed list readiness is 0.83–1.12s, Board readiness
+1.40–1.46s and full native metadata 4.76–4.90s. Board load has 3–4 Long Tasks per
+sample (maximum 161–207ms); no list Long Tasks were observed. These are unthrottled
+warm-server observations, not p95, an SLA or controlled before/after claims.
+
+**Cleanup verified:** four task accounts (Auth 404), two task organizations,
+three Boards/521 rows, 321 growth records plus joins/canonical/provenance fixtures,
+two explicitly promoted memories and four receipts are absent. Four immutable
+history triggers were restored in the same locked exact-ID cleanup transaction
+and verified enabled. No unrelated data or private assets were deleted. Both
+task-local Next/Chrome helpers are stopped; ignored test passwords are removed.
+
+**Limits/deferred:** manual Windows NVDA, physical touch devices and other browser
+engines remain target-environment checks. Native metadata still has measured
+type-grouped read latency; full cold/warm profiling belongs to 009. No new AI,
+generic Result/analytics platform, automatic Memory, anonymous voting, native
+source replacement or future business module is delivered. REDESIGN-007 is not
+started or authorized by this completion. No merge or push.
+
+## REDESIGN-005 - Native Stylus entities in Boards
+
+Dedicated branch `codex/redesign-005-native-board-entities`, starting exactly at
+`8236b471592023faf6aa3b0136344071f7c93bcf`. Original checkout and completed
+004.* worktrees are preserved. Main agent only, sequential runners; no merge/push.
+
+Delivered: public Core reference/provider/projection/open/create contract, trusted
+plugin composition, six initial card adapters, exact immutable Evidence binding,
+private batched resolution, canonical openers and reviewed Task/Idea/manual
+Research Note conversions. Durable own-creator receipts recover failed linking,
+lost successful responses and reload without duplicate targets. Sources remain;
+explicit card archival and newer collaborator rows survive recovery. Manual Notes
+remain an existing separate domain. No AI or Knowledge promotion is introduced.
+Generic editor mechanics/design, voting and presentation architecture stay frozen.
+
+All three reviewed `202611040002*` forward migrations are applied to the authorized
+development project; all **42** local/remote versions match. Existing Board V2
+columns/RPCs and new receipts/domain RPCs were verified. No reset, DROP/TRUNCATE
+or unrelated hosted records were changed. Exact test-fixture cleanup verified
+absence of four accounts (including Auth 404 checks), two organizations, four
+Boards, 1,030 Board rows, 83 remaining canonical fixtures, nine immutable source/
+Evidence rows, one cancelled synthetic run/job and their scoped dependent data.
+Both immutable triggers are enabled. No model/worker job was executed or private
+asset uploaded. Task helpers are stopped; ignored evidence is never shipped.
+
+**Verification:** full web suite run once near completion: **227 files / 1,292
+tests PASS**. All six Board pgTAP suites pass against actual SQL in isolated
+PGlite: **246 assertions** (201 existing plus 45 native-reference/recovery).
+Web lint, worker/web typecheck and production web build pass. Scoped formatting,
+links, architecture/security/scope/secret/artifact and final diff checks pass.
+
+Real authenticated Supabase/browser checks cover all six inserts/openers, all
+four conversions, retry/reload/lost-response recovery, deleted-target refusal,
+tenant/role/revoked-member/plugin boundaries, archive labels, stale-title/search
+purging and re-enable. Shift-selection, Groups/Sections, alignment/distribution,
+lock/layers/duplicate, reference-only paste, actual comments/reactions and existing
+voting/presentation pass. Native voting remains deliberately ineligible.
+Both themes pass **16** responsive cases at 320/390/430/768/1024/1200/1440/1920px;
+keyboard/focus restoration and real touch-emulated picker checks pass.
+
+Three local production direct-entry samples per fixture show median canvas-ready
+times of 1,846ms at exact baseline vs 1,483ms current for 500 ordinary objects;
+500 objects including 50 native cards take 1,527ms. All 50 fresh authorized
+projections resolve at median 4,423ms through one discovery plus one 50-reference
+batch, with no resolution Long Tasks. Selection/search medians are 31.8/21.7ms.
+Existing canvas virtualization is retained. These small samples are observations,
+not cold/warm percentiles, causal speedup claims or SLAs. Manual Windows NVDA,
+other browser engines/devices and hosted end-to-end percentile budgets remain
+unverified. Optional source replacement/native voting, AI conversion, storyboard,
+follow/history, anonymous voting and richer connectors remain deferred.
+REDESIGN-006 is ready for its separately approved scope and remains unstarted.
+See [Native entities](docs/NATIVE_ENTITIES.md) for the contract and binding matrix.
+
+## REDESIGN-004.3.3 — Board voting, Section presentation and visual color picker
+
+Branch `codex/redesign-004-3-3-voting-presentation` starts at
+`1e7b8a1e3d41744603ad715bd924dc16e33b2d38`. Original checkout and completed
+004.3.2 remain preserved. Main agent only, sequential runners; no 005, AI/native
+cards, merge or push. Existing fixtures/work were continued, not recreated.
+
+Delivered: visible voting with default 3 / bounded 1–5 own slots, multiple votes
+per object, one active session, fresh role/tenant authority and SELECT-only RLS.
+Version/request identities protect real concurrent/delayed requests. Private
+revision events refresh bounded summaries/results; own-only optimistic rollback
+retains newer remote counts. Ending freezes casts/removals. Presentation uses
+existing Sections in Layers order, the same mounted canvas/fit path, read-only
+input guards, keyboard/touch controls, optional fullscreen and editor restoration.
+Remote content/order/removal preserve appropriate active context without a slide
+model. Visual popovers provide S/V, hue/alpha, HEX/presets/Shape None, per-object
+previews and one commit per completed gesture. Nested Escape retains Properties.
+Native EyeDropper is feature detected; Pick from Board is explicitly deferred.
+
+Both reviewed forward migrations are applied:
+`20261104000100_board_voting.sql` and
+`20261104000110_board_voting_conflict_response.sql`. The latter corrects the
+observed hosted PostgREST retry timeout with PT409, preserving the applied
+original, existing records, locks and grants. All **39** ledger versions match.
+Existing Board columns/template-operation RPCs, both new tables and four voting
+RPCs were explicitly verified. No reset, DROP/TRUNCATE, seed/role application
+or unrelated hosted data deletion occurred.
+
+**Verification:** full web suite run once near completion: **220 files / 1,266
+tests PASS**. Focused Board coverage passed 53 files/332 tests before the final
+read-transport addition; its nine client/route cases also pass in the full suite.
+All five Board pgTAP suites pass in isolated PGlite: **201 assertions**, including
+63 voting assertions and result pagination/caps. Web lint, typecheck and ordinary
+production build pass. Scoped formatting, links, secret/artifact/scope scans and
+final diff checks are part of the recorded delivery review.
+
+Hosted smoke passes ten lifecycle/concurrency/security groups. Real two-user
+UI voting, injected rollback/recovery, ending/results, presentation/input/
+fullscreen/restore, live Section updates/reorder/archive/restore, color gesture
+preview/commit/reload, VIEWER, safe links/touch and accessible names pass. Both
+themes pass all eight required widths. New private HTTP voting reads preserve
+fresh shared authorization but bypass the mutation Server Action queue; real
+member/foreign/revoked/signed-out boundaries pass. This corrects a measured save
+delay without changing permissions. Absent sessions are not reread just by panning.
+
+500-object production probes cover drag, Layers, Section focus, presentation and
+realtime voting. Individual vote updates render zero object bodies; color
+previews render one. Lightweight interaction probes show no repeatable new
+regression; final valid save observations are 3.124/2.462/1.825s against baseline
+3.101/2.550/1.895s. One 51ms Long Task appears in the final current trace. Small
+samples/hosted variation are not SLAs; diagnostic overhead/outliers and existing
+initial-render/marquee limits remain explicit in docs/BOARDS.md.
+
+Exact cleanup verified absence of four task users, two organizations, three
+Boards, 522 objects, three private assets, 25 votes and 11 sessions, including
+user 404 checks. Task helpers are stopped. Evidence/scripts/screenshots and the
+now-deleted-account credential inventory stay ignored under
+`.next/cache/redesign-004-3-3-qa`; no secrets/artifacts/dependencies are delivered.
+
+**Limits:** native OS EyeDropper capture, manual NVDA and other browser/device
+engines remain target-environment checks; headless Chrome plus deterministic
+API-contract tests do not claim those sessions. Pick from Board, full voting
+history analytics, public presentation URLs and new slide entities are deferred.
+Generic Board editor scope is frozen; REDESIGN-005 is ready for its own approved
+public entity/provider/conversion brief and is **not started**.
+
+## Previous verified milestone
+
+REDESIGN-004.3.2 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-004.3.2 — Boards UI and input polish
+
+Branch `codex/redesign-004-3-2-boards-ui-polish` starts clean at
+`9e678586dd34b87dcd1e8fcc0712fc8aad0ffd58`, in its own matching worktree.
+Main agent only; original checkout and other worktrees preserved. The continuation
+brief adds direct Group-child drill-in; all original requirements remain in scope.
+No schema change, REDESIGN-005, AI/native cards, merge or push is authorized here.
+
+Implemented and verified: 15 local OFL Board families (12 added
+from official Google Fonts with license/source/hash records), categorized search,
+supported weight selection, editable numeric presets and compact exact-HEX color
+controls. Board-local overlay controls replace native Properties selects and
+the persistent View details menu. Properties uses a 320px desktop dock and hides
+empty Text Appearance. Bare-domain input normalizes at the user input boundary;
+strict stored/action URL validation remains and malformed URLs fail safely.
+
+Layers accepts valid Group insertion/extraction using existing parent identities
+and atomic operations, with indexed destination checks and explicit no-drop/
+Group/Section/reorder feedback. Natural wheel/touchpad panning and modified zoom
+use existing React Flow input paths. Group context derives from canonical
+selection: single click targets the Group; double-click targets the actual hit
+child without entering text edit; a subsequent intended double-click edits text.
+Escape returns to parent; sibling Shift selection, Layers expansion, child
+Properties and inherited locks remain synchronized. Selection does not save.
+
+Relevant verification: 45 Board files passed; the remaining new drop-cue file
+passed its focused rerun after fixing JSDOM's synthetic DragEvent coordinates
+(46 files / 279 tests in aggregate before two final regressions). Negative layer
+projection and Space-pan regressions pass focused operation/Group tests. Existing
+assertions for replaced native controls/old prohibited extraction now exercise
+the approved behavior; security/persistence assertions remain. Web lint with zero
+warnings, typecheck and the final production build pass. The single final full
+web run passes **211 files / 1,206 tests** with one worker and no file parallelism
+(726.78s); no skipped/weakened assertions or timeout changes. This includes all
+46 Board files / 281 tests after the two final regressions. Scoped formatting,
+local-link, secret/artifact, scope and diff checks pass. The requested commit is
+`fix: polish Board properties and canvas input`; no merge/push or REDESIGN-005.
+
+Authenticated production checks pass: all five Group child types, native topmost
+overlap, sibling Shift selection, inherited locks, first versus subsequent text
+double-click, no selection writes, actual text/geometry edits and reload with
+ownership intact. Native HTML5 Layer drag inserts/extracts; Group bounds expand
+without translating old children. Custom Text/Sticky/Shape colors, four normalized
+link edits with unchanged title, invalid-scheme rejection, numeric preset/custom/
+Escape/validation, View dismissal/navigation and font request checks pass. The
+12-case light/dark 390/768/1024/1200/1440/1920 Properties matrix passes, including
+paired control geometry, popup bounds and modal focus/Tab behavior. Native child
+drag/resize, Shift-wheel, Space/H panning without writes, panel wheel isolation
+and custom-color outside-blur saving pass on the final build.
+
+Native QA found two corrected input defects: invalid fractional CSS frame layers
+could intercept negatively ordered children; render-only integer projection
+fixes the hit target. Space-pan could start an object drag; temporary draggability
+and a committed-event guard now prevent it. Neither fix changes persistence or
+the hierarchy schema.
+
+Performance: ordinary production before/final runs complete all 72 phases each
+across identical 200/300/500 fixtures, with zero browser exceptions. First-node
+times are 1420/1435/1756ms before and 1472/1455/1658ms final. Single phase samples
+vary (including four 59–68ms final 500-object marquee tasks); no general speedup,
+p95 or latency SLA is claimed. Five matched empty-pane marquee runs per build
+select 92 objects and write zero operations: nine total Long Tasks/max86ms before,
+eight/max75ms after. Seven Layers collapse/expand trials per build record one
+task each (136ms before, 99ms after); seven native Group drill-ins have zero Long
+Tasks and retain mounted node DOM identity. The comparison found no new
+repeatable interaction regression. Font browsing requests zero unused faces;
+five representative selections request exactly those five local files, and a
+Geist-only 500-object board requests zero Board font files. Details/limits are
+in [Boards](docs/BOARDS.md).
+
+Temporary helpers/artifacts live in ignored `.next/cache/redesign-004-3-2-qa`.
+Authenticated QA used two isolated task accounts, one organization, four boards
+(200/300/500 mixed objects plus a 14-object interaction fixture), seven private
+assets and three comments. All were removed and absence verified, including
+1,014 elements. Only checked task-owned Next helpers on 3345/3346 and task-profile
+Chrome 9345 were stopped. Exact inventory/credentials/artifacts remain ignored;
+no unrelated records or helpers were touched. Optional
+font/color recents are omitted to keep this a finishing pass. Do not rerun the
+download codemods or reset this worktree during continuation.
+
+Limits: manual NVDA, physical touchpad feel and additional browser engines are
+not claimed. Chrome native input/keyboard and responsive/modal checks pass.
+Large initial-render/selection costs remain measured; small local samples are
+not a p95, broad speedup claim or production SLA. Database schema/configuration,
+dependencies, auth and other product areas are unchanged. Hosted writes were
+isolated QA only and fully cleaned up. Ready for a separately approved
+REDESIGN-005; no future feature was started.
+
+## Previous verified milestone
+
+REDESIGN-004.3.1 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-004.3.1 — Large Board performance hardening
+
+Status: **PASS — MEASURED INTERACTION HARDENING; LIMITS RECORDED**.
+
+Branch `codex/redesign-004-3-1-board-performance`, isolated worktree
+`.worktrees/redesign-004-3-1-board-performance`, starts exactly at
+`2d767aa2bb743eed5497e2427304eebe12526d54` with clean status. Main agent only;
+unrelated checkout changes preserved. Performance only; no schema changes,
+product redesign, new features, REDESIGN-005, merge or push.
+
+The historical 104/50 ms observations contained no stacks. The same 1,000-object
+probe was reproduced with CPU/timeline attribution before application changes.
+Ordinary-production diagnostics identify broad React host/SVG updates and
+subsequent browser layout/paint; a reproduced 104.885 ms task is a React commit,
+and a 51.858 ms task includes 32.26 ms Paint plus 5.108 ms Layout. Diagnostic React
+profiling builds themselves add component-timing overhead, so those numbers are
+not used as the shipped-runtime baseline. Lightweight ordinary production
+measurements cover all flows at 200/300/500 objects, with no CPU profiler or React
+timing logger. At 500, hover has repeated 50–96 ms tasks, search clear 175 ms,
+marquee up to 180 ms and commit-time drag work up to 191 ms. Properties drafts
+remain local. Raw traces stay ignored, outside product docs.
+
+Implemented: stable committed event closures, shared canonical object lookup,
+memoized Layers controls, structure/search projections, retained hidden trees,
+offscreen-render containment and save-time event guards. A follow-up CPU trace
+found repeated Zod errors for absent typography options during Section focus;
+missing values now use the same validated defaults, with supplied values still
+validated. Chrome also exposed a pre-existing root-list role issue; a presentation
+role restores Section roots as tree items. No schema/server authorization change.
+
+The final ordinary-production benchmark completes 72 phases at 200/300/500 with
+no browser exceptions. At 500, hover/scroll/search/clear/Locate/Section focus/
+pan/zoom/single and multi-drag/Properties commit/feedback/realtime/sidebar phases
+have no Long Tasks. Marquee improves from 16 tasks / 180 ms maximum to 3 / 92 ms;
+300 drops from 12 to 4 tasks with a 73 ms maximum. Initial document/render tasks
+remain (221/163/190 ms at 200/300/500); first-node timings are variable and do not
+establish a general speedup. Detailed before/after observations and limitations
+are in [Boards](docs/BOARDS.md).
+
+Verification:
+
+- Focused Board suite: **40 files / 225 tests PASS**. Eight added regressions
+  cover committed callback authority, structural/search cache invalidation,
+  retained tree identity, save-time node identity and fresh Locate geometry.
+- Full web: **205 files / 1,150 tests PASS**, sequentially with one worker. The
+  initial default-worker run had 204 passing files / 1,149 tests and one
+  five-second undo/redo timeout. The full serial rerun changes no assertions,
+  skips, configuration or timeouts; no application/test workaround was added.
+- Web lint with zero warnings, typecheck and ordinary production build PASS.
+  Scoped formatting, local-link, diff, scope, secret and artifact checks PASS.
+- Final ordinary-production browser QA: **36 accessibility/interaction checks**
+  PASS, including all 500 tree items in both themes at 1200/1440/1920 px,
+  keyboard traversal/rename, native persisted Layers reorder, search/tree
+  retention and modal focus/reflow at 390/768/1024 px. **26 drag checks** PASS
+  across seven cases including native Shift-click, stable grid/node/selection/
+  handles, one save per release, held-save guard, write-free marquee and reload.
+  **Six image/search checks** PASS: all 50 private previews load, unrelated
+  selection retains the URL and three 356-match searches cap display at 50
+  without Long Tasks. No browser exceptions in these final passes.
+- Exact isolated hosted inventory was removed and verified absent: **two users,
+  one organization, four boards, 2,000 elements, four comments and seven private
+  assets**. No schema/reset/migration or unrelated records were targeted.
+  Only checked task Next/Chrome helpers on 3344/9344 were stopped. Credentials,
+  scripts, screenshots and traces remain ignored, never committed.
+
+Limits: one before/final-after sample per phase/fixture; no p95 or general speedup
+claim. Initial rendering, some selection/Properties layout shifts and marquee
+remain measured costs. The historical unsaved stacks cannot be reconstructed;
+reproduced paths are documented instead. Manual NVDA, Firefox/Safari and physical
+device timing remain unperformed. No REDESIGN-005 implementation, merge or push.
+
+## Previous verified milestone
+
+REDESIGN-004.3 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-004.3 — Boards interaction and creative usability
+
+Status: **PASS — LOCAL AND REAL AUTHENTICATED VERIFICATION**.
+
+Branch `codex/redesign-004-3-boards-interaction`, isolated worktree
+`.worktrees/redesign-004-3-boards-interaction`, starts exactly at
+`eff9568c4b39c3ebffdd4abf33ab35afa667c7a0`. Main agent only; unrelated checkout
+changes preserved. No merge/push or REDESIGN-005 implementation.
+
+Desktop Layers-left/Properties-right docks default open and collapse independently
+with scoped device/account preferences. Bottom tools, View, quick actions, direct
+Layers reorder/reparent/inline rename and keyboard tree stay synchronized with
+canonical selection. Groups manipulate; Sections organize. Text uses lazy licensed
+Geist/Lora/Geist Mono content controls, safe auto-height, local guides/snapping and
+one-intent Alt-drag copies. Application chrome/brand and other feature areas stay
+unchanged. Comments share the right slot, resolve/reopen without deleting history,
+and use deferred bodies plus open-thread badges. Board-local search and Section
+focus are included; voting/presentation/attached connectors are deferred.
+
+Flicker investigation found lost measured node dimensions, save-time control
+removal, competing Group-child drag selection and full editor RSC rendering from
+list invalidation. Controlled identity/dimensions, root-only controls, explicit
+drag selection and operation-only responses correct those paths. All seven
+required production drag cases retain the same visible DOM nodes, grid, selection
+and handles, with no confirmation jump, zero pointer-frame writes and exactly one
+persisted operation after release. Synchronous DOM reorders still occur; zero DOM
+mutations is not claimed. A small-fixture move response changed from 21,921 bytes
+including unchanged Board content to 666 bytes containing the operation result.
+A scoped content-free marker refreshes the list on return. Visible image signing
+is independent from the 200-object feedback limit, preventing preview starvation
+on large text-heavy Boards; signing stays bounded to 25 per request.
+
+Section 39 of the 004.3 brief expressly authorizes the configured development
+project the maintainer?s development project. Reviewed forward migrations
+`20261103000100_board_reactions.sql` and
+`20261103000110_board_comment_resolution.sql` were applied unchanged through the
+supported linked CLI workflow. They preserve existing rows and enforce fresh
+roles, composite tenant/object identity, idempotency and RLS. The final ledger and
+read-only API diagnostic confirm all required columns/table and six operation/
+template/feedback/count RPCs. No reset, DROP, TRUNCATE or unrelated data deletion.
+
+Verification:
+
+- Full web suite: **202 files / 1,142 tests PASS**. Final Board coverage is
+  37 files / 217 tests, included in that full run; focused changes passed first.
+- Web lint (zero warnings), typecheck and final production build PASS. Scoped
+  formatting, diff/link/scope/secret/artifact checks are recorded below.
+- Four permanent pgTAP suites: **138 assertions PASS** (34 existing + 59 V2 +
+  24 reactions + 21 resolution) in isolated PostgreSQL/PGlite using repository
+  SQL/minimal Supabase bootstrap. Hosted pgTAP still requires unavailable Docker;
+  real hosted application/API checks are separate, not mocked transport.
+- Production Chrome: **109** two-theme/eight-width layout/focus/shortcut checks,
+  **36** seven-case drag checks, **25** Alt-copy/native Layers checks, **13**
+  comments/search/typography reload checks, **11** image/recovery checks and
+  **12** landing/navigation checks PASS, without unexpected browser exceptions.
+  Real API role/tenant/revocation/anonymous checks: **10 PASS**; large-fixture
+  readiness/pointer checks: **6 PASS**. Network errors deliberately induced for
+  rollback are identified separately from normal browser exceptions.
+- Isolated fixtures: two test accounts, two organizations, three boards,
+  1,034 total active/archived elements, one comment and six private assets were
+  exactly inventoried, removed and verified absent. No unrelated records targeted.
+  Only this task's checked Chrome/Next helper processes were stopped. Temporary
+  credentials/traces/screenshots/runners remain ignored, never committed.
+
+Measured limits: the 1,000-object fixture contains 20 image objects sharing one
+private asset. All 20 load after the viewport fix. Three sequential production
+full-document navigations in one authenticated session observed first nodes at
+6,181 / 3,647 / 7,070 ms; document transfer was 91,835 bytes and decoded document
+1,599,172 bytes (excluding later JS/actions/images). These uncontrolled local
+network/cache samples are not a cold/warm benchmark, p95, SLA or speedup claim.
+A 100-pointer-move probe wrote zero operations and observed two Long Tasks
+(104 ms and 50 ms). Large-document payload/initial rendering remains a measured
+profiling opportunity, not a claimed solved performance budget.
+
+Manual Windows NVDA and additional browser engines remain target-environment
+checks. Keyboard, semantic names/tree, focus restoration, reduced motion,
+320/390/430/768/1024/1200/1440/1920px reflow and both themes are automated/browser
+verified. Font subsets use fallback for non-Latin scripts. Dense layer reorders
+touching more than 200 rows reject safely. Existing owner organization-deletion
+audit-FK ordering remains separately scoped; cleanup used only inventoried QA Board
+rows before the existing owner deletion RPC. Native entities/conversions, AI,
+anonymous voting, presentation, persistent attached connectors, repeated-duplicate
+offset memory and global search are not introduced. REDESIGN-005 can proceed as a
+separately authorized task using the current feedback surfaces.
+
+Final repository checks: scoped formatting and local Markdown links PASS;
+`git diff --check` PASS; 77-file scope/credential-pattern/artifact audit PASS;
+font source hashes/byte sizes match. Dependencies, applied historical migrations,
+unrelated feature code and original checkout changes remain untouched. Generated
+Next type references are restored. These scans supplement review; they are not
+a claim of exhaustive credential detection.
+
+## Previous verified milestone
+
+REDESIGN-004.2 COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+## REDESIGN-004.2 — Boards stabilization and UX polish
+
+Status: **PASS — LOCAL AND REAL AUTHENTICATED VERIFICATION**.
+
+Branch `codex/redesign-004-2-boards-stabilization` continues from
+`f6fdf51882b299d24e538d385ae311e05b797043` in the existing worktree. The
+previous uncommitted P0 patch was retained. Main agent only; original
+checkout/other worktrees preserved; no merge/push or REDESIGN-005.
+
+The owner explicitly superseded the earlier production restriction and
+authorized the maintainer?s development project as this task's active development backend.
+Supported CLI ledger inspection confirmed history through `20260825002020` and
+exactly two missing migrations. The reviewed dry run listed only
+`20261102000100_board_v2_element_types.sql` and
+`20261102000110_board_v2_foundation.sql`; both were applied unchanged. They add
+enum values, nullable/defaulted columns, constraints, indexes, triggers and
+bounded RPCs. No reset, DROP, TRUNCATE or unrelated record deletion. Ledger and
+API schema now include both RPCs, `template_key`, `parent_id` and `locked`.
+
+Real authenticated QA used one isolated account/organization, three boards and
+one private image. Direct hosted RPC verification passes 18 checks. Signed-in
+browser actions verify cross-type Shift selection; one persisted multi-object
+move; Group/ Ungroup; decimal property commit; context duplication/undo;
+internal clipboard; network-failure rollback, retry and reload;
+marquee/Shift-marquee; saved alignment/ distribution;
+Section-from-selection/name focus and drag creation; Layers locks; keyboard
+context menus; grid and shortcut help. An initial visible-menu event wrapper
+defect was found and corrected during QA. These are actual Next/Supabase
+authenticated actions, not mocked transport. Final production browser checks and
+isolated fixture cleanup are complete.
+
+Failures now restore confirmed document/history state and keep unrelated/remote
+work. The board remains usable. Safe retry retains identities; conflict recovery
+loads latest state without page reload. Safe error categories distinguish
+access, locks, limits, validation, conflict, missing schema and infrastructure.
+Diagnostics log codes only. Custom clicks own Shift toggling; React Flow
+selection changes are applied only during marquee to avoid the former duplicate
+selection update.
+
+Properties uses rounded decimal text fields with Enter/blur commit, Escape
+restore and inline validation; no native step popup or Save object button.
+Context menus, icon alignment/arrangement, Layers/Properties tabs and compact
+keycap help expose power actions. Groups are manipulation containers; Sections
+are visible named organization regions. Cards render deferred, freshly
+authorized bounded native content previews; image glyphs replace costly
+private-image signing. Dot grid and minimap toggle through View controls.
+Existing privacy, operation/ownership limits, private Realtime and
+no-AI/no-native-entity boundaries remain.
+
+Verification:
+
+- Full web: **192 files / 1,104 tests pass**. Focused Boards tests pass; new
+  geometry, property, recovery/error and preview authorization coverage is
+  included.
+- Web lint (zero warnings), standalone typecheck and production build pass.
+- Real hosted RPC suite: **18 checks pass**. Signed-in browser suites pass all
+  seven cross-type Shift selection cases, **13 persisted interaction/recovery
+  checks** and **11 extended manipulation/Section/Layers/help checks**.
+- Actual production app: editor/reflow, single responsive panel, Properties,
+  focus return, visible action menu and reduced-motion checks pass at
+  320/390/430/768/1024/1200/1440/1920px in both themes. The first 83-check run
+  found six desktop card-column failures caused by mixed Tailwind breakpoint
+  units. Those were corrected, rebuilt and replaced by **18 passing targeted
+  card/ preview checks**. Both production runs recorded zero browser exceptions.
+  These are authenticated application/transport checks, not synthetic fixtures.
+- Permanent pgTAP: **34 existing + 59 V2 = 93 assertions pass** in isolated
+  PostgreSQL/PGlite using actual repository SQL. The supported hosted CLI test
+  runner requires unavailable Docker; real hosted RPC/browser verification above
+  is separate and succeeds. No permanent test was skipped or weakened.
+- No worker, dependency/lockfile, auth/provider, Marketing or native-entity
+  changes. Existing two migrations were applied; no migration source was
+  rewritten.
+- Scoped formatting, local documentation links, diff and secret/artifact checks
+  pass. Temporary QA artifacts and local credentials are excluded from the
+  commit.
+
+Fixture cleanup verified exact test identity, ownership, organization name and
+three board IDs. One private image, all three QA boards, the QA organization and
+the QA account were removed; unrelated records were not targeted. The existing
+owner organization-deletion RPC first failed transactionally with
+`board_elements_creator_membership_fkey`: membership cascade precedes the board
+audit reference cleanup. Removing only the inventoried QA board rows first
+allowed cleanup. This pre-existing organization-deletion ordering issue needs a
+separately scoped fix; no applied migration or deletion behavior was changed
+here.
+
+Limits: manual Windows NVDA, physical touch devices and non-Chromium browsers
+were not exercised. Automated keyboard/focus/modal/reflow and reduced-motion
+behavior passed; these checks do not replace manual screen-reader acceptance.
+Docker is unavailable, so hosted CLI pgTAP did not run. No hosted
+latency/performance SLA is claimed. REDESIGN-005 may proceed as a separately
+authorized task and is not started.
+
+Temporary scripts, credentials, screenshots and logs stay ignored under
+`.next/cache/redesign-004-2-qa`; local environment files are untracked/ignored.
+See [Boards](docs/BOARDS.md) and
+[environment findings](docs/BOARDS_ENVIRONMENT.md).
+
+## REDESIGN-004.1 — Brand identity, typography and premium auth
+
+Branch `codex/redesign-004-1-brand-auth`, isolated worktree
+`.worktrees/redesign-004-1-brand-auth`, starts exactly at
+`f4571e28cb6325406abe4fcc2afb97a91ddf08e5`. Main agent only. Original checkout
+and prior worktree changes are preserved. No merge/push or REDESIGN-005 work.
+
+“Calm where people work. Expressive where the product speaks.” now governs the
+shared brand. Cobalt #4F5BD5 replaces cyan; warm light/charcoal dark neutrals keep
+Home, Tasks, Boards and navigation calm. Supporting apricot/mint/butter/sky have
+separate dark artwork values and remain distinct from semantic states and human
+collaborator colors. Older pastel names are palette-derived compatibility aliases.
+
+The supplied blue–coral logo package is integrated unchanged, with full wordmark
+variants, compact/monochrome marks and favicon/Apple/app icons. Shared BrandLogo
+uses the pre-hydration theme class; runtime full-logo image hints avoid oversized
+downloads. Geist variable Sans (69,436 bytes) is self-hosted from official
+`geist@1.7.0`, with original SIL OFL license, hash, same-origin preload and
+system fallback. No package/lockfile changes or runtime CDN.
+
+Login/signup use a full-bleed deterministic architectural tile field and one
+concise content card. Local proximity controls bounded Z lift, tilt, directional
+shadows and highlight intensity through refs/finite RAF easing. No WebGL, new
+graphics library, idle loop or React pointer rerenders. Reduced motion, hidden
+documents, coarse pointers and small screens reset/stay static. Mobile is form
+first with a small static accent. Artwork is decorative and unfocusable.
+
+Removed redundant login/signup, Tasks and Boards subtitles; Home retains the
+organization name. Useful ordering/read-only/empty/error/password guidance stays.
+Board template preview accents are presentation only; no Board data, template
+initialization, Realtime, private Storage, task rules or Marketing workflow changes.
+Auth actions, schemas, provider, safe returns and session semantics are unchanged.
+The proxy matcher excludes only the exact shipped font and license so public
+auth can load them; permanent tests keep private/similar routes protected.
+
+Verification:
+
+- Full web suite: **188 files / 1,070 tests pass**. Existing permanent isolation,
+  authorization, memory-domain, plugin, task and workflow coverage remains enabled.
+- Focused brand/auth/contrast: 7 files / 30 tests pass. Targeted static-font routing,
+  existing session proxy and contrast: 3 files / 11 tests pass (contrast overlaps).
+- Web lint (zero warnings), standalone typecheck and production build pass.
+- Actual production public login/signup: **142 checks across 32 theme/width/mode
+  cases pass**, at 320/390/430/768/1024/1200/1440/1920px. Includes keyboard sequence,
+  form labels/safe return, static art, pointer entry/slow-fast movement/local
+  falloff/settling, reduced motion, short viewport, mobile and zoom-equivalent
+  reflow. Zero recorded browser exceptions. No successful provider login/signup
+  or real authenticated session was exercised; local nonsecret env placeholders.
+- Home/Tasks/Boards list/editor: **16 actual-component fixture smoke checks pass**
+  in both themes at 390/1440px. Only transport/actions/Realtime are synthetic; this
+  checks tokens/reflow, not a new audit of Boards functionality or hosted services.
+- Rendered auth contrast: button text 5.54:1 light / 7.80:1 dark; input boundaries
+  3.39:1 / 4.13:1; body 16.09:1 / 16.86:1. Automated token tests cover body, muted,
+  links, action states, selected nav, semantic states, inputs and focus. Decorative
+  dividers are intentionally lower contrast. The global border default was moved
+  into the base layer so control/selection tokens actually apply.
+- Login declared client-reference JS union versus the starting build: **-103 raw /
+  +48 locally gzipped bytes**, five chunks in both. No shader/canvas bundle. Local
+  optimized wordmark responses were 8,180/8,036 bytes; both variants are requested
+  to support device-local theme switching. Font is an additional 69,436-byte file.
+- A short 60-move local production-page probe recorded local falloff, stable form
+  bounds, zero Long Task/layout-shift entries and no frames after rest/leave.
+  These are scoped observations, not a production benchmark, cold-load CLS claim
+  or device SLA. No authenticated latency improvement is claimed.
+
+Limits: manual Windows NVDA, physical devices, non-Chromium browsers and hosted
+provider acceptance remain target-environment checks. The existing locked install
+reported npm audit findings; dependency upgrades were not part of this visual
+task. Database/worker validation is not applicable because neither changed.
+Temporary QA/install artifacts stay ignored under `.next/cache/redesign-004-1-qa`.
+Scoped code formatting, 13 changed Markdown ranges, diff whitespace and the
+57-file artifact/secret/relative-link review pass. Final sidebar logo fit passes
+after its size default was placed below utility overrides. Task browser and
+preview helpers are stopped. See [Brand](docs/BRAND.md) for canonical sources/usage and
+the exact future REDESIGN-005 recommendation.
+
+## REDESIGN-004 - Boards V2 foundation
+
+Boards now has real owner/updater/template metadata and seven native templates.
+The editor uses an immersive BoardShell with overlay navigation, vertical named
+creation tools, six Shapes choices, one-shot insertion, explicit Sections/Groups,
+selection sets and atomic manipulation. Private images support bounded batches,
+paste/drop, per-file recovery, aspect/crop/fit and identity-preserving replacement.
+Safe manual links fetch no previews. Inspector, Comments and the accessible
+outline share one responsive slot; zoom/fit/minimap and account/org/board-scoped
+local viewports preserve context. Scoped shortcuts and outline/Inspector controls
+provide alternatives to dragging. See [Boards](docs/BOARDS.md) for full contracts.
+
+Two forward migrations add minimal parent/lock/template invariants and bounded
+atomic operation/template RPCs. Direct writes and RPCs serialize on the board and
+repeat tenant/role/ownership checks. Initial canvas data has zero comment bodies
+and zero Storage signing calls. Deferred reads freshly check organization/board,
+accept PostgreSQL offset timestamps and sign canonical private asset keys in
+batches. Traversal/encoded/URL-shaped keys are rejected in both app and SQL.
+SVG paint cannot request external resources. Realtime keeps existing private
+channels, directory identity, unique people, stable colors and throttled cursors.
+Timestamp comparison retains PostgreSQL microseconds; same-transaction changes
+reconcile without dropping final row fields. Failed conflicting intents require
+reload rather than blind replay. No provider/plugin-private/Knowledge path is added.
+
+Verification passes:
+
+- Focused board plus workspace architecture: 24 files / 149 tests.
+- Full web suite: 186 files / 1,063 tests, including permanent isolation,
+  authorization, memory-domain, plugin-boundary and workflow categories.
+- Actual board SQL in isolated PostgreSQL/pgTAP: 34 existing plus 59 V2 assertions.
+  Covers tenant/role/revocation, direct read policies, ownership/cycles, atomic
+  rollback/moves, bounds/locks, archive/restore, image identity/private keys and
+  bounded template initialization. Existing SQL fixtures were corrected, not
+  weakened: policy-compatible UUIDs, accurate plan and distinct actor-denial /
+  recipient-success notification checks.
+- Web lint, standalone web typecheck and production Next build pass. The build
+  retains all 30 page URLs and non-page entrypoints, using nonsecret local
+  Supabase placeholders. No worker/shared-worker code changed, so worker checks
+  are not applicable.
+- Sandboxed headless Chrome: 70 recorded actual-component fixture checks across
+  320/390/430/768/1024/1200/1440/1920 px and both themes, plus a desktop panel-focus
+  transition check. Covers blank/populated/template/1,000-object/20-image boards,
+  list/empty/VIEWER, mouse/keyboard/touch-style input/reduced motion, manipulation,
+  real Group/Section dragging and image resize, outline/panels, comments, upload
+  recovery/paste/drop/replacement, reconnect simulation and viewport restore.
+  Recorded browser runs have zero runtime exceptions. Resize handles were raised
+  above image surfaces after actual hit testing exposed an overlap.
+
+Limits: browser fixtures replace only Next transport/actions/Realtime; they are
+not a live authenticated Supabase session. PostgreSQL uses a minimal Supabase
+bootstrap because Docker/Podman/local Supabase are unavailable; hosted data and
+service transport are untouched. Hosted migration/Storage/private-channel smoke
+checks and manual Windows NVDA remain target-environment acceptance. No offline
+persistence, connector attachment relation, image garbage collection, permanent
+board history, or native entity/AI integration is claimed. Local short timing
+probes are client-only observations, not before/after speedups or service SLAs.
+
+Temporary dependencies, synthetic fixtures, screenshots, logs and profiles are
+ignored under `.next/cache/redesign-004-qa`; no app dependency/lockfile changed.
+Task browser/preview helpers were stopped. No merge/push or 005 implementation.
+Scoped code/changed-Markdown formatting, local documentation links and
+`git diff --check` pass. Review covers all 64 changed candidate files; no secret,
+environment, dependency/lockfile or generated artifact is included. The production
+build retains 30 unique page URLs and three callback/API entrypoints. Its 48
+client JavaScript files contain none of the checked private-provider environment
+or synthetic QA markers. These scans are scoped verification, not a hosted audit.
+
+### Baseline captured before persistence changes
+
+Branch `codex/redesign-004-boards-v2`, worktree `.worktrees/redesign-004-boards-v2`,
+starts exactly at `d211d878793b60abb2598460a0feaf1f9baf5c9f`. Main agent only.
+Original checkout changes remain untouched. No merge/push or 005 implementation.
+
+Before modifying persistence: `boards` holds title, organization, author/updater,
+timestamps and archival state. `board_elements` has independently addressed TEXT,
+STICKY, IMAGE, SHAPE and ARROW rows; world x/y, width/height, rotation, persisted
+z-index and object-shaped content/style/metadata. Images use metadata.storagePath
+in the private board-images bucket, PNG/JPEG/WebP up to 10MB. Comments reference
+board/optional object, with shallow replies and validated mentions. Existing
+tenant foreign keys, provenance triggers, member-read/collaborator-write RLS and
+private org+board Realtime channel authorization are retained.
+
+No sections, groups, locks, links or template metadata exist in the baseline.
+Only the first selected ID is retained. Layer/undo changes persist through
+independent row actions (Promise.all), so partial saves are possible. The list
+uses repeated generic previews and generic owner labels. The editor sits in its
+page-owned AppShell, then adds its own header/horizontal toolbar. Initial editor
+loading waits for board, elements, directory, up to 200 comments and individual
+signing of every image; no production timing claim is made.
+
+Recorded plan: retain URLs/module/table names; add an immersive BoardShell with navigation
+overlay and no notification/search reads. Add bounded atomic operations and
+relational ownership/lock/template invariants with forward migrations, keeping
+legacy object identity/world coordinates. Build native templates, multi-selection,
+group/section manipulation, named shape tools, inspector/outline alternatives and
+zoom/device viewport controls. Defer comments and batched authorized image signing
+until after the base canvas is usable; retain private original assets and comment
+identities on replacement. Keep existing cursor/presence/color normalization and
+local conflict-aware operation history. No plugin imports, canonical entity cards,
+conversion, voting/reactions, AI execution or memory promotion.
+
+Docker/Podman/local PostgreSQL are unavailable. Database verification used an
+isolated embedded PostgreSQL/pgTAP runner, documenting its Supabase
+bootstrap/service limits; hosted data is not a test fixture and is not modified.
+
+## REDESIGN-003.1 — Auth visual identity and interactive artwork
+
+Branch `codex/redesign-003-1-auth-visual-identity`, isolated worktree
+`.worktrees/redesign-003-1-auth-visual-identity`, starts exactly at accepted
+REDESIGN-003 `d9f481d119a7d4f517d428bd3b4a6473bf38e444`. Original checkout changes
+remain untouched. Main agent only; no merge/push or REDESIGN-004 implementation.
+
+Login/signup share an original abstract contour/plane composition: ideas becoming
+structure, with sparse grid/coordinate fragments and concise identity copy.
+Server SVG is passed into a small client interaction wrapper. Scoped theme tokens
+provide mist/teal/seafoam/warm-neutral light art and separately authored charcoal/
+muted-teal dark art. Normal application surfaces and global tokens are unchanged.
+Desktop is approximately 55/45; tablet has a reduced static field; mobile is
+form-first with a small static accent. Focused invitation/setup/recovery shells
+retain their existing presentation and behavior.
+
+Fine desktop pointer movement normalizes/clamps position, translates layers by
+2/4/8/10 SVG units and reveals secondary lines through a soft radial CSS mask.
+Geometry is cached outside the frame loop and invalidated on resize/scroll.
+Only CSS variables change in finite RAF bursts; no React state/render loop,
+ambient drift, velocity effect, SVG filter, WebGL, raster hero or new dependency.
+Media/visibility changes reset/cancel animation; reduced motion also disables
+transforms/reveal in CSS. All pointer data is ephemeral and local, never logged,
+persisted or sent. Decorative artwork is aria-hidden, unfocusable and independent
+of auth, account, organization or application state.
+
+AuthForm, auth pages/actions/schemas, session and return-path boundaries are
+unchanged. Focused tests pass: 5 files / 24 tests, including existing normalized
+credentials, validation, generic errors, signup confirmation and invitation return
+security; new tests cover form submission, decorative safety, media/visibility
+guards, finite frames, cached geometry, cleanup and zero pointer-driven React
+child rerenders. Preview screenshots of actual public routes were inspected.
+
+Production public-route QA passes 260 checks across 32 login/signup cases in both
+themes at 320/390/430/768/1024/1200/1440/1920px, plus 1440x600 short-screen checks.
+Coverage includes form bounds/reflow, caption separation, essential button/copy
+contrast, decorative focus isolation, actual Tab order, return paths, invalid
+submission, static small-screen art, slow/fast pointer response, local reveal,
+form stability, settled idle behavior and live reduced-motion reset. Final desktop,
+mobile and reveal screenshots were inspected. There were no uncaught/console
+errors. Public pages used nonsecret local Supabase placeholders; successful live
+provider authentication was not exercised. Existing action/schema tests retain
+that behavior coverage through mocks. Manual NVDA is not claimed.
+
+Against the accepted REDESIGN-003 production build, the declared login client-
+reference JS chunk union remains five files: 356,085 -> 359,234 bytes raw and
+88,524 -> 89,452 bytes locally gzipped, a +3,149/+928 byte change. This includes
+shared chunks and is an artifact comparison, not measured HTTP transfer. SVG
+markup and CSS are additional payload, not included in those JS figures. Short
+desktop slow/fast-pointer probes observed zero Long Task entries in both themes;
+this is a local observation, not a device-independent performance guarantee.
+Unit tests verify zero pointer-driven child rerenders; browser checks verify no
+continuing style writes after settling. No elaborate benchmark harness was added.
+
+All required local checks pass: full web suite 179 files / 1,006 tests, focused
+auth suite 5 files / 24 tests, web lint, standalone web typecheck, production build,
+scoped formatting and diff/secret/artifact review. Checked private server/client
+construction markers are absent from production client bundles. QA assets remain
+ignored under `.next`; temporary browser/server processes are stopped. No worker
+or DB validation is required because no shared worker runtime or schema changed.
+No Home/Tasks/Boards/Marketing/Settings, database/RLS, worker/shared runtime,
+provider or dependency changes are included. Total-list pagination and signed-in/
+NVDA follow-up from REDESIGN-003 remain unchanged. REDESIGN-004 can proceed as a
+separately authorized task; it is not started here.
+
+
+## REDESIGN-003 — Home and Tasks V2
+
+Branch `codex/redesign-003-home-tasks`, isolated worktree
+`.worktrees/redesign-003-home-tasks`, starting exactly at accepted REDESIGN-002
+`17ade235eabfe142ee536267e1a3d88da736942a`. Original checkout changes are untouched.
+Main agent only; no merge/push and no REDESIGN-004 implementation.
+
+Home replaces pastel/metric/launcher sections with six deduplicated tasks ranked
+overdue, due within 48 hours, assigned to the viewer, then other active work.
+Four organization-scoped queries each request at most six task summaries; a
+deterministic due-date/ID tie break produces the final six. Activity requests six
+events. The member directory and existing enabled-Marketing overview contract
+are retained. Meaningful Marketing work is omitted when disabled or empty.
+Create task uses the existing `?create=true` flow; VIEWER gets Review tasks.
+Home deadlines and compact activity reuse the hydration-safe, browser/System
+Intl component, including date-boundary and DST behavior.
+
+Tasks exposes My/All/Upcoming/Completed, with Overdue/Archive/Calendar under More
+views. Search, a mobile filter sheet, removable active filters and compact rows
+retain existing filter/order/completion/archive semantics. Selection uses native
+App Router-compatible history, preserving all other query state without a list
+refetch. Detail is a 480px nonmodal desktop panel, modal tablet overlay and
+full-screen mobile dialog. Back/Forward and direct selection work independently
+of visible rows. Closing returns focus to the row or heading.
+
+### Structural performance evidence
+
+Inspected baseline before changes: initial Tasks selected every task field and
+every organization comment body, plus one member-directory RPC: one task query,
+one comments query, one member query (excluding authorization/setup/shell).
+Home selected up to 50 full task rows and displayed four, with UTC-only deadline
+formatting. These are source observations, not production timings.
+
+After: initial Tasks reads only nine summary fields and one member RPC, with
+**zero comment queries/bodies**. For fewer than 1,000 tasks this is one task query;
+larger lists use deterministic ID-keyset batches of 1,000 (an exact multiple
+requires an empty final batch). No total-list cap is claimed: product pagination
+is deferred to preserve complete cross-list search, views, archive and deadline
+refresh semantics. The former implicit API row cap no longer silently truncates
+the workspace. Concurrent insertions before a traversed cursor appear on refresh.
+The full directory and total summary list can still grow; this remains a measured
+follow-up rather than an incorrect first-N client list.
+
+Opening detail starts one read action: fresh current organization/membership,
+validated UUIDs, then one organization+task-scoped full task read. Only after
+success does a second action reauthorize, check task existence and read at most
+51 comments, displaying 50 and an explicit earlier-page cursor. Ordering is
+timestamp+ID, newest batch displayed chronologically; Load earlier comments uses
+a validated keyset cursor. Each subsequent batch is bounded. Foreign/missing
+tasks share an unavailable response; expected organization is validated against
+fresh server context, never trusted as authority. RLS and mutation actions remain.
+Keyed selection boundaries and request lifecycles discard late detail/comments
+after switches, refreshes or closing. Local errors/retry preserve the list.
+
+No reliable authenticated Home -> Tasks latency or DB request trace is available;
+no milliseconds or production percentile improvement is asserted. Home trades
+one wider task query for four small priority-arm reads (at most 24 candidates).
+Marketing overview fetching remains its existing contract, outside this redesign.
+
+### Verification and remaining acceptance
+
+Focused Home/Tasks/read-authorization/local-time tests pass, including 22 final
+Task workspace/data tests. The final full web suite passes: 177 files / 997 tests.
+Headless Chrome passes 132 actual-component fixture checks at
+320/390/430/768/1024/1200/1440px in
+both themes, including a representative 224px desktop shell allowance, overflow,
+Enter opening, modal Tab wrap, URL/filter retention, empty/read-only/error states,
+lazy-read counters, mobile filter-sheet bounds and repeated comment posts that
+refresh discussion without remounting the focused composer. Desktop/mobile screenshots
+were inspected; no uncaught browser/console errors occurred. Fixture server reads
+are mocked; this is not live authenticated browser or RLS/production timing proof.
+Temporary fixture bundles, screenshots and profiles stay ignored under `.next`.
+
+Web lint, web typecheck and the web production build pass. Scoped formatting,
+diff checks and secret/runtime-artifact review pass; production client bundles
+contain none of the checked private server-environment/client-construction markers.
+The build retains all existing page and non-page entrypoints. Temporary QA browser
+and server processes are stopped. No worker validation or DB migration checks are
+required because neither shared worker runtime nor schema changed.
+Manual Windows NVDA and signed-in target-environment transition/
+authorization/latency acceptance remain outstanding and are not claimed as passed.
+No database, migration, RLS, dependency, worker/shared runtime, AI or memory changes.
+REDESIGN-004 remains the separately approved Boards foundation: list/templates,
+immersive BoardShell and editor mechanics. Native entity integrations/conversions
+remain in 005; Marketing redesign and new AI execution remain outside that scope.
+
+
+## REDESIGN-002 baseline and scope
+
+Starting HEAD: accepted REDESIGN-001 commit
+`0deddae882c589f3e26be6e2af6017bbca273e83`, descendant of freshly fetched
+`origin/main` `5b7e76a`. Implementation is isolated in
+`.worktrees/redesign-002-shell-auth-performance` on
+`codex/redesign-002-shell-auth-performance`; original unrelated changes remain.
+
+Before implementation, source confirms sidebar document anchors, individually
+owned page shells, 256px sidebar/64px topbar, inert global search, six parallel
+onboarding datasets for routine routing, duplicate membership/org reads and two
+notification queries per page render. Plugin state and Auth are already
+request-memoized. Source-derived common Core-page overhead is 14 DB/RPC calls
+before feature data (3 context, 2 full-loader membership/org, 6 onboarding,
+2 notifications, 1 plugin); selected-cookie fallback may add a membership call.
+This is a structural call inventory, not a measured trace or latency benchmark.
+Marketing tab links already use client routing but recreate their shell.
+
+No connected browser tool or authenticated browser session is available for
+reliable Home -> Tasks, Tasks -> Marketing, Marketing -> Studio or Settings
+timings/request traces. Record structural before/after evidence and automated
+contracts without inventing measurements. Preserve existing incomplete-setup
+Marketing/Workers behavior and defer Home/Tasks content, BoardShell/mechanics,
+Marketing workflows and deep Settings consolidation.
+
+### REDESIGN-002 implementation and verification
+
+The `(workspace)` route group owns one AppShell at unchanged URLs. Each page
+keeps server-derived context and applicable setup/plugin/role checks; ordinary
+layouts do not grant mutation authority. The existing board editor remains on
+its page-owned AppShell until REDESIGN-004. Workers/Marketing retain their
+existing incomplete-onboarding behavior rather than acquiring a new setup gate.
+
+The shell uses serializable navigation icon IDs, a neutral 224px expanded/56px
+collapsed sidebar, 48px opaque topbar, Next Link pending feedback and content
+skeletons. Collapse is device-local, keyboard-labeled and works without Storage
+through a session fallback. Settings and local Marketing/Apps links preserve
+all moved destinations. The inert search field is gone. Auth retains its action,
+validation, confirmation and safe return contracts with a two-column desktop
+showcase and form-first layout below 1200px.
+
+Selected-membership resolution now reads one membership plus one organization,
+instead of selecting membership twice. Read-only onboarding/company composition
+reuses that request context, while explicit membership authorization stays
+uncached. Routine gates read only `completed_at, current_step`; full loaders
+remain for Company/Memory/editing. Layout owns initial notifications/plugin reads
+in parallel. Notification summaries refresh on opening through a fresh
+organization/recipient-derived action; focus refresh updates shell metadata.
+
+Structural common Core overhead is now 6 queries on a full workspace render
+(2 context, 1 setup, 2 notification, 1 plugin), or 3 on a content-only transition
+that reuses the layout, plus feature data. The baseline was 14. These are source
+counts, not observed production requests or latency claims; cookie fallback may
+add a membership query. Task comment loading is deliberately unchanged.
+
+Verification passes the full web suite (174 files / 969 tests), repository lint,
+worker/web typechecks and standard worker/web production builds. After aligning
+the shell/auth desktop breakpoint to the specified 1200px, the affected eight
+UI tests, targeted lint and web production build pass again. Scoped formatting,
+route contracts, diff/whitespace review and secret/local-artifact checks pass.
+
+Headless Chrome checks against the built public auth routes pass 28 cases:
+login/signup, light/dark, 320/390/430/768/1199/1200/1440px. Checks cover overflow,
+showcase visibility, form bounds, one main heading, autocomplete and real Tab
+order through the inputs/submit. Reduced-motion media is honored and no uncaught
+client errors were observed. Desktop/mobile screenshots were inspected. This is
+not manual NVDA testing or authenticated workspace performance acceptance.
+
+The isolated worktree needed a local install of the unchanged lockfile for
+Turbopack's workspace-root resolution; no dependency/version/lockfile changed.
+Build/browser QA uses non-secret verification public configuration, never a
+copied production environment. Temporary browser/server processes were stopped
+and generated QA files remain ignored. Worker tests were not rerun because no
+worker/shared runtime code changed; no DB migration tests apply without DB changes.
+
+Remaining acceptance: authenticated desktop/tablet/mobile shell transitions,
+real before/after latency/request traces and manual NVDA verification in the
+target environment. Do not claim measured speedups. Existing board/editor and
+feature-page content stays deliberately unchanged for later redesign phases.
+
+## REDESIGN-001 — V2 Product Experience Foundation
+
+Documentation-only work on `codex/redesign-001-v2-foundation`, isolated at
+`.worktrees/redesign-001-v2-foundation` from freshly fetched `origin/main`
+`5b7e76a0fe6a4e80f17e14c04b119a84b43668a9`. Unrelated source edits and supplied
+untracked design references in the original `main` checkout are preserved.
+
+The canonical [V2 specification](docs/STYLUS_V2_PRODUCT_EXPERIENCE.md) defines
+neutral cyan-led visuals, Home/Tasks/Boards/Marketing/Settings navigation,
+all 30 page routes, immersive BoardShell, startup board templates/integrations,
+workflow-first Studio and Settings consolidation. DESIGN_SYSTEM and UI_PATTERNS
+now describe V2 targets, not an assertion that those targets are implemented.
+ADR-040 supersedes ADR-039's default editorial section-color guidance only.
+
+Source audit confirms ordinary sidebar anchors, page-owned shells, six-dataset
+onboarding gates on routine Core routes and eager loading of every task comment.
+Auth/plugin request memoization and existing loading files qualify other
+hypotheses. Production timing and each mechanism's latency contribution remain
+unmeasured. All ten verdicts, P0/P1/P2 remediation and repeatable benchmarks are
+in the spec. No browser automation, application code, migrations, RLS, workflow,
+worker behavior, dependencies or existing functionality changed.
+
+Validation passes: scoped Prettier for all seven Markdown files, all 30 page
+routes plus three retained non-page entrypoints, 16 local Markdown links,
+38 required sections, ten performance verdicts, repository lint, worker/web
+typechecks and six focused existing web test files / 23 tests. Diff review and
+whitespace checks confirm documentation-only changes. No full suite, production
+build or database tests were run: they are not applicable to this prose-only
+change. An ignored worktree-local junction resolves the existing shared
+TypeScript config for checks; no dependency/package/lockfile changed. Do not
+reuse old verification counts below as evidence for this task.
+
+Unresolved: capture production before/after timing, run NVDA and visual responsive
+QA during implementation, confirm owner product/budget decisions listed in the
+spec, and keep all previous hosted QA limitations in force. The reference files
+are user-supplied untracked inputs in the original checkout; they are not staged
+or copied into this documentation branch. No runtime feature is declared complete.
 
 Stylus Marketing now includes Ask Council, a bounded conversational advisor
 that reads authorized company, research, Performance Learning and exact
@@ -17,17 +1665,21 @@ derivation, memory or Web Agency behavior.
 
 ## Current Phase
 
-Phase 17 — Ask Council
+REDESIGN-002 — Workspace Shell / Authentication Foundation
 
-Status: FINAL UI REFINEMENT VERIFIED / FINAL VISUAL QA READY
+Status: COMPLETE / REQUIRED LOCAL CHECKS PASS
 
 ---
 
 ## Current Objective
 
-Perform final light/dark responsive visual QA for the completed production
-design system and high-distinction Whiteboard collaborator identities without
-altering accepted TASK-001 through TASK-020 workflows.
+Review REDESIGN-002 and its retained manual acceptance limitations; do not merge
+or push automatically. REDESIGN-003 is not started. Its exact next scope is Home
+attention hierarchy/local-time consistency and Tasks toolbar/views/right detail
+with lazy selected-task comments and bounded loading, preserving reminder,
+completion/archive and authorization contracts. The earlier production and
+TASK-001 through TASK-020 notes below are historical implementation/QA records,
+not V2 completion claims; existing manual/hosted acceptance obligations remain.
 
 ## Final Production Design Refinement
 

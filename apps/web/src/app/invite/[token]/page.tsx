@@ -77,3 +77,5 @@ export default async function InvitationPage({
     </AuthShell>
   );
 }
+
+export const metadata = { title: "Join organization" };

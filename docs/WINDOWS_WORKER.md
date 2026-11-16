@@ -160,6 +160,10 @@ committed and are never downloaded during install, startup, build, tests, or web
 requests. Transcription stays local; structured interpretation remains a hosted
 ModelGateway operation.
 
+Serialized `transcript.model` contains only the configured model filename, with
+Windows/POSIX separators handled independently of the host OS. The full model
+path stays local and is passed unchanged to whisper.cpp.
+
 The extraction-result broker call allows enough time for ModelGateway's bounded
 provider attempts. If hosted interpretation fails, the broker returns only a
 normalized job category and retryability flag. The worker preserves that safe

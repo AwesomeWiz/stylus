@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { useActionState, useMemo, useState, useSyncExternalStore } from "react";
 import {
@@ -319,7 +320,7 @@ function ContentTab({
           </label>
           <label className="text-sm font-medium">
             Source Reel Brief version (optional)
-            <select
+            <Select
               className="border-input bg-background mt-1.5 h-10 w-full rounded-md border px-3 text-sm"
               name="sourceReelBriefVersionId"
             >
@@ -329,11 +330,11 @@ function ContentTab({
                   {brief.title} · v{brief.version_number}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="text-sm font-medium">
             Content opportunity type (optional)
-            <select
+            <Select
               className="border-input bg-background mt-1.5 h-10 w-full rounded-md border px-3 text-sm"
               name="contentOpportunityType"
             >
@@ -343,7 +344,7 @@ function ContentTab({
                   {label(type)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="text-sm font-medium">
             Reel duration in seconds (optional)
@@ -542,7 +543,7 @@ function DetailTab({
     <div className="space-y-6">
       <label className="block max-w-xl text-sm font-medium">
         Published Reel
-        <select
+        <Select
           className="border-input bg-background mt-1.5 h-10 w-full rounded-md border px-3 text-sm"
           onChange={(event) => onSelect(event.target.value)}
           value={selectedId}
@@ -553,7 +554,7 @@ function DetailTab({
               {content.internal_label}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       {!selected ? (
         <p className="text-muted-foreground border-y py-8 text-center text-sm">

@@ -12,6 +12,19 @@ plugins.
 
 ## Dependency Boundary
 
+REDESIGN-006 declares Marketing Hypothesis/Experiment/Learning read/write
+capabilities and registers their native providers through the existing trusted
+host. Core owns the public provenance interface; the host freshly authorizes a
+canonical target before a trusted plugin returns bounded internal backlinks.
+There is no plugin-supplied executable client UI, new tool or memory-domain grant.
+See [Growth and learning](GROWTH_LEARNING.md).
+
+Native Board integrations use the separate public Core entity provider contract
+and trusted static application host. Marketing registers bounded resolvers,
+canonical openers and domain creation adapters without a private import from
+Core Boards. Enabled-plugin and fresh entity authority gate discovery, resolution
+and creation. See [Native entities](NATIVE_ENTITIES.md).
+
 The allowed direction is:
 
 ```text

@@ -1,0 +1,15 @@
+name: Bounded improvement
+description: Explain a concrete problem before proposing a new capability.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and existing workflow
+      description: Who encounters this, and how do they work around it today?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Proposed outcome and limits
+      description: Describe a small useful outcome and what can remain deferred.

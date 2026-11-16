@@ -1,3 +1,36 @@
+import type {
+  ConnectionRow,
+  LinkRow,
+  ResourceProjection,
+} from "@/core/integrations/public";
+type IntegrationTable<T> = {
+  Row: T;
+  Insert: T;
+  Update: Partial<T>;
+  Relationships: [];
+};
+type IntegrationState = {
+  id: string;
+  organization_id: string;
+  actor_id: string;
+  provider: ConnectionRow["provider"];
+  purpose: "oauth" | "github-selection";
+  sealed: string;
+  expires_at: string;
+  created_at: string;
+};
+type CalendarIntent = {
+  account_id: string;
+  id: string;
+  organization_id: string;
+  actor_id: string;
+  connection_id: string;
+  entity_type: LinkRow["entity_type"];
+  entity_id: string;
+  input: Record<string, string>;
+  state: "pending" | "linked";
+  created_at: string;
+};
 export type OrganizationRole = "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
 export type OrganizationInvitationStatus = "PENDING" | "ACCEPTED" | "REVOKED";
 export type OrganizationPluginRow = {
@@ -609,9 +642,33 @@ export type MarketingAskCouncilContextRefRow = {
   strategic_review_id: string | null;
   turn_id: string;
 };
-export type BoardElementType = "TEXT" | "STICKY" | "IMAGE" | "SHAPE" | "ARROW";
+export type BoardElementType =
+  | "ENTITY_CARD"
+  | "TEXT"
+  | "STICKY"
+  | "IMAGE"
+  | "SHAPE"
+  | "ARROW"
+  | "SECTION"
+  | "GROUP"
+  | "LINK";
 
+export type BoardEntityConversionRow = {
+  id: string;
+  organization_id: string;
+  board_id: string | null;
+  created_by: string | null;
+  entity_type: string;
+  entity_id: string;
+  card_id: string;
+  input: Record<string, unknown>;
+  source_ids: string[];
+  state: "PREPARED" | "CREATED";
+  created_at: string;
+};
 export type BoardRow = {
+  /** Absent only on legacy client snapshots; SQL defaults to null. */
+  template_key?: string | null;
   archived_at: string | null;
   created_at: string;
   created_by: string;
@@ -623,6 +680,9 @@ export type BoardRow = {
 };
 
 export type BoardElementRow = {
+  /** Legacy snapshots normalize absent ownership/lock to null/false. */
+  parent_id?: string | null;
+  locked?: boolean;
   archived_at: string | null;
   board_id: string;
   content: Record<string, unknown>;
@@ -643,7 +703,67 @@ export type BoardElementRow = {
   z_index: number;
 };
 
+export type BoardReactionKind =
+  "like" | "heart" | "fire" | "eyes" | "celebrate";
+export type BoardVotingSessionRow = {
+  id: string;
+  organization_id: string;
+  board_id: string;
+  status: "ACTIVE" | "ENDED";
+  allowance: number;
+  eligible_types: string[];
+  started_by: string | null;
+  ended_by: string | null;
+  created_at: string;
+  updated_at: string;
+  ended_at: string | null;
+  revision: number;
+};
+export type BoardVoteRow = {
+  organization_id: string;
+  board_id: string;
+  session_id: string;
+  voter_id: string;
+  slot: number;
+  element_id: string;
+  active: boolean;
+  version: number;
+  request_id: string;
+  updated_at: string;
+};
+export type BoardVoteSummary = {
+  element_id: string;
+  total: number;
+  mine: number;
+  participants: string[];
+  rank?: number;
+};
+export type BoardVotingSnapshot = {
+  session: BoardVotingSessionRow | null;
+  own_votes: BoardVoteRow[];
+  summaries: BoardVoteSummary[];
+  results: BoardVoteSummary[];
+  has_more: boolean;
+};
+export type BoardReactionRow = {
+  organization_id: string;
+  board_id: string;
+  element_id: string;
+  user_id: string;
+  reaction: BoardReactionKind;
+  active: boolean;
+  updated_at: string;
+};
+export type BoardReactionSummary = {
+  element_id: string;
+  reaction: BoardReactionKind;
+  total: number;
+  mine: boolean;
+  participants: string[];
+};
 export type BoardCommentRow = {
+  resolved_at: string | null;
+  resolved_by: string | null;
   archived_at: string | null;
   author_id: string;
   board_id: string;
@@ -717,6 +837,7 @@ export type AIRunRow = {
 };
 
 export type KnowledgeMemoryRow = {
+  creation_key?: string | null;
   archived_at: string | null;
   archived_by: string | null;
   content: string;
@@ -935,6 +1056,7 @@ export type OnboardingProgressRow = {
 };
 
 export type TaskRow = {
+  milestone_id?: string | null;
   assignee_id: string | null;
   completed_at: string | null;
   created_at: string;
@@ -1017,9 +1139,192 @@ type MarketingUpdate<T extends MarketingAuditRow> = Partial<
   Omit<T, "created_at" | "created_by" | "id" | "organization_id">
 >;
 
+export type GrowthRow = {
+  id: string;
+  organization_id: string;
+  title: string;
+  owner_id?: string | null;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+  statement?: string;
+  status?: string;
+  confidence?: string | null;
+  hypothesis_id?: string;
+  test_plan?: string;
+  success_criteria?: string;
+  starts_on?: string | null;
+  ends_on?: string | null;
+  outcome?: string | null;
+  result_summary?: string | null;
+  evaluated_at?: string | null;
+  evaluated_by?: string | null;
+  evaluated_hypothesis_statement?: string | null;
+  evaluated_source_ids?: string[] | null;
+  experiment_id?: string;
+  conclusion?: string;
+  board_conversion_id?: string | null;
+};
+export type HypothesisSourceRow = {
+  id: string;
+  organization_id: string;
+  hypothesis_id: string;
+  evidence_id: string | null;
+  evidence_run_id: string | null;
+  evidence_key: string | null;
+  note_id: string | null;
+  opportunity_report_id: string | null;
+  opportunity_index: number | null;
+  created_by: string;
+  created_at: string;
+  archived_at: string | null;
+};
+export type ExperimentLinkRow = {
+  id: string;
+  organization_id: string;
+  experiment_id: string;
+  task_id: string | null;
+  campaign_id: string | null;
+  reel_idea_id: string | null;
+  creative_brief_id: string | null;
+  reel_brief_version_id: string | null;
+  performance_snapshot_id: string | null;
+  performance_learning_id: string | null;
+  created_by: string;
+  created_at: string;
+  archived_at: string | null;
+};
+
+export type CoreExecutionAudit = {
+  id: string;
+  organization_id: string;
+  title: string;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+};
+export type MilestoneRow = CoreExecutionAudit & {
+  description: string;
+  target_date: string | null;
+  status: "PLANNED" | "ACTIVE" | "COMPLETE";
+  owner_id: string | null;
+};
+export type CoreNoteRow = CoreExecutionAudit & { content: string };
+export type CoreNoteLinkRow = {
+  id: string;
+  organization_id: string;
+  note_id: string;
+  task_id: string | null;
+  milestone_id: string | null;
+  created_by: string;
+  created_at: string;
+};
+export type TaskDependencyRow = {
+  organization_id: string;
+  task_id: string;
+  blocked_by_id: string;
+  created_by: string;
+  created_at: string;
+};
+export type TaskExecutionSummary = {
+  task_id: string;
+  blocked_count: number;
+  milestone_id: string | null;
+  milestone_title: string | null;
+  milestone_archived: boolean;
+};
+export type OnboardingDraftRow = {
+  organization_id: string;
+  step: string;
+  fields: Record<string, string[]>;
+  base_revision: string | null;
+  updated_by: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
+      integration_connections: IntegrationTable<ConnectionRow>;
+      integration_secrets: IntegrationTable<{
+        connection_id: string;
+        sealed: string;
+        updated_at: string;
+      }>;
+      integration_oauth_states: IntegrationTable<IntegrationState>;
+      external_resource_links: IntegrationTable<LinkRow>;
+      integration_resource_cache: IntegrationTable<{
+        connection_id: string;
+        resource_key: string;
+        generation: number;
+        projection: ResourceProjection;
+        checked_at: string;
+      }>;
+      integration_calendar_intents: IntegrationTable<CalendarIntent>;
+      milestones: {
+        Row: MilestoneRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      notes: {
+        Row: CoreNoteRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      note_links: {
+        Row: CoreNoteLinkRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      task_dependencies: {
+        Row: TaskDependencyRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      onboarding_drafts: {
+        Row: OnboardingDraftRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_hypotheses: {
+        Row: GrowthRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_experiments: {
+        Row: GrowthRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_learnings: {
+        Row: GrowthRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_hypothesis_sources: {
+        Row: HypothesisSourceRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      marketing_experiment_links: {
+        Row: ExperimentLinkRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       activity_events: {
         Row: ActivityEventRow;
         Insert: never;
@@ -1051,6 +1356,12 @@ export type Database = {
         Update: Partial<AudienceProfileRow>;
         Relationships: [];
       };
+      board_entity_conversions: {
+        Row: BoardEntityConversionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       board_elements: {
         Row: BoardElementRow;
         Insert: Pick<
@@ -1069,11 +1380,15 @@ export type Database = {
           | "y"
           | "z_index"
         > &
-          Partial<Pick<BoardElementRow, "id" | "rotation">>;
+          Partial<
+            Pick<BoardElementRow, "id" | "rotation" | "parent_id" | "locked">
+          >;
         Update: Partial<
           Pick<
             BoardElementRow,
             | "archived_at"
+            | "parent_id"
+            | "locked"
             | "content"
             | "height"
             | "metadata"
@@ -1086,6 +1401,24 @@ export type Database = {
             | "z_index"
           >
         >;
+        Relationships: [];
+      };
+      board_reactions: {
+        Row: BoardReactionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      board_voting_sessions: {
+        Row: BoardVotingSessionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      board_votes: {
+        Row: BoardVoteRow;
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       board_comments: {
@@ -1106,7 +1439,7 @@ export type Database = {
           BoardRow,
           "created_by" | "organization_id" | "title" | "updated_by"
         > &
-          Partial<Pick<BoardRow, "id">>;
+          Partial<Pick<BoardRow, "id" | "template_key">>;
         Update: Partial<Pick<BoardRow, "archived_at" | "title" | "updated_by">>;
         Relationships: [];
       };
@@ -1213,13 +1546,13 @@ export type Database = {
         Relationships: [];
       };
       marketing_reel_ideas: {
-        Row: MarketingReelIdeaRow;
+        Row: MarketingReelIdeaRow & { board_conversion_id: string | null };
         Insert: MarketingInsert<MarketingReelIdeaRow>;
         Update: MarketingUpdate<MarketingReelIdeaRow>;
         Relationships: [];
       };
       marketing_research: {
-        Row: MarketingResearchRow;
+        Row: MarketingResearchRow & { board_conversion_id: string | null };
         Insert: MarketingInsert<MarketingResearchRow>;
         Update: MarketingUpdate<MarketingResearchRow>;
         Relationships: [];
@@ -1450,7 +1783,10 @@ export type Database = {
         Relationships: [];
       };
       tasks: {
-        Row: TaskRow;
+        Row: TaskRow & {
+          board_conversion_id: string | null;
+          milestone_id: string | null;
+        };
         Insert: Pick<
           TaskRow,
           "created_by" | "organization_id" | "title" | "updated_by"
@@ -1484,6 +1820,356 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      set_external_resource_link: {
+        Args: {
+          p_organization_id: string;
+          p_type: string;
+          p_entity: string;
+          p_connection: string;
+          p_locator: LinkRow["locator"];
+          p_remove: boolean;
+        };
+        Returns: string;
+      };
+      disconnect_integration: {
+        Args: { p_organization_id: string; p_id: string };
+        Returns: undefined;
+      };
+      store_integration_secret: {
+        Args: { p_id: string; p_generation: number; p_sealed: string };
+        Returns: boolean;
+      };
+      store_integration_cache: {
+        Args: {
+          p_id: string;
+          p_generation: number;
+          p_rows: { key: string; projection: ResourceProjection }[];
+        };
+        Returns: undefined;
+      };
+      activate_integration: {
+        Args: {
+          p_actor: string;
+          p_org: string;
+          p_id: string;
+          p_provider: string;
+          p_account: string;
+          p_name: string;
+          p_config: ConnectionRow["config"];
+          p_sealed: string;
+          p_expected: number;
+        };
+        Returns: string;
+      };
+      daily_core_attention: {
+        Args: { p_organization_id: string; p_now: string };
+        Returns: unknown;
+      };
+      marketing_daily_attention: {
+        Args: { p_organization_id: string; p_now: string };
+        Returns: unknown;
+      };
+      save_milestone: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_title: string;
+          p_description: string;
+          p_target_date: string | null;
+          p_status: string;
+          p_owner_id: string | null;
+          p_archived: boolean;
+          p_expected_updated_at: string | null;
+        };
+        Returns: string;
+      };
+      set_task_milestone: {
+        Args: {
+          p_organization_id: string;
+          p_task_id: string;
+          p_milestone_id: string | null;
+        };
+        Returns: undefined;
+      };
+      set_task_dependency: {
+        Args: {
+          p_organization_id: string;
+          p_task_id: string;
+          p_blocked_by_id: string;
+          p_link: boolean;
+        };
+        Returns: undefined;
+      };
+      task_execution_summaries: {
+        Args: { p_organization_id: string; p_ids: string[] };
+        Returns: TaskExecutionSummary[];
+      };
+      milestone_progress: {
+        Args: { p_organization_id: string; p_ids: string[] };
+        Returns: { id: string; completed_count: number; total_count: number }[];
+      };
+      save_core_note: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_title: string;
+          p_content: string;
+          p_archived: boolean;
+          p_expected_updated_at: string | null;
+        };
+        Returns: string;
+      };
+      set_core_note_link: {
+        Args: {
+          p_organization_id: string;
+          p_note_id: string;
+          p_kind: string;
+          p_target_id: string;
+          p_link: boolean;
+        };
+        Returns: undefined;
+      };
+      promote_core_note: {
+        Args: {
+          p_organization_id: string;
+          p_note_id: string;
+          p_kind: MemoryKind;
+          p_title: string;
+          p_content: string;
+          p_expected_updated_at: string;
+        };
+        Returns: string;
+      };
+      read_onboarding_draft: {
+        Args: { p_organization_id: string; p_step: string };
+        Returns: {
+          fields: Record<string, string[]>;
+          updated_at: string | null;
+          base_revision: string | null;
+          conflicted: boolean;
+        }[];
+      };
+      save_onboarding_draft: {
+        Args: {
+          p_organization_id: string;
+          p_step: string;
+          p_fields: Record<string, string[]>;
+          p_base_revision: string | null;
+          p_expected_updated_at: string | null;
+        };
+        Returns: string;
+      };
+      resolve_onboarding_draft: {
+        Args: {
+          p_organization_id: string;
+          p_step: string;
+          p_expected_updated_at: string | null;
+          p_keep: boolean;
+        };
+        Returns: undefined;
+      };
+      commit_onboarding_step: {
+        Args: {
+          p_organization_id: string;
+          p_step: string;
+          p_fields: Record<string, unknown>;
+          p_base_revision: string | null;
+          p_draft_revision: string | null;
+        };
+        Returns: number;
+      };
+      finish_company_onboarding: {
+        Args: { p_organization_id: string };
+        Returns: undefined;
+      };
+      marketing_growth_counts: {
+        Args: { p_organization_id: string; p_ids: string[] };
+        Returns: {
+          id: string;
+          source_count: number;
+          experiment_count: number;
+        }[];
+      };
+      create_company_memory_once: {
+        Args: {
+          p_organization_id: string;
+          p_creation_key: string;
+          p_kind: MemoryKind;
+          p_title: string;
+          p_content: string;
+          p_source_reference: string;
+        };
+        Returns: KnowledgeMemoryRow;
+      };
+      save_marketing_hypothesis: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_fields: Record<string, unknown>;
+          p_expected_updated_at?: string | null;
+          p_source?: Record<string, unknown> | null;
+        };
+        Returns: string;
+      };
+      save_marketing_experiment: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_fields: Record<string, unknown>;
+          p_expected_updated_at?: string | null;
+        };
+        Returns: string;
+      };
+      save_marketing_learning: {
+        Args: {
+          p_organization_id: string;
+          p_id: string;
+          p_experiment_id: string;
+          p_title: string;
+          p_conclusion: string;
+          p_confidence: string;
+          p_archived?: boolean;
+          p_expected_updated_at?: string | null;
+        };
+        Returns: string;
+      };
+      link_marketing_hypothesis_source: {
+        Args: {
+          p_organization_id: string;
+          p_hypothesis_id: string;
+          p_source: Record<string, unknown>;
+          p_archived?: boolean;
+        };
+        Returns: string;
+      };
+      link_marketing_experiment: {
+        Args: {
+          p_organization_id: string;
+          p_experiment_id: string;
+          p_kind: string;
+          p_target_id: string;
+          p_archived?: boolean;
+        };
+        Returns: string;
+      };
+      evaluate_marketing_experiment: {
+        Args: {
+          p_organization_id: string;
+          p_experiment_id: string;
+          p_outcome: string;
+          p_result_summary: string;
+          p_expected_updated_at: string;
+          p_learning?: Record<string, unknown> | null;
+          p_update_hypothesis?: boolean;
+        };
+        Returns: string;
+      };
+      promote_marketing_learning: {
+        Args: {
+          p_organization_id: string;
+          p_learning_id: string;
+          p_kind: MemoryKind;
+          p_title: string;
+          p_content: string;
+        };
+        Returns: string;
+      };
+      create_marketing_growth_from_board: {
+        Args: { p_conversion_id: string };
+        Returns: string;
+      };
+      prepare_board_entity_conversion: {
+        Args: {
+          p_id: string;
+          p_board_id: string;
+          p_entity_type: string;
+          p_input: Record<string, unknown>;
+          p_source_ids: string[];
+        };
+        Returns: BoardEntityConversionRow;
+      };
+      create_task_from_board: {
+        Args: { p_conversion_id: string };
+        Returns: string;
+      };
+      create_marketing_idea_from_board: {
+        Args: { p_conversion_id: string };
+        Returns: string;
+      };
+      create_marketing_note_from_board: {
+        Args: { p_conversion_id: string };
+        Returns: string;
+      };
+      start_board_voting: {
+        Args: {
+          p_board_id: string;
+          p_allowance: number;
+          p_eligible_types: string[];
+        };
+        Returns: BoardVotingSessionRow;
+      };
+      set_board_vote: {
+        Args: {
+          p_session_id: string;
+          p_element_id: string;
+          p_slot: number;
+          p_active: boolean;
+          p_request_id: string;
+          p_expected_version: number;
+        };
+        Returns: BoardVoteRow;
+      };
+      end_board_voting: {
+        Args: { p_session_id: string };
+        Returns: BoardVotingSessionRow;
+      };
+      read_board_voting: {
+        Args: {
+          p_board_id: string;
+          p_element_ids: string[];
+          p_after_total?: number;
+          p_after_id?: string;
+        };
+        Returns: BoardVotingSnapshot;
+      };
+      set_board_comment_resolution: {
+        Args: { p_board_id: string; p_comment_id: string; p_resolved: boolean };
+        Returns: BoardCommentRow;
+      };
+      read_board_comment_counts: {
+        Args: { p_board_id: string; p_element_ids: string[] };
+        Returns: { element_id: string; total: number }[];
+      };
+      set_board_reaction: {
+        Args: {
+          p_board_id: string;
+          p_element_id: string;
+          p_reaction: string;
+          p_active: boolean;
+        };
+        Returns: BoardReactionRow;
+      };
+      read_board_reactions: {
+        Args: { p_board_id: string; p_element_ids: string[] };
+        Returns: BoardReactionSummary[];
+      };
+      apply_board_operation: {
+        Args: {
+          p_board_id: string;
+          p_upserts: Record<string, unknown>[];
+          p_archive_ids: string[];
+        };
+        Returns: BoardElementRow[];
+      };
+      create_board_from_template: {
+        Args: {
+          p_organization_id: string;
+          p_title: string;
+          p_template_key: string;
+          p_elements: Record<string, unknown>[];
+        };
+        Returns: BoardRow;
+      };
       delete_owned_organization: {
         Args: {
           p_confirmation_name: string;

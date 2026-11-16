@@ -134,7 +134,7 @@ function upsertActiveElement(
   );
 }
 
-function sameElement(
+export function sameElement(
   left: BoardElementRow | null,
   right: BoardElementRow | null,
 ) {
@@ -147,6 +147,8 @@ function sameElement(
     left.height === right.height &&
     left.rotation === right.rotation &&
     left.z_index === right.z_index &&
+    (left.parent_id ?? null) === (right.parent_id ?? null) &&
+    (left.locked ?? false) === (right.locked ?? false) &&
     left.archived_at === right.archived_at &&
     JSON.stringify(left.content) === JSON.stringify(right.content) &&
     JSON.stringify(left.style) === JSON.stringify(right.style) &&

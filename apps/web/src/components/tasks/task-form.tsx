@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { useActionState, useEffect, useState } from "react";
 
@@ -74,7 +75,7 @@ export function TaskForm({ members, onCancel, onSaved, task }: TaskFormProps) {
 
   useEffect(() => {
     if (state.status === "success") onSaved();
-  }, [onSaved, state.status]);
+  }, [onSaved, state]);
 
   return (
     <form action={formAction} className="space-y-5 p-5">
@@ -83,7 +84,7 @@ export function TaskForm({ members, onCancel, onSaved, task }: TaskFormProps) {
         Title
         <Input
           aria-invalid={Boolean(state.fieldErrors?.title)}
-          autoFocus
+          autoFocus={!task}
           className="mt-1.5"
           defaultValue={task?.title}
           maxLength={200}
@@ -110,7 +111,7 @@ export function TaskForm({ members, onCancel, onSaved, task }: TaskFormProps) {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-medium">
           Assignee
-          <select
+          <Select
             className="border-input bg-background focus:border-ring mt-1.5 h-10 w-full rounded-md border px-3 text-sm focus:outline-none"
             defaultValue={task?.assignee_id ?? ""}
             name="assigneeId"
@@ -121,13 +122,13 @@ export function TaskForm({ members, onCancel, onSaved, task }: TaskFormProps) {
                 {member.display_name}
               </option>
             ))}
-          </select>
+          </Select>
           <FieldError errors={state.fieldErrors?.assigneeId} />
         </label>
 
         <label className="text-sm font-medium">
           Priority
-          <select
+          <Select
             className="border-input bg-background focus:border-ring mt-1.5 h-10 w-full rounded-md border px-3 text-sm focus:outline-none"
             defaultValue={task?.priority ?? "MEDIUM"}
             name="priority"
@@ -137,14 +138,14 @@ export function TaskForm({ members, onCancel, onSaved, task }: TaskFormProps) {
                 {labelFor(priority)}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       </div>
 
       {task ? (
         <label className="block text-sm font-medium">
           Status
-          <select
+          <Select
             className="border-input bg-background focus:border-ring mt-1.5 h-10 w-full rounded-md border px-3 text-sm focus:outline-none"
             defaultValue={task.status}
             name="status"
@@ -154,7 +155,7 @@ export function TaskForm({ members, onCancel, onSaved, task }: TaskFormProps) {
                 {labelFor(status)}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       ) : null}
 

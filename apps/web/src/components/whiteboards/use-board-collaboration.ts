@@ -1,0 +1,106 @@
+"use client";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type {
+  BoardCommentRow,
+  BoardElementRow,
+  BoardReactionRow,
+  BoardVotingSessionRow,
+  BoardRow,
+  TaskMember,
+} from "@/lib/supabase/database.types";
+import {
+  allocateBoardCollaboratorColors,
+  includeLocalBoardPresence,
+  type BoardCollaboratorColorAssignments,
+  type BoardCursorUpdate,
+} from "@/modules/whiteboards/collaboration";
+import {
+  subscribeToBoardCollaboration,
+  type CollaborationConnectionState,
+} from "@/modules/whiteboards/realtime";
+
+export function useBoardCollaboration(
+  board: BoardRow,
+  currentUser: { id: string; displayName: string },
+  members: TaskMember[],
+  onElement: (row: BoardElementRow) => void,
+  onComment: (row: BoardCommentRow) => void,
+  onReaction?: (row: BoardReactionRow) => void,
+  onVoting?: (row: BoardVotingSessionRow) => void,
+) {
+  // RSC refreshes allocate new objects even when authorized directory content is
+  // identical. Replacing the channel on every save creates visible disconnects.
+  // Memoize only this component's complete directory projection; actual content,
+  // account, board or organization changes still replace/unsubscribe the channel.
+  const directoryJson = useMemo(() => JSON.stringify(members), [members]);
+  const directory = useMemo(
+    () => JSON.parse(directoryJson) as TaskMember[],
+    [directoryJson],
+  );
+  const identity = useMemo(
+    () => ({ id: currentUser.id, displayName: currentUser.displayName }),
+    [currentUser.id, currentUser.displayName],
+  );
+  const [presence, setPresence] = useState(() =>
+    includeLocalBoardPresence([], currentUser, members),
+  );
+  const [colors, setColors] = useState<BoardCollaboratorColorAssignments>(() =>
+    allocateBoardCollaboratorColors(presence.map((row) => row.userId)),
+  );
+  const [connection, setConnection] =
+    useState<CollaborationConnectionState>("CONNECTING");
+  const [cursors, setCursors] = useState<BoardCursorUpdate[]>([]);
+  const subscription = useRef<ReturnType<
+    typeof subscribeToBoardCollaboration
+  > | null>(null);
+  useEffect(() => {
+    if (!identity.id) return;
+    const channel = subscribeToBoardCollaboration({
+      boardId: board.id,
+      organizationId: board.organization_id,
+      currentUser: identity,
+      members: directory,
+      onElement,
+      onComment,
+      onReaction,
+      onVoting,
+      onConnection: setConnection,
+      onCursor: (update) =>
+        setCursors((rows) => [
+          ...rows.filter((row) => row.userId !== update.userId),
+          ...(update.cursor ? [update] : []),
+        ]),
+      onPresence: (people) => {
+        setPresence(people);
+        setColors((before) =>
+          allocateBoardCollaboratorColors(
+            people.map((person) => person.userId),
+            before,
+          ),
+        );
+      },
+    });
+    subscription.current = channel;
+    return () => {
+      subscription.current = null;
+      channel.unsubscribe();
+    };
+  }, [
+    board.id,
+    board.organization_id,
+    identity,
+    directory,
+    onComment,
+    onElement,
+    onReaction,
+    onVoting,
+  ]);
+  return {
+    presence,
+    colors,
+    connection,
+    cursors,
+    updateCursor: (position: { x: number; y: number }) =>
+      subscription.current?.updateCursor(position),
+  };
+}

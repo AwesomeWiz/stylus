@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { useRouter } from "next/navigation";
 import {
@@ -25,6 +26,7 @@ import {
   SpecialistIdentity,
 } from "@/components/marketing/specialist-visuals";
 import { StrategicReviewPanel } from "@/components/marketing/strategic-review-panel";
+import { EntityProvenanceLookup } from "@/components/entities/entity-provenance-lookup";
 import type {
   MarketingCreativeCouncilEvidenceRow,
   MarketingCreativeCouncilRunRow,
@@ -137,7 +139,7 @@ export function CreativeStudio({
             <input name="idempotencyKey" type="hidden" value={idempotencyKey} />
             <label className="block max-w-xl">
               <span className="mb-1 block text-sm font-medium">Reel Idea</span>
-              <select
+              <Select
                 className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
                 disabled={!editable || pending}
                 name="sourceReelIdeaId"
@@ -150,10 +152,16 @@ export function CreativeStudio({
                     {item.title} · {item.status}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             <ContextSummary companyContext={companyContext} idea={idea} />
+            {idea ? (
+              <EntityProvenanceLookup
+                entityType="marketing.reel-idea"
+                entityId={idea.id}
+              />
+            ) : null}
 
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium">

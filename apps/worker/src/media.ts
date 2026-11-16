@@ -9,7 +9,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { join, posix } from "node:path";
 
 import type { WorkerApi } from "./api.js";
 
@@ -303,7 +303,8 @@ export async function transcribeWithWhisperCpp(
     throw new Error("invalid_transcript");
   return parseTranscript(
     await services.readFile(outputPath, "utf8"),
-    basename(dependencies.whisperModelPath),
+    // Serialized model metadata is a filename, independent of the host OS.
+    posix.basename(dependencies.whisperModelPath.replaceAll("\\", "/")),
     mediaDurationSeconds,
   );
 }

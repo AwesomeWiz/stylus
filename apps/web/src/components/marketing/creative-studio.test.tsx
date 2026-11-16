@@ -70,7 +70,11 @@ describe("Creative Studio", () => {
 
   it("renders one Reel Idea selector, bounded optional evidence, and the pending-safe action", () => {
     render(<CreativeStudio {...baseProps} />);
-    expect(screen.getByLabelText("Reel Idea")).toHaveValue(idea.id);
+    const ideaControl = screen.getByRole("combobox", { name: "Reel Idea" });
+    expect(ideaControl).toHaveTextContent(idea.title);
+    expect(
+      new FormData(ideaControl.closest("form")!).get("sourceReelIdeaId"),
+    ).toBe(idea.id);
     expect(
       screen.getByRole("button", { name: "Run Creative Council" }),
     ).toBeEnabled();

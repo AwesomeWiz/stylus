@@ -39,9 +39,12 @@ select results_eq($$ select count(*)::integer from public.marketing_campaigns $$
 select throws_ok($$ insert into public.marketing_campaigns(organization_id,name,objective,created_by,updated_by) values ('10000000-0000-0000-0000-000000000131','Forged','No','00000000-0000-0000-0000-000000000135','00000000-0000-0000-0000-000000000135') $$,'42501',null,'cross-organization write is denied');
 
 reset role;
-insert into public.competitors(organization_id,name,type,created_by,updated_by) values ('10000000-0000-0000-0000-000000000131','Core A','DIRECT','00000000-0000-0000-0000-000000000131','00000000-0000-0000-0000-000000000131'),('10000000-0000-0000-0000-000000000132','Core B','DIRECT','00000000-0000-0000-0000-000000000135','00000000-0000-0000-0000-000000000135');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000131',true);
+insert into public.competitors(id,organization_id,name,type,created_by,updated_by) values ('20000000-0000-4000-8000-000000000131','10000000-0000-0000-0000-000000000131','Core A','DIRECT','00000000-0000-0000-0000-000000000131','00000000-0000-0000-0000-000000000131');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000135',true);
+insert into public.competitors(id,organization_id,name,type,created_by,updated_by) values ('20000000-0000-4000-8000-000000000132','10000000-0000-0000-0000-000000000132','Core B','DIRECT','00000000-0000-0000-0000-000000000135','00000000-0000-0000-0000-000000000135');
 set local role authenticated; select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000131',true);
-select throws_ok($$ update public.marketing_competitors set core_competitor_id=(select id from public.competitors where name='Core B') where name='Acme' $$,'23503',null,'cross-org Core competitor reference is rejected');
+select throws_ok($$ update public.marketing_competitors set core_competitor_id='20000000-0000-4000-8000-000000000132' where name='Acme' $$,'23503',null,'cross-org Core competitor reference is rejected even when the ID is known');
 select lives_ok($$ update public.marketing_competitors set core_competitor_id=(select id from public.competitors where name='Core A') where name='Acme' $$,'same-org Core competitor reference works');
 select throws_ok($$ insert into public.marketing_campaigns(organization_id,name,objective,starts_on,ends_on,created_by,updated_by) values ('10000000-0000-0000-0000-000000000131','Bad dates','Invalid','2026-09-02','2026-09-01','00000000-0000-0000-0000-000000000131','00000000-0000-0000-0000-000000000131') $$,'23514',null,'invalid campaign date range rejected');
 select lives_ok($$ insert into public.marketing_research(organization_id,title,content,source_url,created_by,updated_by) values ('10000000-0000-0000-0000-000000000131','Manual note','Entered by a person','https://example.test','00000000-0000-0000-0000-000000000131','00000000-0000-0000-0000-000000000131') $$,'manual research can be created');

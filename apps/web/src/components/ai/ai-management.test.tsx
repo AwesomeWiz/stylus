@@ -154,9 +154,11 @@ describe("AIManagement", () => {
         runs={[]}
       />,
     );
-    expect(
-      screen.getByRole("combobox", { name: "Execution mode" }),
-    ).toHaveValue("DISABLED");
+    const mode = screen.getByRole("combobox", { name: "Execution mode" });
+    expect(mode).toHaveTextContent("Disabled");
+    expect(new FormData(mode.closest("form")!).get("executionMode")).toBe(
+      "DISABLED",
+    );
     expect(screen.getByRole("button", { name: "Save policy" })).toBeEnabled();
   });
 

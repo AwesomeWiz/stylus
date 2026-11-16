@@ -1,10 +1,10 @@
 import "server-only";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireOrganizationMembership } from "@/modules/organizations/server/context";
+import { getOrganizationContextForRead } from "@/modules/organizations/server/context";
 
 export async function getOnboardingData(organizationId: string) {
-  const context = await requireOrganizationMembership(organizationId);
+  const context = await getOrganizationContextForRead(organizationId);
   const supabase = await createServerSupabaseClient();
   const [company, audience, brand, marketing, competitors, progress] =
     await Promise.all([

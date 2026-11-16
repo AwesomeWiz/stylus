@@ -115,9 +115,10 @@ describe("External Research workspace", () => {
 
   it("shows the bounded HN stream only for fashion technology", () => {
     render(<ExternalResearchWorkspace {...base} />);
-    fireEvent.change(screen.getByLabelText("Primary marketing intent"), {
-      target: { value: "FASHION_TECH" },
-    });
+    fireEvent.click(
+      screen.getByRole("combobox", { name: "Primary marketing intent" }),
+    );
+    fireEvent.click(screen.getByRole("option", { name: "Fashion tech" }));
     expect(screen.getByLabelText("Hacker News stream")).toBeInTheDocument();
     expect(screen.getAllByText(/Hacker News/).length).toBeGreaterThan(0);
   });

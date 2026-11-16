@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(27);
+select plan(29);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000181','00000000-0000-0000-0000-000000000000','authenticated','authenticated','performance-owner@example.test','',now(),'{}','{}',now(),now()),
@@ -45,12 +45,12 @@ insert into public.marketing_reel_brief_versions(
   'Act','Caption','[]'::jsonb,'{}'::jsonb,'00000000-0000-0000-0000-000000000184'
 );
 
-select ok(public.has_function_privilege('authenticated','public.register_marketing_published_content(uuid,text,timestamptz,text,text,uuid,text,numeric)','execute'),'authenticated may invoke guarded publication registration');
-select ok(public.has_function_privilege('authenticated','public.add_marketing_performance_snapshot(uuid,uuid,timestamptz,bigint,bigint,bigint,bigint,bigint,bigint,numeric,numeric,numeric,bigint,bigint,bigint,text,text)','execute'),'authenticated may invoke guarded snapshot creation');
-select ok(not public.has_function_privilege('authenticated','public.create_marketing_performance_learning(uuid,uuid,public.marketing_performance_platform,public.marketing_performance_content_type,public.marketing_performance_horizon,public.marketing_performance_metric,text,text,text[],jsonb)','execute'),'browser cannot invoke learning persistence');
-select ok(public.has_function_privilege('service_role','public.create_marketing_performance_learning(uuid,uuid,public.marketing_performance_platform,public.marketing_performance_content_type,public.marketing_performance_horizon,public.marketing_performance_metric,text,text,text[],jsonb)','execute'),'trusted service may persist validated learning');
-select ok(not public.has_table_privilege('authenticated','public.marketing_performance_snapshots','insert'),'authenticated has no direct snapshot insert');
-select ok(not public.has_table_privilege('authenticated','public.marketing_performance_learnings','insert'),'authenticated has no direct learning insert');
+select ok(pg_catalog.has_function_privilege('authenticated','public.register_marketing_published_content(uuid,text,timestamptz,text,text,uuid,text,numeric)','execute'),'authenticated may invoke guarded publication registration');
+select ok(pg_catalog.has_function_privilege('authenticated','public.add_marketing_performance_snapshot(uuid,uuid,timestamptz,bigint,bigint,bigint,bigint,bigint,bigint,numeric,numeric,numeric,bigint,bigint,bigint,text,text)','execute'),'authenticated may invoke guarded snapshot creation');
+select ok(not pg_catalog.has_function_privilege('authenticated','public.create_marketing_performance_learning(uuid,uuid,public.marketing_performance_platform,public.marketing_performance_content_type,public.marketing_performance_horizon,public.marketing_performance_metric,text,text,text[],jsonb)','execute'),'browser cannot invoke learning persistence');
+select ok(pg_catalog.has_function_privilege('service_role','public.create_marketing_performance_learning(uuid,uuid,public.marketing_performance_platform,public.marketing_performance_content_type,public.marketing_performance_horizon,public.marketing_performance_metric,text,text,text[],jsonb)','execute'),'trusted service may persist validated learning');
+select ok(not pg_catalog.has_table_privilege('authenticated','public.marketing_performance_snapshots','insert'),'authenticated has no direct snapshot insert');
+select ok(not pg_catalog.has_table_privilege('authenticated','public.marketing_performance_learnings','insert'),'authenticated has no direct learning insert');
 
 set local role authenticated;
 select set_config('request.jwt.claim.role','authenticated',true);
@@ -154,6 +154,14 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000184'
 select results_eq($$ select count(*)::integer from public.marketing_published_content $$,array[0]::integer[],'cross-organization publication rows are isolated');
 select results_eq($$ select count(*)::integer from public.marketing_performance_snapshots $$,array[0]::integer[],'cross-organization snapshots are isolated');
 select results_eq($$ select count(*)::integer from public.marketing_performance_learnings $$,array[0]::integer[],'cross-organization learnings are isolated');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.role','authenticated',true);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000181',true);
+select lives_ok($$ select public.delete_owned_organization('10000000-0000-0000-0000-000000000181','Performance Org A') $$,'confirmed OWNER deletes populated tenant including immutable history');
+reset role;
+select is((select count(*)::integer from public.organizations where id='10000000-0000-0000-0000-000000000182'),1,'tenant deletion preserves the unrelated organization');
 
 select * from finish();
 rollback;

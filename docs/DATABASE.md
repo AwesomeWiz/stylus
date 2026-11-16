@@ -4,6 +4,48 @@ This document defines the initial conceptual data model.
 
 Exact schemas are introduced through migrations during implementation.
 
+REDESIGN-008 adds six RLS tables: `integration_connections`, service-only encrypted
+`integration_secrets`, service-only `integration_oauth_states`, generic
+`external_resource_links`, service-only `integration_resource_cache`, and private
+`integration_calendar_intents`. Authenticated clients can read organization GitHub
+or their own Google connection, and references through authorized canonical targets.
+They cannot write tables directly or read secrets/cache/receipts. Two actor-derived
+RPCs attach/unlink and disconnect; three service-only RPCs atomically activate a
+connection and store generation-checked refresh credentials/cache. A private,
+migration-only target registry supplies trusted relation/tenant/plugin/archival
+checks. Provider identities never become copied content or Knowledge. Calendar
+receipts retain exact actor, organization, Google account, target and submitted
+input, with one pending intent per scope. Existing rows/migrations are preserved.
+Both `202611110001*` forward migrations are applied to the authorized development
+project; all 51 local/hosted ledger versions match. See [Integrations](INTEGRATIONS.md).
+
+REDESIGN-007 adds Core `milestones`, `task_dependencies`, `notes`, `note_links`,
+nullable tenant-constrained `tasks.milestone_id`, and manager-only
+`onboarding_drafts`. Working tables allow authenticated RLS reads and no direct
+browser writes. Bounded actor-derived RPCs own revisions, relationship changes,
+cycle checks and reviewed Note-to-company-Memory creation. Canonical setup commit
+writes profile rows, monotonic progress and draft removal atomically. Profile
+update revisions use actual write time. Core and plugin-owned attention RPCs
+return bounded content projections. See [Core execution](CORE_EXECUTION.md) for
+limits, roles and current verification status.
+
+REDESIGN-006 adds `marketing_hypotheses`, `marketing_hypothesis_sources`,
+`marketing_experiments`, `marketing_experiment_links` and `marketing_learnings`.
+Tenant-composite foreign keys preserve source/execution identity. RLS permits
+authorized reads; bounded editor RPCs own writes, revisions, criteria and atomic
+evaluation. Completed evaluations freeze statement/source identity and result.
+Company Memory gains a scoped optional creation key and public create-once wrapper
+around the existing human company mutation. Board integration extends existing
+receipts; old plaintext guards remain. See [Growth and learning](GROWTH_LEARNING.md).
+
+REDESIGN-005 adds `ENTITY_CARD`, `board_entity_conversions`, nullable scoped
+`board_conversion_id` links on Tasks/Marketing Ideas/manual Notes, strict native
+reference validation and four public preparation/domain-creation RPCs. Receipts
+are own-creator/editor SELECT-only under RLS; creation plus receipt state commits
+atomically and Board linking recovers separately. Forward migrations preserve
+existing records; no canonical snapshot or business-record cascade on Board
+deletion is introduced. See [Native entities](NATIVE_ENTITIES.md).
+
 ---
 
 # Identity
@@ -196,6 +238,92 @@ Supabase Storage bucket `board-images` is private, limited to 10 MB PNG, JPEG an
 WebP objects, and protected by organization-path membership/role policies.
 Archiving an image element retains its private object so non-destructive recovery
 remains possible; a future permanent purge workflow may remove archived assets.
+
+## Board feedback and resolution (REDESIGN-004.3)
+
+`20261103000100_board_reactions.sql` creates `board_reactions` with a composite
+organization/board/element/user/reaction primary key, same-tenant object FK,
+five-kind check, active state and timestamp. Authenticated clients have SELECT
+only; RLS freshly requires membership and active Board/object. The definer
+`set_board_reaction(uuid,uuid,text,boolean)` locks the Board, checks the current
+editor role and target and derives the actor from `auth.uid()`. Setting a desired
+state is idempotent. Invoker `read_board_reactions(uuid,uuid[])` uses RLS and a
+200-ID limit, exact counts, current-user state and at most 20 participant IDs.
+The existing realtime publication includes these rows, including inactive rows
+needed to reconcile removals. Archived targets hide feedback, revoked users lose
+access, and deleted accounts cascade their reaction records. No direct client
+write policy bypasses these checks.
+
+`20261103000110_board_comment_resolution.sql` adds nullable paired
+`resolved_at`/`resolved_by`, a same-organization resolver membership FK and an
+open-root-thread index. Existing content/provenance remains immutable.
+`set_board_comment_resolution(uuid,uuid,boolean)` freshly checks the active Board,
+editor role and unarchived root thread, then resolves/reopens idempotently.
+`read_board_comment_counts(uuid,uuid[])` returns only open root counts for up to
+200 active object IDs under invoker RLS, without comment bodies. VIEWER can read
+both feedback systems; mutation requires OWNER/ADMIN/MEMBER. Existing comment
+archive, reply, mention and notification rules remain.
+
+Both files were reviewed and applied unchanged through the linked CLI workflow
+to the expressly task-authorized development project. No reset/DROP/TRUNCATE or
+unrelated content modification. Permanent reaction/resolution suites add 24 and
+21 assertions to the existing 93 Board assertions. The read-only developer schema
+diagnostic now checks these columns/table and all six Board RPCs.
+
+## Boards V2 relational foundation (REDESIGN-004)
+
+Forward migrations `20261102000100_board_v2_element_types.sql` and
+`20261102000110_board_v2_foundation.sql` add enum values SECTION/GROUP/LINK in a
+separate committed migration, then nullable `boards.template_key`, nullable
+`board_elements.parent_id` and non-null `locked` (default false). Existing
+boards keep a null template and existing objects remain root-level. No
+table/route is renamed and no historical record is copied or deleted.
+
+A composite `(organization_id, board_id, parent_id)` foreign key references
+scoped element identity. Triggers reject nested Sections, nested Groups,
+ordinary-object parents, cycles, cross-board ownership, inactive parents and
+containers exceeding 199 descendants. Content/style/metadata have byte bounds;
+links/Sections have minimum shape checks. Image paths must match the current
+organization/board. Geometry/provenance/RLS constraints remain. Direct writes
+also lock their board and repeat relationship/lock validation. A container move
+translates descendants in the same transaction; dimension changes leave children
+unchanged.
+
+`apply_board_operation(board_id, upserts, archive_ids)` is an authenticated-only
+SECURITY DEFINER API with fixed empty search path, fresh active-membership/role
+checks, active-board row lock, explicit allowed fields, no tenant/audit
+projection, distinct identities, a 2 MB payload ceiling and at most 200 touched
+objects. It preserves creator provenance and commits all changes or none.
+Existing foreign IDs are rejected; missing archive IDs are an idempotent no-op
+for recovery. Deferred ownership constraints are validated before the RPC
+returns. Section archival requires detaching or archiving active children in
+that transaction.
+
+`create_board_from_template` freshly checks the supplied organization
+membership, restricts template keys to seven registered definitions, and
+atomically creates the board/native objects. It cannot create Tasks, plugin
+records or Knowledge. Existing member-read/collaborator-write policies and
+private Storage/Realtime policies remain. Originals are retained for
+duplicate/replacement/undo; only an uncommitted upload is removed on row
+failure. No destructive GC is introduced.
+
+Permanent SQL coverage: `whiteboards_rls.test.sql` (34 assertions) and
+`board_v2_rls.test.sql` (59). Local execution uses isolated PostgreSQL/pgTAP
+with a minimal Supabase bootstrap, not deployed service transport. See
+[Boards](BOARDS.md) and PROJECT_STATE for environment limits and hosted smoke
+results.
+
+REDESIGN-004.2 inspected the linked development backend ledger and applied only
+these two previously missing forward migrations unchanged. The remote ledger is
+current through `20261102000110`; API schema and actual authenticated template/
+operation calls verify both RPCs, template/parent/lock columns and object
+behavior. No new migration, reset, table removal, truncation or unrelated record
+deletion was needed. Isolated hosted fixtures were removed after real
+mutation/reload/recovery tests. Cleanup exposed the existing owner
+organization-deletion ordering problem with
+`board_elements_creator_membership_fkey`; this needs a separately scoped forward
+fix, not a rewrite of an applied migration. See
+[environment notes](BOARDS_ENVIRONMENT.md).
 
 TASK-007 adds migrations `20260825000700_extend_collaboration_enums.sql` and
 `20260825000710_whiteboard_collaboration.sql`.
@@ -697,3 +825,74 @@ contains only that session ID and bounded flow coordinates. The receiver
 accepts a cursor only when the session resolves through current Presence to an
 authorized server-projected board member; names, roles and colors never come
 from the Broadcast payload.
+
+## Board voting (REDESIGN-004.3.3)
+
+`20261104000100_board_voting.sql` adds `board_voting_sessions` and `board_votes`.
+Sessions carry tenant/Board, ACTIVE/ENDED, starter/ender/times, allowance 1–5,
+allowed types and revision. A partial unique index permits one ACTIVE session
+per Board. Votes use `(session_id,voter_id,slot)` as their key with composite
+organization/Board/session/object foreign keys. Inactive versioned tombstones
+protect slot reuse; request UUIDs make the current request idempotent. No stored
+content copies, colors, slide records or model outputs are introduced.
+
+Authenticated users have SELECT-only grants and member/active-Board RLS. Four
+functions form the public contract: `start_board_voting`, `set_board_vote`,
+`end_board_voting`, `read_board_voting`. Mutations lock the Board and freshly
+validate active membership/editor role. Start validates bounded config; casts
+validate current same-tenant eligible unlocked objects and inherited locks.
+Only the current actor's slots can change; removals may reclaim an own allocation
+from an archived/locked object while the session is active. Starter editors or
+OWNER/ADMIN can end. Ended allocations reject further writes. VIEWER reads only.
+
+The aggregate RPC uses invoker RLS and one CTE snapshot: at most five own slots,
+200 requested object summaries, 100 ranked results plus has-more, and up to 20
+unique participant IDs per object. Ties share a dense rank; UUID orders display
+and keyset paging. Completed sessions remain audited; full history UI is deferred.
+Existing account/object hard-delete cascades apply; ordinary archive retains data.
+Session INSERT/UPDATE publication events invalidate authorized reads on the
+existing private Board channel.
+
+`20261104000110_board_voting_conflict_response.sql` is an applied forward-only
+replacement of `set_board_vote` that changes stale-version SQLSTATE `40001` to
+`PT409` (HTTP409). This avoids the observed hosted PostgREST serialization-retry
+timeout. Authorization, locking, data and grants are unchanged. Neither migration
+resets or drops existing schema/data. No color/presentation migration is needed.
+
+## Public beta database verification (REDESIGN-009)
+
+This phase adds no persistence model. The 51 applied canonical migrations remain
+unchanged. New forward migration `20261115000100_board_explicit_browser_grants.sql`
+corrects inherited platform-wide Board grants, restoring supported column writes
+without changing records, RLS or RPCs. The supported hosted dry run lists exactly
+this correction. The owner authorized deployment; all 52 hosted versions now
+match, and column/RPC checks pass. No records or applied SQL were changed.
+`scripts/database/test-isolated.mjs` creates an
+in-memory PostgreSQL database with real pgcrypto/pgTAP and minimal Supabase platform
+fixtures, then applies actual SQL and permanent tests. Default grants mirror the
+platform so explicit revocations remain testable. A separate pre-integration
+upgrade fixture checks retained organization/Task data and authorized reads.
+
+All 30 suites pass 1,115 assertions over the 53-migration fresh path. The release
+catalog regression discovers organization-keyed tables dynamically,
+requires RLS, checks security-definer search paths and credential/state ACLs.
+The reviewed inventory contains 75 public tables, 71 keyed by organization.
+`job_definitions` is a service-only code registry rather than tenant data;
+integration secrets/cache inherit identity through their connection and remain
+service-only. See [RLS review](RLS_REVIEW.md). Isolated fixtures do not certify
+native Auth, Storage, Realtime or PostgREST transport. The full Docker-dependent
+local authenticated clean-install gate remains pending by owner instruction.
+
+The additional `20261115000200_atomic_organization_deletion.sql` correction is
+locally verified, separately owner-approved and deployed. A real populated-demo
+deletion exposed immediate membership references and missing organization
+lifecycle links on immutable child tables. Sixteen validated direct root FKs
+complete tenant ownership; 133 existing references become deferrable without
+changing their keys or initial modes. Owner-confirmed deletion defers the full
+cascade, then validates before return. Research/Performance/Council history may
+delete only after its actual organization is absent. No trigger or constraint is
+disabled, no existing row changes at deployment, and all prior immutability/RLS
+denials remain tested. Existing migrations remain untouched. See ADR-057 and the
+release audit for the initial failed cleanup and successful exact-ID retry.
+The final hosted ledger matches all 53 versions; only the recorded demo was
+deleted after deployment, with its rows/accounts/assets verified absent.

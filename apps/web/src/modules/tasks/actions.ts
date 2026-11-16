@@ -9,13 +9,13 @@ import { getCurrentOrganizationContext } from "@/modules/organizations/server/co
 
 import { assertCanMutateTasks } from "./authorization";
 import {
-  createTaskSchema,
   taskCommentSchema,
   taskIdSchema,
   type TaskActionState,
   updateTaskSchema,
 } from "./schemas";
 import { validateTaskAssignee } from "./server/data";
+import { createTaskRecord } from "./server/create";
 
 function value(formData: FormData, name: string) {
   return String(formData.get(name) ?? "");
@@ -65,22 +65,7 @@ export async function createTaskAction(
   formData: FormData,
 ): Promise<TaskActionState> {
   try {
-    const parsed = createTaskSchema.parse(fields(formData));
-    const current = await mutationContext();
-    await validateTaskAssignee(current.organization.id, parsed.assigneeId);
-    const supabase = await createServerSupabaseClient();
-    const { error } = await supabase.from("tasks").insert({
-      assignee_id: parsed.assigneeId,
-      created_by: current.user.id,
-      description: nullable(parsed.description),
-      due_at: parsed.dueAt,
-      organization_id: current.organization.id,
-      priority: parsed.priority,
-      scheduled_at: parsed.scheduledAt,
-      title: parsed.title,
-      updated_by: current.user.id,
-    });
-    if (error) throw error;
+    await createTaskRecord(fields(formData));
   } catch (error) {
     unstable_rethrow(error);
     return errorState(error);

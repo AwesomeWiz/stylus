@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import {
   Activity,
@@ -219,7 +220,7 @@ function AIPolicyForm({
     <form action={action} className="grid gap-5 lg:grid-cols-3">
       <label className="grid gap-1.5 text-sm">
         <span className="font-medium">Execution mode</span>
-        <select
+        <Select
           className="bg-background h-10 rounded-md border px-3"
           defaultValue={policy.execution_mode}
           name="executionMode"
@@ -227,11 +228,11 @@ function AIPolicyForm({
           <option value="DISABLED">Disabled</option>
           <option value="LOCAL_ONLY">Local only</option>
           <option value="REMOTE_ALLOWED">Remote allowed</option>
-        </select>
+        </Select>
       </label>
       <label className="grid gap-1.5 text-sm">
         <span className="font-medium">Default logical tier</span>
-        <select
+        <Select
           className="bg-background h-10 rounded-md border px-3"
           defaultValue={policy.default_tier}
           name="defaultTier"
@@ -239,7 +240,7 @@ function AIPolicyForm({
           <option value="FAST">Fast</option>
           <option value="BALANCED">Balanced</option>
           <option value="REASONING">Reasoning</option>
-        </select>
+        </Select>
       </label>
       <label className="grid gap-1.5 text-sm">
         <span className="font-medium">Remote monthly ceiling (USD)</span>

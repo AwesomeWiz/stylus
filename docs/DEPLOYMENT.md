@@ -1,5 +1,12 @@
 # Stylus — Deployment Strategy
 
+Optional GitHub/Google integrations require no additional always-on service or
+worker. Configure server-side App/OAuth secrets and encryption keys only if used;
+otherwise all Core workflows continue to work. Apply forward migrations using the
+normal Supabase workflow. [Integration setup](INTEGRATIONS.md) lists exact callbacks,
+GitHub permissions, Google scopes and key-rotation requirements for self-hosters.
+Keep credentials out of public environment variables, source control and logs.
+
 ## Initial Constraint
 
 Stylus should initially operate without a mandatory paid VPS.

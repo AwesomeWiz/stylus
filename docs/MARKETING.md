@@ -2,6 +2,12 @@
 
 ## TASK-013 Manual Foundation
 
+Current REDESIGN-006 navigation is Overview, Research, Experiments, Create,
+Campaigns and Learn. First-class Hypotheses, deliberate Experiments and reviewed
+team Learnings connect the existing domains below. Historical TASK contracts
+remain unchanged. [Growth and learning](GROWTH_LEARNING.md) defines current
+models, exact provenance, explicit Memory promotion and verification boundaries.
+
 The current implementation is intentionally manual and organization-scoped:
 
 - Overview

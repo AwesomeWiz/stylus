@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(9);
+select plan(13);
 
 insert into auth.users (
   id,
@@ -31,19 +31,40 @@ values
   ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'OWNER'),
   ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'OWNER');
 
+select ok(not pg_catalog.has_table_privilege('service_role','public.organizations','SELECT'),
+  'demo verification does not require a service-role organization SELECT grant');
+set local role service_role;
+select throws_ok($$select id,name,created_by from public.organizations$$,'42501',null,
+  'service-role direct organization inspection remains denied');
+reset role;
+
 set local role anon;
-select is_empty(
+-- The canonical auth migration revokes anonymous table SELECT entirely.
+-- Assert that stronger boundary instead of expecting an RLS-filtered empty set.
+select throws_ok(
   $$ select id from public.organizations $$,
+  '42501', null,
   'unauthenticated users cannot read organizations'
 );
-select is_empty(
+select throws_ok(
   $$ select organization_id from public.memberships $$,
+  '42501', null,
   'unauthenticated users cannot read memberships'
 );
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select results_eq(
+  $$ select id,created_by from public.organizations where id='10000000-0000-0000-0000-000000000001' $$,
+  $$ values('10000000-0000-0000-0000-000000000001'::uuid,'00000000-0000-0000-0000-000000000001'::uuid) $$,
+  'authenticated OWNER verifies the exact organization and creator through RLS'
+);
+select is_empty(
+  $$ select id,name,created_by from public.organizations where id='10000000-0000-0000-0000-000000000002' $$,
+  'OWNER cannot verify a foreign organization by substituting its exact ID'
+);
 
 select results_eq(
   $$ select name from public.organizations order by name $$,

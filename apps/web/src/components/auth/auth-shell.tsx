@@ -1,45 +1,73 @@
-import Image from "next/image";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { AuthVisual } from "./auth-visual";
+import { AuthVisualAccent, AuthVisualArtwork } from "./auth-visual-artwork";
+import styles from "./auth-visual.module.css";
 
 interface AuthShellProps {
   children: ReactNode;
-  description: string;
+  description?: string;
   title: string;
+  showcase?: boolean;
 }
-
-export function AuthShell({ children, description, title }: AuthShellProps) {
+export function AuthShell({
+  children,
+  description,
+  title,
+  showcase = false,
+}: AuthShellProps) {
   return (
-    <main className="bg-pastel-lilac relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6">
-      <div
-        aria-hidden="true"
-        className="bg-primary-subtle absolute inset-x-0 top-0 h-1"
-      />
-      <div className="bg-background border-pastel-lilac-border w-full max-w-md rounded-2xl border p-6 shadow-sm sm:p-8">
-        <Link
-          aria-label="Stylus home"
-          className="mb-8 inline-flex items-center gap-2.5"
-          href="/"
-        >
-          <Image
-            alt=""
-            className="size-10 object-contain"
-            height={40}
-            priority
-            src="/brand/stylus-mark.png"
-            width={40}
-          />
-          <span className="text-base font-semibold tracking-tight">Stylus</span>
-        </Link>
-
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          <p className="text-muted-foreground mt-2 text-sm leading-6">
-            {description}
-          </p>
-        </header>
-
-        {children}
+    <main
+      className={cn(
+        "bg-background min-h-dvh",
+        styles.shell,
+        showcase ? styles.showcase : "flex items-center justify-center",
+      )}
+    >
+      {showcase ? (
+        <aside aria-label="Stylus identity" className={styles.visual}>
+          <AuthVisual>
+            <AuthVisualArtwork />
+          </AuthVisual>
+          <div className={styles.caption}>
+            <p className={styles.eyebrow}>A workspace for startup work</p>
+            <h2 className={styles.headline}>
+              Think clearly.
+              <br />
+              Build together.
+            </h2>
+            <p className={styles.support}>
+              Bring your ideas, your people and your next move together.
+            </p>
+          </div>
+        </aside>
+      ) : null}
+      <div className="flex min-h-dvh min-w-0 items-center justify-center px-4 py-10 sm:px-6">
+        <div className="w-full max-w-[25rem]">
+          <div className="mb-10 flex items-center gap-4">
+            <Link
+              href="/"
+              aria-label="Stylus home"
+              className="inline-flex min-h-10 items-center gap-2.5"
+            >
+              <BrandLogo />
+            </Link>
+            {showcase ? <AuthVisualAccent /> : null}
+          </div>
+          <header className="mb-7">
+            <h1 className="text-2xl leading-8 font-semibold tracking-tight">
+              {title}
+            </h1>
+            {description ? (
+              <p className="text-muted-foreground mt-2 text-sm leading-6">
+                {description}
+              </p>
+            ) : null}
+          </header>
+          {children}
+        </div>
       </div>
     </main>
   );

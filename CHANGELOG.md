@@ -4,6 +4,174 @@ All notable user-facing changes to Stylus will be documented here.
 
 ## Unreleased
 
+- Fixed demo inventory decoding across CLI output modes and validated complete
+  baselines before cleanup. Native Supabase verification now passes both seed/
+  cleanup rounds and real Auth role checks; full release acceptance remains gated.
+
+- Repaired fictional demo setup to use real team invitations/acceptance and
+  existing bounded research APIs. Added private-image identity/hash cleanup and
+  a repeatable isolated CI seed/cleanup gate that preserves a control workspace.
+  Native remote release acceptance remains required; hosted backends are refused.
+
+- Prepared the first AGPL-3.0-only public beta candidate with source-offer settings,
+  dependency/font/asset provenance, self-host/community documentation and sequential
+  release CI. Publication is not yet approved; required unexecuted gates remain open.
+- Added accessible themed public 404 and unexpected/global recovery, explicit
+  skip-link focus, and independent authorized Task detail reads with progressive
+  list rendering. Optional providers remain outside Core reads.
+- Added a forward-only correction to inherited Board table grants, preserving
+  existing records and permitted column edits. Fresh isolated SQL passes 1,115
+  assertions; owner-authorized hosted deployment is verified. Existing migrations
+  are unchanged.
+- Stabilized Board collaboration across saves, corrected decorative cursor
+  semantics and Memory filter labels, and preserved PostgreSQL comment cursor
+  precision. Actual fictional media and measured Task transport comparisons are
+  included in the release audit.
+- Prepared a separate forward repair for populated organization deletion, after
+  the exact demo cleanup failed and rolled back. All 1,115 isolated SQL assertions
+  pass; separate hosted approval, deployment and exact fixture cleanup are complete.
+
+- Added Settings → Integrations for organization GitHub and private Google Drive/
+  Calendar, reusable connected-resource references on execution work, secure
+  server-side OAuth credentials and explicit recoverable Calendar event creation.
+  Integrations remain optional. Live GitHub, Drive and Calendar QA passed;
+  no new AI, Memory ingestion, provider-wide sync or Board editor changes.
+
+- Closed REDESIGN-008 acceptance with repaired SQL fixtures for Ask Council,
+  competitor analysis and Windows Workers. All 29 SQL/RLS suites pass 1,018
+  assertions. Fixture-scoped integration cache checks work on a nonempty backend;
+  application behavior, RLS and applied migrations are unchanged.
+
+- Added small placement cues, precise drawing cursors, drag-sized Shapes/Sections/
+  Lines/Arrows, local image-thumbnail placement and visible neutral defaults for
+  new Shapes. Browser titles now identify the route or authorized Board name.
+  Existing Board colors, persistence and collaboration contracts are retained.
+
+- Added action-led Home attention, Task prerequisites and minimal Milestones,
+  bounded Core working Notes with explicit reviewed Memory promotion, and
+  recoverable eight-step onboarding drafts. Exact execution provenance and a
+  live native Note card preserve canonical records and tenant permissions.
+- Unified normal form selects through shared UI, including Tasks, Marketing and
+  onboarding. Polished Board screen-space context menus, stable hover/keyboard
+  submenus, safe focused-node Delete/Backspace and native entity card hierarchy.
+  Existing Board persistence and entity contracts remain intact; no new AI runs.
+
+- Added a Marketing growth workflow: Evidence → Hypothesis → Experiment →
+  reviewed Learning, canonical Task/Campaign/creative/result links, exact research
+  provenance and separate explicit Company Memory confirmation. New native Board
+  cards and reviewed conversions reuse existing recovery identities. Marketing
+  navigation now follows Overview, Research, Experiments, Create, Campaigns and
+  Learn. Existing Reel workflows and generic Board mechanics are retained.
+
+- Added native Board reference cards for Tasks, exact Research Evidence, Reel
+  Ideas, Competitors, Campaigns and human Creative Briefs. A scoped picker opens
+  real canonical records; unavailable or disabled items reveal no cached titles.
+  Reviewed Task, Idea and manual Research Note conversions retain source content
+  and recover partial failures without duplicate records. No AI execution or
+  Company Knowledge promotion is added.
+
+- Added visible Board voting with bounded per-person allocations, fresh role/tenant
+  checks, live counts, explicit ending and deterministic results. Added local
+  Section presentation with read-only input, keyboard/touch navigation, optional
+  fullscreen and editor restoration. Visual color popovers provide S/V, hue/alpha,
+  synchronized HEX, per-object previews, gesture commits and native EyeDropper
+  detection. Pick from Board remains deferred. Private voting reads bypass the
+  mutation action queue; two reviewed forward migrations preserve existing data.
+
+- Polished Board Properties with 15 licensed local fonts, searchable family and
+  supported-weight pickers, numeric presets/custom values, contextual Appearance
+  and exact HEX colors. Added direct Group-child drill-in with synchronized
+  Layers/Properties, Group layer insertion/extraction, safe bare-domain links,
+  natural wheel panning and consistent keyboard/outside dismissal for View and
+  property popovers. Existing locks, atomic persistence and local history remain.
+
+- Hardened large Boards with stable node callbacks, indexed/memoized Layers and
+  search, retained sidebar trees, offscreen rendering containment and cheaper
+  text-style defaults. Supplied typography still validates; save-time gestures
+  remain guarded. Section roots retain accessible tree semantics. Measured
+  200/300/500-object results and remaining initial-render/marquee limits are in
+  the Boards documentation.
+
+- Refined Boards with default desktop Layers/Properties docks, bottom tools,
+  independent sidebar preferences, direct Layers reorder/reparent and inline
+  rename. Group and Section ownership stays atomic.
+- Fixed drag-time measured-node and Group-selection instability, retained
+  controls through saving and removed full editor re-rendering after movement.
+- Added lazy self-hosted content typography, local guides/snapping, Alt-drag
+  copies and contextual quick actions. Application chrome remains Geist.
+- Added tenant-authorized social reactions and reversible root-thread resolution,
+  open-thread badges, local Board search and Section focus. Two forward
+  migrations preserve existing records; voting/presentation were deferred in that phase.
+- Deferred private image previews to visible/selected objects with independent
+  bounded signing, retaining paste/drop, replacement history and recovery.
+
+- Stabilized hosted Board mutations against the two required forward migrations;
+  failed edits restore saved state with safe retry and specific recovery errors.
+- Fixed Shift-click/marquee selection and added keyboard/touch-accessible
+  context actions, autosaving Properties, icon alignment/arrangement and a
+  Layers panel.
+- Clarified Groups versus Sections, added Section-from-selection and drag-sized
+  Sections, internal clipboard shortcuts, compact shortcut help and dot-grid
+  view.
+- Replaced Board rows with responsive cards and deferred authorized real-content
+  previews; private image signing is not required for list thumbnails.
+
+- Established cobalt brand actions, warm neutral surfaces, self-hosted Geist and
+  the approved blue–coral logo/wordmark variants across light/dark themes.
+- Rebuilt login/signup around a full-height geometric field with local tile
+  depth, tilt and directional shadows; reduced-motion/mobile remain static.
+- Simplified repeated auth/Home/Tasks/Boards subtext, retained meaningful hints,
+  and strengthened control borders and focus visibility. Authentication and
+  Board/task workflows remain unchanged.
+
+- Built Boards V2 with real owner/template metadata and seven focused native
+  templates. Existing `/whiteboards` URLs and historical records remain.
+- Added an immersive board editor with overlay navigation, vertical named tools,
+  six Shapes choices, explicit Sections/Groups, multi-selection, atomic movement,
+  alignment/distribution, layers, lock and duplicate.
+- Improved private images with bounded batch upload/paste, per-file recovery,
+  aspect/crop/fit controls and replacement preserving object/comments identity.
+  Safe manual links fetch no external previews.
+- Added a shared Inspector/Comments/accessible-outline slot, mobile sheets,
+  scoped keyboard controls, zoom/fit/minimap and account-scoped local viewports.
+- Deferred discussion and authorized batch image signing until after the base
+  canvas. Retained private Realtime identity/colors and conflict-aware local undo;
+  forward migrations enforce tenant-scoped ownership and all-or-nothing edits.
+
+- Added an original abstract SVG identity for login/signup, with authored light/
+  dark palettes, subtle desktop parallax and a local line reveal. Tablet and
+  mobile use static treatments; reduced motion disables effects. Forms, providers,
+  validation and authentication return behavior remain unchanged.
+
+- Replaced Home's pastel dashboard and shortcut grid with a prioritized,
+  deduplicated attention list, meaningful Marketing continuations and recent
+  activity. Deadlines/activity use hydration-safe viewer-local time.
+- Refined Tasks with primary/More views, progressive filters, removable active
+  filters and compact rows with explicit status, ownership, due time and priority.
+- Added URL-preserving right-side task detail: nonmodal on desktop, overlay on
+  tablet and full-screen on mobile, with keyboard return to the list.
+- Removed organization-wide comment bodies from the initial Tasks payload.
+  Authorized direct detail and discussions load independently, with bounded
+  comment batches, earlier-page recovery, local retry and stale-response guards.
+
+- Established the V2 workspace foundation: a persistent authenticated layout,
+  neutral 224px/56px collapsible sidebar, compact 48px topbar, Home/Tasks/Boards/
+  Marketing navigation and a Settings utility entry. Sidebar collapse is local
+  to the device; the mobile navigation drawer retains keyboard focus handling.
+- Replaced sidebar document links with Next client navigation, added pending
+  link feedback/content skeletons and a skip link, and removed inert global
+  search. Existing URLs, query state, account controls and notifications remain.
+- Added Settings links to relocated company/team/knowledge/AI/apps/workers/jobs
+  routes, five local Marketing sections with secondary destinations, and enabled
+  app entry links including the development fixture.
+- Added restrained desktop login/signup storytelling alongside existing forms;
+  smaller screens keep the form first. Authentication, confirmation, validation
+  and invitation return behavior are preserved.
+- Replaced broad routine onboarding gates with a completion/current-step read,
+  removed a duplicate selected-membership read and reused request-scoped context
+  for read-only company composition. Mutations/direct data boundaries retain
+  server authorization and RLS; notification summaries refresh on demand.
+
 - Team-member last-sign-in timestamps now render after hydration in the current
   viewer's browser/system timezone, including daylight-saving and local date
   boundaries, while preserving the existing authorized server projection.

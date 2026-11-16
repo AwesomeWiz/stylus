@@ -35,7 +35,7 @@ function element(type: BoardElementType): BoardElementRow {
 describe("WhiteboardInspector", () => {
   afterEach(cleanup);
 
-  it("edits bounded text size, color and alignment", () => {
+  it("edits bounded text size, color and alignment", async () => {
     const change = vi.fn();
     render(
       <WhiteboardInspector
@@ -44,9 +44,10 @@ describe("WhiteboardInspector", () => {
         pending={false}
       />,
     );
-    fireEvent.change(screen.getByLabelText("Font size"), {
-      target: { value: "72" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Font size presets" }));
+    fireEvent.click(await screen.findByRole("option", { name: "72" }));
+    await Promise.resolve();
+    fireEvent.click(screen.getByRole("button", { name: /^Text color: #/ }));
     fireEvent.click(
       screen.getByRole("button", { name: "Text color: #1d4ed8" }),
     );
@@ -63,21 +64,25 @@ describe("WhiteboardInspector", () => {
       3,
       expect.objectContaining({ align: "center" }),
     );
-    expect(
-      screen.getAllByRole("option").map((option) => option.textContent),
-    ).not.toContain("80");
+    expect(document.querySelector("select")).toBeNull();
   });
 
-  it("offers curated sticky, shape and arrow palettes", () => {
+  it("offers curated sticky, shape and arrow palettes", async () => {
     const change = vi.fn();
     const { rerender } = render(
       <WhiteboardInspector
+        showTypography={false}
         element={element("STICKY")}
         onStyleChange={change}
         pending={false}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Blue sticky" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Sticky fill: #fef3c7" }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Sticky fill: #dbeafe" }),
+    );
     expect(change).toHaveBeenCalledWith(
       expect.objectContaining({ background: "#dbeafe", color: "#1e3a8a" }),
     );
@@ -89,10 +94,10 @@ describe("WhiteboardInspector", () => {
       />,
     );
     expect(
-      screen.getByRole("group", { name: "Shape fill" }),
+      screen.getByRole("button", { name: /^Shape fill: / }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("group", { name: "Shape stroke" }),
+      screen.getByRole("button", { name: /^Shape stroke: / }),
     ).toBeInTheDocument();
     rerender(
       <WhiteboardInspector
@@ -102,7 +107,7 @@ describe("WhiteboardInspector", () => {
       />,
     );
     expect(
-      screen.getByRole("group", { name: "Arrow color" }),
+      screen.getByRole("button", { name: /^Arrow color: / }),
     ).toBeInTheDocument();
   });
 

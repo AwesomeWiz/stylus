@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import {
   CheckCircle2,
@@ -111,7 +112,7 @@ export function StrategicReviewPanel({
             <span className="mb-1 block text-sm font-medium">
               Reel Brief version
             </span>
-            <select
+            <Select
               className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
               disabled={!editable || pending}
               name="sourceReelBriefVersionId"
@@ -124,7 +125,7 @@ export function StrategicReviewPanel({
                   {brief.title} · Version {brief.version_number}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <p className="text-muted-foreground max-w-2xl text-xs">
             Uses only the selected Reel Brief projection and bounded canonical

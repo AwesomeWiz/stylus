@@ -2,6 +2,570 @@
 
 # Current
 
+## REDESIGN-009 — #23 semantic Board entry assertion repair
+
+Fix the duplicate raw-main selector with a semantic main landmark and count
+accessible page headings through the streaming overlap. Keep route, heading,
+authentication and error assertions; use no sleeps, timeout increases, skips or
+error filters. The shared entry helper is covered by a real-browser fixture
+that retains both DOM mains/headings while hiding the completed loading status.
+Chromium/Firefox/WebKit regression checks pass. Native full authenticated smoke
+at the new exact candidate is pending; #21 is prior-candidate evidence. Preserve
+the separate uncommitted Apache audit and original main checkout changes.
+
+## REDESIGN-009 — Engineering acceptance PASS; manual publication gates open
+
+Native `release-machine-ci` #21 succeeds at exact CI-tested release candidate
+`5c99aaea122338556d96703f0b32e90b6de4ed83`. All required pipeline steps pass:
+fresh install/53 migrations, 30 SQL/RLS suites / 1,138 assertions, upgrade, actual
+Auth/JWT role checks, worker/web/demo tests, security/static checks, builds, all
+nine Chromium/Firefox/WebKit browser cases and complete guarded demo cleanup with
+unchanged baselines and no seeded tenant/Auth/Storage orphans. Exact run and gate
+evidence are recorded in docs/RELEASE_AUDIT.md. No completed phase is reopened.
+
+READY TO MAKE PUBLIC: NO. Maintainer checks remain for supported-host signup/
+organization/onboarding, physical NVDA, live GitHub security/branch/reviewer
+settings, historical author/privacy review, distribution/service legal duties
+and applicable public Google OAuth verification. Publication is not authorized.
+No future feature work starts. The documentation-only acceptance commit `cdd2238`
+and final documentation reconciliation follow the tested runtime SHA. Prepare a
+draft release PR into main, preserving all original-checkout changes. Main is an
+ancestor, the merge preview is conflict-free, and no release execution inputs
+change. Audit all remote refs/history: repository visibility is already public;
+historical privacy and the old independent open-source licensing branch remain
+explicit review items, not silently deleted. Require a full native run at the
+actual main merge SHA after any separately authorized merge. No hosted access,
+agents, automatic merge, tag or visibility change.
+
+# Earlier verification records
+
+## REDESIGN-009 — Inventory transport and complete round-trip verification
+
+Repair native preflight #12's plain-array/agent-envelope mismatch, not just the
+downstream `[0]`. Validate transport errors, nonempty catalog coverage, complete
+tenant rows/keys/provenance and control/Auth/Storage baselines. Keep legitimate
+empty asset/absence results distinct from missing data. Execute actual round-trip
+and Auth-smoke source in strict SQL tests; use directory RPCs for team reads and
+database-generated task IDs. Preserve exact cleanup and idempotent known smoke
+inventory reconciliation. All 63 demo tests, seven release-helper tests, lint,
+typechecks and 30 SQL suites / 1,138 assertions pass. No production grants/RLS/
+migrations, hosted access or dependency changes.
+
+Diagnostic branch `cci/preflight/demo-seed-20261116-a` is fast-forwarded to
+`eeab04337322438985d8e6c6845aa3517350b194`. Real seed/verification/cleanup/baseline
+comparison remains pending the complete native run. CLI/v3 triggering returns
+404; owner manual native execution is requested. No round-trip PASS until all
+real Supabase phases succeed; full release gates remain required afterward.
+
+Native #15 at `eeab043` passed inventory and baseline capture but exposed the
+error-only Auth logout contract. The logout validator is now explicit and leaves
+inventory data requirements intact. Complete-controller coverage now uses actual
+installed Auth/Storage SDKs over synthetic HTTP; 64 demo plus seven helper tests
+pass. Both builds, formatting/190 links, secret and workflow checks pass. A new
+native diagnostic must finish seed, verification, exact cleanup and baseline
+comparison before this task or release acceptance can close.
+
+## REDESIGN-009 — Complete demo-seed privilege and round-trip repair
+
+Continue from `e5fe80e`; audit every seed/cleanup operation. Use OWNER invitation
+and teammate acceptance, existing guarded research service RPCs instead of
+administrative SQL writes, and exact private-image identity/hash cleanup. Keep
+all production grants/RLS/migrations unchanged. Full actual-source seed/cleanup
+contract coverage passes twice under all 53 migrations with synthetic transport;
+19 demo tests and 30 SQL suites / 1,138 assertions pass. Full web/worker tests,
+lint/typechecks/builds, upgrade, formatting/links and license checks pass. Real fresh Supabase
+round-trip, Auth/JWT/browser and the complete exact native release run remain
+required. The new CI round-trip checks repeatability, exact absence and an
+unchanged pre-existing control, and adds no relaxed release gate.
+
+CircleCI log reads work, but explicit native trigger returns 404 and cancellation
+403. The initial diagnostic predates final local hardening; the final 009 candidate
+must run `release-machine-ci`. Compatibility workflow results do not close this task. No hosted writes,
+local Docker/virtualization, agents, merge/tag/publication or release PASS.
+
+## REDESIGN-009 — Demo exact-organization verification
+
+Fix only the seed's 42501 verification boundary from `227c7cf`: use the signed-in
+fictional owner's RLS path, keep Auth administration separate, and share exact
+organization UUID/name/creator checks with guarded cleanup. Owner login precedes
+the cleanup ownership read; inventory and account-ID gates and the existing atomic
+deletion RPC remain. Thirteen focused demo/cleanup tests and thirteen organization
+RLS assertions pass; full isolated SQL passes 30 suites / 1,138 assertions.
+Lint/typechecks, formatting/links, secret scan and diff checks pass.
+No production grants/RLS/migration, dependency or lockfile change. Full live seed
+and remaining release acceptance await the next exact candidate on CircleCI.
+
+## REDESIGN-009 — Fresh Supabase SQL test role leakage
+
+Repair test/harness boundaries only. The old isolated bootstrap's blanket table
+grant to service_role masked direct fixture lookups and inspection under that
+role in seven suites. Without it, all reported native failures reproduce under
+the same postgres connection and transaction semantics. Preserve original RPC
+roles, all existing assertions, explicit integration grants and production RLS.
+Seven focused suites and the complete stricter SQL gate pass: 30 suites / 1,134
+assertions / 53 migrations; upgrade passes. Actual direct-read denials for eight
+internal tables, administrator restoration and explicit integration access have
+permanent regressions. No production/application/migration or CI runtime change.
+The owner reports the native Docker setup and migration gate already passed at
+`06ecb41`; the new candidate must complete native SQL and all remaining release
+gates on CircleCI. No hosted database or Windows virtualization changes.
+
+## REDESIGN-009 — Direct CircleCI machine release pipeline
+
+Add `.circleci/config.yml` as an alternate CI path: one Ubuntu 24.04 machine job,
+direct Docker socket, pinned Node, deterministic clean install, all static/
+security/runtime/SQL/upgrade/build/browser gates and explicit local cleanup.
+Verify exact checkout, fresh volumes, complete migration ledger and administrative
+fixture role before pgTAP. Reuse fictional seeding and add actual Auth JWT role
+checks with public-key sessions. Keep GitHub Actions intact; no experimental
+Supabase runtime, hosted backend, provider credentials or SQL/RLS weakening.
+Official CircleCI validation, seven local helper tests, YAML/Bash/reference and
+simulated failure/cleanup checks, lint and typechecks pass. Actual machine execution is
+pending user configuration of `.circleci/config.yml` instead of compatibility
+execution of the GitHub workflow. No release gate is waived.
+
+## REDESIGN-009.1 — Supabase startup diagnostics follow-up
+
+Remote failure diagnosis remains open. Preserve startup stdout/stderr in an
+ignored private file and print sanitized output on failure with the original
+nonzero exit status. Report runner identity/platform/tool versions, only the
+presence of native settings, and bounded artifact-host reachability. The pinned
+2.115.0 top-level command is legacy Docker despite the step name; no native PASS
+is claimed. The next exact candidate must run the full CircleCI workflow to
+establish the actual failure before any runtime/version/root workaround.
+Local log-redaction, workflow/Bash/exit-status checks, lint and typechecks pass;
+dependencies, lockfile and application build inputs remain unchanged.
+
+## REDESIGN-009.1 — Worker model metadata portability follow-up
+
+Local verification passes: 22 media tests, 36 full worker tests, worker typecheck
+and build. Normalize Windows/POSIX separators for filename-only transcript model
+metadata while preserving the full native execution path. CircleCI must validate
+the new candidate; dependencies, lockfile and release gates remain unchanged.
+
+## REDESIGN-009 — Open-source and public release hardening
+
+LOCAL VALIDATION VERIFIED / RELEASE GATES OPEN on
+`codex/redesign-009-release-hardening` from exact `72b990e`.
+Main agent only, sequential runners, feature freeze. AGPL-3.0-only, fresh security/
+RLS/dependency/provenance review, reproducible CI/self-hosting, fictional demo/media,
+public docs, accessible error pages and bounded measured performance fixes.
+Initial checklist: docs/RELEASE_CHECKLIST.md. No merge/push/tag/publication.
+
+Isolated SQL passes 30 suites / 1,115 assertions over 53 migrations; pre-008 upgrade
+preserves work and authorized edits. A real broad-Board-grant defect was confirmed
+read-only on the hosted backend. Forward correction `20261115000100` is applied
+with owner authorization. The additional populated-tenant deletion repair
+`20261115000200` is separately approved and applied. All 53 hosted versions and
+Board column/RPC checks match. No previously applied migration was rewritten.
+
+Final four-engine smoke (12), authenticated responsive (64) and detailed Board
+interaction/upload/persistence checks pass. Actual Task comparison and large
+Board samples, media provenance and manual QA limits are in RELEASE_AUDIT/MEDIA.
+The original populated-tenant cleanup failure is repaired. Guarded exact-ID cleanup
+verifies all 1,096 demo rows, one organization, three accounts and four private
+image assets absent. Approved non-demo aggregate counts match before/after; no
+existing-content fingerprint is claimed. No AI/provider was invoked. Task-only
+credentials are removed and placeholder configuration restored.
+Final runtime passes 267 web files / 1,531 tests and 32 worker tests; lint,
+typechecks, production builds, SQL/upgrade, license inventory, formatting, links
+and redacted tree/history scans pass. Seven documented moderate dev-only audit
+findings remain, with zero high/critical findings. Fresh-clone install, example
+configuration without optional services, typechecks/builds and eight four-engine
+public checks pass without inherited modules/env/build output. The final handoff
+records the exact candidate SHA. Native authenticated setup and remote CI remain
+open; no public-release gate is waived.
+
+Owner instruction on 2026-11-15: do not require local Docker/Supabase or enable
+WSL/Virtual Machine Platform after a boot failure. Full local authenticated
+Supabase clean-install checks remain pending; independent isolated SQL/CI and all
+other work continue without weakening the release gates. Remote CI cannot be
+claimed verified without an authorized push and an actual run.
+
+## REDESIGN-008 — Integrations & Context Bridge
+
+PASS / ACCEPTANCE CLOSED by REDESIGN-008.1 on `codex/redesign-008-integrations`,
+implementation `2bb3bed`, clean feature base `6ce67b9`. The owner's closure brief
+records live GitHub, Drive and Calendar QA as passed; provider QA is not repeated
+for SQL fixture/documentation changes.
+GitHub organization installation/repository selection; private Google Drive and
+Calendar; shared bounded external references; explicit recoverable Calendar
+creation only. Reuse canonical entity authority and trusted plugin host, keep
+Core/tenant/user boundaries, optional self-host setup and zero new AI/Boards work.
+See docs/INTEGRATIONS.md and PROJECT_STATE.md for plan and verification limits.
+Main agent only, no merge/push. Both additive migrations remain unchanged and all
+51 ledger versions match; no new migration. All 29 SQL/RLS suites pass 1,018
+assertions in isolated PostgreSQL with real pgcrypto and no privilege aliases.
+Ask Council catalog/type/enum and tenant-scoping fixtures, competitor plugin/
+catalog inspection setup and worker temporary-ID access are repaired, preserving
+all original assertions and adding two denial checks. Baseline reproduces the
+original defects. Hosted focused suites pass 35/23/23 and integration 54, with
+rollback; integration cache counts now scope their own fixture connection.
+Real Supabase JWT smoke (13), browser component matrix and authenticated optional-
+configuration checks from implementation remain valid.
+The corrected full web run passes 264 files / 1,512 tests; worker tests pass 32.
+Lint, both typechecks and final worker/web production build pass. Final browser
+checks pass; isolated accounts/organizations/credentials and helpers are cleaned.
+Formatting, links, secret/artifact scans and diff review pass (56 scoped files).
+Closure re-runs 92 focused integration web tests, lint, both typechecks and the
+worker/web production build. Full web/worker runtime suites are not repeated for
+SQL-only repairs. No provider/application/RLS changes, credentials or QA artifacts
+are committed. REDESIGN-009 is ready to plan but has not started.
+
+Placement cursor stability follow-up: COMPLETE / VERIFIED. Fixed dual-tone,
+screen-space app cursor replaces native placement cursors; Image Escape/chooser
+cancellation restores Select. Focused tests: 32 pass. Prolonged light/dark Chrome
+hover, zoom/drag/theme/reset checks, lint, web typecheck and build pass. No database
+changes, subagents, merge or push; prior Tasks styling work remains preserved.
+
+Tasks navigation styling follow-up: COMPLETE / VERIFIED. Milestones shares the
+Tasks view-link renderer, without text underline; only the active view has the
+Stylus indicator. Existing Tasks tests (19), lint, web typecheck and build pass.
+
+## Final interaction and metadata polish (post-REDESIGN-007)
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Same dedicated branch from `f1d83a044de4871e1e1da46ca2efcce5688fba58`.
+Only placement cues/cursors, bounded drag creation, image thumbnail staging,
+new Shape defaults and meaningful page titles. No schema changes or new phase.
+See PROJECT_STATE and docs/BOARDS.md. Main agent only; no merge/push.
+Affected coverage is 396 tests, with the corrected upload-flow file included in
+a passing 35-test final rerun. Eleven component-browser flow groups, twelve zoom/
+theme samples, responsive/touch-style checks and five production Next title
+checks pass. Lint, worker/web typecheck, production build and scoped delivery
+checks pass. No database/dependency changes or hosted writes. Image drag sizing,
+other entity names and manual target-environment checks remain explicit limits.
+
+## REDESIGN-007 - Core execution and startup essentials
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Approved baseline `6afe70c7ffa07b61187ebc8eefd304318de02fba`, dedicated
+`codex/redesign-007-core-execution` branch. See docs/CORE_EXECUTION.md for the
+audit, bounded implementation plan and Goals deferral. Main agent only;
+sequential runners, no new AI, merge or push. The explicit continuation adds only
+shared selects and bounded Board menu/Delete/native-card visual fixes; all other
+generic editor contracts remain frozen. Final complete web validation passes
+252 files / 1,409 tests on the corrected final tree. Related SQL: 13 suites /
+455 assertions; hosted/browser, 192 initial plus 96 changed-control responsive
+cases, lint, worker/web typecheck and production build pass. Exact task fixtures,
+accounts and helpers are cleaned up. All 49 migration versions and unchanged
+applied hashes are verified. See PROJECT_STATE for performance/manual QA limits.
+REDESIGN-008 is not started; no merge or push.
+
+## REDESIGN-006 - Startup growth and learning workflow
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Approved exact baseline `82d854afca2f2a91162c70a5b6bf37694c0f857a`;
+branch `codex/redesign-006-growth-learning`. See PROJECT_STATE and
+docs/GROWTH_LEARNING.md for the domain mapping, delivered workflow and limits.
+Four reviewed development migrations are applied; all 46 ledger versions match.
+Hosted workflow/security/recovery and 144 responsive cases plus 64 targeted
+repeats pass. The single full web run covered 1,330 tests: 1,328 passed; two stale
+inventory expectations were corrected and the final focused nine tests pass.
+All failures are resolved. Thirteen SQL suites / 527 assertions, lint, worker/web
+typecheck and final production web build pass. Exact isolated data/accounts and
+helpers are cleaned up. No merge, push, new AI execution, automatic Memory or
+generic Board change. Main agent only, sequential runners; next phase not started.
+
+## REDESIGN-005 - Native Stylus entities in Boards
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Approved exact baseline `8236b471592023faf6aa3b0136344071f7c93bcf`, dedicated
+branch `codex/redesign-005-native-board-entities`. Public reference/provider/open/
+create contracts, six initial adapters, native UI and durable explicit conversion
+recovery are implemented. Three forward migrations are applied; all 42 ledger
+versions match. Hosted persistence/isolation/recovery, all six canonical openers,
+four conversions, native editor integrations and 16 responsive cases pass.
+Full web: **227 files / 1,292 tests**; actual SQL: **246 assertions**.
+Lint, worker/web typecheck, production web build and scoped delivery checks pass.
+Exact isolated records/accounts and helpers are cleaned up. Performance probes
+show no repeatable native-resolution regression; small-sample/NVDA/other-engine
+limits are explicit in PROJECT_STATE. No AI, automatic Knowledge promotion,
+generic editor redesign, subagents, merge or push. The current approved
+REDESIGN-006 scope is recorded above.
+
+## REDESIGN-004.3.3 — Voting, Section presentation and visual color picker
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Dedicated branch from `1e7b8a1e3d41744603ad715bd924dc16e33b2d38`. Visible
+voting, read-only Section presentation and visual color controls are delivered.
+Both reviewed forward migrations are applied; all 39 ledger versions match.
+Real hosted lifecycle/security/concurrency, two-user UI, failure recovery, color
+persistence, live presentation, VIEWER/touch and 16 responsive cases pass. Private
+authorized read transport avoids delaying mutation actions. Full web suite:
+**220 files / 1,266 tests**; Board SQL: **201 assertions**. Lint/typecheck/build
+and final scoped delivery checks pass. Exact fixtures/helpers are cleaned up.
+Pick from Board/native OS/NVDA/other-engine limits are documented. Generic Board
+scope is frozen and 005 is ready for a separately approved task, not started.
+Main agent only; no merge or push. See PROJECT_STATE and docs/BOARDS.md.
+
+## REDESIGN-004.3.2 — Boards UI and input polish
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Continued from `9e678586dd34b87dcd1e8fcc0712fc8aad0ffd58` on the requested
+task branch. Fonts/Properties/controls, Group insertion/extraction, links,
+natural input and View polish are verified. Added Group-child drill-in preserves
+selection/Properties/Layers, locks and ownership. Native QA also corrected CSS
+frame layer order and Space-pan object dragging. Full web **211 files / 1,206
+tests**, lint/typecheck/production build and scoped final checks pass. Real
+authenticated input/persistence, two-theme six-width QA, 72-phase production
+comparison per build and targeted performance/font checks pass; measured limits
+remain documented. Exact hosted fixtures were removed and absence verified.
+Main agent only, sequential; no schema/dependency change, merge/push or
+REDESIGN-005. See PROJECT_STATE and docs/BOARDS.md.
+
+---
+
+## REDESIGN-004.3.1 — Large Board performance hardening
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Dedicated branch starts exactly at `2d767aa2bb743eed5497e2427304eebe12526d54`.
+Reproduced React/host/SVG, remount, typography-default and browser layout/paint
+costs are reduced with stable events, local projections and retained/contained
+Layers. All 72 before/final-after phases are recorded at 200/300/500 objects;
+initial-render/marquee limits remain explicit. Full web 205 files / 1,150 tests,
+focused Board 40 / 225, lint/typecheck/build and 68 final browser checks pass.
+The full single-worker rerun resolves an initial default-worker test timeout
+without altering assertions or timeouts. Exact hosted fixtures and checked local
+helpers were cleaned up. No schema changes, feature redesign, REDESIGN-005,
+subagents, merge or push. See PROJECT_STATE and [Boards](docs/BOARDS.md).
+
+---
+
+## REDESIGN-004.3 — Boards interaction and creative usability
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Dedicated branch starts at `eff9568c4b39c3ebffdd4abf33ab35afa667c7a0`.
+Desktop docks/bottom tools, stable drag and Group selection, direct Layers,
+typography, guides/snapping, Alt copies, reactions, reversible thread resolution,
+local search and Section focus pass local and real authenticated verification.
+Two reviewed forward migrations are applied to the explicitly task-authorized
+backend. Full web: 202 files / 1,142 tests; Board coverage: 37 / 217; pgTAP: 138.
+Lint/typecheck/build and production browser QA pass. Exact isolated hosted fixtures
+were removed. See PROJECT_STATE for measured performance/browser limits. Main
+agent only; no merge/push or REDESIGN-005 implementation.
+
+---
+
+## REDESIGN-004.2 — Boards stabilization and UX polish
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+The existing task branch/worktree continues from
+`f6fdf51882b299d24e538d385ae311e05b797043`. The owner authorized the configured
+Stylus backend for this development task; both reviewed missing Boards
+migrations are applied and real authenticated persistence passes. Rollback/error
+handling, Shift/marquee selection, context menus, Properties, Layers,
+Sections/Groups UX, clipboard/shortcuts/help, grid and card previews are
+implemented. Full web tests (192 files / 1,104 tests), lint/typecheck and 93
+isolated pgTAP assertions pass. Production responsive/keyboard/browser QA and
+scoped fixture cleanup pass. The two-theme eight-width matrix found and
+corrected desktop card breakpoints; the final targeted 18 card/preview checks
+pass without browser exceptions. See PROJECT_STATE and
+[environment findings](docs/BOARDS_ENVIRONMENT.md). No merge/push or 005.
+
+---
+
+## REDESIGN-004.1 — Brand identity, typography and premium auth
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-004-1-brand-auth`, starting at
+`f4571e28cb6325406abe4fcc2afb97a91ddf08e5`, in its own worktree. Main agent only.
+Cobalt/warm-neutral shared tokens, self-hosted licensed Geist and approved
+blue–coral logo variants establish the final identity. Full-height procedural
+CSS tiles and one content card replace the auth SVG; bounded local depth/tilt/
+light/shadow settle with no idle rendering. Mobile/reduced-motion stay static.
+Redundant subtext is removed while auth behavior and helpful state copy remain.
+Only exact public font/license paths bypass the session proxy. No database,
+Board/task business logic, Marketing workflows, worker or dependency changes.
+
+Full web tests (188 files / 1,070 tests), focused brand/auth/routing/contrast,
+lint/typecheck/build, 142 auth browser checks and 16 shared-surface fixture smoke
+checks pass. See PROJECT_STATE and [Brand](docs/BRAND.md) for measurements and
+limits. No merge/push; REDESIGN-005 remains unstarted.
+
+---
+
+## REDESIGN-004 - Boards V2 foundation
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-004-boards-v2`, starting exactly at
+`d211d878793b60abb2598460a0feaf1f9baf5c9f`, in its own worktree. Main agent only.
+Boards retains its URLs, adds real list metadata and seven native templates, and
+opens an immersive BoardShell with vertical tools, named Shapes, selection,
+Sections/Groups, atomic manipulation, private image editing, safe manual links,
+shared Inspector/Comments/outline slot, viewport navigation and scoped shortcuts.
+Two forward migrations protect parent/lock/template invariants and bounded atomic
+operations. Initial canvas reads exclude comments/signing; deferred reads freshly
+check tenant/board access. Realtime identity, colors, cursors and local history
+remain; conflicting failed saves require reload. No native entity integrations,
+conversion, votes/reactions, AI, memory promotion, worker changes or 005 execution.
+
+Full web tests (186 files / 1,063 tests), focused tests (24 / 149), 93 board
+pgTAP assertions, web lint/typecheck/build and 70 fixture browser checks pass.
+See [Boards](docs/BOARDS.md) and PROJECT_STATE for verification and explicit local
+PostgreSQL/browser limits. No merge/push; hosted transport/NVDA checks remain
+separate target-environment acceptance.
+
+---
+
+## REDESIGN-003.1 — Auth visual identity and interactive artwork
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-003-1-auth-visual-identity`, starting exactly at
+`d9f481d119a7d4f517d428bd3b4a6473bf38e444`, in its own worktree. Main agent only.
+Login/signup replace workflow cards with original, server-rendered abstract SVG,
+scoped light/dark palettes, finite desktop parallax and a soft local line reveal.
+Tablet is static/reduced; mobile is form-first with a small static brand accent.
+Reduced motion/coarse pointers/hidden tabs reset and disable movement. Artwork is
+decorative with no tab stop, state/data dependency, network artwork or persistence.
+Existing forms, actions, validation, redirects and return-path security remain.
+
+Focused auth tests pass (5 files / 24 tests), as do full web tests (179 files /
+1,006 tests), web lint/typecheck/build, scoped formatting and diff/secret/artifact
+checks. Production browser QA passes 260 checks across 32 public login/signup
+cases in both themes at all requested widths plus 1920px, including keyboard,
+pointer/reveal, reduced motion, contrast and form stability. The declared login
+client JS chunk union grows by 3,149 raw / 928 locally gzipped bytes; short local
+pointer probes observed no Long Task entries. These are scoped observations,
+not a live-provider or broad device-performance guarantee. See PROJECT_STATE for
+measurement boundaries and manual NVDA limitations. No normal work-surface,
+database, worker, dependency or auth-logic changes; no merge/push or automatic 004.
+
+---
+
+## REDESIGN-003 — Home and Tasks V2
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-003-home-tasks`, starting from accepted REDESIGN-002
+`17ade235eabfe142ee536267e1a3d88da736942a`, in its own worktree. Main agent only.
+Home has a bounded, ranked/deduplicated attention list, meaningful enabled-Marketing
+continuations, small recent activity and a role-aware task-create entry. All Home
+timestamps reuse browser-local Intl presentation.
+
+Tasks has primary/More views, progressive filters and removable active state,
+compact textual-status rows and URL-controlled responsive detail. Direct task
+selection is authorized independently of visible rows. Initial list payload has
+no descriptions or comment bodies; detail and bounded comments load separately
+with tenant/task checks, local retry and stale-response protection. Existing
+mutation, lifecycle, archive and deadline rules remain.
+
+Total-list product pagination is deliberately deferred: summary transport batches
+preserve complete search/filter semantics without silently capping the workspace.
+Comments display 50 per cursor batch. See PROJECT_STATE for the structural query
+inventory, browser fixture scope and remaining live/NVDA acceptance. Final web
+suite passes (177 files / 997 tests), as do focused tests, web lint/typecheck/build,
+scoped formatting and diff/secret/artifact checks. Headless Chrome passes 132
+actual-component fixture checks across both themes and all seven target widths,
+including keyboard/modal focus and comment-post focus retention. These mocked
+read boundaries do not substitute for live authorization/latency or manual NVDA.
+No DB/worker/dependency/AI changes, no merge/push and no automatic REDESIGN-004.
+
+---
+
+## REDESIGN-002 — App Shell, Navigation, Auth and Foundational Performance
+
+Status: COMPLETE / VERIFIED / READY FOR USER-MANAGED REVIEW
+
+Branch `codex/redesign-002-shell-auth-performance`, isolated worktree
+`.worktrees/redesign-002-shell-auth-performance`, starting at accepted spec commit
+`0deddae882c589f3e26be6e2af6017bbca273e83` (includes fetched `origin/main`).
+
+The `(workspace)` route group owns one persistent AppShell without changing
+URLs. Pages retain server context/role/plugin checks. Sidebar uses Next Link,
+five-destination V2 IA, a device-local collapse preference and accessible names/
+tooltips. The topbar is compact and opaque; inert global search is removed.
+Settings/Marketing/Apps supply paths to every relocated destination. Login/signup
+have a truthful desktop showcase and form-first smaller-screen composition.
+
+Routine Core gates read only onboarding completion/current step; full company
+loaders remain for actual consumers and direct onboarding edits. The selected
+membership is validated without reselecting it; read-only composition reuses
+React request context. Explicit membership authorization remains uncached and
+mutations still resolve server context per request. Layout owns initial plugin
+and notification reads; summaries refresh through a tenant/recipient-derived
+read action when opened and shell metadata refreshes on window focus.
+
+The board editor remains outside the workspace route group on its existing
+AppShell pending REDESIGN-004. Marketing/Workers retain their existing
+incomplete-onboarding access behavior. No Home/Task content, task detail/comments,
+board mechanics, AI contract, worker, schema or RLS changes are included.
+
+Verification passes: full web suite 174 files / 969 tests, repository lint,
+worker/web typechecks, standard worker/web production builds, scoped formatting,
+route/diff checks and secret/local-artifact review. The explicit 1200px desktop
+breakpoint is rechecked with eight affected UI tests, targeted lint and a final
+web production build. Headless Chrome passes 28 public-auth cases across both
+themes and 320/390/430/768/1199/1200/1440px, including real Tab order, form bounds,
+overflow, heading/autocomplete semantics and reduced-motion preference. No
+uncaught browser errors occurred; desktop/mobile screenshots were inspected.
+
+No dependency/lockfile, worker/shared runtime, DB, RLS or AI contract changed.
+Worker tests/DB migration tests are not applicable. Required next manual gates
+are signed-in shell transition/responsive acceptance, production request/latency
+traces and NVDA; they are not claimed as performed. No merge/push or automatic 003.
+
+---
+
+## REDESIGN-001 — Stylus V2 Product Experience Foundation
+
+Status: COMPLETE / DOCUMENTATION VERIFIED / IMPLEMENTATION NOT STARTED
+
+Scope is planning/specification only. Main agent only; no production code,
+database, dependency, worker or AI contract changes. Branch:
+`codex/redesign-001-v2-foundation`, worktree
+`.worktrees/redesign-001-v2-foundation`, baseline freshly fetched `origin/main`
+`5b7e76a0fe6a4e80f17e14c04b119a84b43668a9`.
+
+Deliverables: [canonical V2 experience](docs/STYLUS_V2_PRODUCT_EXPERIENCE.md),
+aligned DESIGN_SYSTEM/UI_PATTERNS, status/roadmap updates and ADR-040. The spec
+accounts for all 30 page routes, five distinct design references, BoardShell,
+Boards P0/P1/P2, existing workflow/security boundaries, all ten performance
+hypotheses and a measurement plan without invented timing.
+
+Acceptance: documentation-only diff, complete route/link inventory, scoped
+formatting and whitespace checks, relevant existing checks recorded accurately;
+commit only the seven task Markdown files. No merge/push or automatic 002.
+
+Verification passes: seven-file scoped Prettier, 30 page routes, three retained
+non-page entrypoints, 16 local links, 38 sections, ten hypothesis verdicts,
+repository lint, worker/web typechecks and six focused existing test files /
+23 tests. Diff/whitespace review passes; production source and database are
+unchanged. Full suite/build/database checks are not applicable to prose-only
+work. Production timing, NVDA and browser visual acceptance remain future
+implementation gates; no benchmark results are invented.
+
+### Follow-up redesign queue — 002 complete; later tasks not started
+
+| Task | Scope | Gate |
+| --- | --- | --- |
+| REDESIGN-002 | Baseline measurement; shared V2 primitives; persistent workspace shell, Link navigation, five global entries with discoverable landing links; two-column auth; narrow setup gate, render-only context deduplication and loading feedback; remove inert search | Preserve all current URLs, setup/invitation/role/plugin checks; no new schema, search backend, task drawer, board mechanics or AI/business behavior |
+| REDESIGN-003 | Home attention/timezones; Tasks toolbar/views/right detail and lazy comments | Preserve lifecycle, deadlines, 14-day archive and authorization; initial list excludes comment bodies |
+| REDESIGN-004 | Boards foundation: immersive editor, toolbar/shapes, sections, images, selection/group/alignment/layers/lock, zoom/minimap and templates | Private assets, Realtime and local history intact; no Marketing-private Core imports |
+| REDESIGN-005 | Public native entity references/conversion, voting/reactions and comments refinement; selection-intelligence foundations | P0 integration before optional P1 breadth; new AI execution/storyboard scope requires explicit inclusion |
+| REDESIGN-006 | Marketing local shell, workflow Studio, advisory Ask Council and output/history hierarchy | TASK-015/016/020 calls/context/versions unchanged |
+| REDESIGN-007 | Research/Competitors, Campaigns and secondary Marketing including Performance/human briefs | Preserve exact evidence, immutable observations and scoped canonical relations |
+| REDESIGN-008 | Settings consolidation and advanced/internal presentation | Preserve member-read versus manager-mutation distinctions and old URLs |
+| REDESIGN-009 | Full performance profiling, responsive, keyboard/NVDA and release QA | Measured acceptance and all relevant verification, not speculative optimization |
+
+Exact boundaries, dependency adjustments and acceptance are in sections 37–38
+of the canonical spec. Existing task records below retain their historical
+statuses; duplicated older planned entries are not authorization to redo work.
+
+---
+
 ## Final Production Polish
 
 Status: FINAL DESIGN REFINEMENT VERIFIED / FINAL VISUAL QA READY

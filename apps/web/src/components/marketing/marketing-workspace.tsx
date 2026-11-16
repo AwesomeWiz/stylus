@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import Link from "next/link";
 import type { Route } from "next";
@@ -165,6 +166,7 @@ export function MarketingWorkspace({
   coreCompetitors = [],
   records,
   role,
+  selectedId,
 }: {
   area: Area;
   archived: boolean;
@@ -172,10 +174,18 @@ export function MarketingWorkspace({
   coreCompetitors?: Option[];
   records: RecordValue[];
   role: OrganizationRole;
+  selectedId?: string;
 }) {
   const editable = canMutateMarketing(role);
+  useEffect(() => {
+    if (selectedId)
+      document.getElementById(`marketing-item-${selectedId}`)?.focus();
+  }, [selectedId]);
   return (
     <div className="space-y-5">
+      {selectedId && !records.some((row) => row.id === selectedId) ? (
+        <p role="status">Selected item unavailable.</p>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3 border-y py-3">
         <Link
           className="text-muted-foreground text-sm underline-offset-4 hover:underline"
@@ -196,7 +206,12 @@ export function MarketingWorkspace({
       {records.length ? (
         <div className="divide-y border-y">
           {records.map((record) => (
-            <article className="py-4" key={record.id}>
+            <article
+              className="py-4"
+              key={record.id}
+              id={`marketing-item-${record.id}`}
+              tabIndex={record.id === selectedId ? -1 : undefined}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <h2 className="font-medium">
@@ -214,6 +229,22 @@ export function MarketingWorkspace({
                     )}
                   </h2>
                   <RecordBadge record={record} />
+                  {record.id === selectedId ? (
+                    <dl className="mt-3 space-y-2">
+                      {fields[area]
+                        .filter((field) => text(record[field.key]))
+                        .map((field) => (
+                          <div key={field.key}>
+                            <dt className="text-muted-foreground text-xs">
+                              {field.label}
+                            </dt>
+                            <dd className="max-w-prose text-sm break-words whitespace-pre-wrap">
+                              {text(record[field.key])}
+                            </dd>
+                          </div>
+                        ))}
+                    </dl>
+                  ) : null}
                   <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
                     {text(
                       record.objective ??
@@ -412,7 +443,7 @@ function Control({
     );
   if (field.kind === "select")
     return (
-      <select
+      <Select
         className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
         defaultValue={value || field.options?.[0] || ""}
         name={name}
@@ -428,7 +459,7 @@ function Control({
             {option.name}
           </option>
         ))}
-      </select>
+      </Select>
     );
   return (
     <Input

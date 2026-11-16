@@ -5,7 +5,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@xyflow/react", () => ({
   NodeResizer: ({
     onResizeEnd,
+    isVisible,
   }: {
+    isVisible: boolean;
     onResizeEnd: (
       event: unknown,
       value: { height: number; width: number; x: number; y: number },
@@ -13,6 +15,7 @@ vi.mock("@xyflow/react", () => ({
   }) => (
     <button
       aria-label="Resize element"
+      hidden={!isVisible}
       onClick={() => onResizeEnd({}, { height: 220, width: 260, x: 30, y: 40 })}
     />
   ),
@@ -71,6 +74,44 @@ function nodeData(overrides: Partial<WhiteboardNodeData> = {}) {
 }
 
 describe("WhiteboardNode", () => {
+  it("does not arm text editing through a lock and open it later on unlock", () => {
+    const data = nodeData({ canMutate: false });
+    const view = render(<WhiteboardNode {...props(data)} />);
+    fireEvent.doubleClick(screen.getByLabelText("Sticky note: Original"));
+    view.rerender(<WhiteboardNode {...props({ ...data, canMutate: true })} />);
+    expect(
+      screen.queryByRole("textbox", { name: "Edit sticky note" }),
+    ).not.toBeInTheDocument();
+  });
+  it("does not draw independent selection controls for a selected container descendant", () => {
+    const { container } = render(
+      <WhiteboardNode {...props(nodeData({ selectionRoot: false }))} />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Resize element" }),
+    ).not.toBeInTheDocument();
+    expect(container.firstElementChild).not.toHaveClass("outline-2");
+  });
+  it("does not interpret untrusted SVG paint as an external resource URL", () => {
+    const { container } = render(
+      <WhiteboardNode
+        {...props(
+          nodeData({
+            element: {
+              ...sticky,
+              element_type: "ARROW",
+              style: { color: "url(https://example.test/paint.svg)" },
+            },
+          }),
+        )}
+      />,
+    );
+    expect(container.querySelector("line[marker-end]")).toHaveAttribute(
+      "stroke",
+      "#52525b",
+    );
+    expect(container.querySelectorAll('[stroke*="url("]')).toHaveLength(0);
+  });
   afterEach(cleanup);
 
   it("commits text on blur without rendering unsafe HTML", () => {
@@ -102,6 +143,32 @@ describe("WhiteboardNode", () => {
       x: 30,
       y: 40,
     });
+  });
+  it("cancels text with Escape and keeps Sticky Shift+Enter available for new lines", () => {
+    const commit = vi.fn(),
+      cancel = vi.fn();
+    render(
+      <WhiteboardNode
+        {...props(
+          nodeData({ onContentCommit: commit, onInteractionCancel: cancel }),
+        )}
+      />,
+    );
+    fireEvent.doubleClick(
+      screen.getByRole("button", { name: /Sticky note: Original/ }),
+    );
+    const editor = screen.getByRole("textbox", { name: "Edit sticky note" });
+    fireEvent.change(editor, { target: { value: "Discard" } });
+    expect(fireEvent.keyDown(editor, { key: "Enter", shiftKey: true })).toBe(
+      true,
+    );
+    expect(commit).not.toHaveBeenCalled();
+    fireEvent.keyDown(editor, { key: "Escape" });
+    expect(commit).not.toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalledWith(sticky.id);
+    expect(
+      screen.getByRole("button", { name: /Sticky note: Original/ }),
+    ).toBeInTheDocument();
   });
 
   it("renders a new arrow horizontally", () => {
@@ -142,12 +209,14 @@ describe("WhiteboardNode", () => {
   it("shows the active comment count on a commented element", () => {
     render(<WhiteboardNode {...props(nodeData({ commentCount: 2 }))} />);
     expect(
-      screen.getByRole("status", { name: "2 comments on this element" }),
+      screen.getByRole("button", { name: "2 open threads on this object" }),
     ).toBeInTheDocument();
   });
 
   it("does not show a comment badge when the element has no active comments", () => {
     render(<WhiteboardNode {...props(nodeData())} />);
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /open threads/ }),
+    ).not.toBeInTheDocument();
   });
 });

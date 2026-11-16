@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import {
   Check,
@@ -108,7 +109,7 @@ export function TeamManagement({
                         type="hidden"
                         value={member.member_user_id}
                       />
-                      <select
+                      <Select
                         aria-label={`Role for ${member.display_name}`}
                         className="bg-background h-9 rounded-md border px-2 text-sm"
                         defaultValue={member.role}
@@ -116,7 +117,7 @@ export function TeamManagement({
                       >
                         <option value="MEMBER">Member</option>
                         <option value="VIEWER">Viewer</option>
-                      </select>
+                      </Select>
                       <Button className="h-9" type="submit" variant="secondary">
                         Save
                       </Button>
@@ -253,7 +254,7 @@ function InviteForm() {
             </p>
           ) : null}
         </div>
-        <select
+        <Select
           aria-label="Initial role"
           className="bg-background h-10 rounded-md border px-3 text-sm"
           defaultValue="MEMBER"
@@ -261,7 +262,7 @@ function InviteForm() {
         >
           <option value="MEMBER">Member</option>
           <option value="VIEWER">Viewer</option>
-        </select>
+        </Select>
         <Button type="submit">Create invitation</Button>
       </form>
       {state.message ? (
