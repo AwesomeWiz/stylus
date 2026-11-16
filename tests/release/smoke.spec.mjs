@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import fs from "node:fs";
 import { createRequire } from "node:module";
+import { assertReleaseEntry } from "./entry-assertions.mjs";
 const require = createRequire(import.meta.url);
 
 async function accessibility(page) {
@@ -85,15 +86,7 @@ test("authenticated fictional Core and growth workflow", async ({ page }) => {
     entry.on("pageerror", (error) => errors.push(error.message));
     try {
       await entry.goto(route);
-      await expect(entry.locator("main")).toBeVisible();
-      await expect(entry.locator("h1")).toHaveCount(1);
-      await expect(entry).toHaveURL(
-        (url) => url.pathname === new URL(route, "http://localhost").pathname,
-      );
-      await expect(entry).not.toHaveTitle("Page not found — Stylus");
-      await expect(
-        entry.getByText("Something slipped out of place.", { exact: true }),
-      ).toHaveCount(0);
+      await assertReleaseEntry(entry, route);
       await entry.waitForLoadState("networkidle");
     } finally {
       await entry.close();
@@ -132,8 +125,8 @@ test("authenticated fictional Core and growth workflow", async ({ page }) => {
     .getByRole("link", { name: "Boards", exact: true })
     .click();
   await page
-    .locator(`a[href="/whiteboards/${demo.ids.board}"]`)
-    .first()
+    .getByRole("link", { name: /^Open / })
+    .and(page.locator(`a[href="/whiteboards/${demo.ids.board}"]`))
     .click();
   await expect(page.getByLabel("Board canvas", { exact: true })).toBeVisible();
   await page.locator('summary[aria-label="Shapes"]').click();

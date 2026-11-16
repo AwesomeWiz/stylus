@@ -4,6 +4,14 @@ Last Updated: 2026-11-16
 
 ## Overall Status
 
+Current test-only follow-up: native #23 at `ce61c1c` fails on a strict selector
+matching both the loading status and Board workspace `<main>` elements. Use the
+unique semantic main landmark and accessible level-one heading, preserving all
+route/auth/error checks. The focused overlap regression passes in Chromium,
+Firefox and WebKit; full authenticated smoke and native release validation at
+the new exact commit remain required. No application/security/schema changes.
+The successful #21 evidence below applies to its original candidate only.
+
 REDESIGN-009 engineering and native release-pipeline acceptance: **PASS**.
 Exact CI-tested release SHA: `5c99aaea122338556d96703f0b32e90b6de4ed83`.
 [Native CircleCI #21](https://app.circleci.com/workflow/fb7f1bdd-b38e-4f34-947e-7a0d318273cb/job/a344e292-252d-438f-9258-14679aca6c3d)

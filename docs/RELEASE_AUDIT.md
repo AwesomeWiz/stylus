@@ -9,6 +9,29 @@ REDESIGN-009.1 authorizes normal task-branch pushes for remote CI; no merge, tag
 or visibility change is authorized. A workflow file is not remote CI evidence.
 The candidate must be evaluated at its exact SHA.
 
+## Current test-only follow-up — native #23 semantic landmarks
+
+[Native #23](https://app.circleci.com/workflow/5dabe94d-320d-4336-a411-2f22da0ec456/job/57543886-0ebc-4d6a-89b8-0dd6bfad09e9)
+at `ce61c1cb9435bb440844f05afa1e1f0acb334a76` passes eight browser cases, then
+fails the authenticated Chromium case at the raw main selector: loading
+`<main role="status">` overlaps `<main aria-label="Board workspace">`. This is a
+strict-mode test failure, not evidence of a timeout or broken Board behavior.
+
+The entry helper uses the unique semantic main role and an accessible level-one
+heading count; hidden loading headings do not count, and the Board header title
+can remain outside main. URL, authentication, title, error and document-persistence
+checks are retained. The existing Board opener now selects its accessible Open
+link plus exact href instead of the first of two links. No application, security,
+workflow, dependency, timeout, retry, skip or error-filter change is introduced.
+
+A focused real-browser regression retains both main elements and both headings,
+then hides the loading status explicitly while preserving the old DOM subtree.
+It passes in Chromium, Firefox and WebKit with one worker; the same helper is
+used by authenticated smoke. Full real authenticated browser/native acceptance
+at the new exact commit remains pending. #21 below is still successful evidence
+for its original SHA, not a substitute for validating this test change. Separate
+uncommitted Apache-audit documentation is preserved and excluded from this fix.
+
 ## Final native acceptance — 2026-11-16
 
 [Native CircleCI release-machine-ci #21](https://app.circleci.com/workflow/fb7f1bdd-b38e-4f34-947e-7a0d318273cb/job/a344e292-252d-438f-9258-14679aca6c3d)

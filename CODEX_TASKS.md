@@ -2,6 +2,17 @@
 
 # Current
 
+## REDESIGN-009 — #23 semantic Board entry assertion repair
+
+Fix the duplicate raw-main selector with a semantic main landmark and count
+accessible page headings through the streaming overlap. Keep route, heading,
+authentication and error assertions; use no sleeps, timeout increases, skips or
+error filters. The shared entry helper is covered by a real-browser fixture
+that retains both DOM mains/headings while hiding the completed loading status.
+Chromium/Firefox/WebKit regression checks pass. Native full authenticated smoke
+at the new exact candidate is pending; #21 is prior-candidate evidence. Preserve
+the separate uncommitted Apache audit and original main checkout changes.
+
 ## REDESIGN-009 — Engineering acceptance PASS; manual publication gates open
 
 Native `release-machine-ci` #21 succeeds at exact CI-tested release candidate
