@@ -2,6 +2,32 @@
 
 # Current
 
+## REDESIGN-009 — Inventory transport and complete round-trip verification
+
+Repair native preflight #12's plain-array/agent-envelope mismatch, not just the
+downstream `[0]`. Validate transport errors, nonempty catalog coverage, complete
+tenant rows/keys/provenance and control/Auth/Storage baselines. Keep legitimate
+empty asset/absence results distinct from missing data. Execute actual round-trip
+and Auth-smoke source in strict SQL tests; use directory RPCs for team reads and
+database-generated task IDs. Preserve exact cleanup and idempotent known smoke
+inventory reconciliation. All 63 demo tests, seven release-helper tests, lint,
+typechecks and 30 SQL suites / 1,138 assertions pass. No production grants/RLS/
+migrations, hosted access or dependency changes.
+
+Diagnostic branch `cci/preflight/demo-seed-20261116-a` is fast-forwarded to
+`eeab04337322438985d8e6c6845aa3517350b194`. Real seed/verification/cleanup/baseline
+comparison remains pending the complete native run. CLI/v3 triggering returns
+404; owner manual native execution is requested. No round-trip PASS until all
+real Supabase phases succeed; full release gates remain required afterward.
+
+Native #15 at `eeab043` passed inventory and baseline capture but exposed the
+error-only Auth logout contract. The logout validator is now explicit and leaves
+inventory data requirements intact. Complete-controller coverage now uses actual
+installed Auth/Storage SDKs over synthetic HTTP; 64 demo plus seven helper tests
+pass. Both builds, formatting/190 links, secret and workflow checks pass. A new
+native diagnostic must finish seed, verification, exact cleanup and baseline
+comparison before this task or release acceptance can close.
+
 ## REDESIGN-009 — Complete demo-seed privilege and round-trip repair
 
 Continue from `e5fe80e`; audit every seed/cleanup operation. Use OWNER invitation

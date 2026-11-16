@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
 import { assertLoopback, assertNoProviders } from "./ci-local-database.mjs";
 import { sanitizeStartupLog } from "./supabase-start-log.mjs";
+import { requireSuccess } from "../demo/responses.mjs";
 
 export function assertPublicKey(key) {
   assert.ok(
@@ -229,7 +230,7 @@ export async function runAuthSmoke() {
   }
   record("OWNER management allowed; MEMBER and VIEWER management denied");
   for (const client of clients)
-    dataOrFail(await client.auth.signOut(), "Auth logout");
+    requireSuccess(await client.auth.signOut(), "Auth logout");
   record(
     "All fictional Auth sessions signed out; no AI or external provider invoked",
   );

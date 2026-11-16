@@ -6,6 +6,7 @@ import test from "node:test";
 import vm from "node:vm";
 import { EventEmitter } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
+import { createClient as createSdkClient } from "@supabase/supabase-js";
 import { PGlite } from "@electric-sql/pglite";
 import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { pgtap } from "@electric-sql/pglite-pgtap";
@@ -74,37 +75,65 @@ test(
           };
         }
       };
-      const client = {
+      // Exercise installed Auth/Storage SDK transformations, rather than
+      // fabricating SDK result objects. HTTP is wholly synthetic and fenced.
+      const json = (value, status = 200) =>
+        new Response(JSON.stringify(value), {
+          status,
+          headers: {
+            "content-type": "application/json",
+            "x-supabase-api-version": "2024-01-01",
+          },
+        });
+      const publicUser = (record) => ({
+        id: record.id,
+        aud: "authenticated",
+        role: "authenticated",
+        email: record.email,
+        user_metadata: record.user_metadata ?? {},
+        app_metadata: { provider: "email", providers: ["email"] },
+        created_at: "2026-01-01T00:00:00Z",
+      });
+      const sdk = createSdkClient(url, key, {
         auth: {
-          admin: {
-            createUser: (input) =>
-              result(async () => {
-                assert.equal(role, "service_role");
-                const record = { id: randomUUID(), ...input };
-                await sql(
-                  "postgres",
-                  null,
-                  "insert into auth.users(id,email,raw_user_meta_data) values($1,$2,$3)",
-                  [
-                    record.id,
-                    record.email,
-                    JSON.stringify(input.user_metadata),
-                  ],
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+        global: {
+          fetch: async (input, init) => {
+            const request = new Request(input, init),
+              target = new URL(request.url);
+            assert.equal(
+              target.origin,
+              url,
+              "No network request may escape the synthetic transport",
+            );
+            const route = decodeURIComponent(target.pathname),
+              method = request.method;
+            if (route === "/auth/v1/admin/users" && method === "POST") {
+              assert.equal(role, "service_role");
+              const input = await request.json(),
+                record = { id: randomUUID(), ...input };
+              await sql(
+                "postgres",
+                null,
+                "insert into auth.users(id,email,raw_user_meta_data) values($1,$2,$3)",
+                [record.id, record.email, JSON.stringify(record.user_metadata)],
+              );
+              accounts.set(record.id, record);
+              return json(publicUser(record));
+            }
+            if (route.startsWith("/auth/v1/admin/users/")) {
+              assert.equal(role, "service_role");
+              const id = route.split("/").at(-1),
+                record = accounts.get(id);
+              if (!record)
+                return json(
+                  { code: "user_not_found", msg: "User not found" },
+                  404,
                 );
-                accounts.set(record.id, record);
-                return { user: record };
-              }),
-            async getUserById(id) {
-              return accounts.has(id)
-                ? { data: { user: accounts.get(id) } }
-                : {
-                    data: { user: null },
-                    error: { status: 404, code: "user_not_found" },
-                  };
-            },
-            deleteUser: (id) =>
-              result(async () => {
-                assert.ok(accounts.has(id));
+              if (method === "DELETE") {
                 await sql(
                   "postgres",
                   null,
@@ -112,17 +141,21 @@ test(
                   [id],
                 );
                 accounts.delete(id);
-                return {};
-              }),
-          },
-          signInWithPassword: (input) =>
-            result(async () => {
+              } else assert.equal(method, "GET");
+              return json(publicUser(record));
+            }
+            if (route === "/auth/v1/token") {
+              const credentials = await request.json();
               user = [...accounts.values()].find(
-                (a) => a.email === input.email && a.password === input.password,
+                (u) =>
+                  u.email === credentials.email &&
+                  u.password === credentials.password,
               );
               assert.ok(user);
               const token = [
-                "synthetic",
+                Buffer.from(
+                  JSON.stringify({ alg: "HS256", typ: "JWT" }),
+                ).toString("base64url"),
                 Buffer.from(
                   JSON.stringify({
                     sub: user.id,
@@ -130,21 +163,92 @@ test(
                     exp: Math.floor(Date.now() / 1000) + 3600,
                   }),
                 ).toString("base64url"),
-                "synthetic",
+                "synthetic-signature",
               ].join(".");
-              return { user, session: { access_token: token } };
-            }),
-          getUser: () =>
-            result(async () => {
+              return json({
+                access_token: token,
+                token_type: "bearer",
+                expires_in: 3600,
+                refresh_token: randomUUID(),
+                user: publicUser(user),
+              });
+            }
+            if (route === "/auth/v1/user") {
               assert.ok(user);
-              return { user };
-            }),
-          signOut: () =>
-            result(async () => {
+              return json(publicUser(user));
+            }
+            if (route === "/auth/v1/logout") {
+              assert.equal(method, "POST");
               user = null;
-              return {};
-            }),
+              return new Response(null, { status: 204 });
+            }
+            if (route.startsWith("/storage/v1/object/")) {
+              assert.ok(user);
+              assert.equal(role, "authenticated");
+              const rest = route.slice("/storage/v1/object/".length);
+              const prefix = rest.startsWith("info/")
+                ? "info/"
+                : rest.startsWith("authenticated/")
+                  ? "authenticated/"
+                  : "";
+              const resource = rest.slice(prefix.length),
+                bucket = resource.split("/")[0],
+                name = resource.slice(bucket.length + 1);
+              assert.equal(bucket, "board-images");
+              if (method === "DELETE") {
+                const body = await request.json();
+                assert.equal(body.prefixes.length, 1);
+                const rows = await sql(
+                  role,
+                  user.id,
+                  "delete from storage.objects where bucket_id=$1 and name=$2 returning id,name",
+                  [bucket, body.prefixes[0]],
+                );
+                bytes.delete(body.prefixes[0]);
+                return json(rows);
+              }
+              if (method === "POST") {
+                const id = randomUUID();
+                await sql(
+                  role,
+                  user.id,
+                  "insert into storage.objects(id,bucket_id,name,owner_id) values($1,$2,$3,$4)",
+                  [id, bucket, name, user.id],
+                );
+                bytes.set(name, Buffer.from(await request.arrayBuffer()));
+                return json({ Id: id, Key: bucket + "/" + name });
+              }
+              assert.equal(method, "GET");
+              const row = (
+                await sql(
+                  role,
+                  user.id,
+                  "select id,name,bucket_id,owner_id from storage.objects where bucket_id=$1 and name=$2",
+                  [bucket, name],
+                )
+              )[0];
+              if (!row)
+                return json(
+                  {
+                    statusCode: "404",
+                    error: "not_found",
+                    message: "Object not found",
+                  },
+                  404,
+                );
+              return prefix === "info/"
+                ? json(row)
+                : new Response(bytes.get(name), {
+                    headers: { "content-type": "image/png" },
+                  });
+            }
+            throw Error(`Unexpected synthetic SDK endpoint ${method} ${route}`);
+          },
         },
+      });
+      const client = {
+        auth: sdk.auth,
+        storage: sdk.storage,
         rpc: (name, args) =>
           result(async () => {
             calls.push([role, name]);
@@ -268,63 +372,6 @@ test(
             },
           };
           return builder;
-        },
-        storage: {
-          from(bucket) {
-            assert.equal(bucket, "board-images");
-            return {
-              info: (name) =>
-                result(async () => {
-                  const rows = await sql(
-                    role,
-                    user?.id,
-                    "select id,name,bucket_id from storage.objects where bucket_id=$1 and name=$2",
-                    [bucket, name],
-                  );
-                  assert.equal(rows.length, 1);
-                  return {
-                    id: rows[0].id,
-                    name: rows[0].name,
-                    bucketId: rows[0].bucket_id,
-                  };
-                }),
-              upload: (name, data) =>
-                result(async () => {
-                  const id = randomUUID();
-                  await sql(
-                    role,
-                    user?.id,
-                    "insert into storage.objects(id,bucket_id,name,owner_id) values($1,$2,$3,$4)",
-                    [id, bucket, name, user.id],
-                  );
-                  bytes.set(name, data);
-                  return { id, path: name };
-                }),
-              async download(name) {
-                const rows = await sql(
-                  role,
-                  user?.id,
-                  "select id from storage.objects where bucket_id=$1 and name=$2",
-                  [bucket, name],
-                );
-                return rows.length
-                  ? { data: new Blob([bytes.get(name)]) }
-                  : { error: { statusCode: "404" } };
-              },
-              remove: (names) =>
-                result(async () => {
-                  assert.equal(names.length, 1);
-                  const rows = await sql(
-                    role,
-                    user?.id,
-                    "delete from storage.objects where bucket_id=$1 and name=$2 returning id,name",
-                    [bucket, names[0]],
-                  );
-                  bytes.delete(names[0]);
-                  return rows;
-                }),
-            };
-          },
         },
       };
       return client;
@@ -495,6 +542,7 @@ test(
         },
         "./verification.mjs": verification,
         "./responses.mjs": responses,
+        "../demo/responses.mjs": responses,
       };
       const source = new vm.SourceTextModule(
         fs.readFileSync(

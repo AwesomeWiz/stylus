@@ -83,7 +83,8 @@ No production grant, RLS policy, migration or application behavior changes.
 | Exact `organizations` SELECT                                                                                                                       | Authenticated OWNER                                                  | Active membership/RLS; exact UUID, creator and name checked                                                                                                           |
 | `create_organization_invitation`                                                                                                                   | OWNER                                                                | Existing manager-only RPC; exact email/role/token hash/expiry; returned invitation UUID recorded                                                                      |
 | `accept_organization_invitation`                                                                                                                   | Each invited MEMBER/VIEWER                                           | Existing matching-authenticated-email acceptance RPC; token held only in ignored manifest                                                                             |
-| `memberships` SELECT                                                                                                                               | Each invited user; OWNER during verification                         | Exact current organization/user/active role; no direct membership mutation                                                                                            |
+| `memberships` SELECT                                                                                                                               | Each invited user                                                    | Exact current organization/user/active role; no direct membership mutation                                                                                            |
+| `list_organization_team`, `list_organization_invitations`                                                                                          | OWNER                                                                | Existing scoped directory RPCs verify teammates and accepted invitation UUIDs; direct membership reads expose only the current user                                   |
 | `set_organization_plugin_enabled`                                                                                                                  | OWNER                                                                | Existing manager authorization; MEMBER/VIEWER denial retained in real Auth gate                                                                                       |
 | `company_profiles`, `audience_profiles`, `brand_profiles`, `marketing_profiles`, `onboarding_progress` INSERT/returning SELECT                     | OWNER                                                                | Existing authenticated profile collaborator grants/RLS; organization and actor fields validated                                                                       |
 | Six `tasks` INSERT/SELECT                                                                                                                          | OWNER                                                                | Existing editor grants, task RLS and server-generated activity; actual teammate assignment                                                                            |
@@ -121,7 +122,7 @@ that the pre-existing control remains unchanged, then repeats the complete seed.
 The second workspace supplies the required real Auth/JWT/role and browser checks.
 
 `node scripts/demo/roundtrip.mjs cleanup` admits only the Auth smoke's two
-preallocated task UUIDs and their four validated trigger-event UUIDs into the
+database-generated task UUIDs, journaled immediately on return, and their four validated trigger-event UUIDs into the
 existing inventory. Any other change stops cleanup. It repeats guarded cleanup,
 checks tenant/Auth/Storage absence and control preservation, then deletes only
 the separately recorded control through its owner/API path and checks absence.
@@ -133,3 +134,51 @@ web/worker, build, real Auth/JWT and three-engine browser gate, followed by guar
 cleanup. A diagnostic success alone cannot close release acceptance. Local
 Windows Docker/WSL is not required or enabled; real remote verification remains
 pending until its exact native run has completed.
+
+## Inventory transport and baseline validation
+
+Native diagnostic #12 at `8a182d9` failed before seeding because the pinned CLI's
+non-agent JSON output is a plain array, while `readLocalDemoRows` assumed a
+top-level `.rows` envelope. That returned `undefined`; the catalog consumer then
+indexed `[0]`. This was a response-contract error after a successful query, not
+evidence of an empty catalog or a denied query. The pinned
+[CLI formatter](https://github.com/supabase/cli/blob/v2.115.0/apps/cli/src/legacy/commands/db/query/query.format.ts#L428)
+defines both shapes.
+
+Queries now pin `--local --output-format json --agent no`. The decoder validates
+plain arrays and the known agent envelope, and rejects process failures/signals,
+empty stdout, malformed JSON, error objects, unknown envelopes and invalid rows.
+Exit status, signal, spawn error, stdout and stderr remain in ignored private
+logs. Missing data never defaults to `[]`.
+
+The catalog must contain exactly one nonempty result with unique tables/keys,
+including organization and membership tables. Every catalog table must have one
+inventory entry even when it has zero records. Keys, actor/creator provenance,
+tenant identities and duplicate rows are validated. A successful zero-row Storage
+absence query remains valid; an empty/missing catalog or tenant inventory fails.
+
+The baseline validates actual control organization/note/OWNER rows and the exact
+Auth account. It also records complete Auth-ID and Storage-object metadata lists
+on the fresh isolated VM; a genuine empty asset list is allowed. Control content
+is compared before cleanup, and the full baseline is compared afterward. Final
+control cleanup verifies the original Auth/Storage baseline minus only its own
+recorded account. These broader platform reads are local-only and never mutate
+or connect to hosted data.
+
+The complete controller regression now executes `prepare`, both seed rounds,
+verification, the actual Auth-smoke source, cleanup and baseline comparison with
+actual PostgreSQL permissions and synthetic Auth/Storage/process transport. It
+uses the production CLI-response decoder for both JSON shapes. Malformed or
+changed baselines stop before deletion. This audit also caught two later defects:
+team verification must use the directory RPC, and task creation must let the
+database allocate the protected ID. Smoke-inventory reconciliation is idempotent
+for the exact known identities and still rejects unexpected rows/provenance.
+Real Supabase round-trip PASS remains contingent on a complete native run.
+
+Native #15 confirmed this inventory fix, then caught a separate SDK boundary:
+`auth.signOut()` returns `{ error: null }` without `data`. Logout now has a strict
+error-only success validator; query/RPC data validation remains mandatory. The
+controller regression uses the installed Auth and Storage SDK implementations
+over fenced synthetic HTTP, so SDK response transformations are exercised rather
+than invented by result mocks. Real Auth/JWT and Storage HTTP transport are
+still established only by the isolated native Supabase run, never by this test.

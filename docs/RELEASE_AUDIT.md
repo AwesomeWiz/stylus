@@ -11,6 +11,42 @@ The candidate must be evaluated at its exact SHA.
 
 ## Environment limits
 
+### Inventory transport and full controller audit — 2026-11-16
+
+Native [diagnostic #12](https://app.circleci.com/workflow/f54717f2-23ff-4938-88b8-4ef24c35f97c/job/5874bb30-7e97-4c7e-9391-e1a2bfb27064)
+at `8a182d9` passes fresh Docker/53-migration prerequisites, then fails before the
+seed. The CLI's successful non-agent JSON response is a row array; reading its
+nonexistent `.rows` returns undefined. Catalog `[0]` then throws. The response
+contract and complete [repair audit](DEMO.md#inventory-transport-and-baseline-validation)
+are recorded without treating that failure as empty or permission-denied data.
+
+The decoder now validates both documented shapes, pins non-agent JSON and keeps
+complete private process diagnostics. Catalog/table coverage, keys, provenance,
+tenant identities and control/Auth/Storage snapshots fail closed on missing or
+malformed data. Actual round-trip plus Auth-smoke source executes under all real
+SQL grants/RLS in the regression. It caught later own-user membership reads and
+protected task-ID insertion: existing directory RPCs and database-generated IDs
+replace those assumptions. Cleanup inventory remains exact and supports safe
+reconciliation of the same recorded smoke IDs. Baseline changes are rejected
+before deletion and checked again after cleanup.
+
+All 63 demo tests, seven release-helper tests, lint/typechecks and 30 SQL suites /
+1,138 assertions pass locally. Synthetic Auth/Storage/process transport is not
+live Supabase evidence. The diagnostic branch advances normally to `eeab043`;
+native CLI/v3 trigger calls return 404, so owner-started native execution at that
+exact SHA is requested. No real seed/cleanup/baseline PASS is claimed, and no
+hosted data, production grants/RLS/migrations or dependencies are changed.
+
+Owner-started [native #15](https://app.circleci.com/workflow/c908ab90-f9ba-4528-aa47-826c6d3096ce/job/0b626199-39e9-4daf-a06b-515497a0053e)
+at `eeab043` confirms inventory decoding/baseline capture, then fails at MEMBER
+logout because the new validator incorrectly expects `data` from the SDK's
+error-only signOut result. This is corrected explicitly without relaxing query
+data validation. The complete controller now runs installed Auth/Storage SDKs
+over fenced synthetic HTTP and actual SQL permissions. All 64 demo tests and
+seven release-helper tests pass; builds, formatting/190 links, secret and workflow
+checks pass. Full real seed/cleanup/baseline acceptance remains pending a new
+native run; #15's partial execution is not a round-trip PASS.
+
 ### Complete demo privilege audit and round trip — 2026-11-16
 
 Native job `3e01d041-5273-47dd-a911-fd4525d9927c` at `e5fe80e` confirms the next

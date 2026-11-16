@@ -7,6 +7,28 @@ import {
   readDemoInventory,
 } from "./inventory.mjs";
 import { assertControlBaseline } from "./verification.mjs";
+import { requireSuccess, requireData } from "./responses.mjs";
+
+test("error-only logout success remains distinct from data-bearing query success", () => {
+  assert.doesNotThrow(() => requireSuccess({ error: null }, "logout"));
+  assert.throws(() => requireSuccess({}, "logout"), /success status/);
+  assert.throws(
+    () => requireSuccess({ error: undefined, data: {} }, "logout"),
+    /success status/,
+  );
+  assert.throws(
+    () => requireSuccess({ error: false }, "logout"),
+    /success status/,
+  );
+  assert.throws(
+    () => requireSuccess({ error: { code: "401" } }, "logout"),
+    /401/,
+  );
+  assert.throws(
+    () => requireData({ error: null }, "inventory"),
+    /no response data/,
+  );
+});
 
 const org = "10000000-0000-4000-8000-000000000001",
   user = "10000000-0000-4000-8000-000000000002",

@@ -4,6 +4,50 @@ Last Updated: 2026-11-16
 
 ## Overall Status
 
+REDESIGN-009 inventory/round-trip follow-up: native diagnostic #12 at `8a182d9`
+fails before seeding because the CLI emits a plain JSON array outside agent mode,
+but the adapter unconditionally reads `.rows`. The resulting undefined value is
+indexed by the catalog consumer. The pinned CLI formatter confirms the contract;
+this is not an empty catalog or a permission-denied query. Output now pins
+non-agent JSON and validates the complete transport/result shape. Private logs
+preserve exit/signal/spawn errors and both output streams. Catalog coverage,
+primary keys, provenance and tenant identities must be complete before empty
+tenant records can count as verified absence.
+
+The entire actual round-trip and Auth-smoke sources now execute in the SQL
+contract regression, including both seed rounds, CLI response decoding, exact
+cleanup and before/after preservation checks. This caught two later defects:
+team verification now uses the existing directory RPC (direct membership reads
+are own-user only), and Auth-smoke tasks use database-generated IDs because the
+browser INSERT grant excludes `id`. Returned IDs are journaled before update.
+Smoke-inventory reconciliation permits an already-recorded exact identity once;
+unexpected rows/provenance still stop cleanup. Missing/changed baseline data stops
+before deletion. The baseline includes actual control content/Auth identity and
+fresh-VM Auth-ID/Storage inventories, with validated genuine empty Storage results.
+
+All 63 demo regressions, seven release-helper tests, lint/typechecks and 30 SQL
+suites / 1,138 assertions pass locally with 53 unchanged migrations. Auth/Storage
+transport is synthetic in the SQL test; no real Supabase PASS is claimed. The
+requested preflight branch is fast-forwarded to
+`eeab04337322438985d8e6c6845aa3517350b194`, incorporating the later 009 hardening.
+Native triggering still returns 404 through CLI and documented v3 API; automatic
+compatibility execution has ended. An owner-started native diagnostic at that
+exact SHA is requested. Hosted data, production grants, RLS, migrations,
+dependencies and the lockfile remain untouched. No agents/merge/tag/publication.
+
+Owner-started native run #15 confirms the inventory/baseline repair at `eeab043`,
+then fails at MEMBER logout: the new data validator incorrectly required `data`
+from `auth.signOut()`, whose documented SDK result is error-only. Explicit logout
+success now requires `{ error: null }`; data-bearing queries/RPCs still require
+their data field. The installed Auth and Storage SDK implementations now run
+inside the complete controller regression with fenced synthetic HTTP, replacing
+handwritten SDK result mocks. All 64 demo tests and seven release-helper tests
+pass, including actual SDK account/session/logout/upload/info/download/remove
+transformations, full SQL roles and all round-trip phases. Lint, typechecks,
+both production builds, formatting, 190 links, secret scan and workflow/Bash
+checks pass. The full real Supabase round trip remains pending a new native run;
+no PASS is inferred from #15 or local synthetic transport.
+
 REDESIGN-009 complete demo-seed repair is in progress from `e5fe80e`.
 The entire interaction/role audit is in docs/DEMO.md. Direct service membership
 writes are replaced by OWNER invitations and each teammate's authenticated

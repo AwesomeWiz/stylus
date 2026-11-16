@@ -41,3 +41,13 @@ export function requireData(result, label) {
     throw Error(`STOP: ${label} has no response data`);
   return result.data; // null is a valid response for a PostgreSQL void RPC.
 }
+// Auth signOut is intentionally error-only; database/query reads still require
+// their own explicit data field and must never use this validator as a fallback.
+export function requireSuccess(result, label) {
+  requireObject(result, label);
+  if (!Object.hasOwn(result, "error"))
+    throw Error(`STOP: ${label} has no success status`);
+  if (result.error === null) return;
+  if (result.error) requireData(result, label);
+  throw Error(`STOP: ${label} has an invalid success status`);
+}

@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { requireObject, requireUuid } from "./responses.mjs";
+import { requireObject, requireUuid, requireSuccess } from "./responses.mjs";
 
 // Follow the same invitation/acceptance contract as the application. A service
 // key and direct membership writes are deliberately unnecessary here.
@@ -102,7 +102,7 @@ export async function ensureDemoTeam({
     invitation.accepted = true;
     delete invitation.token;
     save();
-    check(await member.auth.signOut(), `sign out fictional ${role}`);
+    requireSuccess(await member.auth.signOut(), `sign out fictional ${role}`);
   }
   manifest.teamReady = true;
   save();
