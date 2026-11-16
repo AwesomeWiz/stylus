@@ -22,6 +22,7 @@ test("startup logs redact generated credentials as well as inherited secrets", (
     "\u001b[31mERROR\u001b[0m: startup failed",
     "ANON_KEY=local-anon-value",
     '"service_role_key": "local-service-value"',
+    '{"workerId":"fictional-worker","credential":"generated-worker-credential"}',
     "Secret key │ generated-local-secret │",
     "JWT secret: generated-jwt-secret",
     "postgresql://postgres:local-db-password@127.0.0.1:54322/postgres",
@@ -39,6 +40,7 @@ test("startup logs redact generated credentials as well as inherited secrets", (
   for (const secret of [
     "local-anon-value",
     "local-service-value",
+    "generated-worker-credential",
     "generated-local-secret",
     "generated-jwt-secret",
     "local-db-password",

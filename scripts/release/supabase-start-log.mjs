@@ -32,7 +32,7 @@ export function sanitizeStartupLog(input, env = process.env) {
       "$1 [REDACTED]",
     )
     .replace(
-      /^(.*?\b(?:[\w -]*(?:key|secret|password|token))["']?\s*[=:|│])[^\r\n]*/gim,
+      /^(.*?\b(?:[\w -]*(?:key|secret|password|token|credential))["']?\s*[=:|│])[^\r\n]*/gim,
       "$1 [REDACTED]",
     );
 }

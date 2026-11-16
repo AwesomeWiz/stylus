@@ -1,0 +1,115 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@7.2.1
+
+jobs:
+  release:
+    machine:
+      image: ubuntu-2404:current
+    resource_class: medium
+    parallelism: 1
+    environment:
+      # The pinned CLI's standard Docker path; never opt into experimental native.
+      SUPABASE_EXPERIMENTAL_STACK: "0"
+      DOCKER_HOST: unix:///var/run/docker.sock
+    steps:
+      - checkout:
+          # History/blob scans need a full clone, not the default blobless checkout.
+          method: full
+      - run:
+          name: Verify exact revision and fresh checkout
+          command: |
+            git rev-parse HEAD
+            git status --short
+            test "$(git rev-parse HEAD)" = "$CIRCLE_SHA1"
+            test "$(git rev-parse --is-shallow-repository)" = "false"
+            test -z "$(git status --porcelain)"
+            umask 077
+            npm_cache=$(mktemp -d "${TMPDIR:-/tmp}/stylus-npm.XXXXXX")
+            printf 'export NPM_CONFIG_CACHE=%q\n' "$npm_cache" >> "$BASH_ENV"
+            printf 'export PLAYWRIGHT_BROWSERS_PATH=%q\n' "$PWD/.release-qa/browsers" >> "$BASH_ENV"
+            printf 'unset DOCKER_CONTEXT DOCKER_TLS_VERIFY DOCKER_CERT_PATH\n' >> "$BASH_ENV"
+      - node/install:
+          node-version: "24.22.1"
+          use-nvm-cache: false
+      - run:
+          name: Verify supported host and direct Docker daemon
+          command: |
+            uname -a
+            id
+            node --version
+            npm --version
+            docker version
+            docker compose version
+            test "$(node --version)" = "v24.22.1"
+      - run: npm ci
+      - run:
+          name: Verify pinned CLI, local-only configuration and release helpers
+          command: |
+            npx --no-install supabase --version
+            node --test --test-concurrency=1 scripts/release/supabase-start-log.test.mjs scripts/release/ci-local.test.mjs
+            node scripts/release/ci-local-database.mjs guard
+      - run: npm run format:check
+      - run: npm run docs:check
+      - run: npm run audit:licenses:check
+      - run: npm audit --audit-level=high
+      - run: npm run audit:secrets
+      - run: npm run audit:secrets:tree
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:db:isolated
+      - run: npm run test:db:upgrade
+      - run:
+          name: Start fresh Docker Supabase and apply all migrations
+          no_output_timeout: 20m
+          command: |
+            docker version
+            # A fresh VM must have neither Supabase containers nor saved volumes.
+            containers=$(docker ps -a --format '{{.Names}}')
+            volumes=$(docker volume ls --format '{{.Name}}')
+            for name in $containers $volumes; do
+              if [[ "$name" == supabase_* ]]; then
+                printf 'Refusing pre-existing Supabase container/volume: %s\n' "$name"
+                exit 1
+              fi
+            done
+            mkdir -p .release-qa
+            umask 077
+            touch .release-qa/ci-stack-owned
+            if npx --no-install supabase start -x studio,logflare,vector,edge-runtime,imgproxy,supavisor > .release-qa/supabase-start.log 2>&1; then
+              printf 'Docker-backed Supabase started; verifying status, migrations and SQL connection next.\n'
+            else
+              startup_status=$?
+              node scripts/release/supabase-start-log.mjs .release-qa/supabase-start.log
+              exit "$startup_status"
+            fi
+      - run:
+          name: Verify local status, migration ledger and administrative SQL harness; run all pgTAP suites
+          no_output_timeout: 20m
+          command: node scripts/release/ci-local-database.mjs test
+      - run: node scripts/setup-local-env.mjs
+      - run: npm run demo:seed -- --confirm-demo-memory
+      - run:
+          name: Verify real Auth JWTs and OWNER/MEMBER/VIEWER Core RLS
+          command: node scripts/release/ci-auth-smoke.mjs
+      - run: npm run build
+      - run: npx --no-install playwright install --with-deps chromium firefox webkit
+      - run: npm run test:e2e
+      - run: git diff --check
+      # No raw logs, dotenv, demo credentials or browser traces are public artifacts.
+      - run:
+          name: Stop only this VM's local Supabase stack
+          when: always
+          command: |
+            if test -f .release-qa/ci-stack-owned && test -f node_modules/supabase/dist/supabase.js; then
+              npx --no-install supabase stop --no-backup
+            else
+              printf 'This job did not attempt to start a fresh stack; no stack is owned for cleanup.\n'
+            fi
+
+workflows:
+  release-verification:
+    jobs:
+      - release

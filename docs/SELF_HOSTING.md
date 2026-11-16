@@ -13,6 +13,16 @@ Do not enable virtualization features on an unstable machine just to run Stylus.
 
 ## Local development with Supabase
 
+For supported-host clean-install release verification, configure CircleCI to read
+[`.circleci/config.yml`](../.circleci/config.yml) directly. It uses a fresh Ubuntu
+24.04 machine VM with direct Docker access, real local Supabase/Auth and all
+repository migrations, SQL/RLS, JWT role, web/worker and browser gates. No hosted
+backend or optional AI/GitHub/Google credentials are required. This is a native
+CircleCI pipeline with **Docker-backed Supabase**, not Supabase's experimental
+native runtime. The retained [GitHub workflow](../.github/workflows/ci.yml) is a
+separate supported CI configuration. Machine-run acceptance is pending until an
+actual complete run passes at the exact release-candidate SHA.
+
 Docker-compatible containers are required by the pinned Supabase CLI's local
 stack. Start Docker only on a machine where it is supported and working. The
 following is the public setup path to validate in CI/a suitable development host:

@@ -1432,3 +1432,23 @@ unexpected existing orphans instead of silently repairing or deleting them.
 Permanent SQL coverage now deletes populated Core and immutable-domain fixtures,
 preserves unrelated organizations/accounts, and checks validated lifecycle/FK
 invariants. All original role, tenant and immutability denials remain enabled.
+
+## ADR-058 - Direct CircleCI machine release verification
+
+2026-11-16 · REDESIGN-009; owner-selected alternate CI path, remote acceptance pending.
+
+Use `.circleci/config.yml` directly rather than CircleCI's GitHub Actions
+compatibility layer. One Ubuntu 24.04 machine VM provides direct Docker sockets,
+volumes and loopback networking. The pinned Supabase CLI uses ordinary Docker;
+the experimental native runtime is disabled. Keep GitHub Actions supported and
+retain every release gate. No linked backend, application credential, optional
+provider, local Windows Docker or virtualization change is required.
+
+Before SQL tests, verify a fresh stack, all repository migration versions, real
+platform prerequisites and an explicit local postgres connection. Inspect worker
+table grants and fixture privileges instead of modifying RLS for an unclassified
+compatibility-run denial. Add real password-grant Auth JWT checks for the existing
+fictional OWNER/MEMBER/VIEWER accounts; public-key user sessions enforce role
+assertions, while fixture creation retains the seeder's separate administrative
+path. An always-run final step stops only the job-owned local stack. Official
+configuration validation is not proof of a successful remote release run.

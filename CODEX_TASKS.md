@@ -2,6 +2,20 @@
 
 # Current
 
+## REDESIGN-009 — Direct CircleCI machine release pipeline
+
+Add `.circleci/config.yml` as an alternate CI path: one Ubuntu 24.04 machine job,
+direct Docker socket, pinned Node, deterministic clean install, all static/
+security/runtime/SQL/upgrade/build/browser gates and explicit local cleanup.
+Verify exact checkout, fresh volumes, complete migration ledger and administrative
+fixture role before pgTAP. Reuse fictional seeding and add actual Auth JWT role
+checks with public-key sessions. Keep GitHub Actions intact; no experimental
+Supabase runtime, hosted backend, provider credentials or SQL/RLS weakening.
+Official CircleCI validation, seven local helper tests, YAML/Bash/reference and
+simulated failure/cleanup checks, lint and typechecks pass. Actual machine execution is
+pending user configuration of `.circleci/config.yml` instead of compatibility
+execution of the GitHub workflow. No release gate is waived.
+
 ## REDESIGN-009.1 — Supabase startup diagnostics follow-up
 
 Remote failure diagnosis remains open. Preserve startup stdout/stderr in an

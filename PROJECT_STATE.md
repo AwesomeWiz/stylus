@@ -4,6 +4,38 @@ Last Updated: 2026-11-16
 
 ## Overall Status
 
+REDESIGN-009 direct CircleCI machine pipeline: `.circleci/config.yml` adds one
+sequential Ubuntu 24.04 VM job with direct local Docker, exact `CIRCLE_SHA1`
+verification, Node 24.22.1, a fresh npm cache and deterministic `npm ci`. The
+existing GitHub Actions workflow is unchanged. Experimental Supabase is disabled;
+fresh-container/volume guards precede standard Docker-backed startup. Real local
+status, all repository migration versions, Auth/Storage/pgcrypto and the postgres
+fixture connection/grants are inspected before the complete pgTAP suite. No RLS,
+SQL fixture, migration, dependency or lockfile change is made for the reported
+compatibility-layer `worker_registrations` denial.
+
+The existing three-account fictional seeder exercises real Auth creation and
+owner organization bootstrap. An additional local-only gate logs in OWNER,
+MEMBER and VIEWER, verifies each JWT with Auth, tests Core reads/writes and
+management restrictions, and confirms VIEWER writes leave the original unchanged.
+It uses public-key/password sessions for assertions, never service-role
+impersonation. All previous static/security, isolated SQL/upgrade, web/worker,
+production build and three-engine browser gates remain required. Cleanup always
+stops only the stack this job attempted to create; raw logs/credentials/traces
+are not uploaded. Hosted Supabase and external providers are not used.
+
+CircleCI's official CLI 1.15.0 validates the configuration/public orb. Seven local
+guard/redaction tests, all run-step Bash syntax, script/package references,
+simulated startup failure/cleanup ownership, lint and both typechecks pass.
+Formatting, 188 documentation links, the Git-visible candidate secret scan and
+diff checks pass; all validation runners were sequential.
+The existing GitHub workflow and application build inputs remain unchanged.
+The owner must configure
+CircleCI to read `.circleci/config.yml` directly; the compatibility pipeline does
+not automatically switch. Full machine execution and release acceptance remain
+pending at the new exact candidate, including reproduction/classification of
+any SQL failure. Windows virtualization remains disabled and untouched.
+
 REDESIGN-009.1 startup diagnosis: CircleCI passed npm installation and the worker
 path fix at `7aa7924`, then failed Supabase startup with both output streams hidden
 in a file. CI now reports safe platform/tool/environment-presence diagnostics,

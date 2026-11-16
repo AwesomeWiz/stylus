@@ -11,6 +11,55 @@ The candidate must be evaluated at its exact SHA.
 
 ## Environment limits
 
+### Direct CircleCI machine release gate — 2026-11-16
+
+The owner selected a direct CircleCI pipeline after the GitHub Actions
+compatibility run reported `permission denied for table worker_registrations`
+and cascading TAP plan errors. This is not treated as evidence to change RLS or
+fixtures. The unchanged isolated baseline remains 30 suites / 1,115 assertions;
+reproduction and classification on the supported machine executor remain required.
+
+`.circleci/config.yml` uses one `ubuntu-2404:current` machine VM, direct local
+Docker (no remote-Docker executor), Node 24.22.1 through pinned official Node orb
+7.2.1, and `npm ci` with a new temporary cache. It asserts the checked-out commit
+equals `CIRCLE_SHA1`, rejects inherited backend/provider configuration and saved
+Supabase containers/volumes, and uses the pinned 2.115.0 CLI's ordinary Docker
+startup. `SUPABASE_EXPERIMENTAL_STACK=0` is explicit. No dependency, SQL, fixture,
+RLS or migration change is part of this pipeline addition.
+
+The database wrapper captures real local status without printing keys. It
+requires loopback URLs, the postgres database/user and the configured local port.
+A read-only Docker/psql preflight records connection/session roles, worker-table
+owner/grants and fixture privileges, checks real Auth/Storage/pgcrypto, and compares
+the entire applied migration ledger to repository files. The existing complete
+`supabase test db` gate then uses that same explicit local postgres URL. No custom
+bootstrap, grant repair, role alias or database patch is introduced. Failures
+remain fatal and their output is sanitized without hiding SQL/TAP errors.
+
+The existing fictional demo creates three real Auth users and bootstraps its
+organization through the owner's authenticated RPC. The new CI-only smoke logs
+in all three roles, verifies JWT identities with Auth, checks scoped Core reads,
+OWNER/MEMBER Task writes, VIEWER denial/persistence and OWNER-only management.
+Its clients use the public key and real password-grant sessions. No JWT is
+fabricated, persisted or printed, and service-role access is not used for these
+assertions. This gate supplements all original SQL/RLS and browser tests.
+
+All GitHub Actions gates remain intact. CircleCI runs the same package scripts,
+plus the local connection/JWT prerequisites, with no parallel jobs/runners.
+Always-run cleanup stops only a stack whose fresh-start intent this job recorded.
+No raw logs, dotenv, demo credentials or traces are uploaded. The pipeline never
+links a hosted project, invokes a provider or changes Windows virtualization.
+Official CircleCI CLI 1.15.0 config/public-orb validation passes. Seven local
+guard/redaction tests, YAML and all run-step Bash syntax, referenced scripts/
+package commands, simulated startup exits and cleanup ownership, lint and both
+typechecks pass. Application build inputs and the GitHub workflow are unchanged;
+formatting, 188 relative links, candidate-tree secret scanning and diff checks
+also pass. All validation runners are sequential. Application
+runtime suites are required in the remote job rather than
+repeated locally for this CI-only change. Remote machine execution remains
+unverified. The owner must change the CircleCI UI configuration path to
+`.circleci/config.yml`; adding the file does not switch the compatibility pipeline.
+
 ### REDESIGN-009.1 remote startup diagnosis — 2026-11-16
 
 CircleCI passed installation and worker tests at `7aa7924`, then reported only
