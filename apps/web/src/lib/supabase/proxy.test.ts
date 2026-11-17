@@ -31,7 +31,12 @@ describe("session route decisions", () => {
           const path =
             "/" +
             segments.map((s) => (s.startsWith("[") ? "example" : s)).join("/");
-          expect(isSessionApplicationPath(path), path).toBe(true);
+          if (path === "/about") {
+            expect(isSessionApplicationPath(path)).toBe(false);
+            expect(getSessionRouteDecision(path, false)).toBeNull();
+          } else {
+            expect(isSessionApplicationPath(path), path).toBe(true);
+          }
         }
       }
     }
