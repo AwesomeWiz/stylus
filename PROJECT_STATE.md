@@ -1,5 +1,17 @@
 # Stylus — Project State
 
+## Public product SEO — 2026-11-17
+
+Production `/` redirects to login, inheriting root `noindex, nofollow`; no
+X-Robots-Tag header was observed. Static `/about` alone overrides indexing and
+sets a canonical URL from NEXT_PUBLIC_SITE_URL; sitemap lists only that page.
+Workspace/auth behavior and private default metadata remain unchanged. Focused
+SEO/session tests pass (10 tests). Deployment and Search Console live inspection
+of `/about` remain required; source changes are not automatically deployed.
+Web lint and production build/typechecking pass using non-secret loopback backend
+fixtures. Built HTML verifies one index/follow directive and the intended public
+canonical; the generated sitemap contains only `/about`. No hosted data changed.
+
 Last Updated: 2026-11-16
 
 ## Overall Status

@@ -2,6 +2,13 @@
 
 # Current
 
+## Public product SEO — 2026-11-17
+
+Expose static `/about` with explicit public metadata and a single-page sitemap;
+preserve root/login/signup/private noindex and workspace authorization. Focused
+SEO and session-route coverage passes. Verify build and deploy before requesting
+indexing for `/about`; do not submit private `/` as a public landing page.
+
 ## REDESIGN-009 — #23 semantic Board entry assertion repair
 
 Fix the duplicate raw-main selector with a semantic main landmark and count
