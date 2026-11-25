@@ -52,7 +52,7 @@ describe("authentication actions", () => {
     formData.set("password", "correct-horse");
 
     await expect(loginAction(initialAuthActionState, formData)).rejects.toThrow(
-      "redirect:/",
+      "redirect:/home",
     );
     expect(mocks.signInWithPassword).toHaveBeenCalledWith({
       email: "founder@example.com",

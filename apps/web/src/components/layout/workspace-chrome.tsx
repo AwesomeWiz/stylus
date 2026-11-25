@@ -52,7 +52,7 @@ export function WorkspaceChrome({
   mainClassName?: string;
   activePath?: string;
 }) {
-  const pathname = usePathname() ?? activePath ?? "/";
+  const pathname = usePathname() ?? activePath ?? "/home";
   const storedCollapsed = useSyncExternalStore(
     subscribe,
     collapsedSnapshot,

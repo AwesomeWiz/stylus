@@ -9,7 +9,7 @@ export function Brand({ collapsed = false }: { collapsed?: boolean }) {
           ? "flex h-12 shrink-0 items-center justify-center"
           : "flex h-12 shrink-0 items-center gap-2.5 px-4 [&_.brand-wordmark]:w-28"
       }
-      href="/"
+      href="/home"
       aria-label="Stylus home"
     >
       <BrandLogo mark={collapsed} />

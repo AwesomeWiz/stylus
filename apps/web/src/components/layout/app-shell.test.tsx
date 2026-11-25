@@ -2,7 +2,7 @@ import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ path: "/", refresh: vi.fn() }));
+const mocks = vi.hoisted(() => ({ path: "/home", refresh: vi.fn() }));
 vi.mock("next/navigation", () => ({
   usePathname: () => mocks.path,
   useRouter: () => ({ refresh: mocks.refresh }),
@@ -25,7 +25,7 @@ const props = {
 
 beforeEach(() => {
   localStorage.clear();
-  mocks.path = "/";
+  mocks.path = "/home";
   vi.clearAllMocks();
 });
 describe("AppShell", () => {

@@ -19,11 +19,14 @@ describe("public product SEO boundary", () => {
     expect(html).not.toContain("Paper Orbit");
   });
   it("lists only public product content in the sitemap", () => {
-    expect(sitemap()).toEqual([{ url: "https://stylus.example/about" }]);
+    expect(sitemap()).toEqual([
+      { url: "https://stylus.example/" },
+      { url: "https://stylus.example/about" },
+    ]);
   });
   it("keeps workspace authentication and inherited private noindex intact", () => {
     expect(getSessionRouteDecision("/about", false)).toBeNull();
-    expect(getSessionRouteDecision("/", false)).toBe("/login");
+    expect(getSessionRouteDecision("/home", false)).toBe("/login");
     expect(getSessionRouteDecision("/tasks", false)).toBe("/login");
     const layout = fs.readFileSync("src/app/layout.tsx", "utf8");
     expect(layout).toContain("robots: { index: false, follow: false }");

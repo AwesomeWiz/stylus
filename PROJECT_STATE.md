@@ -1,5 +1,18 @@
 # Stylus — Project State
 
+## Public landing release route contract
+
+The release branch now contains the landing page at `/` and the workspace at
+`/home`. Signed-in visits to the root redirect to Home. The exact inventory
+contains 37 unique page URLs, including public `/about`. The contract checks
+workspace placement and rejects anonymous access to every workspace, Board editor
+and setup page.
+
+The focused suite passed 31 tests. The full suite passed 1,536 web, 36 worker
+and 64 demo tests. Lint, typecheck and production builds passed. Chromium,
+Firefox and WebKit verified the public landing and signed-in redirect with
+loopback Auth in the production build. CircleCI verification follows the push.
+
 ## Landing page capture layout and typography
 
 Home and the task prerequisite occupy separate captioned figures. The walkthrough

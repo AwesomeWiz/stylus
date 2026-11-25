@@ -43,7 +43,8 @@ describe("session route decisions", () => {
     inspect(join(dirname(fileURLToPath(import.meta.url)), "../../app"));
   });
   it("redirects unauthenticated application requests to login", () => {
-    expect(getSessionRouteDecision("/", false)).toBe("/login");
+    expect(getSessionRouteDecision("/home", false)).toBe("/login");
+    expect(getSessionRouteDecision("/", false)).toBeNull();
     expect(getSessionRouteDecision("/organization/new", false)).toBe("/login");
     expect(getSessionRouteDecision("/onboarding/company", false)).toBe(
       "/login",
@@ -62,9 +63,10 @@ describe("session route decisions", () => {
   });
 
   it("keeps authenticated users out of entry routes", () => {
-    expect(getSessionRouteDecision("/login", true)).toBe("/");
-    expect(getSessionRouteDecision("/signup", true)).toBe("/");
-    expect(getSessionRouteDecision("/", true)).toBeNull();
+    expect(getSessionRouteDecision("/login", true)).toBe("/home");
+    expect(getSessionRouteDecision("/signup", true)).toBe("/home");
+    expect(getSessionRouteDecision("/", true)).toBe("/home");
+    expect(getSessionRouteDecision("/home", true)).toBeNull();
   });
 
   it("bypasses human sessions only for the worker broker", () => {

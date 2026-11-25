@@ -2,6 +2,12 @@
 
 # Current
 
+## Public landing release route contract
+
+Track the exact page and workspace inventories and the public/private session
+decisions. The authenticated release smoke enters through `/` and checks the
+resulting Home route.
+
 ## Landing page media containment and text entrances
 
 Keep the walkthrough images within their reserved frame, separate the daily
