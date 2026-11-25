@@ -48,7 +48,7 @@ export const coreNavigationGroups: NavigationGroup[] = [
   {
     label: "Workspace",
     items: [
-      { label: "Home", icon: "home", href: "/" },
+      { label: "Home", icon: "home", href: "/home" },
       { label: "Tasks", icon: "tasks", href: "/tasks" },
       { label: "Boards", icon: "boards", href: "/whiteboards" },
     ],
@@ -77,7 +77,7 @@ export const settingsNavigation: NavigationItem[] = [
 ];
 
 export function globalNavigationPath(path: string) {
-  if (path === "/activity") return "/";
+  if (path === "/activity") return "/home";
   if (path === "/apps/marketing" || path.startsWith("/apps/marketing/"))
     return "/apps/marketing";
   if (path === "/tasks" || path.startsWith("/tasks/")) return "/tasks";
@@ -107,7 +107,7 @@ export function navigationContext(path: string) {
   return (
     (
       {
-        "/": "Home",
+        "/home": "Home",
         "/tasks": "Tasks",
         "/whiteboards": "Boards",
         "/apps/marketing": "Marketing",

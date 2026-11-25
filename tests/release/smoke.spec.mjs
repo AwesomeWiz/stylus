@@ -60,7 +60,7 @@ test("authenticated fictional Core and growth workflow", async ({ page }) => {
     .fill(demo.users[0].email);
   await page.getByLabel("Password", { exact: true }).fill(demo.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.waitForURL((url) => url.pathname === "/");
+  await page.waitForURL((url) => url.pathname === "/home");
   await expect(
     page.getByRole("heading", { name: "Home", exact: true }),
   ).toBeVisible();
@@ -86,7 +86,7 @@ test("authenticated fictional Core and growth workflow", async ({ page }) => {
     entry.on("pageerror", (error) => errors.push(error.message));
     try {
       await entry.goto(route);
-      await assertReleaseEntry(entry, route);
+      await assertReleaseEntry(entry, route === "/" ? "/home" : route);
       await entry.waitForLoadState("networkidle");
     } finally {
       await entry.close();

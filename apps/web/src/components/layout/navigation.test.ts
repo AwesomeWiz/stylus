@@ -51,7 +51,7 @@ describe("V2 application navigation", () => {
       expect(globalNavigationPath(route)).toBe("/apps/marketing");
     for (const { href } of settingsNavigation)
       expect(globalNavigationPath(href)).toBe("/settings");
-    expect(globalNavigationPath("/activity")).toBe("/");
+    expect(globalNavigationPath("/activity")).toBe("/home");
     expect(globalNavigationPath("/whiteboards/id")).toBe("/whiteboards");
     expect(globalNavigationPath("/apps/marketing-forged")).toBe("/settings");
   });

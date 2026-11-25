@@ -5,6 +5,7 @@ import { publicEnv } from "@/lib/env/public";
 
 const authEntryPaths = new Set(["/login", "/signup"]);
 const publicPaths = new Set([
+  "/",
   "/auth/confirm",
   "/auth/error",
   ...authEntryPaths,
@@ -19,6 +20,7 @@ const applicationRoots = new Set([
   "apps",
   "auth",
   "company",
+  "home",
   "integrations",
   "invite",
   "jobs",
@@ -54,7 +56,7 @@ export function isServerlessJobCronPath(pathname: string) {
 export function getSessionRouteDecision(
   pathname: string,
   isAuthenticated: boolean,
-): "/" | "/login" | null {
+): "/home" | "/login" | null {
   if (
     !isAuthenticated &&
     isSessionApplicationPath(pathname) &&
@@ -63,8 +65,8 @@ export function getSessionRouteDecision(
     return "/login";
   }
 
-  if (isAuthenticated && authEntryPaths.has(pathname)) {
-    return "/";
+  if (isAuthenticated && (pathname === "/" || authEntryPaths.has(pathname))) {
+    return "/home";
   }
 
   return null;
@@ -117,7 +119,11 @@ export async function updateSession(request: NextRequest) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = routeDecision;
     redirectUrl.search = "";
-    return NextResponse.redirect(redirectUrl);
+    const redirect = NextResponse.redirect(redirectUrl);
+    for (const cookie of response.cookies.getAll())
+      redirect.cookies.set(cookie);
+    redirect.headers.set("Cache-Control", "private, no-store");
+    return redirect;
   }
 
   return response;

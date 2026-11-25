@@ -88,7 +88,7 @@ describe("bounded route metadata", () => {
     const read = (p: string) =>
       readFileSync(resolve(process.cwd(), "src", p), "utf8");
     for (const [route, title] of Object.entries({
-      "(workspace)": "Home",
+      "(workspace)/home": "Home",
       "(workspace)/tasks": "Tasks",
       "(workspace)/whiteboards": "Boards",
       "(workspace)/apps/marketing": "Marketing",

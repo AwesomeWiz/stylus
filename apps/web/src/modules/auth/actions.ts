@@ -40,7 +40,7 @@ export async function loginAction(
   }
 
   revalidatePath("/", "layout");
-  redirect((returnPath ?? "/") as Route);
+  redirect((returnPath ?? "/home") as Route);
 }
 
 export async function signupAction(
