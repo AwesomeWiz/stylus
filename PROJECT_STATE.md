@@ -1,5 +1,92 @@
 # Stylus — Project State
 
+## Landing page capture layout and typography
+
+Home and the task prerequisite occupy separate captioned figures. The walkthrough
+sizes each picture to a shared frame and crossfades the current and previous
+capture while showing one narrative. Manual selection takes priority until the
+next scroll gesture. A layout change cancels pending selection work. The hero
+stagger follows the rendered heading lines, and section titles enter once.
+Server-rendered copy and links remain available with JavaScript disabled.
+
+Production-build checks passed at 390, 768 and 1440 px in light and dark themes.
+The desktop recording sampled 527 rendered frames during scrolling and rapid
+selection. Images stayed inside their frames and one narrative remained visible.
+All 12 Chromium/WebKit landing tests and 18 focused unit tests passed, along
+with lint, typecheck and the production build.
+
+## Public product narrative and confirmation recovery
+
+The landing page uses Paper Orbit records to connect research, experimentation,
+daily execution, collaborative Notes and reviewed Company Memory. A bounded
+desktop scroll scene complements direct keyboard and touch controls. The full
+Boards film is the uncropped README master with a native player and full-size
+link. The page also explains optional Marketing, AI and external connections.
+
+The old callback rejected code-only PKCE returns. In an isolated production-build
+test, Supabase confirmed an account in a fresh browser while the missing original
+PKCE verifier prevented session creation. Password sign-in then succeeded.
+A second observed issue was a request-derived redirect from 127.0.0.1 to localhost
+after a successful exchange, leaving the session cookie on the original hostname.
+The callback now supports both code exchange and token hashes and redirects to
+the configured app origin. The confirmation template supports a fresh browser;
+invalid or consumed links provide sign-in and resend recovery.
+
+Four controlled accounts received actual SMTP emails through local Supabase Auth
+v2.198.0 and PostgreSQL. The temporary Windows Auth build used the standard TCP
+listener without Unix socket reuse. Auth, email generation, tokens, PKCE, session
+cookies and password sign-in were real. Organization reads used empty fixtures.
+Checks included same/fresh browser, missing verifier, repeat use, expiry, invalid
+token, successful resend and subsequent sign-in. Hosted template, allow-list and
+mail delivery still require operator verification. See docs/SELF_HOSTING.md.
+
+Production verification includes 48 focused unit tests, lint, typecheck and
+build, three-engine walkthrough checks, both themes and phone/tablet/desktop.
+A 60-frame scroll sample on Chromium transferred 166,255 bytes of initial JS
+(previously 165,883). Desktop CLS went from 0.0431 to 0 and throttled phone CLS
+from 0.00054 to 0.0283. Neither final sample saw a frame over 50ms. These are
+single local samples, with 4× CPU slowdown, 100ms latency and 200 kB/s download
+on the phone. The hosted site was not deployed or tested.
+
+## Public landing page
+
+Anonymous visitors at `/` can follow Paper Orbit's onboarding decision through
+five product views. Signed-in visits to `/` go to the protected workspace Home
+at `/home`. Home still checks membership and onboarding before loading the
+organization's work. The sitemap contains both public product pages.
+
+Local verification passed with 36 worker, 1,535 web and 64 demo tests, lint,
+typecheck and both production builds. Playwright checked public entry and
+keyboard navigation in Chromium, Firefox and WebKit. Chromium covered phone,
+tablet and desktop in both themes, reduced motion, both videos, touch input and
+the walkthrough with JavaScript disabled. Automated accessibility checks passed
+on desktop and mobile. Password sign-in, signup confirmation state, invitation
+return, the incomplete-onboarding gate and sign-out were exercised against a
+loopback fixture through the production-built app. Live deployment, hosted Auth
+and Search Console recrawling were outside this local verification.
+
+The landing polish enlarges the Paper Orbit preview and follows its native
+task card into the original task. Learning's source link returns to the
+identified EVID-1 capture with keyboard focus and a reduced-motion highlight.
+The production browser checks cover delayed and superseded image requests,
+fragment navigation without JavaScript, stable media placement, phone touch
+input and scroll reveals. All 12 walkthrough checks passed across Chromium,
+Firefox and WebKit. Captures and authenticated route checks used fictional
+records and loopback transport. The closing actions link to hosted signup,
+the public repository and the self-hosting guide.
+
+The November 25 motion pass adds a responsive evidence-to-task hero entrance,
+source-record emphasis, confirmed completion feedback, task-row settling,
+native card selection feedback, and detail, dialog and popover entrances.
+Production Chromium recordings cover the fictional board insertion through
+opening the original task, completing it and reordering overdue tasks.
+Both desktop and phone played the revised eight-second Boards demo to its end.
+On a 390px Chromium profile at 4× CPU slowdown and 100ms network latency,
+initial encoded JavaScript was 165,754 bytes before and 165,883 after.
+Both single samples measured 0.00054 CLS and zero frames over 50ms during a
+60-frame scroll probe. Lint, typecheck, builds, 50 focused tests and eight
+Chromium/WebKit walkthrough regressions passed.
+
 ## Public product SEO — 2026-11-17
 
 Production `/` redirects to login, inheriting root `noindex, nofollow`; no

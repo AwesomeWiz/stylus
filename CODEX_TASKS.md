@@ -2,6 +2,28 @@
 
 # Current
 
+## Landing page media containment and text entrances
+
+Keep the walkthrough images within their reserved frame, separate the daily
+execution screenshots and animate the rendered headline lines. The landing
+browser suite covers image and frame bounds, sticky release, single selection,
+responsive layout changes, reduced motion and static navigation.
+
+## Product narrative and signup confirmation
+
+Full-canvas Boards media, scroll walkthrough, feature discovery and confirmation
+recovery verified locally. Hosted template, redirect and SMTP verification
+remain pending. See PROJECT_STATE.md and docs/SELF_HOSTING.md.
+
+## Public landing page — verified locally
+
+Serve the product walkthrough at `/` and the authenticated workspace at `/home`.
+The route inventory covers both public product pages and the private Home.
+The Boards demo follows its linked card from the workshop notes to the original task.
+The responsive preview, source-evidence link, motion and open-source entry
+points have local production-browser coverage. See PROJECT_STATE.md for build,
+browser and session verification.
+
 ## Public product SEO — 2026-11-17
 
 Expose static `/about` with explicit public metadata and a single-page sitemap;
